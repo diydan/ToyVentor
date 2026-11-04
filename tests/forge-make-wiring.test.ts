@@ -133,6 +133,18 @@ describe("the text-to-part panel in the Kip page", () => {
     expect(panel).not.toContain("forge-part");
   });
 
+  it("opening the panel wakes a model that sleeps when idle: once per opening, never while a part is being made, never more than every 4 minutes, and sending no words", () => {
+    expect(panel).toContain("flow.warmMaker({ gate, fetch: doFetch })");
+    expect(panel).toContain("const wasOpen = Boolean(built && built.back.classList.contains('open'));");
+    expect(panel).toContain("if (!wasOpen && !state.busy && Date.now() - lastWarm > 4 * 60_000)");
+    expect(panel.match(/flow\.warmMaker\(/g)).toHaveLength(1); // only in open(), not on build, not on make
+    const flowSrc = read("shared/forgeMakeFlow.ts");
+    const start = flowSrc.indexOf("export function warmMaker(");
+    const fn = flowSrc.slice(start, flowSrc.indexOf("\n}\n", start) + 3); // just the function
+    expect(fn).not.toMatch(/state\.text|wish|text:|prompt/); // the helper has no way to send what a child typed
+    expect(fn).toContain('body: "{}"');
+  });
+
   it("leaves out the save button when the bench hands no file out", () => {
     expect(panel).toContain("downloads = true");
     expect(panel).toContain("$.save.hidden = !r.printable || !downloads");

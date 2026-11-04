@@ -126,6 +126,57 @@ function parseRequest(raw: unknown): Parsed {
   return { ok: true, req: { text, ...(slot ? { slot } : {}), attempt, ...(repair ? { repair } : {}) } };
 }
 
+/**
+ * POST /api/forge/warm: a child opened "Make from words", so wake our own model now. Glimmer on Modal scales to zero when idle (Dan, 2026-11-04: keep it cheaper), and the first
+ * request after a quiet spell waits 26 to 150+ seconds for a container; the child is about to type a wish, so the wake-up overlaps with the typing.
+ *
+ * What it does: only when the text backend is "self", send ONE GET to the model server's /health (the origin, not /v1) and do not wait for the answer. An abandoned request still wakes
+ * the container (measured 2026-11-04: a request dropped after 2 s, silence for 25 s, then a health check answered in 0.6 s). Nothing else: no key is sent, no child data, no wish.
+ * For the hosted API or "off" it does nothing at all.
+ *
+ * Cost guard. Device ids are free to invent, so a per-device limit alone cannot stop someone keeping the GPU awake (every ping restarts the idle timer): the real guard is that this
+ * isolate sends at most one ping every WARM_PING_EVERY_MS however many calls arrive (best effort: isolates multiply), plus a Cloudflare rate-limit rule on this path. The worst case
+ * is one container always on, the same cost as min_containers = 1 (about $47 a day), never more: pings are instant requests and do not make Modal start a second container.
+ * The answer is the same 202 whatever happened, so the route reveals neither the backend nor the address; the log line says what happened (no URL, no device id).
+ */
+export const WARM_PING_EVERY_MS = 4 * 60_000;
+const WARM_PING_TIMEOUT_MS = 28_000; // a Worker keeps a background task for about 30 s after it has answered
+let lastWarmPing = 0;
+export function resetForgeWarm(): void {
+  lastWarmPing = 0;
+}
+
+export async function handleForgeWarm(request: Request, env: ForgeMakeEnv, ctx?: { waitUntil(p: Promise<unknown>): void }): Promise<Response> {
+  const g = await gateForge(request, env, "POST", "warm", "forge_warm", false); // a device id and the limits; the daemon must be configured (no maker, nothing to warm)
+  if (!g.ok) return g.response;
+  const accepted = () => reply(202, { ok: true, status: "accepted" });
+  const backend = resolveBackend(env, "text");
+  if (backend.mode !== "self" || !backend.baseUrl) {
+    logEvent("forge_warm", "not_needed", { backend: backend.mode });
+    return accepted();
+  }
+  const now = Date.now();
+  if (now - lastWarmPing < WARM_PING_EVERY_MS) {
+    logEvent("forge_warm", "coalesced");
+    return accepted();
+  }
+  let health: string;
+  try {
+    health = `${new URL(backend.baseUrl).origin}/health`;
+  } catch {
+    return accepted();
+  }
+  lastWarmPing = now;
+  const started = Date.now();
+  const ping = fetch(health, { method: "GET", signal: AbortSignal.timeout(WARM_PING_TIMEOUT_MS) }).then(
+    (r) => logEvent("forge_warm", "up", { httpStatus: r.status, ms: Date.now() - started }),
+    () => logEvent("forge_warm", "no_answer", { ms: Date.now() - started }),
+  );
+  if (ctx) ctx.waitUntil(ping);
+  logEvent("forge_warm", "pinged");
+  return accepted();
+}
+
 export async function handleForgeMake(request: Request, env: ForgeMakeEnv): Promise<Response> {
   const backend = resolveBackend(env, "text");
   if (request.method === "POST" && backend.mode === "off") {

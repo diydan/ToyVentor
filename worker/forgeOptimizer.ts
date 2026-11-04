@@ -51,6 +51,7 @@ const RATE_WINDOW_MS = 60_000;
 const LIMITS = {
   preview: { device: 3, ip: 6 },
   poll: { device: 30, ip: 60 },
+  warm: { device: 2, ip: 6 }, // POST /api/forge/warm (worker/forgeMake.ts): a child opening the panel, never a make attempt, so it does not use the preview budget
 } as const;
 type RateKind = keyof typeof LIMITS;
 const hits = new Map<string, number[]>();
