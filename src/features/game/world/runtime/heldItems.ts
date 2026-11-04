@@ -6,9 +6,11 @@ import { HELD_GUITAR_SCALE, buildGuitarMesh } from "./guitar";
 import { buildWandMesh } from "./bubbleWand";
 import { buildMalletMesh } from "./xylophone";
 import { buildMopMesh } from "./mop";
+import { buildSpongeMesh, buildVacuumMesh } from "./cleanScene";
+import { buildSpatulaMesh } from "./cookScene";
 import type * as THREE from "three";
 
-export type HeldItem = "book" | "guitar" | "wand" | "mallets" | "mop";
+export type HeldItem = "book" | "guitar" | "wand" | "mallets" | "mop" | "vacuum" | "sponge" | "spatula";
 
 /** A small hardback book: a coloured cover, cream pages and a spine, flat, about 0.7 by 0.5. */
 export function buildBookMesh(): THREE.Group {
@@ -41,6 +43,11 @@ export const HELD: Readonly<Record<HeldItem, HeldSpec>> = {
   mallets: { parent: "arms", position: [0, -0.38, 0.05], rotation: [0, 0, Math.PI], scale: 1, build: buildMalletMesh },
   // A mop slanted across the front of the body, the head on the floor ahead of Kip and the handle up against its chest (+x is forward); the body rocking while it mops moves it too.
   mop: { parent: "model", position: [0.95, 0.02, 0.05], rotation: [0, 0, 0.62], scale: 1, build: buildMopMesh },
+  // The cleaning level's other two tools, held the same way as the mop (cleanScene.ts): the upright vacuum and the soapy sponge on a handle.
+  vacuum: { parent: "model", position: [0.95, 0.02, 0.05], rotation: [0, 0, 0.62], scale: 1, build: buildVacuumMesh },
+  sponge: { parent: "model", position: [0.95, 0.02, 0.05], rotation: [0, 0, 0.62], scale: 1, build: buildSpongeMesh },
+  // The cooking level's spatula, held the same way (cookScene.ts).
+  spatula: { parent: "model", position: [0.95, 0.02, 0.05], rotation: [0, 0, 0.62], scale: 1, build: buildSpatulaMesh },
 };
 
 export function createHeld() {

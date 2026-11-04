@@ -14,6 +14,8 @@
 // tests/scene-prompts.test.ts reads world.ts and fails when its call sites are not the ones listed above, so a new spoken line cannot slip past this file.
 import { LEARN_RUNGS, learnRungDef } from "../../src/features/game/world/runtime/learnRungs";
 import { MESS_PROMPT_LINES } from "../../src/features/game/world/runtime/messLines";
+import { CLEAN_PROMPT_LINES } from "../../src/features/game/world/runtime/cleanLines";
+import { COOK_PROMPT_LINES } from "../../src/features/game/world/runtime/cookLines";
 import { LEVEL2_RECIPES } from "../../src/features/game/world/runtime/level2Recipes";
 import {
   arriveScene,
@@ -114,6 +116,10 @@ export function enumeratePrompts(): Map<string, string[]> {
   };
   // What Kip says in the Toy Room's mess mini-interactions (runtime/mess.ts): "Oh no, oh no!", "Clean?", "All clean! Hooray!". They are not Carousel scenes, so they are added by name.
   for (const line of MESS_PROMPT_LINES) add(line, "mess:toy-room");
+  // The cleaning level (runtime/clean.ts): the wrong-tool lines and the soap step; its framing lines are the mess lines above.
+  for (const line of CLEAN_PROMPT_LINES) add(line, "activity:clean");
+  // The cooking level (runtime/cook.ts): the intro, one line a beat, the count, the grown-up's "it's hot" and the kind answers.
+  for (const line of COOK_PROMPT_LINES) add(line, "activity:cook");
   const ids = new Set<string>([...LEARN_RUNGS.map((r) => r.missionId), ...LEVEL2_RECIPES.map((r) => r.id)]);
   for (const id of [...ids].sort()) {
     carryLines(id, add);

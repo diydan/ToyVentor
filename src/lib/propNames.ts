@@ -44,8 +44,14 @@ export const NOUN_KEYS = [
   "sandcastle", "pine", "snowman", "igloo", "blocks", "books", "chair", "plant", "teddy", "ball", "cushions", "bed", "guitar", "bubbles", "dog", "xylophone",
   // The Toy Room mess mini-interactions (runtime/mess.ts): the juice cup on its little table, and the toy box that tips its toys out.
   "cup", "toybox",
+  // The cleaning level's cart (runtime/clean.ts): a bucket with a mop and a sponge.
+  "cleancart",
+  // The cooking level's hob (runtime/cook.ts): a little counter with a pan on it.
+  "hob",
   // Fruit (docs/specs/playful-interactions-spec.md section 3): what a tapped apple says ("red apple"). A fruit is a prop now.
   "apple", "pear", "orange", "lemon", "cherries", "banana", "plum", "strawberry", "blueberries", "coconut", "pumpkin",
+  // Things to play with outside (runtime/playthings.ts): the snow angel, the flower bed, the bunny, the picnic blanket and the swing.
+  "snowangel", "flowers", "bunny", "picnic", "swing",
 ] as const;
 export type NounKey = (typeof NOUN_KEYS)[number];
 
@@ -61,57 +67,64 @@ const NOUNS: Record<LangCode, Record<NounKey, Noun>> = {
     light: m("light"), lamp: m("lamp"), house: m("house"), tree: m("tree"), bushes: mp("bushes"), cloud: m("cloud"), island: m("island"),
     tire: m("tire"), drum: m("drum"), shed: m("shed"), crane: m("crane"), windmill: m("windmill"), palm: m("palm tree"), umbrella: m("umbrella"),
     sandcastle: m("sandcastle"), pine: m("pine tree"), snowman: m("snowman"), igloo: m("igloo"), blocks: mp("blocks"), books: mp("books"),
-    chair: m("chair"), plant: m("plant"), teddy: m("teddy bear"), ball: m("ball"), cushions: mp("cushions"), bed: m("bed"), guitar: m("guitar"), bubbles: mp("bubbles"), dog: m("dog"), xylophone: m("xylophone"), cup: m("cup"), toybox: m("toy box"),
+    chair: m("chair"), plant: m("plant"), teddy: m("teddy bear"), ball: m("ball"), cushions: mp("cushions"), bed: m("bed"), guitar: m("guitar"), bubbles: mp("bubbles"), dog: m("dog"), xylophone: m("xylophone"), cup: m("cup"), toybox: m("toy box"), cleancart: m("cleaning cart"), hob: f("stove"),
     apple: m("apple"), pear: m("pear"), orange: m("orange"), lemon: m("lemon"), cherries: mp("cherries"), banana: m("banana"), plum: m("plum"),
     strawberry: m("strawberry"), blueberries: mp("blueberries"), coconut: m("coconut"), pumpkin: m("pumpkin"),
+    snowangel: m("snow angel"), flowers: mp("flowers"), bunny: m("bunny"), picnic: m("picnic blanket"), swing: m("swing"),
   },
   es: {
     light: f("luz"), lamp: f("lámpara"), house: f("casa"), tree: m("árbol"), bushes: mp("arbustos"), cloud: f("nube"), island: f("isla"),
     tire: m("neumático"), drum: m("tambor"), shed: m("cobertizo"), crane: f("grúa"), windmill: m("molino"), palm: f("palmera"), umbrella: f("sombrilla"),
     sandcastle: m("castillo de arena"), pine: m("pino"), snowman: m("muñeco de nieve"), igloo: m("iglú"), blocks: mp("bloques"), books: mp("libros"),
-    chair: f("silla"), plant: f("planta"), teddy: m("osito de peluche"), ball: f("pelota"), cushions: mp("cojines"), bed: f("cama"), guitar: f("guitarra"), bubbles: fp("burbujas"), dog: m("perro"), xylophone: m("xilófono"), cup: f("taza"), toybox: f("caja de juguetes"),
+    chair: f("silla"), plant: f("planta"), teddy: m("osito de peluche"), ball: f("pelota"), cushions: mp("cojines"), bed: f("cama"), guitar: f("guitarra"), bubbles: fp("burbujas"), dog: m("perro"), xylophone: m("xilófono"), cup: f("taza"), toybox: f("caja de juguetes"), cleancart: m("carrito de limpieza"), hob: f("cocina"),
     apple: f("manzana"), pear: f("pera"), orange: f("naranja"), lemon: m("limón"), cherries: fp("cerezas"), banana: m("plátano"), plum: f("ciruela"),
     strawberry: f("fresa"), blueberries: mp("arándanos"), coconut: m("coco"), pumpkin: f("calabaza"),
+    snowangel: m("ángel de nieve"), flowers: fp("flores"), bunny: m("conejito"), picnic: f("manta de picnic"), swing: m("columpio"),
   },
   fr: {
     light: f("lumière"), lamp: f("lampe"), house: f("maison"), tree: m("arbre"), bushes: mp("buissons"), cloud: m("nuage"), island: f("île"),
     tire: m("pneu"), drum: m("tambour"), shed: f("cabane"), crane: f("grue"), windmill: m("moulin"), palm: m("palmier"), umbrella: m("parasol"),
     sandcastle: m("château de sable"), pine: m("sapin"), snowman: m("bonhomme de neige"), igloo: m("igloo"), blocks: mp("cubes"), books: mp("livres"),
-    chair: f("chaise"), plant: f("plante"), teddy: m("nounours"), ball: m("ballon"), cushions: mp("coussins"), bed: m("lit"), guitar: f("guitare"), bubbles: fp("bulles"), dog: m("chien"), xylophone: m("xylophone"), cup: f("tasse"), toybox: m("coffre à jouets"),
+    chair: f("chaise"), plant: f("plante"), teddy: m("nounours"), ball: m("ballon"), cushions: mp("coussins"), bed: m("lit"), guitar: f("guitare"), bubbles: fp("bulles"), dog: m("chien"), xylophone: m("xylophone"), cup: f("tasse"), toybox: m("coffre à jouets"), cleancart: m("chariot de ménage"), hob: f("cuisinière"),
     apple: f("pomme"), pear: f("poire"), orange: f("orange"), lemon: m("citron"), cherries: fp("cerises"), banana: f("banane"), plum: f("prune"),
     strawberry: f("fraise"), blueberries: fp("myrtilles"), coconut: f("noix de coco"), pumpkin: f("citrouille"),
+    snowangel: m("ange de neige"), flowers: fp("fleurs"), bunny: m("lapin"), picnic: f("nappe de pique-nique"), swing: f("balançoire"),
   },
   de: {
     light: n("Licht"), lamp: f("Lampe"), house: n("Haus"), tree: m("Baum"), bushes: np("Büsche"), cloud: f("Wolke"), island: f("Insel"),
     tire: m("Reifen"), drum: f("Trommel"), shed: m("Schuppen"), crane: m("Kran"), windmill: f("Windmühle"), palm: f("Palme"), umbrella: m("Sonnenschirm"),
     sandcastle: f("Sandburg"), pine: f("Tanne"), snowman: m("Schneemann"), igloo: m("Iglu"), blocks: np("Bauklötze"), books: np("Bücher"),
-    chair: m("Stuhl"), plant: f("Pflanze"), teddy: m("Teddybär"), ball: m("Ball"), cushions: np("Kissen"), bed: n("Bett"), guitar: f("Gitarre"), bubbles: np("Seifenblasen"), dog: m("Hund"), xylophone: n("Xylophon"), cup: m("Becher"), toybox: f("Spielzeugkiste"),
+    chair: m("Stuhl"), plant: f("Pflanze"), teddy: m("Teddybär"), ball: m("Ball"), cushions: np("Kissen"), bed: n("Bett"), guitar: f("Gitarre"), bubbles: np("Seifenblasen"), dog: m("Hund"), xylophone: n("Xylophon"), cup: m("Becher"), toybox: f("Spielzeugkiste"), cleancart: m("Putzwagen"), hob: m("Herd"),
     apple: m("Apfel"), pear: f("Birne"), orange: f("Orange"), lemon: f("Zitrone"), cherries: np("Kirschen"), banana: f("Banane"), plum: f("Pflaume"),
     strawberry: f("Erdbeere"), blueberries: np("Blaubeeren"), coconut: f("Kokosnuss"), pumpkin: m("Kürbis"),
+    snowangel: m("Schneeengel"), flowers: fp("Blumen"), bunny: m("Hase"), picnic: f("Picknickdecke"), swing: f("Schaukel"),
   },
   it: {
     light: f("luce"), lamp: f("lampada"), house: f("casa"), tree: m("albero"), bushes: mp("cespugli"), cloud: f("nuvola"), island: f("isola"),
     tire: f("gomma"), drum: m("tamburo"), shed: m("capanno"), crane: f("gru"), windmill: m("mulino"), palm: f("palma"), umbrella: m("ombrellone"),
     sandcastle: m("castello di sabbia"), pine: m("pino"), snowman: m("pupazzo di neve"), igloo: m("igloo"), blocks: mp("blocchi"), books: mp("libri"),
-    chair: f("sedia"), plant: f("pianta"), teddy: m("orsacchiotto"), ball: f("palla"), cushions: mp("cuscini"), bed: m("letto"), guitar: f("chitarra"), bubbles: fp("bolle di sapone"), dog: m("cane"), xylophone: m("xilofono"), cup: f("tazza"), toybox: f("scatola dei giocattoli"),
+    chair: f("sedia"), plant: f("pianta"), teddy: m("orsacchiotto"), ball: f("palla"), cushions: mp("cuscini"), bed: m("letto"), guitar: f("chitarra"), bubbles: fp("bolle di sapone"), dog: m("cane"), xylophone: m("xilofono"), cup: f("tazza"), toybox: f("scatola dei giocattoli"), cleancart: m("carrello delle pulizie"), hob: m("fornello"),
     apple: f("mela"), pear: f("pera"), orange: f("arancia"), lemon: m("limone"), cherries: fp("ciliegie"), banana: f("banana"), plum: f("prugna"),
     strawberry: f("fragola"), blueberries: mp("mirtilli"), coconut: f("noce di cocco"), pumpkin: f("zucca"),
+    snowangel: m("angelo di neve"), flowers: mp("fiori"), bunny: m("coniglietto"), picnic: f("coperta da picnic"), swing: f("altalena"),
   },
   pt: {
     light: f("luz"), lamp: f("luminária"), house: f("casa"), tree: f("árvore"), bushes: mp("arbustos"), cloud: f("nuvem"), island: f("ilha"),
     tire: m("pneu"), drum: m("tambor"), shed: m("galpão"), crane: m("guindaste"), windmill: m("moinho"), palm: f("palmeira"), umbrella: m("guarda-sol"),
     sandcastle: m("castelo de areia"), pine: m("pinheiro"), snowman: m("boneco de neve"), igloo: m("iglu"), blocks: mp("blocos"), books: mp("livros"),
-    chair: f("cadeira"), plant: f("planta"), teddy: m("ursinho de pelúcia"), ball: f("bola"), cushions: fp("almofadas"), bed: f("cama"), guitar: m("violão"), bubbles: fp("bolhas de sabão"), dog: m("cachorro"), xylophone: m("xilofone"), cup: m("copo"), toybox: f("caixa de brinquedos"),
+    chair: f("cadeira"), plant: f("planta"), teddy: m("ursinho de pelúcia"), ball: f("bola"), cushions: fp("almofadas"), bed: f("cama"), guitar: m("violão"), bubbles: fp("bolhas de sabão"), dog: m("cachorro"), xylophone: m("xilofone"), cup: m("copo"), toybox: f("caixa de brinquedos"), cleancart: m("carrinho de limpeza"), hob: m("fogão"),
     apple: f("maçã"), pear: f("pera"), orange: f("laranja"), lemon: m("limão"), cherries: fp("cerejas"), banana: f("banana"), plum: f("ameixa"),
     strawberry: m("morango"), blueberries: mp("mirtilos"), coconut: m("coco"), pumpkin: f("abóbora"),
+    snowangel: m("anjo de neve"), flowers: fp("flores"), bunny: m("coelhinho"), picnic: f("toalha de piquenique"), swing: m("balanço"),
   },
   tr: {
     light: m("ışık"), lamp: m("lamba"), house: m("ev"), tree: m("ağaç"), bushes: mp("çalılar"), cloud: m("bulut"), island: m("ada"),
     tire: m("lastik"), drum: m("davul"), shed: m("kulübe"), crane: m("vinç"), windmill: m("yel değirmeni"), palm: m("palmiye"), umbrella: m("şemsiye"),
     sandcastle: m("kumdan kale"), pine: m("çam ağacı"), snowman: m("kardan adam"), igloo: m("iglu"), blocks: mp("bloklar"), books: mp("kitaplar"),
-    chair: m("sandalye"), plant: m("bitki"), teddy: m("oyuncak ayı"), ball: m("top"), cushions: mp("yastıklar"), bed: m("yatak"), guitar: m("gitar"), bubbles: mp("baloncuklar"), dog: m("köpek"), xylophone: m("ksilofon"), cup: m("bardak"), toybox: m("oyuncak kutusu"),
+    chair: m("sandalye"), plant: m("bitki"), teddy: m("oyuncak ayı"), ball: m("top"), cushions: mp("yastıklar"), bed: m("yatak"), guitar: m("gitar"), bubbles: mp("baloncuklar"), dog: m("köpek"), xylophone: m("ksilofon"), cup: m("bardak"), toybox: m("oyuncak kutusu"), cleancart: m("temizlik arabası"), hob: m("ocak"),
     apple: m("elma"), pear: m("armut"), orange: m("portakal"), lemon: m("limon"), cherries: mp("kirazlar"), banana: m("muz"), plum: m("erik"),
     strawberry: m("çilek"), blueberries: mp("yaban mersinleri"), coconut: m("hindistan cevizi"), pumpkin: m("balkabağı"),
+    snowangel: m("kar meleği"), flowers: mp("çiçekler"), bunny: m("tavşan"), picnic: m("piknik örtüsü"), swing: m("salıncak"),
   },
 };
 

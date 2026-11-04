@@ -11,9 +11,9 @@ import type { PropInst } from "./propReactions";
 import type { P3 } from "./sleepRoutine";
 import { createVisitor, type Visit, type VisitAdapter, type VisitPhase } from "./visitRoutine";
 
-export type ActKind = "hug" | "kick" | "jump" | "read" | "play" | "blow" | "pet" | "mallet" | "spill" | "dump";
+export type ActKind = "hug" | "kick" | "jump" | "read" | "play" | "blow" | "pet" | "mallet" | "spill" | "dump" | "scrub" | "cook";
 /** Which prop type starts which act. */
-export const ACT_FOR_PROP: Readonly<Record<string, ActKind>> = { teddy: "hug", ball: "kick", cushions: "jump", books: "read", guitar: "play", bubbles: "blow", dog: "pet", xylophone: "mallet", cup: "spill", toybox: "dump" };
+export const ACT_FOR_PROP: Readonly<Record<string, ActKind>> = { teddy: "hug", ball: "kick", cushions: "jump", books: "read", guitar: "play", bubbles: "blow", dog: "pet", xylophone: "mallet", cup: "spill", toybox: "dump", cleancart: "scrub", hob: "cook" };
 
 /** How far from the prop's centre the toy stands, in x. */
 export const HUG_STAND = 1.05;
@@ -100,6 +100,8 @@ export interface ActsWorld extends Omit<VisitAdapter, "onPhase"> {
   bubbles: { blow(from: P3, dir: 1 | -1, n: number): void };
   /** The mess mini-interactions (mess.ts): the visit a tap on the juice cup ("spill") or the toy box ("dump") starts, or null when there is a mess already. Absent: those taps start nothing. */
   mess?: { visitFor(kind: "spill" | "dump", inst: PropInst): Visit | null };
+  /** The activity levels (activities.ts): the visit a tap on the cleaning cart ("scrub") or the hob ("cook") starts, or null when one is under way. Absent: those taps start nothing. */
+  activity?: { visitFor(kind: "scrub" | "cook", inst: PropInst): Visit | null };
   /** A dog, if there is one, goes after the ball Kip has just kicked and brings it back (dogFetch.ts): true if it will, so Kip does not trot after the ball itself. Absent: no dog. */
   fetch?(ball: PropInst): boolean;
   /** Place the toy (during the cushion jump). */
@@ -316,7 +318,7 @@ export function createActs(w: ActsWorld) {
       const kind = ACT_FOR_PROP[inst.type];
       if (!kind || !w.allowed() || w.eater() !== "character") return false;                // (an act already under way refuses a second start itself)
       following = null;
-      const visit = kind === "spill" || kind === "dump" ? w.mess?.visitFor(kind, inst) ?? null : { hug: hugVisit, kick: kickVisit, jump: jumpVisit, read: readVisit, play: playVisit, blow: blowVisit, pet: petVisit, mallet: malletVisit }[kind](inst);
+      const visit = kind === "spill" || kind === "dump" ? w.mess?.visitFor(kind, inst) ?? null : kind === "scrub" || kind === "cook" ? w.activity?.visitFor(kind, inst) ?? null : { hug: hugVisit, kick: kickVisit, jump: jumpVisit, read: readVisit, play: playVisit, blow: blowVisit, pet: petVisit, mallet: malletVisit }[kind](inst);
       return visit ? visitor.start(visit) : false;
     },
     /** Start a visit that is not a tap on a prop (the Clean button): false (and nothing happens) if one is already under way or an act is not allowed now. */
