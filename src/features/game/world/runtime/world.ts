@@ -11,7 +11,7 @@ import { FXAAShader } from "three/examples/jsm/shaders/FXAAShader.js";
 import { STAGE_CSS, STAGE_HTML } from "./stageDom";
 import { applyLightRig, followHero, setDusk } from "./lighting";
 import { BACKDROPS, createBackdrop, disposeArtCache, type ArtCache } from "./backdrop";
-import { MixamoDriver, loadMixamoBank, type MixAction } from "./mixamo";
+import { MixamoDriver, loadMixamoBank, type BakedClip, type BeatSource, type MixAction } from "./mixamo";
 import { PROCEDURAL_CLIPS } from "./proceduralClips";
 import { SPOT_COUNT, codeToSeed, composeLevel } from "./levelKit";
 import * as MPD from "./missionData";
@@ -262,8 +262,10 @@ export interface WorldRuntimeHandle {
   buildSummary?: () => BuildSummary;
   /** Open these parts to try (the Garage's loaner). Any `known` loaner not in `active`, still worn and not found, is handed back. */
   setLoanKeys?: (active: string[], known: string[]) => void;
-  /** The dance party: start the character's dance on a song's clock (`time()` is the clip time, read every frame); false when it cannot dance (reduced motion, no rig). */
-  partyDanceStart?: (time: () => number) => boolean;
+  /** The dance party: start the character's dance on a song's clock (`source()` says which dance and how far into it, read every frame); false when it cannot dance (reduced motion, no rig). */
+  partyDanceStart?: (source: BeatSource) => boolean;
+  /** Put converted dance clips into the character's bank (the party loads its dances on demand). */
+  partyAddClips?: (clips: Record<string, BakedClip>) => void;
   partyDanceStop?: () => void;
   /** Fade the world's own music out (true) and back (false) while a song plays. */
   partyMusicDuck?: (on: boolean) => void;
@@ -1303,7 +1305,8 @@ getWorld:function(){return S.world},
 setTier:function(t){t=t===2||t===3?t:1;var m=curM();if(!m||W.missions.indexOf(m)<0||P.busy||P.mDrive)return;var k=mid(m),cur=mTier(m);if(m.done&&!m.replaying){mStartReplay(m);S.ms[k]={tier:t};if(MT[m.type]){MT[m.type]!.st&&MT[m.type]!.st(m);MT[m.type]!.sync(m)}else mSync(m);save();mPanel(m);return}if(cur===t){mPanel(m);return}var old=S.ms[k]||{};if(!m.free&&!m.replaying){["deck","support","mid","drum"].forEach(function(sl){if(old[sl])S.bin[old[sl]]=(S.bin[old[sl]]||0)+1})}S.ms[k]={tier:t};if(MT[m.type]){MT[m.type]!.st&&MT[m.type]!.st(m);MT[m.type]!.sync(m)}else mSync(m);save();mPanel(m);},
 setZoom:function(z){setZoom(z)},setPaused:function(v){paused=!!v;if(MUS.on)musGain(paused?0:(sound?.7:0),paused?.3:.8)},
 mute:function(){muteAudio()},
-partyDanceStart:function(time: ()=>number){if(!(mix&&!reduce&&P.rig&&mix.canDrive(P.rig)&&mix.startBeatDance("dance",time)))return false;if(P.danceBack==null){P.danceBack=P.tface;P.tface=-Math.PI/2}return true},
+partyAddClips:function(clips: Record<string,BakedClip>){if(mix)mix.addClips(clips)},
+partyDanceStart:function(source: BeatSource){if(!(mix&&!reduce&&P.rig&&mix.canDrive(P.rig)&&mix.startBeatSource(source)))return false;if(P.danceBack==null){P.danceBack=P.tface;P.tface=-Math.PI/2}return true},
 partyDanceStop:function(){if(mix)mix.stopBeatDance()},
 partyMusicDuck:function(on: boolean){if(MUS.on)musGain(on?0:(paused?0:(sound?.7:0)),.4)},
 startLearnRun:function(track,plan,kidMode){startLearnRunFn(track,plan,kidMode)},

@@ -18,6 +18,17 @@ import { analyseTheme, cutToWav, themeIndexEntry } from "../../../../shared/them
 export type FlowPhase = "idle" | "writing" | "making" | "ready" | "dancing" | "over" | "failed";
 export type FlowKind = "build" | "level" | "prompt";
 
+/** What the route says a device has left this week (worker/songStore.ts statusFor). */
+export interface SongQuota {
+  limit: number;
+  used: number;
+  left: number;
+  /** The Monday the songs come back, "YYYY-MM-DD". */
+  resetsOn: string;
+  /** False when a grown-up switched songs off for this device. */
+  makerOn: boolean;
+}
+
 export interface FlowState {
   phase: FlowPhase;
   name: string;
@@ -27,6 +38,8 @@ export interface FlowState {
   note: string;
   /** A plain link to the finished song, set when it could not be cut to dance to. */
   fallbackUrl: string;
+  /** Songs left this week, once the route has said. */
+  quota: SongQuota | null;
 }
 
 export interface FlowDeps {
@@ -37,6 +50,10 @@ export interface FlowDeps {
   startParty(song: { entry: unknown; wav: ArrayBuffer; title: string }): Promise<{ ok: boolean; dancing?: boolean; reason?: string }>;
   onState(state: FlowState): void;
   storage?: Pick<Storage, "getItem" | "setItem"> | null;
+  /** Headers every request carries: the device id and the family's time zone (the week turns on its own Monday). */
+  headers?: () => Record<string, string>;
+  /** One per tap of "make my song": a retry of the same tap reuses it, so the route spends nothing twice. */
+  newKey?: () => string;
   url?: string;
   pollMs?: number;
   maxWaitMs?: number;
@@ -71,7 +88,7 @@ export function levelDescription(missionType: string): string {
   return `I finished ${LEVEL_WORDS[missionType] ?? "a game level"} with my toy.`.slice(0, MAX_DESCRIPTION);
 }
 
-const EMPTY: FlowState = { phase: "idle", name: "", verse: [], chorus: [], note: "", fallbackUrl: "" };
+const EMPTY: FlowState = { phase: "idle", name: "", verse: [], chorus: [], note: "", fallbackUrl: "", quota: null };
 
 export interface KeptSong {
   name: string;
@@ -106,9 +123,16 @@ export function readKeptSongs(storage: FlowDeps["storage"]): KeptSong[] {
   } catch { return []; }
 }
 
+/** Reasons the route gives that carry a sentence meant for the child. Anything else it says is never shown. */
+const KIND_REASONS = new Set(["idea_not_allowed", "week_used", "songs_off", "budget_spent", "in_progress"]);
+
 export interface ThemeSongFlow {
   /** One free GET: is the route on? Remembered for the life of the flow. */
   isOn(): Promise<boolean>;
+  /** The same free GET, with what this device has left this week. `fresh` asks again (the quota changes with every song). Never throws. */
+  probe(fresh?: boolean): Promise<{ enabled: boolean; quota: SongQuota | null }>;
+  /** Is a song worth OFFERING now: the route is on, a grown-up has not switched songs off, and a song is left this week. Asks fresh. */
+  canMake(): Promise<boolean>;
   /** Name the adventure and start its song. Resolves true once the NAME is in (not the song). Never throws. */
   start(description: string, kind?: FlowKind): Promise<boolean>;
   /** The party ended (the page tells the flow, which owns the card's words). */
@@ -129,10 +153,14 @@ export function createThemeSongFlow(deps: FlowDeps): ThemeSongFlow {
   const now = deps.now ?? (() => Date.now());
   const setT = deps.setTimeout ?? ((fn, ms) => globalThis.setTimeout(fn, ms) as unknown as number);
   const clearT = deps.clearTimeout ?? ((id) => globalThis.clearTimeout(id));
+  const hdr = () => { try { return deps.headers?.() ?? {}; } catch { return {}; } };
+  const newKey = deps.newKey ?? (() => (globalThis.crypto && "randomUUID" in globalThis.crypto ? globalThis.crypto.randomUUID() : `tap-${now()}-${Math.floor(Math.random() * 1e9)}`));
+  const get = (u: string) => deps.fetchImpl(u, { headers: hdr() });
   let st: FlowState = { ...EMPTY };
   let run = 0;
   let timer: number | null = null;
   let available: boolean | null = null;
+  let lastQuota: SongQuota | null = null;
   let cut: { entry: unknown; wav: ArrayBuffer; title: string } | null = null;
   let moodOf = ""; // the mood card the song writer chose for this song
 
@@ -140,13 +168,25 @@ export function createThemeSongFlow(deps: FlowDeps): ThemeSongFlow {
   const clearTimer = () => { if (timer !== null) { clearT(timer); timer = null; } };
   const sleep = (ms: number) => new Promise<void>((res) => { timer = setT(() => { timer = null; res(); }, ms); });
 
-  async function isOn(): Promise<boolean> {
-    if (available !== null) return available;
+  const quotaFrom = (v: unknown): SongQuota | null => {
+    const q = v as Partial<SongQuota> | null | undefined;
+    return q && Number.isInteger(q.left) && Number.isInteger(q.limit) && Number.isInteger(q.used) && typeof q.resetsOn === "string" && typeof q.makerOn === "boolean" ? { limit: q.limit!, used: q.used!, left: q.left!, resetsOn: q.resetsOn, makerOn: q.makerOn } : null;
+  };
+
+  async function probe(fresh = false): Promise<{ enabled: boolean; quota: SongQuota | null }> {
+    if (!fresh && available !== null) return { enabled: available, quota: lastQuota };
     try {
-      const res = await deps.fetchImpl(url);
-      available = res.ok && ((await res.json()) as { enabled?: unknown })?.enabled === true;
-    } catch { available = false; }
-    return available;
+      const res = await get(url);
+      const body = res.ok ? ((await res.json()) as { enabled?: unknown; quota?: unknown }) : null;
+      available = body?.enabled === true;
+      lastQuota = available ? quotaFrom(body?.quota) : null;
+    } catch { available = false; lastQuota = null; }
+    return { enabled: available, quota: lastQuota };
+  }
+  async function isOn(): Promise<boolean> { return (await probe()).enabled; }
+  async function canMake(): Promise<boolean> {
+    const p = await probe(true);
+    return p.enabled && p.quota?.makerOn !== false && (p.quota?.left ?? 1) > 0;
   }
 
   async function startParty(mine: number): Promise<boolean> {
@@ -163,7 +203,7 @@ export function createThemeSongFlow(deps: FlowDeps): ThemeSongFlow {
     set({ phase: "ready", note: keep ? "Your song is ready! Getting the party ready…" : "Getting the party ready…" });
     let bytes: ArrayBuffer;
     try {
-      const res = await deps.fetchImpl(`${url}?id=${encodeURIComponent(task)}&audio=1`);
+      const res = await get(`${url}?id=${encodeURIComponent(task)}&audio=1`);
       if (!res.ok) throw new Error(String(res.status));
       bytes = await res.arrayBuffer();
     } catch {
@@ -198,7 +238,7 @@ export function createThemeSongFlow(deps: FlowDeps): ThemeSongFlow {
       if (mine !== run) return;
       let answer = null as { status?: unknown; url?: unknown } | null;
       try {
-        const res = await deps.fetchImpl(`${url}?id=${encodeURIComponent(task)}`);
+        const res = await get(`${url}?id=${encodeURIComponent(task)}`);
         if (res.status === 429) continue; // told to slow down: one more turn, not a failure
         if (!res.ok) throw new Error(String(res.status));
         answer = (await res.json()) as typeof answer;
@@ -217,6 +257,8 @@ export function createThemeSongFlow(deps: FlowDeps): ThemeSongFlow {
 
   return {
     isOn,
+    probe,
+    canMake,
     async start(description, kind = "level") {
       const mine = ++run;
       clearTimer();
@@ -229,19 +271,27 @@ export function createThemeSongFlow(deps: FlowDeps): ThemeSongFlow {
       set({ phase: "writing", note: "Thinking of a name…" });
       let body: Record<string, unknown>;
       try {
-        const res = await deps.fetchImpl(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ description: text, kind }) });
+        const res = await deps.fetchImpl(url, { method: "POST", headers: { "content-type": "application/json", ...hdr() }, body: JSON.stringify({ description: text, kind, key: newKey() }) });
         if (!res.ok) {
-          // the route turns an idea it will not use away with a kind sentence of its own: show that one, and nothing else it says
+          // the route turns a request away with a kind sentence of its own: show that one, and nothing else it says
           let why = "";
-          try { const j = (await res.json()) as { reason?: unknown; error?: unknown }; if (j?.reason === "idea_not_allowed" && typeof j.error === "string") why = j.error.slice(0, 80); } catch { /* no body */ }
-          throw Object.assign(new Error(String(res.status)), { why });
+          let quota: SongQuota | null = null;
+          try {
+            const j = (await res.json()) as { reason?: unknown; error?: unknown; quota?: unknown };
+            if (typeof j?.reason === "string" && KIND_REASONS.has(j.reason) && typeof j.error === "string") why = j.error.slice(0, 80);
+            quota = quotaFrom(j?.quota);
+          } catch { /* no body */ }
+          throw Object.assign(new Error(String(res.status)), { why, quota });
         }
         body = (await res.json()) as Record<string, unknown>;
       } catch (err) {
-        if (mine === run) set({ phase: "failed", note: (err as { why?: string })?.why || "No song this time. Try again later!" });
+        const e = err as { why?: string; quota?: SongQuota | null };
+        if (e?.quota) lastQuota = e.quota;
+        if (mine === run) set({ phase: "failed", note: e?.why || "No song this time. Try again later!", quota: e?.quota ?? st.quota });
         return false;
       }
       if (mine !== run) return false;
+      if (quotaFrom(body.quota)) { lastQuota = quotaFrom(body.quota); set({ quota: lastQuota }); }
       if (typeof body.name !== "string" || !Array.isArray(body.verse) || !Array.isArray(body.chorus)) { set({ phase: "failed", note: "No song this time. Try again later!" }); return false; }
       moodOf = typeof body.mood === "string" ? body.mood : "";
       set({ name: body.name, verse: body.verse.map(String), chorus: body.chorus.map(String) });

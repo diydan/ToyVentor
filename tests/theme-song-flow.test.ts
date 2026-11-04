@@ -67,7 +67,7 @@ describe("the end-of-level song flow", () => {
     const s = setup();
     await s.flow.start("I finished building a bridge with my toy.", "level");
     const post = s.calls.find((c) => c.method === "POST")!;
-    expect(JSON.parse(post.body!)).toEqual({ description: "I finished building a bridge with my toy.", kind: "level" });
+    expect(JSON.parse(post.body!)).toEqual({ description: "I finished building a bridge with my toy.", kind: "level", key: expect.stringMatching(/^[A-Za-z0-9_-]{8,64}$/) });
   });
   it("goes writing, then making with the name and the words on screen, then ready, then dancing", async () => {
     const s = setup();
@@ -201,7 +201,7 @@ describe("an idea from the Songs sheet", () => {
   it("is sent as kind 'prompt' with the idea and nothing else, then follows the same steps", async () => {
     const s = setup();
     await s.flow.start("a sleepy cat", "prompt");
-    expect(JSON.parse(s.calls.find((c) => c.method === "POST")!.body!)).toEqual({ description: "a sleepy cat", kind: "prompt" });
+    expect(JSON.parse(s.calls.find((c) => c.method === "POST")!.body!)).toEqual({ description: "a sleepy cat", kind: "prompt", key: expect.stringMatching(/^[A-Za-z0-9_-]{8,64}$/) });
     await until(() => s.flow.state().phase === "dancing");
     expect(s.parties[0]!.title).toBe("Brave Bridge Builder");
   });
@@ -279,5 +279,85 @@ describe("keepSong", () => {
     m.set("tv.themeSongs.v1", "{not json");
     keepSong(storage, { name: "fresh", verse: [], chorus: [], mood: "", url: "u", task: "9", madeAt: "" });
     expect(JSON.parse(m.get("tv.themeSongs.v1")!)).toHaveLength(1);
+  });
+});
+
+// ---- the device, the weekly quota and the route's kind sentences ----------------------------------------------------------------------------------
+describe("songs left this week", () => {
+  const QUOTA = { limit: 5, used: 2, left: 3, resetsOn: "2026-11-09", makerOn: true };
+  function quotaSetup(over: { probe?: unknown; post?: { status: number; body: unknown } } = {}) {
+    const seen: Array<{ url: string; method: string; headers: Record<string, string>; body?: string }> = [];
+    const fetchImpl = (async (input: string, init?: RequestInit) => {
+      const url = String(input);
+      const headers = (init?.headers ?? {}) as Record<string, string>;
+      seen.push({ url, method: init?.method ?? "GET", headers, ...(init?.body ? { body: String(init.body) } : {}) });
+      const j = (status: number, body: unknown) => new Response(JSON.stringify(body), { status });
+      if (url === "/api/theme-song" && init?.method === "POST") { const p = over.post ?? { status: 200, body: { ...NAMED, quota: { ...QUOTA, used: 3, left: 2 } } }; return j(p.status, p.body); }
+      if (url === "/api/theme-song") return j(200, over.probe ?? { ok: true, enabled: true, quota: QUOTA });
+      return j(200, { status: "making" });
+    }) as unknown as typeof fetch;
+    const states: FlowState[] = [];
+    const flow = createThemeSongFlow({ fetchImpl, pollMs: 60_000, setTimeout: () => 1, clearTimeout: () => {}, now: () => 1000, headers: () => ({ "x-device-id": "dev-1234567890", "x-client-timezone": "Europe/London" }), newKey: () => "tap-key-0001-aaaa",
+      decode: async () => ({ channels: [], sampleRate: 1 }), startParty: async () => ({ ok: true }), onState: (s) => states.push({ ...s }) });
+    return { flow, seen, states };
+  }
+  it("reads the quota from the free probe, and sends the device and the time zone on it", async () => {
+    const s = quotaSetup();
+    expect(await s.flow.probe()).toEqual({ enabled: true, quota: QUOTA });
+    expect(s.seen[0]).toMatchObject({ url: "/api/theme-song", method: "GET", headers: { "x-device-id": "dev-1234567890", "x-client-timezone": "Europe/London" } });
+  });
+  it("remembers the probe, and asks again only when told to", async () => {
+    const s = quotaSetup();
+    await s.flow.probe(); await s.flow.probe(); await s.flow.isOn();
+    expect(s.seen).toHaveLength(1);
+    await s.flow.probe(true);
+    expect(s.seen).toHaveLength(2);
+  });
+  it("is worth offering only when the route is on, a grown-up has not switched songs off, and a song is left (it asks fresh each time)", async () => {
+    expect(await quotaSetup().flow.canMake()).toBe(true);
+    expect(await quotaSetup({ probe: { ok: true, enabled: true, quota: { ...QUOTA, left: 0, used: 5 } } }).flow.canMake()).toBe(false);
+    expect(await quotaSetup({ probe: { ok: true, enabled: true, quota: { ...QUOTA, makerOn: false } } }).flow.canMake()).toBe(false);
+    expect(await quotaSetup({ probe: { ok: true, enabled: false } }).flow.canMake()).toBe(false);
+    expect(await quotaSetup({ probe: { ok: true, enabled: true } }).flow.canMake()).toBe(true); // an unmetered route says nothing about a quota: offer
+    const s = quotaSetup(); await s.flow.canMake(); await s.flow.canMake();
+    expect(s.seen).toHaveLength(2);
+  });
+  it("a malformed quota is ignored rather than trusted", async () => {
+    for (const bad of [{ limit: "5", used: 0, left: 5, resetsOn: "x", makerOn: true }, { limit: 5, used: 0, left: 5, makerOn: true }, null, "x", [1]]) {
+      expect((await quotaSetup({ probe: { ok: true, enabled: true, quota: bad } }).flow.probe()).quota, JSON.stringify(bad)).toBeNull();
+    }
+  });
+  it("makes a song with the device, one key per tap, and keeps the quota the route answered with", async () => {
+    const s = quotaSetup();
+    await s.flow.start("a sleepy cat", "prompt");
+    const post = s.seen.find((x) => x.method === "POST")!;
+    expect(post.headers).toMatchObject({ "x-device-id": "dev-1234567890", "content-type": "application/json" });
+    expect(JSON.parse(post.body!)).toEqual({ description: "a sleepy cat", kind: "prompt", key: "tap-key-0001-aaaa" });
+    expect(s.flow.state().quota).toMatchObject({ left: 2, used: 3 });
+  });
+  it("shows the route's own sentence when the week is used up, and the quota it sent", async () => {
+    const s = quotaSetup({ post: { status: 429, body: { error: "No new songs until Monday. Dance to the ones you made!", reason: "week_used", quota: { ...QUOTA, used: 5, left: 0 } } } });
+    expect(await s.flow.start("a sleepy cat", "prompt")).toBe(false);
+    expect(s.flow.state()).toMatchObject({ phase: "failed", note: "No new songs until Monday. Dance to the ones you made!", quota: { left: 0 } });
+    expect((await s.flow.probe()).quota?.left).toBe(0);
+  });
+  it("shows kind sentences for songs-switched-off and the resting studio, but never any other error text", async () => {
+    for (const [reason, error] of [["songs_off", "Songs are switched off by a grown-up."], ["budget_spent", "The song studio is resting this month."]]) {
+      const s = quotaSetup({ post: { status: 403, body: { error, reason } } });
+      await s.flow.start("a cat", "prompt");
+      expect(s.flow.state().note).toBe(error);
+    }
+    const leak = quotaSetup({ post: { status: 500, body: { error: "SQLITE_ERROR: no such table", reason: "quota_unavailable" } } });
+    await leak.flow.start("a cat", "prompt");
+    expect(leak.flow.state().note).toBe("No song this time. Try again later!");
+    const leak2 = quotaSetup({ post: { status: 429, body: { error: "x".repeat(500), reason: "week_used" } } });
+    await leak2.flow.start("a cat", "prompt");
+    expect(leak2.flow.state().note.length).toBeLessThanOrEqual(80);
+  });
+  it("polling and the audio relay carry the device too, so the route can tell whose song it is", async () => {
+    const s = quotaSetup();
+    await s.flow.start("a cat", "prompt");
+    await until(() => s.seen.some((x) => x.url.includes("?id=")), 1000).catch(() => {});
+    for (const x of s.seen.filter((y) => y.url.includes("?id="))) expect(x.headers["x-device-id"]).toBe("dev-1234567890");
   });
 });
