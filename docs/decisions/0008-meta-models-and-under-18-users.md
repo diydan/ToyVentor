@@ -83,7 +83,7 @@ policy. The Model API terms above are about the hosted API, not downloaded weigh
 | Outputs presented as human-made (3.5) | "AI-made" label planned (phase G5) | label not built |
 | Known dangers disclosed to end users (4) | none written | write the child and grown-up copy |
 | Safety tuning surviving a fine-tune | Meta's post-training on the base | the model card does not say; the eval must include unsafe and injection prompts before any tuned model ships |
-| Strict child safety as a whole | the guards and the gaps are listed in `docs/specs/forge-ai-spec.md`, "Child safety" (researched 2026-11-04) | English-only unsafe words across seven languages, free-text fields, no classifier, no child red-team set, weights not pinned |
+| Strict child safety as a whole | the guards and the gaps are listed in `docs/specs/forge-ai-spec.md`, "Child safety" (researched 2026-11-04) | unsafe words were English-only (a draft in seven languages built 2026-11-04, no native read yet), free-text fields, no classifier, no child red-team set, weights not pinned |
 | Laws on children's data (e.g. COPPA, UK children's code, GDPR for children) | no accounts, no wish text stored | **not assessed; needs an owner** |
 
 ## Options (owner: Dan)

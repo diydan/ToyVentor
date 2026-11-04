@@ -48,6 +48,16 @@ SELF_IMAGE_KEY=
 SELF_TRANSCRIBE_URL=
 SELF_TRANSCRIBE_KEY=
 
+# Text to part (worker/forgeMake.ts, worker/forgeOptimizer.ts). The optimizer daemon is what builds and checks the part; with no URL the routes
+# answer 503 "disabled". A non-loopback daemon MUST also have a token. Local dev: http://127.0.0.1:8791 (npm run forge:optimizer).
+FORGE_OPTIMIZER_URL=
+FORGE_OPTIMIZER_TOKEN=
+# "1" puts the grown-up proof back in front of making and previewing a part. Unset: making needs only the device id and the rate limits;
+# printing and saving the file always need the proof.
+FORGE_MAKE_REQUIRES_PROOF=
+# Signs the spoken names, so /api/voice only says what this Worker produced. At least 16 characters. Deployed: `wrangler secret put VOICE_SIGNING_KEY`.
+VOICE_SIGNING_KEY=
+
 # The grown-up check (worker/parent.ts). Signs the challenge and proof tokens. Unset: a random secret kept in the database is used.
 # The Meta model key is no longer a fallback for this (2026-11-03), so a deployment with no model key still has a working gate.
 PARENT_GATE_SECRET=
