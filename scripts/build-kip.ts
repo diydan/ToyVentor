@@ -305,6 +305,11 @@ copyFileSync(
   join(kipSrcDir, "viewer/kip-theme-song.js"),
   join(kipOutDir, "kip-theme-song.js"),
 );
+// The microphone button of the Describe & build tab (say what to build; hidden when the app's /api/transcribe is off).
+copyFileSync(
+  join(kipSrcDir, "viewer/kip-describe-voice.js"),
+  join(kipOutDir, "kip-describe-voice.js"),
+);
 copyFileSync(
   join(kipSrcDir, "viewer/kip-describe.js"),
   join(kipOutDir, "kip-describe.js"),

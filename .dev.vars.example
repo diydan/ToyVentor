@@ -40,7 +40,7 @@ TRANSCRIBE_BACKEND=
 # (measured 2026-11-04: 3,600 to 4,000 tokens and 44 to 48 s per make call, against 800 to 1,100 tokens and 10 to 14 s with low).
 # Glimmer v1 on Modal (scripts/modal/glimmer_server.py), with MODEL_BACKEND=self (or TEXT_BACKEND=self for the text capability only):
 #   SELF_TEXT_URL=https://<workspace>--toyventor-glimmer.us-east.modal.run/v1   SELF_TEXT_MODEL=muse-glimmer-30B   SELF_TEXT_API=chat
-#   SELF_TEXT_KEY = the key you gave the Modal secret glimmer-api-key (LLAMA_API_KEY). Segment, image and transcribe have no adapter yet.
+#   SELF_TEXT_KEY = the key you gave the Modal secret glimmer-api-key (LLAMA_API_KEY). Segment and image have no adapter yet.
 SELF_TEXT_URL=
 SELF_TEXT_KEY=
 SELF_TEXT_MODEL=
@@ -50,6 +50,10 @@ SELF_SEGMENT_URL=
 SELF_SEGMENT_KEY=
 SELF_IMAGE_URL=
 SELF_IMAGE_KEY=
+# Voice input for Describe & build (worker/transcribe.ts, POST/GET /api/transcribe): a child's voice goes ONLY to our own speech model (Whisper large-v3-turbo,
+# scripts/modal/whisper_server.py), never to Meta. The route works only with TRANSCRIBE_BACKEND=self (or MODEL_BACKEND=self) AND an address below: hosted, off, an unset switch and
+# a missing address all leave it off, and the microphone button stays hidden. SELF_TRANSCRIBE_URL is the address `modal deploy` printed (with or without a trailing /v1);
+# SELF_TRANSCRIBE_KEY = the key you gave the Modal secret whisper-api-key (WHISPER_API_KEY).
 SELF_TRANSCRIBE_URL=
 SELF_TRANSCRIBE_KEY=
 

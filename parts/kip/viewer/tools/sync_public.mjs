@@ -17,7 +17,7 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const VIEWER = path.join(HERE, '..');
 const PUBLIC = path.join(VIEWER, '..', '..', '..', 'public', 'kip');
 export const FILES = [
-  'kip-describe.js', 'kip-describe-validate.js', 'kip-describe-view.js', 'kip-describe-tab.js', 'kip-workshop-wait.js', 'kip-theme-song.js', 'kip-my-songs.js',
+  'kip-describe.js', 'kip-describe-validate.js', 'kip-describe-view.js', 'kip-describe-tab.js', 'kip-workshop-wait.js', 'kip-theme-song.js', 'kip-my-songs.js', 'kip-describe-voice.js',
   'kip-describe-recipes.json', 'kip-describe-parts.json',
 ];
 
