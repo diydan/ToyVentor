@@ -16,16 +16,16 @@ import from the Worker and retain the local box parser in `shared/sam.ts`.
 ## Three.js & Mixamo Sample Animation Clips (Kip 3D Demo Viewer)
 
 - Package: `three` (MIT License) — bundled into `public/kip/vendor/three-kip.js` via `scripts/build-kip.ts`.
-- Sample skeletal animation clips (`public/kip/mixamo/Xbot.glb`, `public/kip/mixamo/Michelle.glb`): bare bone hierarchies and keyframe curves extracted from `mrdoob/three.js` (`examples/models/gltf/`, MIT repository distribution), with all third-party character meshes, materials, and textures stripped; retargeted at runtime onto Kip's clean-room parametric ToyVentor `12.5 mm` TU rig (`parts/kip/kip.scad`).
+- Sample skeletal animation clips (`public/kip/mixamo/Xbot.glb`, `public/kip/mixamo/Michelle.glb`): bare bone hierarchies and keyframe curves extracted from [Xbot.glb](https://github.com/mrdoob/three.js/blob/dev/examples/models/gltf/Xbot.glb) and [Michelle.glb](https://github.com/mrdoob/three.js/blob/dev/examples/models/gltf/Michelle.glb) in `mrdoob/three.js` (`examples/models/gltf/`), whose repository [LICENSE](https://github.com/mrdoob/three.js/blob/dev/LICENSE) is MIT (verified 2026-11-04), with all third-party character meshes, materials, and textures stripped; retargeted at runtime onto Kip's clean-room parametric ToyVentor `12.5 mm` TU rig (`parts/kip/kip.scad`).
 
 ## Mixamo dance, reaction and movement animations (Kip bench, dance party)
 
-- Source: sixteen animations downloaded from Mixamo (Adobe) on 2026-11-03 by the project owner, from his own Adobe account: Silly Dancing, Hip Hop Dancing,
-  Chicken Dance, Swing Dancing, Locking Hip Hop Dance, Jumping Jacks, Arm Stretching, Neck Stretching, Guitar Playing, Waving, Clapping, Standing Cheering,
-  Standing Fist Pump, Jump, Push and Pick Up Lifting. Animations only, "without skin": no Mixamo character mesh, material or texture was downloaded.
-- What ships: `public/kip/mixamo/baked/` holds derived joint data only (Kip's 14 joint rotations and the hips position at 30 fps, retargeted by
-  `scripts/mixamo-bake.mjs`), small JSON files. **No raw Mixamo file is in the repository or served**: the downloaded FBX files stay in the git-ignored
-  `.local/mixamo/` folder on the owner's machine (a test fails if an `.fbx` is ever tracked).
+- Source (single link, fetch it yourself): [Mixamo](https://www.mixamo.com/) (own Adobe account, "without skin"). See `public/kip/mixamo/baked/README.md`:
+  drop the FBX files listed in `scripts/mixamo-clips.json` (plus `scripts/mixamo-loco-clips.json` for idle/walk/run) into git-ignored `.local/mixamo/`,
+  then run `node scripts/mixamo-bake.mjs`.
+- What ships: nothing Mixamo-derived. `public/kip/mixamo/baked/*.json` is git-ignored local-only joint data (Kip's 14 joint rotations and the hips
+  position at 30 fps, retargeted by `scripts/mixamo-bake.mjs`). **No raw Mixamo file is in the repository or served** (a test fails if an `.fbx` is ever tracked).
+  Without the baked files the app runs on its procedural clips and the three.js sample clips below; Mixamo moves load when present and are skipped when absent.
 - Terms: Mixamo's terms as read from Adobe's published FAQ (a community copy dated 2022, not the current terms of service: recheck before release)
   allow use in personal and commercial projects including games, with no attribution required, but not redistributing the raw files as a product and
   **not using them as machine-learning training data**. These clips are therefore kept out of every AI training set (the Forge AI plans, the Glimmer-only
@@ -80,3 +80,34 @@ Viewer launch path directly; see the review notes before the release.
 The app makes no request to a Google host at runtime. The fonts are
 self-hosted, and the GLB files carry no Draco or Basis compression, so the
 viewer's optional decoder downloads are never fetched.
+
+## Browser runtime libraries (React, lit)
+
+- Packages: `react` (^19.3.1) and `react-dom` (^19.3.0) — the app UI.
+  License: MIT (per each package's own `package.json`).
+- Transitive: `lit` (BSD-3-Clause, per its `package.json`) arrives through
+  `@google/model-viewer` above and ships in the on-demand preview bundle.
+- Build and test tooling (`vite`, `vitest`, `tsx`, `typescript`, `wrangler`)
+  is MIT except `typescript` (Apache-2.0) and `wrangler` (MIT OR Apache-2.0).
+  It runs on the developer's machine and in CI; none of it ships to the
+  browser except through the compiled bundle.
+
+## Python dependencies (PartSpec generator)
+
+- File: `parts/partspec/requirements.txt`. These run the part generator and
+  its checks on the developer's machine; they never ship to users.
+- `manifold3d` (Apache-2.0, per its trove classifier), `trimesh` (MIT),
+  `jsonschema` (MIT), `numpy` and `scipy` (BSD-3-Clause), `pygltflib` (MIT).
+
+## Muse-generated artwork (backdrops, world looks)
+
+- Source: backdrops and world-look art made with Muse Image
+  (`muse-image-1.0`) on the project owner's own account, from code-built
+  prompts (the child's words never reach the image model; see
+  `docs/specs/generated-worlds-spec.md`). The samples in
+  `docs/mockups/generated-backdrops/` are measurement evidence, not shipped
+  art. The showcase worlds playable in Create mode are labelled AI-made in
+  the app.
+- Terms: Meta's hosted-model terms apply (adults only; see
+  `docs/decisions/0008-meta-models-and-under-18-users.md`). Recheck the
+  current image terms before release, as with the songs above.
