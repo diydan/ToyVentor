@@ -97,7 +97,11 @@ describe("the wiring", () => {
     // the scene the menu stands on is still there: the turntable, its two gears, and the way out of the title
     expect(world).toContain('hostEl.classList.add("titled")');
     expect(world).toMatch(/function startPlay\(build: boolean\)\{if\(!P\.title\)return;/);
-    expect(world).toContain("FAC.userData.gears[0].rotation.y+=dt*.6");
+    // ...and it turns under the child's hand now (runtime/turntableSpin.ts: hold, drag, fling): the frame moves the table, and the gears follow it in their old proportions (0.6 and -0.9 against 0.45)
+    expect(world).toContain("var tts=TT.step(dt);facA+=tts.d;");
+    expect(world).toContain("FAC.userData.gears[0].rotation.y+=tts.d*GEAR_RATIO[0];FAC.userData.gears[1].rotation.y+=tts.d*GEAR_RATIO[1]");
+    expect(world).toContain("else{TT.park();TTS.quiet()}");                                                  // off the title the table is back to its idle turn and quiet
+    expect(world).toContain("if(!P.title||!FAC||ttGrab||disposed");                                           // only the title reacts to a press on the stage
   });
 
   it("the engine passes the choice to the world and tells the page when the title is over", () => {

@@ -163,6 +163,8 @@ import { createSleepHook } from "./sleepHook";
 import { createActs } from "./toyRoomActs";
 import { createFetch } from "./dogFetch";
 import { createFollow } from "./dogFollow";
+import { GEAR_RATIO, createTurntable } from "./turntableSpin";
+import { createTurntableSound } from "./turntableSound";
 import { SHOVE_FADE_S, loadMoves } from "./gameMoves";
 import { followsClock, lookFor } from "./worldLook";
 import { loadTimeOfDayMode, timeOfDayFor } from "../../../../lib/timeOfDay";
@@ -794,6 +796,14 @@ var sh=ray.intersectObjects(signHits,false);if(sh.length&&!P.busy){var sdir=sh[0
 canvas.addEventListener("pointermove",function(e: PointerEvent){if(!hold||hold.id!==e.pointerId||P.busy||P.showcase)return;rayAt(e.clientX,e.clientY);var lp2=lanePoint();if(lp2)setTarget(lp2.x,lp2.z)});
 function endHold(e: PointerEvent){if(hold&&hold.id===e.pointerId)hold=null}
 canvas.addEventListener("pointerup",endHold);canvas.addEventListener("pointercancel",endHold);
+/* The title's turntable can be played with (runtime/turntableSpin.ts, turntableSound.ts; Dan, 2026-11-04): hold it to stop it, drag it either way, flick it. The title overlay lets touches through except on its buttons, so a press on empty stage reaches this canvas and a tap on a button never does. Off the title (P.title false) none of this reacts and the table just turns at its idle speed. */
+var TT=createTurntable({reduceMotion:reduce}),TTS=createTurntableSound({reduceMotion:reduce}),ttGrab: {id:number;x:number}|null=null;
+function ttRim(){var c=canvas.getBoundingClientRect(),xa=v3.set(FX,.34,0).project(camera).x,xb=v3.set(FX+2.1,.34,0).project(camera).x;return Math.max(40,Math.abs(xb-xa)*c.width/2)}
+canvas.addEventListener("pointerdown",function(e: PointerEvent){if(!P.title||!FAC||ttGrab||disposed||(e.pointerType==="mouse"&&e.button!==0))return;noteGesture();ttGrab={id:e.pointerId,x:e.clientX};try{canvas.setPointerCapture(e.pointerId)}catch(_){}TT.grab();TTS.grab()});
+canvas.addEventListener("pointermove",function(e: PointerEvent){if(!ttGrab||ttGrab.id!==e.pointerId)return;TT.drag(e.clientX-ttGrab.x,ttRim());ttGrab.x=e.clientX});
+function ttEnd(e: PointerEvent){if(ttGrab&&ttGrab.id===e.pointerId){ttGrab=null;TT.release();TTS.release()}}
+canvas.addEventListener("pointerup",ttEnd);canvas.addEventListener("pointercancel",ttEnd);
+winOn("keydown",function(e){if(!P.title||disposed||e.ctrlKey||e.metaKey||e.altKey)return;var k=e.key,tg=e.target&&e.target.tagName;if(k!=="ArrowLeft"&&k!=="ArrowRight")return;if(tg==="INPUT"||tg==="TEXTAREA"||tg==="SELECT"||(e.target&&e.target.isContentEditable))return;e.preventDefault();noteGesture();TT.nudge(k==="ArrowLeft"?-1:1)});
 canvas.addEventListener("pointermove",function(e: PointerEvent){FEED.move(e);ACT.move(e)});canvas.addEventListener("pointerup",function(e: PointerEvent){FEED.up(e);ACT.up(e)});canvas.addEventListener("pointercancel",function(){FEED.cancel();ACT.cancel()});
 winOn("keydown",function(e){if(paused)return;var k=(e.key||"").toLowerCase(),onBtn=e.target&&e.target.closest&&e.target.closest("button"),tgn=e.target&&e.target.tagName;if(onBtn&&(k===" "||k==="enter"))return;if(tgn==="INPUT"||tgn==="TEXTAREA"||tgn==="SELECT"||(e.target&&e.target.isContentEditable))return;
  if(k==="arrowleft"||k==="a")keys.l=1;else if(k==="arrowright"||k==="d")keys.r=1;else if(k==="arrowup"||k==="w")keys.u=1;else if(k==="arrowdown"||k==="s")keys.d=1;else if(k==="1")ability("speed");else if(k==="2")ability("spin");else if(k==="3")ability("glow");else if(k==="4")ability("torque");else if(k==="e"||k===" "){if(P.nearJunk)unboltNext(P.nearJunk)}else if(k==="b"){P.showcase?closeSheet():openSheet()}else if(k==="escape"&&P.showcase)closeSheet();else return;ctx();e.preventDefault()});
@@ -832,7 +842,7 @@ if(!P.showcase&&!P.busy&&!P.mDrive){tidySpots.forEach(function(ts){if(ts.done)re
  P.phase+=P.speed*dt*3.2;
  var rig=P.rig,mv=Math.min(1,P.speed/2.5),driven=!!(mix&&rig.type==="character"&&mix.canDrive(rig));
  if(!mixLoading&&rig.type==="character"){mixLoading=true;loadMixamoBank().then(function(b){if(disposed)return;mix=new MixamoDriver({...b,...PROCEDURAL_CLIPS,...PLAY_CLIPS});startGestures();loadMoves({fetchImpl:(function(){return fetch.apply(window,arguments as any)}) as typeof fetch,addClips:function(c: Record<string,BakedClip>){if(mix)mix.addClips(c)}}).then(function(r){MOVES.shoveContact=r.shoveContactS;MOVES.shoveDur=r.shoveDurationS}).catch(function(){})}).catch(function(e){console.warn("Mixamo clips unavailable, using the procedural walk",e)})}
- P.root.position.set(P.pos.x,0,P.pos.z);if(P.showcase&&FAC){facA+=dt*.45;FAC.userData.tt.rotation.y=facA;FAC.userData.gears[0].rotation.y+=dt*.6;FAC.userData.gears[1].rotation.y-=dt*.9}P.root.position.y=P.showcase?.36:(P.elev||0);P.root.rotation.y=P.showcase?facA:P.face;
+ P.root.position.set(P.pos.x,0,P.pos.z);if(P.showcase&&FAC){var tts=TT.step(dt);facA+=tts.d;TTS.update(tts);FAC.userData.tt.rotation.y=facA;FAC.userData.gears[0].rotation.y+=tts.d*GEAR_RATIO[0];FAC.userData.gears[1].rotation.y+=tts.d*GEAR_RATIO[1]}else{TT.park();TTS.quiet()}P.root.position.y=P.showcase?.36:(P.elev||0);P.root.rotation.y=P.showcase?facA:P.face;
  P.model.position.set(P.lunge,P.hop,0);P.model.rotation.set(0,P.spin,P.roll||0);
  if(P.dropSlot&&P.dropT<1){P.dropT=Math.min(1,P.dropT+dt*2.4);var e2=P.dropT>=1?1:1-Math.pow(1-P.dropT,3)*Math.cos(P.dropT*6);P.dropSlot.position.y=P.dropSlot.userData.y0+1.2*(1-Math.min(1,e2))}
  rig.wheels.forEach(function(w: any){w.rotation.z-=P.speed*dt/(w.userData.r||.3)});
