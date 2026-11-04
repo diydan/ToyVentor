@@ -12,6 +12,7 @@
  * Two generations of the measuring instrument are kept apart (see results.ts): "v1" = the name rule as it was until 2026-11-04 20:26, "v2" = labels ending -v2 / -v2b, after the echo fix.
  * Each generation is judged against its own base run. A pass is permission to run beside the base, never a claim of child safety.
  */
+import { rescoreFile } from "./rescore";
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -81,10 +82,10 @@ const loadRuns = (): Run[] =>
 
 const SHORT: Record<string, string> = {
   base: "base", "base-v2": "base",
-  "base-prefill": "base, no thinking",
+  "base-prefill": "base, control",
   "tuned-keep": "p1", "tuned-skip": "p2", "tuned-keep-longprompt": "p1, full prompt", "tuned-p3": "p3",
   "tuned-p5": "p5", "tuned-p5c": "p5 again",
-  "tuned-p6": "p6", "tuned-p6b": "p6 again", "tuned-p6d": "p6 + drafter", "tuned-p6-v2": "p6",
+  "tuned-p6": "p6", "tuned-p6b": "p6 again", "tuned-p6d": "p6 + speed-up", "tuned-p6-v2": "p6",
   "tuned-p7": "p7",
   "tuned-p8": "p8", "tuned-p8-v2": "p8", "tuned-p8-v2b": "p8 again",
 };
@@ -124,7 +125,7 @@ svg.dot text{font-size:13px}svg.dot text.m{font-size:11.5px}svg .m{fill:var(--mu
 .l-lr{fill:none;stroke:var(--accent);stroke-width:2}.l-gn{fill:none;stroke:var(--train);stroke-width:1.2}
 .resume{stroke:var(--warn);stroke-width:1.5;stroke-dasharray:4 3}
 .zone-pass{fill:var(--passbg)}.passline{stroke:var(--pass);stroke-width:1.5;stroke-dasharray:5 3}
-.pt-pass{fill:var(--pass)}.pt-fail{fill:var(--fail)}.pt-base{fill:none;stroke:var(--base);stroke-width:2}
+.pt-pass{fill:var(--pass)}.pt-fail{fill:var(--fail)}.pt-base{fill:none;stroke:var(--base);stroke-width:2}.bar-safety{fill:var(--eval)}.bar-echo{fill:var(--grid);stroke:var(--line);stroke-width:1}
 .t-pass{fill:var(--pass)!important;font-weight:650}.t-fail{fill:var(--fail)!important;font-weight:650}
 .k1{fill:var(--m1);stroke:var(--m1)}.k2{fill:var(--m2);stroke:var(--m2)}.k3{fill:var(--m3);stroke:var(--m3)}
 .hdr{font-weight:650}
@@ -153,14 +154,14 @@ const manifestTrain = (dir: string): number | null => {
   return m?.counts?.perSplit?.train ?? null;
 };
 const PILOTS: PilotInfo[] = [
-  { n: 1, what: "keeps its thinking", dataset: "dataset", prompt: "short prompt" },
-  { n: 2, what: "answers without thinking", dataset: "dataset", prompt: "short prompt" },
-  { n: 3, what: "keeps its thinking", dataset: "dataset-p1", prompt: "full production prompt" },
-  { n: 4, what: "answers without thinking", dataset: "dataset-p1", prompt: "full production prompt", note: "died about 85% through, when the compute workspace was disabled; never evaluated" },
-  { n: 5, what: "keeps its thinking, brand examples", dataset: "dataset-p2", prompt: "full production prompt" },
-  { n: 6, what: "answers without thinking, brand examples", dataset: "dataset-p2", prompt: "full production prompt" },
-  { n: 7, what: "keeps its thinking, more data", dataset: "dataset-p3", prompt: "full production prompt" },
-  { n: 8, what: "answers without thinking, more data", dataset: "dataset-p3", prompt: "full production prompt" },
+  { n: 1, what: "keeps its reasoning", dataset: "dataset", prompt: "short prompt" },
+  { n: 2, what: "answers without reasoning", dataset: "dataset", prompt: "short prompt" },
+  { n: 3, what: "keeps its reasoning", dataset: "dataset-p1", prompt: "full production prompt" },
+  { n: 4, what: "answers without reasoning", dataset: "dataset-p1", prompt: "full production prompt", note: "died about 85% through, when the compute workspace was disabled; never evaluated" },
+  { n: 5, what: "keeps its reasoning, brand examples", dataset: "dataset-p2", prompt: "full production prompt" },
+  { n: 6, what: "answers without reasoning, brand examples", dataset: "dataset-p2", prompt: "full production prompt" },
+  { n: 7, what: "keeps its reasoning, more data", dataset: "dataset-p3", prompt: "full production prompt" },
+  { n: 8, what: "answers without reasoning, more data", dataset: "dataset-p3", prompt: "full production prompt" },
 ];
 
 function trainingPanel(p: PilotInfo, m: TrainMetrics | null, xMax: number): string {
@@ -196,7 +197,7 @@ function chartTrainingLoss(metrics: Map<number, TrainMetrics | null>): string {
     : "No training logs on file.";
   return `<h2>1 · Training: did it learn, and did it memorise?</h2>
 <p class="how"><b>How to read it.</b> The typical AI training chart plots <i>loss</i> (how wrong the model's answers are on example answers, lower is better) against <i>steps</i> (small updates). The faint orange line is the loss on each batch of training examples, the bold orange line its running average. The blue dots are the <i>evaluation loss</i>, measured every 50 steps on examples the model never trained on. Both falling and then flattening together means it learned the pattern; evaluation loss climbing while training loss keeps falling would mean it was memorising. Same axes on every panel (log scale).</p>
-<p class="says"><b>What it says here.</b> ${esc(says)} In our case an "example" is a child's wish with our own base model's printable answer for it; low loss means the tuned model writes answers like those. It says nothing about whether the part prints, is fast or is safe: that is what the pass-line charts below measure.</p>
+<p class="says"><b>What it says here.</b> ${esc(says)} In our case an "example" is a child's wish paired with a printable answer; low loss means the tuned model writes answers like those. It says nothing about whether the part prints, is fast or is safe: that is what the pass-line charts below measure.</p>
 <div class="grid">${panels}</div>
 <p class="small muted">Dashed amber line: the run was stopped and resumed from a saved checkpoint (pilot 6 from step 450, pilot 8 from step 300); the log carries the earlier steps over, so the curve is continuous. Pilot 4 has no log: it died before it finished.</p>`;
 }
@@ -452,7 +453,7 @@ function chartNoise(runs: Run[]): string {
 <p class="says"><b>What it says here.</b> The spread between runs of the <i>same</i> model is as big as the margins we are judging by: filter-fix counts differ by ${esc(spread((r) => r.metrics.filterFired))}, printable share by ${esc(spread((r) => r.metrics.printablePct))} points, median seconds by ${esc(spread((r) => r.metrics.p50 ?? 0))} s (rows with one run omitted). The base itself moves too${baseDiff !== null && bA && bB ? `: its filter count was ${bA.metrics.filterFired} and ${bB.metrics.filterFired}, but the two sets of wishes that fired differ in ${baseDiff} places` : ""}, which matters because the safety line is "half the base's count". That is why a pass in one run is called a qualified result, not a proven one, and why repeats come first in the plan.</p>
 <div class="grid">${panels}</div>
 <div class="legend"><span><i style="background:var(--m1);border-radius:50%"></i>old name rule (v1)</span><span><i style="background:var(--m2);transform:rotate(45deg)"></i>fixed name rule (v2)</span></div>
-<p class="small muted">Pilot 6 + drafter (a speed-up option) and the "no thinking" base are different set-ups, not repeats, so they are left out here.</p>`;
+<p class="small muted">Pilot 6 with the speed-up option and the "base, control" run are different set-ups, not repeats, so they are left out here.</p>`;
 }
 
 // ---- 7: blind set --------------------------------------------------------------------------------------------------------------------------------------------------
@@ -503,6 +504,52 @@ function chartBlind(): string {
   const pctOf = (s: Extract<(typeof stats)[number], { ok: true }>) => (s.brand && s.brand.total ? r1((100 * s.brand.passed) / s.brand.total) : "n/a");
   const says = `On brands that were in no list, ${b ? `the base's own names are brand-free on ${pctOf(b)}% of the brand wishes` : "the base run is not finished"}${tuned.length ? `; ${tuned.map((t) => `${t.name} ${pctOf(t)}%`).join(", ")}` : ""}. Dev half, one run each, brands never seen in training: a pointer, not a result. Wishes and translations are unreviewed by a native speaker.`;
   return `${head}<p class="says"><b>What it says here.</b> ${esc(says)}</p><figure>${svgOpen(470, H, `Brand-free share on the blind dev half: ${stats.map((s) => (s.ok ? `${s.name} ${s.brand ? s.brand.passed + " of " + s.brand.total : "n/a"}` : `${s.name} ${(s as { note: string }).note}`)).join("; ")}`)}${rows}</svg></figure>${table}`;
+}
+
+// ---- 7b: what the filter count is made of ---------------------------------------------------------------------------------
+
+function chartRescored(): string {
+  const files = ([
+    { file: join(DATA, "eval-base-v2.json"), name: "base", set: "243-wish set" },
+    { file: join(DATA, "eval-tuned-p6-v2.json"), name: "pilot 6", set: "243-wish set" },
+    { file: join(DATA, "eval-tuned-p8-v2.json"), name: "pilot 8", set: "243-wish set" },
+    { file: join(DATA, "eval-tuned-p8-v2b.json"), name: "pilot 8, run 2", set: "243-wish set" },
+    { file: join(BLIND_DIR, "eval-blind-dev-base.json"), name: "base", set: "blind dev half" },
+    { file: join(BLIND_DIR, "eval-blind-dev-p6.json"), name: "pilot 6", set: "blind dev half" },
+    { file: join(BLIND_DIR, "eval-blind-dev-p8.json"), name: "pilot 8", set: "blind dev half" },
+  ] as { file: string; name: string; set: "243-wish set" | "blind dev half" }[]).filter((f) => existsSync(f.file));
+  const head = `<h2>7b · What the "name filters had to fix" count is made of</h2>
+<p class="how"><b>How to read it.</b> The decision rule counts every answer where a name was replaced or a language's name was dropped. That mixes two very different things: <b>safety fires</b> (a brand or an unsafe word was replaced: what the filters are for, blue) and <b>echo drops</b> (a name that is fine but copies the child's own words, so that language is dropped and the app speaks the English name instead, grey). Each stored answer was run again through the same function the make route uses (<code>shapeModelText</code>), under today's rules including the longer brand list.</p>`;
+  if (files.length === 0) return `${head}<p class="says"><b>What it says here.</b> No evaluation files with stored answers on file yet.</p>`;
+  const rows = files.map((f) => ({ ...f, r: rescoreFile(f.file) }));
+  const max = Math.max(1, ...rows.map((x) => Math.max(x.r.stored, x.r.safety + x.r.echoOnly)));
+  const W = 640, left = 130, scale = 200 / Math.max(1, ...rows.map((x) => x.r.safety + x.r.echoOnly)); void max;
+  let y = 18;
+  let lastSet = "";
+  const parts: string[] = [];
+  for (const x of rows) {
+    if (x.set !== lastSet) {
+      parts.push(`<text x="4" y="${y + 2}" class="m"><tspan font-weight="700">${esc(x.set)}</tspan></text>`);
+      y += 22;
+      lastSet = x.set;
+    }
+    const sw = x.r.safety * scale, ew = x.r.echoOnly * scale;
+    parts.push(`<text x="${left - 8}" y="${y + 4}" text-anchor="end">${esc(x.name)}</text><rect x="${left}" y="${y - 8}" width="${sw.toFixed(1)}" height="16" class="bar-safety"/><rect x="${(left + sw).toFixed(1)}" y="${y - 8}" width="${ew.toFixed(1)}" height="16" class="bar-echo"/><text x="${(left + sw + ew + 8).toFixed(1)}" y="${y + 4}" class="m">safety ${x.r.safety} · echo only ${x.r.echoOnly} · the rule counted ${x.r.stored}</text>`);
+    y += 26;
+  }
+  const blind = rows.filter((x) => x.set === "blind dev half" && x.r.brandWishes > 0);
+  const table = blind.length
+    ? `<div class="scroll"><table><thead><tr><th class="row">42 brand wishes (blind dev half)</th>${blind.map((x) => `<th>${esc(x.name)}</th>`).join("")}</tr></thead><tbody>
+<tr><td class="row">brand in the model's own name, line or names</td>${blind.map((x) => `<td>${x.r.rawLeak} of ${x.r.brandWishes}</td>`).join("")}</tr>
+<tr><td class="row">brand still there after today's filters</td>${blind.map((x) => `<td>${x.r.shownLeak} of ${x.r.brandWishes}</td>`).join("")}</tr>
+</tbody></table></div><p class="small muted">The 12 brands were added to the production list after the dev half was scored (one, "Elmo", on purpose not: it means helmet in Italian, Spanish and Portuguese), so the second row checks coverage of brands that are now known, not unseen ones.</p>`
+    : "";
+  const b243 = rows.find((x) => x.set === "243-wish set" && x.name === "base");
+  const p8 = rows.find((x) => x.set === "243-wish set" && x.name === "pilot 8");
+  const bb = rows.find((x) => x.set === "blind dev half" && x.name === "base");
+  const pb8 = rows.find((x) => x.set === "blind dev half" && x.name === "pilot 8");
+  const says = `Counted by the rule: ${b243 && p8 ? `on the 243 wishes the base ${b243.r.stored} and pilot 8 ${p8.r.stored}` : ""}${bb && pb8 ? `; on the blind dev half the base ${bb.r.stored} and pilot 8 ${pb8.r.stored}` : ""}. Safety fires only: ${b243 && p8 ? `${b243.r.safety} and ${p8.r.safety}` : ""}${bb && pb8 ? `; ${bb.r.safety} and ${pb8.r.safety}` : ""}. The tuned models copy a short wish as the name more often than the base (that is most of the blind-half gap), which costs a language's spoken name, not safety. Moving the rule itself onto the re-scored count is a change of instrument, to be decided together with a base re-run under it.`;
+  return `${head}<p class="says"><b>What it says here.</b> ${esc(says)}</p><figure>${svgOpen(W, y + 6, "Filter count per run split into safety fires and echo drops")}${parts.join("")}</svg><figcaption class="small muted">Blue = a brand or an unsafe word was replaced (safety). Grey = a name copied the wish and that language was dropped (echo). Stored answers re-scored; not a new model run. The two bars need not add up to what the rule counted: safety fires include brands the longer list now catches (the stored count could not see them), and a few answers have no stored answer.</figcaption></figure>${table}`;
 }
 
 // ---- 8: vehicle slots -------------------------------------------------------------------------------------------------------------------------------------------
@@ -569,10 +616,10 @@ function summary(runs: Run[]): string {
 
 function legendTable(runs: Run[]): string {
   const info: Record<string, string> = {
-    base: "the base model (our own, untuned): the yardstick", "base-prefill": "base, answer pre-started so it skips thinking (zero-training control)",
-    "tuned-keep": "pilot 1: short prompt, keeps thinking", "tuned-skip": "pilot 2: short prompt, answers without thinking", "tuned-keep-longprompt": "pilot 1 served with the full prompt (no retrain)", "tuned-p3": "pilot 3: full prompt, keeps thinking",
-    "tuned-p5": "pilot 5: + brand examples", "tuned-p5c": "pilot 5, second run", "tuned-p6": "pilot 6: answers without thinking, brand examples", "tuned-p6b": "pilot 6, second run", "tuned-p6d": "pilot 6 with the speed-up drafter",
-    "tuned-p7": "pilot 7: keeps thinking, 1.7× data", "tuned-p8": "pilot 8: answers without thinking, 1.7× data", "base-v2": "base, rerun under the fixed name rule", "tuned-p6-v2": "pilot 6 under the fixed rule", "tuned-p8-v2": "pilot 8 under the fixed rule, run 1", "tuned-p8-v2b": "pilot 8 under the fixed rule, run 2 (replicate)",
+    base: "the base model: Muse Glimmer 30B, untuned, on our own server with the production prompt (not the hosted Spark model): the yardstick", "base-prefill": "the same base model with its thinking skipped, no training: a control run for the speed goal",
+    "tuned-keep": "pilot 1: short prompt, keeps its reasoning", "tuned-skip": "pilot 2: short prompt, answers without reasoning", "tuned-keep-longprompt": "pilot 1 served with the full prompt (no retrain)", "tuned-p3": "pilot 3: full prompt, keeps its reasoning",
+    "tuned-p5": "pilot 5: + brand examples", "tuned-p5c": "pilot 5, second run", "tuned-p6": "pilot 6: answers without reasoning, brand examples", "tuned-p6b": "pilot 6, second run", "tuned-p6d": "pilot 6 with the speed-up option",
+    "tuned-p7": "pilot 7: keeps its reasoning, 1.7× data", "tuned-p8": "pilot 8: answers without reasoning, 1.7× data", "base-v2": "base, rerun under the fixed name rule", "tuned-p6-v2": "pilot 6 under the fixed rule", "tuned-p8-v2": "pilot 8 under the fixed rule, run 1", "tuned-p8-v2b": "pilot 8 under the fixed rule, run 2 (replicate)",
   };
   const rows = [...runs].sort((a, b) => (a.gen === b.gen ? order(a.label) - order(b.label) : a.gen < b.gen ? 1 : -1)).map((r) => `<tr><td class="row"><code>${esc(r.label)}</code></td><td>${esc(short(r.label))}</td><td>${r.gen}</td><td class="row">${esc(info[r.label] ?? "")}</td><td>${r.metrics.n}</td></tr>`).join("");
   return `<details><summary class="small">Which run is which (${runs.length} runs on file)</summary><div class="scroll"><table><thead><tr><th class="row">file label</th><th>short name</th><th>rule</th><th class="row">what it is</th><th>wishes</th></tr></thead><tbody>${rows}</tbody></table></div></details>`;
@@ -594,6 +641,7 @@ function main(): void {
     chartLatency(runs),
     chartNoise(runs),
     chartBlind(),
+    chartRescored(),
     chartSlots(),
     NOT_DONE,
   ].join("\n");
