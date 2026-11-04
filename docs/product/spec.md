@@ -30,7 +30,9 @@ Verification snapshot: live counts come from `npm test`, the PartSpec
 selftest, and the bridge - not this paragraph. Catalog targets live in
 `parts/partspec/catalog.json`. The demo surface is the five bridged app
 sets (63 entries), six explore worlds connected in a street ring, six lesson
-labs, ten playable vehicles across Maker Ranks 1-6, and 44 missions.
+labs, ten playable vehicles across Maker Ranks 1-6, and the authored mission
+set: `13` mission instances across the `12` authored levels, in `11` mission
+types. A level composed at run time adds `1` to `3` more stations.
 
 
 
@@ -122,6 +124,12 @@ this demo.
 - Opening any sheet closes the others first; the stage stays live behind them.
 - Status transitions never lose placed work, and sleep mode preserves the
   parent path while suppressing play entry points.
+- A finished level can end in a song: the app offers "Make a song about it",
+  the route names the build and writes the words, Mureka sings one song, the
+  audio is measured and cut to whole bars, and the character dances on the
+  beat. The finished song is kept in "My songs", so the Kip party can dance to
+  it too. A song with no steady beat is not a dead end: it plays as a plain
+  song. Off unless `THEME_SONG=on`.
 - Kip's modular 3D rig (`public/kip/Kip-Demo.html`) ships wardrobe and vehicle
   parts, Selfie / Smart Face, `Describe & Build` (10 curated assemblies,
   `fit_matrix` connector validation, and an 8 mm-margin non-overlapping
@@ -212,17 +220,19 @@ from reviewed stems. No toy photo or model weights leave the approved path.
 | Scan outline | SAM 3.1, live. |
 | Skins & Kip Smart Face | Muse Image + SAM 3.1, live (Smart Face opt-in). |
 | Create worlds | Muse Spark, live with validated recipes + word-parser fallback. |
-| Kip Describe & Build | Curated `fit_matrix`-validated recipe book live; custom endpoint opt-in. |
+| Kip Describe & Build | Live: `POST /api/describe` reads the child's words and picks one of ten `fit_matrix`-validated builds; the curated recipe book is the offline fallback. |
 | STEM drafts | Muse Spark, human-reviewed. |
 | Forge AI Recipe v1, Scan Assist, Build Coach | Stretch ([forge-ai-spec.md](../specs/forge-ai-spec.md)). |
-| Voice transcription (`muse-voice-transcribe-1.0`) | Stretch; demo uses browser speech. |
-| Theme songs and loops | Stretch; synth stand-ins today. |
+| Voice transcription | **Not a Meta model.** Per [decision 0008](../decisions/0008-meta-models-and-under-18-users.md), Meta's hosted `muse-voice-transcribe-1.0` is not used for children. The route is our own Whisper large-v3-turbo (MIT) on Modal, and it answers only when the `transcribe` capability is `self` with a URL set; `hosted` is off here by policy and the route fails closed. The demo uses the browser's speech. |
+| Theme song for a build or a level | Route built: `POST /api/theme-song`. The text model writes a name and the words, `shared/songLyrics.ts` builds the lyrics, and Mureka sings one song. Off unless `THEME_SONG=on`, metered at five songs a week a device. The Reveal entrance theme is still the synth. |
 
 Two rejections stand: models never emit raw untrusted meshes (models may only
 propose parameters or part assemblies that deterministic gated code builds and
-verifies, because one failed kid print collapses the pitch), and songs are
-never generated live (latency and mood whiplash); only the Reveal theme is
-generated ahead of time or synthesized deterministically.
+verifies, because one failed kid print collapses the pitch), and no song is
+generated during play (latency and mood whiplash). The theme song is a
+"making" artifact, not play: it is ordered at the end of a level or a build,
+takes about a minute, and is cut to whole bars so the character can dance on
+the beat.
 
 
 ## What is real in the demo
@@ -233,7 +243,9 @@ generated ahead of time or synthesized deterministically.
 | Builder | Grid snapping, live checks, two-archetype Build sheet | Part library made ahead |
 | Play | Live STL hero rigs + procedural fallback, 6-district ring, STEM XP | Town Phases B-E stretch |
 | 3D print | Verified STL/GLB + Kip `.3mf` plate & sticker packs | Delivery handoff; `F1`/`F2` bench coupon pending |
-| Reveal | Entrance animation, card, synth theme | External song API not wired |
+| Reveal | Entrance animation, card, synth theme | The Reveal entrance keeps the synth; the Mureka song is a separate route |
+| End-of-level song and dance party | The name and the words, the song cut to whole bars, the character dancing on the beat | The song itself is ordered from Mureka and takes about a minute; off unless `THEME_SONG=on` |
+| Describe & Build | The model picks one of ten validated builds, with an exploded view and a build animation | Inventing new builds is local only; the hosted validator is not deployed |
 | Packs | Seeded daily pulls with equip flow | Billing |
 | Pro & Pro Powered Add-On lines | TU-lattice beams, pins, gears, Motion, Rank 6 powered-module trays | Live electronics bench test pending |
 
@@ -243,9 +255,10 @@ across `public/`). Geometry, placement, and digital assembly fit are exact;
 physical print fit (`F1_printed_fit`, `F2_breakage`) stays marked prototype
 until bench coupons are logged. Print files stay hidden until four checks
 pass; calibration uses a fixed primer and hidden-dot first-print selector. The
-Reveal theme remains a synth placeholder until approved stems land. Glass is
-reserved for focus surfaces; child-facing copy uses brand tokens while Pro
-tools keep technical readouts and exact engineering wording.
+Reveal entrance theme remains a synth placeholder; the Mureka theme song is a
+separate route for a build or a level. Glass is reserved for focus surfaces;
+child-facing copy uses brand tokens while Pro tools keep technical readouts and
+exact engineering wording.
 
 One stat per part, always: the moment a part is good at two things it becomes
 the default pick and the rest of the library might as well not exist. Rarity

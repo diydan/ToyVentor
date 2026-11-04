@@ -18,7 +18,7 @@ npm run dev        # Vite + local Workers runtime (app + /api/*)
 npm test           # shared checks/schema tests
 npm run validate   # every file in sets/ passes the shared schema
 npm run build      # typecheck + production build
-npm run parts      # regenerate legacy STLs from parts/scad/*.scad (needs OpenSCAD)
+npm run parts      # RETIRED: regenerate the old 16/32 mm STLs from parts/scad/ (needs OpenSCAD)
 npm run bridge     # bridge verified PartSpec v2 parts from parts/partspec/ into sets/
 ```
 
@@ -27,11 +27,17 @@ browser never sees them; only `worker/` reads them.
 
 ## Deploy
 
-https://toyventor.com is up on the previous build. The current build
-(ToyVentor World and Create mode) goes up with the next deploy. The D1
-ownership binding and custom domains for the apex and www (workers.dev
-kept as a fallback) are configured in [wrangler.jsonc](wrangler.jsonc);
-`MODEL_API_KEY` is stored as a Worker secret, never in source.
+https://toyventor.com is live. The D1 ownership binding and custom domains for
+the apex and www (workers.dev is kept as a fallback) are configured in
+[wrangler.jsonc](wrangler.jsonc); `MODEL_API_KEY` is stored as a Worker secret,
+never in source.
+
+**A deploy is only as complete as git is.** `public/kip/` is served straight
+from git with no build step, so a file that exists on a dev machine but is
+gitignored works locally and 404s in production. Do not deploy the working
+tree: export the commit (`git archive HEAD`) and build that. The full check is
+in [docs/product/deploy-checklist.md](docs/product/deploy-checklist.md), and
+the day-of steps are in [docs/product/qa.md](docs/product/qa.md) part 1.
 
 ```sh
 npm run preflight   # local deploy-input checks
@@ -41,15 +47,28 @@ npm run deploy      # build + wrangler deploy
 ## Layout
 
 `src/` React app · `worker/` API Worker · `shared/` pure types + checks ·
-`parts/` parametric parts (`parts/partspec/` 12.5 mm TU Python generator +
-`parts/scad/` legacy OpenSCAD) · `sets/` content as data · `seed/` pre-made
-fallback content · `generated/` build output (never edited by hand).
+`parts/` parametric parts (`parts/partspec/` 12.5 mm TU Python generator;
+`parts/scad/` is retired 16/32 mm OpenSCAD history, kept read-only) ·
+`sets/` content as data · `seed/` pre-made fallback content ·
+`generated/` build output (never edited by hand).
 
-## Status (Oct 30, 2026)
+## Status (November 4, 2026 — submission day)
 
-One-stage app working locally, redeploy pending: SAM scan with seed fallbacks,
-Toybox, builder with snapping and undo, gated STL/GLB previews, daily Packs,
-Reveal with saved cards, build-driven worlds and labs, parent time gates, and
-Create mode. 165 tests across 24 files. Nothing printed yet; the Reveal theme
-is still a synth placeholder.
-See [the plan](docs/product/plan.md) and [the journal](docs/product/journal.md).
+The one-stage app is live at https://toyventor.com. SAM scan with seed
+fallbacks, Toybox, the builder with snapping and undo, gated STL/GLB previews,
+daily Packs, Reveal with saved cards, build-driven worlds and labs, parent time
+gates, Create mode, the explorer trail map, the Garage, STEM XP and Maker
+Ranks 1-6, the Kip and Workshop benches, and the end-of-level song with the
+dance party.
+
+Nothing is printed yet: `F1_printed_fit` and `F2_breakage` stay false until a
+physical bench coupon is signed off. The Reveal entrance theme is still a
+synth placeholder; the Mureka theme song is a separate route, off unless
+`THEME_SONG=on`.
+
+`npm test` carries the live test count; `parts/partspec/catalog.json` carries
+the live part count. Do not copy either number into a document.
+
+See [the plan](docs/product/plan.md) for what shipped each day, the
+[journal](docs/product/journal.md) for the deep record, and
+[the spec](docs/product/spec.md) for what the app does.

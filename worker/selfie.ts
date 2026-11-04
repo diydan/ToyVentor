@@ -5,7 +5,7 @@
 //
 // This is the only place a selfie leaves the device, so it is strict and boring on purpose:
 //  - DEFAULT OFF. Nothing runs unless SELFIE_CLOUD is "on" and a model key exists. Keep it off in production until the COPPA review
-//    is done (docs/specs/kip-demo-implementation.md).
+//    is done (docs/specs/parts-engineering-spec.md section 10.2).
 //  - A grown-up must have passed the parent gate (a live `x-parent-proof` for this `x-device-id`, see worker/parent.ts) and the
 //    client must have shown the consent screen (`x-selfie-consent: v1`).
 //  - The picture is never logged, stored, cached or forwarded beyond the one model call. Logs carry an event name and a status only.

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Kip demo print workflow: headless-Chrome e2e checks for Milestone M1 of docs/specs/kip-print-workflow-spec.md.
+// Kip demo print workflow: headless-Chrome e2e checks for Milestone M1 of docs/specs/parts-engineering-spec.md section 8.
 // Run: npm run e2e:kip-print     Exits nonzero on any failing check.
 // Env: E2E_CHROME, E2E_SHOTS, E2E_STRICT_STL=1 (see scripts/lib/kip-e2e.mjs). Needs python3 to validate zips.
 import { execFileSync } from "node:child_process";

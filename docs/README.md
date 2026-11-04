@@ -5,19 +5,10 @@ Start with [vision.md](product/vision.md) for direction and
 on geometry conflicts, [parts-tu-spec.md](parts/parts-tu-spec.md) and
 [partspec/specs/](parts/partspec/specs/README.md) win.
 
-## Layout
-
-- `product/`: vision, submission story, canonical spec and review copy, plan,
-  journal, demo script, deploy checklist.
-- `ux/`: one-stage World spec, interactive mockups, and design guide.
-- `specs/`: `app-continuation-spec.md`, `native-world-port-spec.md`, `toyventor-town-vision.md`
-  (Phase 0), `stage-simplification-and-kip-spec.md`, `xp-system-spec.md`
-  (Phase 3 gate), parent time gate, flat-pack craft, progressive power, and
-  scan-to-3D.
-- `parts/`: Snap and Pro summaries, creating-parts runbook, TU spec, and the
-  generated PartSpec snapshot.
-- `decisions/`: dated records `0001`–`0006`.
-- `archive/`: retired docs with their replacements.
+**This index lists every file in `docs/`.** If a document is not listed here,
+it is a loose end. Status words mean: **landed** = built and in the app;
+**draft** = written, decisions made, not all built; **proposed** = a plan
+without a decision; **reference** = a third-party surface or a lookup table.
 
 ## Start here
 
@@ -26,73 +17,158 @@ on geometry conflicts, [parts-tu-spec.md](parts/parts-tu-spec.md) and
 | [vision.md](product/vision.md) | Internal long-term direction. |
 | [submission-vision.md](product/submission-vision.md) | External hackathon narrative for November 4. |
 | [spec.md](product/spec.md) | Canonical behavior, demo proof, safety, and delivery scope. |
-| [plan.md](product/plan.md) | Work plan to the November 4 submission. |
+| [plan.md](product/plan.md) | What shipped each day of the hackathon, and what is still open. |
 | [demo-script.md](product/demo-script.md) | The 90-second run, stills, and failure replies. |
+| [qa.md](product/qa.md) | The one QA document: pre-deploy gates, live smoke, by-hand live checks, real-phone and real-child passes. |
+| [journal.md](product/journal.md) | The dated hackathon log, Day 1 to Day 10, plus the "Later" entries. |
 | [world-first-spec.md](ux/world-first-spec.md) | Active one-stage UX, dock, sheets, overflow, transitions, and demo path. |
 | [design-guide.html](ux/design-guide.html) | Tokens, components, motion, accessibility, and open design needs. |
 | [parts-tu-spec.md](parts/parts-tu-spec.md) | Active 12.5/25 mm geometry canon, catalog targets, sets, and print loop. |
+| [parts-engineering-spec.md](specs/parts-engineering-spec.md) | The one canonical parts engineering spec: ladder, card manifest, laws, gates, physics, electrical safety, print workflow, asset pipeline. |
 
-## Active specs (post-consolidation)
+## Product (`product/`)
 
-| File | What it is |
+| File | Status | What it is |
+| --- | --- | --- |
+| [spec.md](product/spec.md) | canonical | Canonical behavior, demo proof, safety, and delivery scope. |
+| [spec-for-review.md](product/spec-for-review.md) | generated | Review copy of `spec.md`. Do not hand-edit; run `npm run spec:review`. |
+| [vision.md](product/vision.md) | live | Internal long-term direction. |
+| [submission-vision.md](product/submission-vision.md) | live | The tight external story for the submission. |
+| [plan.md](product/plan.md) | live | The landed-status tracker: what shipped on which day, and what is still open. |
+| [journal.md](product/journal.md) | live | The dated log, Day 1 to Day 10, and the "Later" entries for post-hackathon work. |
+| [demo-script.md](product/demo-script.md) | live | The 90-second run, the stills to take, and the reply to each failure. |
+| [qa.md](product/qa.md) | live | The one QA document. Merge any new test procedure here rather than opening a new file. |
+| [deploy-checklist.md](product/deploy-checklist.md) | live | What a clean export must contain, and the history of the deploy findings. |
+
+## Specs (`specs/`)
+
+### The app and the world
+
+| File | Status | What it is |
+| --- | --- | --- |
+| [app-continuation-spec.md](specs/app-continuation-spec.md) | **Phases 0-4B + Town Slice 1 landed**; Phase 5 weekly packs parked | The roadmap: top bar and parent gate, enabled roster, STEM XP, vehicles, Town slice. |
+| [stage-simplification-and-kip-spec.md](specs/stage-simplification-and-kip-spec.md) | **landed** | `Demo Mode` v1, cog-mesh fix, Kip V2 unification, `#fix` retired. |
+| [native-world-port-spec.md](specs/native-world-port-spec.md) | **landed** | Phase 0: the native Vite/React Three.js stage port. `<iframe>` and `public/world/**` deleted. |
+| [carousel-modes-ladders-spec.md](specs/carousel-modes-ladders-spec.md) | **C1+C2 and C3 (all six Little-ones rungs) landed**; C4 pick session and kid-band-only C5 decided | Level carousel, age bands, playable Learn runs (38 rungs), the stage Map button and orientation views. |
+| [explorer-map-spec.md](specs/explorer-map-spec.md) | live | The branching trail map beside the Map carousel. |
+| [play-design-spec.md](specs/play-design-spec.md) | live | Level primitives, recipe format, composition kit, generation pipeline, playtest bar. Owns the level lane and its one ordered Plan. |
+| [xp-system-spec.md](specs/xp-system-spec.md) | **implemented** | STEM XP scoring, 11 mission tolerances, two-track gating, D1 sync contract. |
+| [playful-interactions-spec.md](specs/playful-interactions-spec.md) | **draft; partly built** | Fruit, feeding, sleeping and more. Drag-to-feed works in the real Garden; the grown Describe & Build book is in. |
+| [generated-worlds-spec.md](specs/generated-worlds-spec.md) | proposed | Muse-generated worlds and custom backdrops. Feasibility measured against the real service. |
+| [environment-spec.md](specs/environment-spec.md) | **draft; map day/night built** | Time of day and weather. Continuous light and weather are post-hackathon; weather by location waits on a privacy decision. |
+| [parallax-backdrops-spec.md](specs/parallax-backdrops-spec.md) | **draft; the Garden backdrop is in the game** | Generated-image backdrop planes on stepped depths. |
+| [toyventor-town-vision.md](specs/toyventor-town-vision.md) | vision | The destination: open-world Town with districts, quests and a daily rhythm. Extends continuation past Phase 5. |
+
+### The parts and the machine
+
+| File | Status | What it is |
+| --- | --- | --- |
+| [parts-engineering-spec.md](specs/parts-engineering-spec.md) | **canonical** | The merged parts engineering spec. Read this instead of the eight documents it replaces. |
+| [motion-print-test-runsheet.md](specs/motion-print-test-runsheet.md) | live | The values-only bench run sheet. The procedures and pass rules are in `parts-engineering-spec.md` §11.1. |
+| [construction-vehicles-spec.md](specs/construction-vehicles-spec.md) | **draft 1** | Bulldozer, excavator and friends. Two road-roller parts are in the catalog; the bulldozer has a lift sweep but no CAD; the rest is a proposal. Nothing is printed. |
+| [phase4-vehicle-readiness-audit.md](specs/phase4-vehicle-readiness-audit.md) | reference | The per-vehicle readiness table: unlock gates and names. Not a test procedure. |
+
+### The parent, the privacy and the gate
+
+| File | Status | What it is |
+| --- | --- | --- |
+| [parent-time-gate.md](specs/parent-time-gate.md) | **implemented** | Parent caps and earned STEM time. |
+| [parent-controls-off-spec.md](specs/parent-controls-off-spec.md) | **built** | The showcase switch that turns the grown-up checks and play-time limits off. Photo-upload gates stay on. |
+| [coppa-readiness-spec.md](specs/coppa-readiness-spec.md) | **draft; nothing built** | What children's data the build holds, the posture decision, phases P0 to P5, and the wording the entry may use. All deferred until after the hackathon; the condition is that the deployed build stays an adult-operated demo. |
+| [workshop-print-gate-spec.md](specs/workshop-print-gate-spec.md) | **draft 2; phases 1-3 built, switched off** | The grown-up question in front of the Workshop's exports and the selfie sticker. Phase 4 and the per-gate switchboard are deferred. |
+
+### The models and the media
+
+| File | Status | What it is |
+| --- | --- | --- |
+| [forge-ai-spec.md](specs/forge-ai-spec.md) | proposed | Six Muse Spark features (describe it, scan it, repair loop, host fit, build planner, finish it) on one recipe, a gate and repair engine, and five assist features. |
+| [sam-physical-to-digital-spec.md](specs/sam-physical-to-digital-spec.md) | draft | `SAM 3.1` + `Muse` photo-to-digital: sketch-to-part, twin sync, room-to-level, real-life quests. Owns the photo lane. |
+| [scan-to-3d.md](specs/scan-to-3d.md) | recommendation | The scan-body route choice (Routes A to G), the decimation gate and the eval set. A recommendation, not a decision. |
+| [dance-party-spec.md](specs/dance-party-spec.md) | **draft 2; partly built** | Kip headphones, four Mixamo dances with a per-clip quality gate, an AI song maker on Dan's Mureka account (a 12-song starter library and a Dance picker are built; no live song maker Worker yet), a party mode, and the Help cook / Clean up exercise. |
+| [mureka-api-reference.md](specs/mureka-api-reference.md) | reference | The full Mureka API surface, read from the platform's OpenAPI document on 2026-11-03. |
+| [workshop-spec.md](specs/workshop-spec.md) | **stages 1-4 built** | The Workshop shell hosts the Kip, Truck and Yard benches with one stage, one menu and one print view, and opens in the game as an overlay (downloads off). |
+
+### The household and the weekend
+
+| File | Status | What it is |
+| --- | --- | --- |
+| [garage-weekend-spec.md](specs/garage-weekend-spec.md) | **draft 2; phase 1 built (2026-11-03)** | The Garage: always open, with a new part, idea or remix every Fri-Sun, age-specific missions, STEM-minute credit and Demo Mode Preview weekend. The real-life leg, parent controls and roof trophies are phase 2. |
+| [household-library-spec.md](specs/household-library-spec.md) | **draft 2; phases 2, 3, 4 and 5 built** | 50 everyday objects as 3D parts plus the next ten, matched from a child's word or photo. All 60 have a builder, a game GLB and a catalog entry. |
+
+## Parts (`parts/`)
+
+| File | Status | What it is |
+| --- | --- | --- |
+| [parts-tu-spec.md](parts/parts-tu-spec.md) | canonical | The 12.5/25 mm TU geometry canon, catalog targets, sets and print loop. |
+| [creating-parts.md](parts/creating-parts.md) | live | The runbook for new parts and families, from brief to compatible, conforming, testable part. |
+| [snap.md](parts/snap.md) / [pro.md](parts/pro.md) | live | Product summaries. The normative geometry stays in the generated PartSpec copies. |
+| [partspec/README.md](parts/partspec/README.md) | generated | The generated readable snapshot. Edit the sources, then regenerate. |
+| [partspec/specs/](parts/partspec/specs/README.md) | generated | The numbered standards, catalog, agent instructions and design log. |
+
+## UX (`ux/`)
+
+| File | Status | What it is |
+| --- | --- | --- |
+| [world-first-spec.md](ux/world-first-spec.md) | live | One-stage UX, dock, sheets, overflow, transitions and the demo path. |
+| [world-first-mockups.html](ux/world-first-mockups.html) | live | The interactive mockups for that spec. |
+| [design-guide.html](ux/design-guide.html) | live | Tokens, components, motion and accessibility, plus the open design needs. |
+
+## Review (`review/`)
+
+| File | Status | What it is |
+| --- | --- | --- |
+| [spoken-names.md](review/spoken-names.md) | generated | The native-speaker review sheet for everything the game says aloud. Generated by `scripts/spoken-names-sheet.ts`; edit the vocabulary, not this file. |
+
+## Decisions (`decisions/`)
+
+Dated records `0001`–`0008`. The TU merge in
+[0005](decisions/0005-partspec-lattice-merge.md) remains the geometry
+authority.
+
+| # | What it decided |
 | --- | --- |
-| [native-world-port-spec.md](specs/native-world-port-spec.md) | **Phase 0 (landed):** native Vite/React Three.js stage port; `<iframe>` and `public/world/**` deleted. |
-| [stage-simplification-and-kip-spec.md](specs/stage-simplification-and-kip-spec.md) | **Landed:** `Demo Mode` v1, cog-mesh fix, Kip V2 unification (`25` `robot.*` aliases), `#fix` retired. |
-| [app-continuation-spec.md](specs/app-continuation-spec.md) | **Phases 1-5:** `Toy Box` bar & `⚙️` PIN gate, enabled roster, STEM XP, locked roster, and weekly packs. |
-| [forge-ai-spec.md](specs/forge-ai-spec.md) | **Proposed:** six Muse Spark features (describe it, scan it, repair loop, host fit, build planner, finish it) on one recipe, gate and repair engine; five assist features (incl. failed-print triage); data plan and a stretch-goal, Glimmer-based, gated roadmap for two own models (Forge recipe writer, brick sculptor). |
-| [toyventor-town-vision.md](specs/toyventor-town-vision.md) | **Vision:** open-world Town (districts, quests, daily rhythm); extends continuation past Phase 5. |
-| [xp-system-spec.md](specs/xp-system-spec.md) | **Phase 3 (implemented):** STEM XP scoring, 11-mission tolerances, two-track gating, and D1 sync contract. |
-| [carousel-modes-ladders-spec.md](specs/carousel-modes-ladders-spec.md) | **C1+C2 landed, C3 little-six landed:** carousel, age bands, playable Learn runs (38 rungs); all six Little-ones rungs world-first + path depth (§11.6) verified; stage Map button + orientation views (2026-11-03); C4 pick session (§11.8) and kid-band-only C5 decided, after the real-phone pass. |
-| [garage-weekend-spec.md](specs/garage-weekend-spec.md) | **Phase 1 built (2026-11-03):** the Garage, an always-open build place on the map and in the carousel with a new part/idea/remix drop every Fri-Sun, age-specific missions, STEM-minute credit and Demo Mode Preview weekend. Real-life leg, parent controls and roof trophies are phase 2, not built. |
-| [environment-spec.md](specs/environment-spec.md) | **Draft (2026-11-03):** time of day and weather. Map day/night built; 3D worlds on the parallax day/night images next; continuous light and weather are post-hackathon, weather by location gated on a privacy decision. |
-| [parallax-backdrops-spec.md](specs/parallax-backdrops-spec.md) | **Draft (mockup built):** generated-image backdrop planes on stepped depths replacing hill spheres; gameplay stays 3D; awaiting mockup approval. |
-| [dance-party-spec.md](specs/dance-party-spec.md) | **Draft 2 (2026-11-03, decisions made; headphones, 16 Mixamo dances and moves, party mode with a 12-song Mureka starter library and a Dance picker built in the Kip bench; no live song maker Worker yet):** Kip headphones (crown band; real ear sockets later), four Mixamo dances picked and a per-clip quality gate, an AI song maker on Dan's Mureka account (a pre-made starter library plus live songs, 5 new songs a week per user), a party mode with a movement break, and a Help cook / Clean up exercise on the new props with two new primitives (`scrub`, `flick`). |
-| [parent-time-gate.md](specs/parent-time-gate.md) | Implemented parent caps and earned STEM time. |
-| [flatpack-modular-craft-spec.md](specs/flatpack-modular-craft-spec.md) | Proposed flat-pack vehicle/craft grammar. |
-| [kip-demo-implementation.md](specs/kip-demo-implementation.md) | **Proposed:** Kip demo left side menu with dropdowns, flat-pack 3D print view, and selfie face plate — the build plan, superseding the deleted design spec. |
-| [workshop-spec.md](specs/workshop-spec.md) | **Stages 1 to 4 built:** the Workshop shell (`/kip/Workshop.html`) hosts the Kip, Truck and Yard benches with one stage, one menu and one print view, and opens in the game as an overlay (downloads off; the game switch-on is deferred). |
-| [workshop-print-gate-spec.md](specs/workshop-print-gate-spec.md) | **Phases 1 to 3 built, switched off:** the grown-up question in front of the Workshop's exports and the selfie sticker; Dan's decisions, the file exits a child can reach today, and the post-hackathon order. |
-| [parent-controls-off-spec.md](specs/parent-controls-off-spec.md) | **Built:** a showcase switch that turns the grown-up checks and play-time limits off (build flag, or per tab in Demo Mode); photo-upload gates stay on. |
-| [progressive-power-system-spec.md](specs/progressive-power-system-spec.md) | Proposed momentum-to-robotics stages. |
-| [scan-to-3d.md](specs/scan-to-3d.md) | Recommended scan-body route and acceptance tests. |
-| [play-design-spec.md](specs/play-design-spec.md) | Play design: level primitives, recipe format, composition kit, generation pipeline, and playtest bar. Owns the level lane and its one ordered Plan. |
-| [sam-physical-to-digital-spec.md](specs/sam-physical-to-digital-spec.md) | **Draft:** `SAM 3.1` + `Muse` photo-to-digital: sketch-to-part, twin sync, room-to-level, real-life quests. Owns the photo lane; Feature 3 feeds the level lane above. |
+| [0001](decisions/0001-react-spa.md) | React SPA as the app shape. |
+| [0002](decisions/0002-blockml-machineblocks.md) | BlockML and MachineBlocks are not used. |
+| [0003](decisions/0003-blockml-spike.md) | The BlockML spike. |
+| [0004](decisions/0004-license-email-draft.md) | The licence email draft. |
+| [0005](decisions/0005-partspec-lattice-merge.md) | The PartSpec and TU lattice merge. The geometry authority. |
+| [0006](decisions/0006-sam-mask-decoding.md) | SAM mask decoding. |
+| [0007](decisions/0007-sam-provider-retention.md) | SAM provider retention. |
+| [0008](decisions/0008-meta-models-and-under-18-users.md) | Meta's hosted-model terms for under-18 users. Read this before any claim about children's privacy. |
 
-## ToyVentor World (the 2.5D game)
+## Mockups (`mockups/`)
 
-Phase 0A (`native-world-port-spec.md`) ported the 2.5D stage natively into the
-Vite/React app: `src/features/game/world/runtime/world.ts`,
-`src/features/game/world/runtime/stageDom.ts`, `src/features/game/world/engine.ts`,
-and `shared/toycontract.ts` (`/#toy=…` handoff; legacy
-`/world/ToyVentor-World.html` 302-redirects to `/`).
-
-## Product lines and parts
-
-| File | What it is |
-| --- | --- |
-| [snap.md](parts/snap.md) / [pro.md](parts/pro.md) | Product summaries; normative geometry stays in generated PartSpec copies. |
-| [creating-parts.md](parts/creating-parts.md) | Runbook for new parts and families. |
-| [PartSpec](parts/partspec/README.md) / [specs](parts/partspec/specs/README.md) | Generated readable snapshot; edit sources, then regenerate. |
-| [`../parts/README.md`](../parts/README.md) | Package overview for `parts/partspec/` and retired `parts/scad/`. |
+Assets, not documents: the
+[generated backdrops](mockups/generated-backdrops/README.md) and the
+[parallax prototype](mockups/parallax/README.md). The spec that governs
+the backdrops is [parallax-backdrops-spec.md](specs/parallax-backdrops-spec.md).
 
 ## Generated — do not edit by hand
 
-Do not hand-edit [spec-for-review.md](product/spec-for-review.md),
-`partspec/specs/01_interface_standard.md`, `05_catalog.md`, or
-`06_agent_instructions.md`. Regenerate them from `docs/product/spec.md` or
-`parts/partspec/` sources.
+| File | Regenerate with |
+| --- | --- |
+| [product/spec-for-review.md](product/spec-for-review.md) | `npm run spec:review` |
+| [parts/partspec/specs/01_interface_standard.md](parts/partspec/specs/01_interface_standard.md), [05_catalog.md](parts/partspec/specs/05_catalog.md), [06_agent_instructions.md](parts/partspec/specs/06_agent_instructions.md) | the PartSpec generator, then `make_specs.py` |
+| [parts/partspec/specs/10_design_log.md](parts/partspec/specs/10_design_log.md) | `parts/partspec/DESIGN_LOG.md` is the source; `make_specs.py` copies it |
+| [review/spoken-names.md](review/spoken-names.md) | `npx tsx scripts/spoken-names-sheet.ts` |
 
-## Drafts (not served by the app)
+## Outside `docs/`
 
-`drafts/` holds the public landing source, standalone waitlist worker/schema,
-and older prototypes for reference.
+- `drafts/` at the repository root holds the public landing source, the
+  standalone waitlist worker and schema, and older prototypes for reference.
+  It is **gitignored**, so it is a local working folder, not part of the
+  submitted package.
+- [`../generated/`](../generated/) holds build output, including the
+  physical validation coupons. Never edited by hand.
 
 ## Archive
 
-[archive/](archive/README.md) holds retired docs with replacements: the 5-tab
-wireframe and PDF, pre-consolidation mockups, 16/32 mm samples, raw
-brain-dump, and point-in-time parts review.
-Archive entries are history; do not update them to match today.
+[archive/](archive/README.md) holds retired docs with their replacements: the
+5-tab wireframe and PDF, pre-consolidation mockups, 16/32 mm samples, the raw
+brain-dump, the point-in-time parts review, the eight merged parts engineering
+documents, the two merged carousel QA documents, the future-vision pitch draft
+and the household-weekends review. Archive entries are history; do not update
+them to match today.
 
 ## Changing these docs
 
@@ -100,8 +176,9 @@ Keep headings and section order; cut prose, never requirements. Verify changed
 facts against code before writing them, and regenerate generated files from
 their sources instead of editing them.
 
-
-## Decisions
-
-Dated records `0001`–`0006`; the TU merge in
-[0005](decisions/0005-partspec-lattice-merge.md) remains the geometry authority.
+**Before opening a new document, check the index above.** A new file needs a
+reason that none of these covers, and it needs a row in this index. If two
+documents describe the same thing, merge them and retire one: the 2026-11-04
+consolidation merged eight parts-engineering documents into one and two QA
+documents into `qa.md`, and the archive keeps the originals with a note saying
+what replaced them.

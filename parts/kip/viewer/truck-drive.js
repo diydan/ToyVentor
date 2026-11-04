@@ -7,7 +7,7 @@
 // What it is not: no tyre slip, no motor curve, no battery, no firmware (none is built: progressive-power-system-spec 4.1). The numbers marked
 // [viewer feel] are chosen to feel right, not measured; the ones marked [spec] come from the specs.
 
-/** Rolling-resistance coefficient the print-and-test plan models (docs/specs/motion-stage-options-spec.md, test T1: 0.045). [spec] */
+/** Rolling-resistance coefficient the print-and-test plan models (docs/specs/parts-engineering-spec.md section 11.1, test T1: 0.045). [spec] */
 export const ROLLING_DRAG = 0.045;
 /** Gravity in mm/s^2, so a coefficient becomes a deceleration in the bench's units (mm, s). */
 export const G_MM_S2 = 9810;

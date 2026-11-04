@@ -35,12 +35,21 @@ become printable, playable, and shippable.
 - **Part will not fit:** show the failed check and suggest repair, forge, or
   reprint.
 - **Pack already claimed:** show that one-claim-per-day is working.
+- **Make from words is slow or unreachable:** the maker service runs on the
+  author's machine for now, so the app offers a ready-made hat or head. Say so;
+  do not improvise.
 
 ## Check before recording
 
 Confirm smoke checks, the canonical review payload, live world page, seeded and
 fresh mission states, and print gating. Preload the demo toy first on the
 shelf; keep a pre-saved build ready for the Build beat.
+
+Say once, out loud: this demo uses Meta's hosted model with adults operating it,
+because Meta's hosted terms are for adults; for children the same feature runs
+on a self-hosted model. Scan a toy, not a person: the photo goes to Meta's
+hosted model through our Worker, and this build has no grown-up check in front
+of the scan.
 
 
 ## Where this lives
