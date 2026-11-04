@@ -128,6 +128,37 @@ describe("party mode wiring", () => {
     expect(glue).toContain("mixList(currentBpm(), host.dances()).length >= 2"); // offered only when there are two dances to take turns with
   });
 
+  it("a movement break hands each frame to its own function before the party's, swaps the move on a bar line before it checks for another clip, and holds only a move that has a tempo", () => {
+    const glue = read("parts/kip/viewer/kip-party.js");
+    const brk = glue.slice(glue.indexOf("function updateBreak(t)"), glue.indexOf("function update(dt)"));
+    expect(brk.length).toBeGreaterThan(300);
+    expect(brk).toContain("if (f.done) { stop('done'); return; }"); // the break ends by itself
+    expect(brk.indexOf("f.moveId !== st.playing")).toBeLessThan(brk.indexOf("stop('other-clip')")); // else every swap would look like the child picking another clip
+    expect(brk.indexOf("host.releaseClip(st.playing)")).toBeLessThan(brk.indexOf("host.playClip(f.moveId)"));
+    expect(brk).toContain("if (f.locked) host.holdClip(f.moveId, f.moveTime);"); // a stretch has no tempo: it is never pinned to the beat
+    // the child's pick is read when a choose step BEGINS, then the frame is made again so the step starts on the pick
+    expect(brk.indexOf("st.picks[f.step] = st.pick")).toBeLessThan(brk.indexOf("st.frame = f"));
+    const update = glue.slice(glue.indexOf("function update(dt)"), glue.indexOf("/** A tap, at"));
+    expect(update).toContain("if (isBreak()) { updateBreak(t); return; }");
+    expect(update.indexOf("if (isBreak())")).toBeLessThan(update.indexOf("partyFrame(st.plan"));
+  });
+
+  it("a movement break reads nothing from the child's body (no camera, no motion sensor) and does not score taps", () => {
+    const strip = (src: string) => src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+    for (const f of ["parts/kip/viewer/kip-party.js", "shared/moveBreak.ts"]) expect(strip(read(f)), f).not.toMatch(/getUserMedia|mediaDevices|DeviceMotion|DeviceOrientation|Accelerometer|MediaPipe|camera/i);
+    expect(strip(read("shared/moveBreak.ts"))).not.toMatch(/score|tapSummary|registerTap|judgeTap/i); // the planner has no notion of a result at all
+    const glue = read("parts/kip/viewer/kip-party.js");
+    expect(glue).toContain("if (!st.on || st.mode === 'break') return;"); // the stage's pointerdown
+    expect(glue).toContain("if (!st.on || !st.run || isBreak()) return null;"); // and a direct tap(): no outcome, no flash
+  });
+
+  it("the bench gives the break its moves: every baked clip of group move, with its tempo when it has one", () => {
+    const page = read("parts/kip/viewer/kip-bench.js");
+    expect(page).toContain("if (item.baked.group === 'move') breakMoves.push({ id: item.baked.id, bpm: item.baked.bpm ?? null, beats: item.baked.beats ?? null, group: 'move' });");
+    expect(page).toContain("moves: () => breakMoves,");
+    expect(page).toMatch(/const breakMoves = \[\];/);
+  });
+
   it("the glue never keeps time of its own: one clock, the audio clock", () => {
     const code = read("parts/kip/viewer/kip-party.js").replace(/\/\/.*$/gm, "");
     expect(code).not.toMatch(/\b(setInterval|setTimeout|Date\.now)\b/); // performance.now() is only used to ask the audio clock "where is the song now?"

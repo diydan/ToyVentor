@@ -14,6 +14,8 @@
  * Pure: no DOM, no audio, no clock. Times are seconds of SONG time (the audio clock minus the song's start), supplied by the caller.
  */
 import { MOODS, type Mood } from "./songCards";
+// the movement break (shared/moveBreak.ts) rides the same bundle as the party: one core file for the page
+export * from "./moveBreak";
 import {
   MAX_BEATS,
   TAP_WINDOW_MS,

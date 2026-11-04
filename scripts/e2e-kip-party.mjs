@@ -387,6 +387,100 @@ await sleep(500);
 const left2 = await ev("({ hat: window.kipMenu.ctx.loco.hat, hair: window.kipMenu.ctx.loco.hair })");
 check("stopping a song puts the crown and hair back", left2.hat === before2.hat && left2.hair === before2.hair, JSON.stringify([before2, left2]));
 
+// ---- the movement break (docs/specs/dance-party-spec.md 5.2): moves to copy, by age band. Nothing a child does is read or scored. -------------------------------
+{
+  const iv2 = second.dur / second.beats;
+  const bpm2 = 60 / iv2;
+  const hidden = (id) => ev(`window.kipMenu.fields.get(${JSON.stringify(id)}).root.hidden`);
+  const rec = (ms) => ev(`new Promise((resolve) => {
+    const out = [], t0 = performance.now();
+    (function f() {
+      const st = window.kipParty.state(), b = st.break || {};
+      out.push({ ft: st.frameSongTime, on: st.on, mode: st.mode, clip: window.kipMenu.ctx.read.clip(), step: b.step, kind: b.kind, count8: b.count8, moveId: b.moveId, locked: b.locked, moveTime: b.moveTime });
+      if (performance.now() - t0 < ${ms}) requestAnimationFrame(f); else resolve(out);
+    })();
+  })`);
+  const posOf = (x) => (x.ft - second.offset) / iv2;
+  const nearEdge = (x) => { const fr = posOf(x) - Math.floor(posOf(x)); return fr < 0.003 || fr > 0.997; };
+  const wait = (expr, ms = 40000) => page.waitFor(expr, ms, 25);
+
+  const modes = await ev("[...window.kipMenu.fields.get('partyMode').select.options].map((o) => o.value)");
+  check("the menu has a Mode picker: a dance party or a movement break", modes.join() === "party,break", modes.join());
+  await choose("partySong", second.id);
+  await choose("partyMode", "break");
+  await sleep(300);
+  check("in a break the Dance picker is gone, and Next move is not there yet", (await hidden("partyDance")) === true && (await hidden("partyNext")) === true);
+
+  // ages 2 to 3: ONE move, counted 1 to 8
+  await choose("partyBand", "0");
+  await toggle("partyOn");
+  check("switching on in break mode starts a movement break", await wait("window.kipParty.state().on === true && window.kipParty.state().mode === 'break'", 20000));
+  let b = await state();
+  const jacksFit = bpm2 / 112.5 >= 0.8 && bpm2 / 112.5 <= 1.25;
+  check(`the moves are those that fit ${Math.round(bpm2)} bpm: both stretches always, the jacks only when they fit (${jacksFit ? "they do" : "they do not"})`, b.break.pool.includes("move_arms") && b.break.pool.includes("move_neck") && b.break.pool.includes("move_jacks") === jacksFit, b.break.pool.join());
+  check(`it lasts ${b.break.seconds.toFixed(1)} s, between 30 and 60, in whole rounds of four moves`, b.break.seconds >= 30 && b.break.seconds <= 60 && b.break.steps % 4 === 0, JSON.stringify(b.break));
+  check("Kip has the headphones on, and the first move is the first the tempo allows", b.headphones === true && b.style === "one" && b.break.pool[0] === (jacksFit ? "move_jacks" : "move_arms"), JSON.stringify([b.headphones, b.style, b.break.pool]));
+  const r0 = (await rec(2 * 8 * iv2 * 1000 + 600)).filter((x) => x.step != null);
+  const one = new Set(r0.map((x) => x.moveId));
+  check(`ages 2 to 3 get one move the whole time (${[...one].join()}), counted 1 to 8 on the song's beats`, one.size === 1 && r0.filter((x) => !nearEdge(x)).every((x) => x.count8 === ((((Math.floor(posOf(x)) % 8) + 8) % 8) + 1)), String(r0.length));
+  check("the move playing is the move the break says, on every frame", r0.every((x) => x.clip === x.moveId), [...new Set(r0.filter((x) => x.clip !== x.moveId).map((x) => `${x.clip}/${x.moveId}`))].join());
+  const lockedBad = r0.filter((x) => (x.locked ? Math.abs(x.moveTime - ((((posOf(x) % 2) + 2) % 2) * 60) / 112.5) > 0.002 : x.moveTime !== null));
+  check("a move with a tempo is held to the beat and a stretch is left to run at its own speed", lockedBad.length === 0, JSON.stringify(lockedBad[0]));
+  await page.click(600, 350);
+  await sleep(120);
+  const tapped = await state();
+  check("nothing is scored: a tap in a break is not counted, flashes nothing and has no outcome", tapped.taps === 0 && tapped.lastOutcome === null, JSON.stringify([tapped.taps, tapped.lastOutcome]));
+
+  // ages 5 to 6: a four-move sequence, one move to each two bars
+  await choose("partyBand", "2");
+  check("changing the ages restarts the break with the new style (the sound goes on from the start of the song)", await wait("window.kipParty.state().on === true && window.kipParty.state().style === 'copy'", 20000));
+  b = await state();
+  const r2 = (await rec(4 * 8 * iv2 * 1000 + 1200)).filter((x) => x.step != null);
+  const perStep = new Map();
+  for (const x of r2) { if (!perStep.has(x.step)) perStep.set(x.step, new Set()); perStep.get(x.step).add(x.moveId); }
+  const pool = b.break.pool;
+  const seq = [0, 1, 2, 3].map((i) => pool[i % pool.length]);
+  const seen = [...perStep.keys()].sort((p, q) => p - q);
+  check(`ages 5 to 6 copy a four-move sequence (${seq.map((m) => m.replace(/^(move|dance)_/, "")).join(", ")}), one move to a step, and the same four again`, seen.length >= 4 && seen.slice(0, 5).every((k) => perStep.get(k).size === 1 && [...perStep.get(k)][0] === seq[k % 4]), seen.map((k) => `${k}:${[...perStep.get(k)].join("|")}`).join(" "));
+  const swaps2 = [];
+  for (let i = 1; i < r2.length; i++) if (r2[i].moveId !== r2[i - 1].moveId) swaps2.push(r2[i]);
+  check(`the move changes ${swaps2.length} times, every time on a bar line: a multiple of 8 beats of the song's grid`, swaps2.length >= 3 && swaps2.every((x) => { const off = ((posOf(x) % 8) + 8) % 8; return Math.min(off, 8 - off) < 0.35; }), swaps2.map((x) => (((posOf(x) % 8) + 8) % 8).toFixed(2)).join(" "));
+  let mis2 = 0;
+  for (let i = 1; i < r2.length; i++) if (r2[i].clip !== r2[i].moveId && r2[i - 1].clip !== r2[i - 1].moveId) mis2++;
+  check("the move playing is always the one the break says (no frame of disagreement beyond the swap itself)", mis2 === 0, String(mis2));
+  const wB = worldReport(await recordWorld(9500)); // across at least two more changes of move
+  check(`through the changes of move: no foot slides (${wB.slide.toFixed(1)} mm), the body stays put (${wB.lurch.toFixed(2)} mm a frame), the hands do not jerk (${wB.spikes})`, wB.slide <= 4 && wB.lurch <= 1 && wB.spikes === 0, JSON.stringify(wB));
+
+  // ages 10 and up: copy, then choose. The pick is read when a move begins; with none, Kip keeps doing his last move.
+  await choose("partyBand", "4");
+  check("ages 10 and up: a choose break", await wait("window.kipParty.state().on === true && window.kipParty.state().style === 'choose'", 20000));
+  await sleep(300);
+  check("the Next move picker is there now, with the moves that fit and 'keep going'", (await hidden("partyNext")) === false);
+  const opts = await ev("[...window.kipMenu.fields.get('partyNext').select.options].map((o) => o.value)");
+  check("it lists the break's moves", opts[0] === "keep" && ["move_arms", "move_neck"].every((m) => opts.includes(m)), opts.join());
+  check("round one is Kip's: the four moves he shows", await wait("window.kipParty.state().break.step >= 3"));
+  const showKinds = (await state()).break.kind;
+  await choose("partyNext", "move_neck"); // picked during the last shown move: the first chosen move is this
+  check("the first move of round two is the one that was picked", await wait("window.kipParty.state().break.step === 4", 15000));
+  let c = await state();
+  check("it is a chosen move, Kip does the pick, and the pick was recorded for that step", showKinds === "show" && c.break.kind === "choose" && c.break.moveId === "move_neck" && c.picks[4] === "move_neck" && (await ev("window.kipMenu.ctx.read.clip()")) === "move_neck", JSON.stringify([showKinds, c.break.kind, c.break.moveId, c.picks]));
+  await choose("partyNext", "move_arms");
+  check("a pick made during a move is what the next move does", await wait("window.kipParty.state().break.step === 5", 15000) && (await state()).break.moveId === "move_arms");
+  await choose("partyNext", "keep");
+  check("with no pick Kip keeps doing his last move", await wait("window.kipParty.state().break.step === 6", 15000) && (await state()).break.moveId === "move_arms");
+  // and it ends by itself
+  const endsIn = (b.break.seconds + 15) * 1000;
+  check("the break ends by itself when the song's 30 to 60 seconds are done", await page.waitFor("window.kipParty.state().on === false", endsIn, 200), "still on");
+  const done = await state();
+  check("it ended because it was finished, not because of anything else", done.ended === "done", done.ended);
+  await sleep(500);
+  const leftB = await ev("({ hat: window.kipMenu.ctx.loco.hat, hair: window.kipMenu.ctx.loco.hair, on: window.kipMenu.fields.get('partyOn').input.checked })");
+  check("the crown and hair are back and the switch is off", leftB.hat === before2.hat && leftB.hair === before2.hair && leftB.on === false, JSON.stringify([before2, leftB]));
+  // back to a party for what follows
+  await choose("partyMode", "party");
+  await choose("partyBand", "2");
+}
+
 // a song that cannot be fetched: Kip is left exactly as he was and says so
 server.blocked.add("/kip/songs/space_a.mp3");
 await choose("partySong", "space_a");

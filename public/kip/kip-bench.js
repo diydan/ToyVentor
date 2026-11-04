@@ -977,6 +977,7 @@ let activeClipName = null;
 // Dance party (kip-party.js): the clips that carry a tempo, and the party itself once mounted. `partyApi` is declared here so the frame loop can ask it
 // safely before the mount below has run.
 const danceTempos = [];
+const breakMoves = []; // the movement-break moves (group 'move'), with a tempo when the clip has one: the break takes its moves from these
 // Clips whose feet are already solved onto the floor (every kip-clips.js clip, and each baked clip the bake tool planted): the grounder must not re-centre the body over them
 // frame by frame (see pinAndGroundKipFeet), or it drags the planted foot across the floor.
 const plantedClips = new Set();
@@ -1270,6 +1271,7 @@ async function init() {
       registerClip(item.baked.id, item.c.label);
       // a baked clip with a tempo is offered to the party: a dance is picked by the tempo, a movement-break move or a guitar strum only when a child chooses it
       if (item.baked.planted) plantedClips.add(item.baked.id);
+      if (item.baked.group === 'move') breakMoves.push({ id: item.baked.id, bpm: item.baked.bpm ?? null, beats: item.baked.beats ?? null, group: 'move' });
       if (['dance', 'move', 'music'].includes(item.baked.group) && item.baked.beats) danceTempos.push({ id: item.baked.id, bpm: item.baked.bpm, beats: item.baked.beats, group: item.baked.group });
     }
   } catch (err) {
@@ -3286,6 +3288,7 @@ partyApi = mountParty({
     return r.arrayBuffer();
   },
   dances: () => danceTempos,
+  moves: () => breakMoves,
   label: id => (clipChoices.find(c => c.id === id) || {}).label || id,
   playClip: id => triggerClip(id),
   holdClip: (id, t) => { const a = actions.get(id); if (a) { a.paused = true; a.time = t; } },

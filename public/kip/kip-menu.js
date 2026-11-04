@@ -374,6 +374,10 @@ export function buildPartyGroup(party) {
       { kind: 'toggle', id: 'partyOn', label: 'Party',
         title: 'Put on the headphones, play a practice beat and dance on the beat. Tap the stage along with it.',
         get: () => party.isOn(), set: (v) => { if (v) party.start(); else party.stop(); } },
+      sel('partyMode', 'Mode', {
+        title: 'A dance party, or a movement break: a short song and moves to copy. Nothing is watched, measured or scored from how a child moves.',
+        options: () => party.modes, get: () => party.mode(), set: (v) => party.setMode(v),
+      }),
       sel('partySong', 'Song', {
         title: 'The practice beat, or one of the starter songs (made by AI with Mureka: instrumental, an excerpt, looped on its beat)',
         options: () => party.songs(), get: () => party.song(), set: (v) => party.setSong(v),
@@ -389,11 +393,17 @@ export function buildPartyGroup(party) {
         options: () => party.tempos, get: () => party.tempo(), set: (v) => party.setTempo(v),
       }),
       sel('partyDance', 'Dance', {
+        visibleWhen: () => !party.isBreak(),
         title: 'Auto lets the tempo pick the dance. Or choose a move: only those that fit this tempo are listed (the number is how much faster or slower than its own speed it plays)',
         options: () => party.dances(), get: () => party.dance(), set: (v) => party.setDance(v),
       }),
+      sel('partyNext', 'Next move', {
+        title: 'Movement break, ages 10 and up: after Kip has shown the four moves, you choose what he does next. Whatever is picked when a move begins is what he does for it.',
+        visibleWhen: () => party.isBreak() && party.pickStyle() === 'choose',
+        options: () => party.picks(), get: () => party.pick(), set: (v) => party.setPick(v),
+      }),
       sel('partyBand', 'Ages', {
-        title: 'The age band: the youngest two tap anywhere, from 5 to 6 a tap must land on the beat to flash',
+        title: 'The age band. Dance party: the youngest two tap anywhere, from 5 to 6 a tap must land on the beat to flash. Movement break: ages 2 to 4 copy one move and count, 5 to 9 copy a four-move sequence, 10 and up copy and then choose',
         options: () => party.bands, get: () => party.band(), set: (v) => party.setBand(v),
       }),
       { kind: 'toggle', id: 'partyClick', label: 'Beat click',

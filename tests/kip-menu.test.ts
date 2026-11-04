@@ -449,7 +449,7 @@ describe("kip viewer build wiring", () => {
 
 describe("kip menu: the Party group (docs/specs/dance-party-spec.md 5.1)", () => {
   const stateful = () => {
-    const s = { on: false, mood: "bouncy", tempo: "medium", dance: "auto", song: "practice", click: false, band: "0", started: 0, stopped: 0 };
+    const s = { on: false, mood: "bouncy", tempo: "medium", dance: "auto", song: "practice", click: false, band: "0", started: 0, stopped: 0, mode: "party", pick: "keep" };
     return {
       s,
       party: {
@@ -466,6 +466,11 @@ describe("kip menu: the Party group (docs/specs/dance-party-spec.md 5.1)", () =>
         start: () => { s.on = true; s.started++; }, stop: () => { s.on = false; s.stopped++; },
         setMood: (v: string) => { s.mood = v; }, setTempo: (v: string) => { s.tempo = v; }, setBand: (v: string) => { s.band = v; },
         status: () => (s.on ? "Hip Hop · 110 bpm · 3 · taps 4" : "Pick a mood"),
+        modes: [{ value: "party", label: "Dance party" }, { value: "break", label: "Movement break (copy Kip)" }],
+        mode: () => s.mode, setMode: (v: string) => { s.mode = v; }, isBreak: () => s.mode === "break",
+        pickStyle: () => (Number(s.band) >= 4 ? "choose" : Number(s.band) >= 2 ? "copy" : "one"),
+        picks: () => [{ value: "keep", label: "Kip keeps doing his last move" }, { value: "move_arms", label: "Arm Stretch" }],
+        pick: () => s.pick, setPick: (v: string) => { s.pick = v; },
       },
     };
   };
@@ -483,7 +488,7 @@ describe("kip menu: the Party group (docs/specs/dance-party-spec.md 5.1)", () =>
   it("has an on switch, the mood, tempo and age pickers, and a readout, and each does what it says", () => {
     const { s, party } = stateful();
     const ctx = ctxWith(party);
-    expect(ids(ctx).filter((i: string) => i.startsWith("party"))).toEqual(["partyOn", "partySong", "partyMood", "partyTempo", "partyDance", "partyBand", "partyClick", "partyInfo"]);
+    expect(ids(ctx).filter((i: string) => i.startsWith("party"))).toEqual(["partyOn", "partyMode", "partySong", "partyMood", "partyTempo", "partyDance", "partyNext", "partyBand", "partyClick", "partyInfo"]);
     expect(byId(ctx, "partyOn").get()).toBe(false);
     byId(ctx, "partyOn").set(true);
     expect([s.on, s.started]).toEqual([true, 1]);
@@ -514,5 +519,34 @@ describe("kip menu: the Party group (docs/specs/dance-party-spec.md 5.1)", () =>
     expect(byId(ctx, "partyInfo").text()).toBe("Pick a mood");
     s.on = true;
     expect(byId(ctx, "partyInfo").text()).toBe("Hip Hop · 110 bpm · 3 · taps 4");
+  });
+
+  it("the Mode picker switches a dance party to a movement break (docs/specs/dance-party-spec.md 5.2): the Dance picker goes, and the Next move picker comes only for ages 10 and up", () => {
+    const { s, party } = stateful();
+    const ctx = ctxWith(party);
+    expect(resolveOptions(byId(ctx, "partyMode")).map((o: any) => o.value)).toEqual(["party", "break"]);
+    expect(byId(ctx, "partyMode").get()).toBe("party");
+    // a dance party: the Dance picker, no Next move
+    expect(byId(ctx, "partyDance").visibleWhen()).toBe(true);
+    expect(byId(ctx, "partyNext").visibleWhen()).toBe(false);
+    byId(ctx, "partyMode").set("break");
+    expect(s.mode).toBe("break");
+    expect(byId(ctx, "partyDance").visibleWhen()).toBe(false);
+    // a break for the youngest: one move, nothing to choose
+    byId(ctx, "partyBand").set("0");
+    expect(byId(ctx, "partyNext").visibleWhen()).toBe(false);
+    byId(ctx, "partyBand").set("2");
+    expect(byId(ctx, "partyNext").visibleWhen()).toBe(false);
+    // ages 10 and up copy and then choose
+    s.band = "4";
+    expect(byId(ctx, "partyNext").visibleWhen()).toBe(true);
+    expect(byId(ctx, "partyNext").get()).toBe("keep");
+    byId(ctx, "partyNext").set("move_arms");
+    expect(s.pick).toBe("move_arms");
+    expect(resolveOptions(byId(ctx, "partyNext")).map((o: any) => o.value)).toEqual(["keep", "move_arms"]);
+    // and back to a party
+    byId(ctx, "partyMode").set("party");
+    expect(byId(ctx, "partyDance").visibleWhen()).toBe(true);
+    expect(byId(ctx, "partyNext").visibleWhen()).toBe(false);
   });
 });

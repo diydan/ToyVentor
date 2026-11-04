@@ -24,12 +24,20 @@
 //   band()                   the age band 0 to 5
 //   loadSongIndex()          Promise of the starter library's index.json (raw: it is checked here before anything is played), or null
 //   loadSongData(file)       Promise of a song file's bytes (an ArrayBuffer)
+//   moves()                  [{ id, bpm, beats, group: 'move' }] the movement-break moves (bpm and beats are null for a stretch, which has no tempo)
 // No storage, and no network of its own: the bench fetches, the glue only decides.
+//
+// Two modes share the song, the clock, the headphones and the lights (`party.setMode()`): a dance party (above), and a MOVEMENT BREAK (docs/specs/dance-party-spec.md
+// 5.2, shared/moveBreak.ts): a 30 to 60 second song and moves a child can stand up and copy, by age band. Nothing a child does is read or scored: no camera, no
+// motion sensor, and a tap in a break is not counted.
 import {
   MOODS,
   TEMPOS,
   TEMPO_BPM,
   beatPlayFor,
+  breakFrame,
+  breakPool,
+  breakStyleFor,
   buildSongRequest,
   danceForMix,
   fittingClips,
@@ -39,9 +47,11 @@ import {
   newTapRun,
   parseSongIndex,
   partyFrame,
+  planBreak,
   planParty,
   practiceBeatMap,
   registerTap,
+  resolveBreakMove,
   songBeatMap,
   songInterval,
   tapFlashes,
@@ -62,13 +72,14 @@ export function mountParty(host) {
     on: false, starting: false,
     mood: 'bouncy', tempo: 'medium', band: Number.isInteger(host.band?.()) ? host.band() : 1,
     song: 'practice', songs: [], note: '', ended: '', bufferSeconds: 0,
+    mode: 'party', bplan: null, picks: [], pick: null,
     dance: 'auto', playing: null, bpm: TEMPO_BPM.medium, plan: null, map: null, run: null, frame: null, frameT: -Infinity,
     worn: false, flash: 0, lastOutcome: null,
   };
   const now = () => performance.now(); // only ever used to ask the audio clock where the song is; the party keeps no time of its own
 
   function onTap(ev) {
-    if (!st.on) return;
+    if (!st.on || st.mode === 'break') return;
     const at = Number.isFinite(ev?.timeStamp) && ev.timeStamp > 0 ? ev.timeStamp : now();
     api.tap(at);
   }
@@ -86,6 +97,9 @@ export function mountParty(host) {
   /** The tempo the party is (or would be) at: the running song's, else the tempo card's. */
   const chosenSong = () => (st.song === 'practice' ? null : st.songs.find((x) => x.id === st.song) ?? null);
   const currentBpm = () => (st.on || st.starting ? st.bpm : chosenSong() ? chosenSong().bpm : TEMPO_BPM[st.tempo]);
+  const isBreak = () => st.mode === 'break';
+  /** The moves a movement break could use at this tempo (the pool the planner takes the moves from), for the child's "next move" pick. */
+  const breakMoves = () => breakPool(currentBpm(), host.moves ? host.moves() : [], host.dances());
   /** What the Dance picker offers at this tempo: Auto, then every clip that fits it (nearest its natural speed first), each with the speed it would play at. */
   function danceOptions() {
     const fit = fittingClips(currentBpm(), host.dances());
@@ -129,13 +143,22 @@ export function mountParty(host) {
     audio.unlock(); // inside the tap, before anything is fetched (see unlock): a song's file has to be awaited and Safari would not start sound after that
     try {
       st.bpm = song ? 60 / songInterval(song) : req.bpm;
-      st.plan = planParty(st.bpm, host.dances(), 0, chosenId());
+      st.picks = [];
+      if (isBreak()) {
+        // a movement break (docs/specs/dance-party-spec.md 5.2): moves to copy, by age band. Nothing a child does is measured.
+        st.plan = null;
+        st.bplan = planBreak(st.bpm, st.band, host.moves ? host.moves() : [], host.dances());
+        if (!st.bplan.steps.length) throw new Error(`no move fits ${Math.round(st.bpm)} bpm`);
+      } else {
+        st.bplan = null;
+        st.plan = planParty(st.bpm, host.dances(), 0, chosenId());
+      }
       st.map = song ? songBeatMap(song, PARTY_SECONDS) : practiceBeatMap(req.bpm, PARTY_SECONDS);
       st.run = newTapRun(st.band);
       // the file is fetched BEFORE anything on the rig changes, so a song that cannot be had leaves Kip exactly as he was
       const data = song ? await host.loadSongData(song.file) : null;
       st.worn = Boolean(host.headphones?.wear());
-      st.playing = st.plan.dance ? st.plan.dance.clip.id : null;
+      st.playing = isBreak() ? resolveBreakMove(st.bplan, st.picks, 0) : st.plan.dance ? st.plan.dance.clip.id : null;
       if (st.playing) host.playClip(st.playing);
       if (song) st.bufferSeconds = (await audio.startSong({ data, offset: song.offset, interval: songInterval(song), loopSeconds: song.dur })).bufferSeconds;
       else await audio.start({ mood: st.mood, bpm: req.bpm });
@@ -147,7 +170,7 @@ export function mountParty(host) {
       console.warn('party could not start', err);
       st.ended = 'error';
       const why = String(err && err.message ? err.message : err).slice(0, 90);
-      st.note = song ? `The song could not be played (${why}): the practice beat is still here.` : `The party could not start (${why}).`;
+      st.note = isBreak() ? `The movement break could not start (${why}).` : song ? `The song could not be played (${why}): the practice beat is still here.` : `The party could not start (${why}).`;
       finish();
       return false;
     } finally {
@@ -177,6 +200,30 @@ export function mountParty(host) {
     finish(reason);
   }
 
+  /**
+   * One frame of a movement break. The move is a function of the song's beat position (shared/moveBreak.ts), so it changes on a bar line and cannot drift;
+   * a move with a tempo (Jumping Jacks) is held to the beat like a dance, a stretch runs at its own speed. The child's pick for a "choose" step is read when
+   * that step BEGINS (so it is what the child had picked at the line), and Kip then does it for the whole step.
+   */
+  function updateBreak(t) {
+    let f = breakFrame(st.bplan, st.map, t, st.picks);
+    if (f.done) { stop('done'); return; }
+    if (f.kind === 'choose' && st.picks[f.step] === undefined) {
+      st.picks[f.step] = st.pick;
+      f = breakFrame(st.bplan, st.map, t, st.picks);
+    }
+    st.frame = f;
+    st.frameT = t;
+    if (f.moveId) {
+      if (st.playing && f.moveId !== st.playing) { host.releaseClip(st.playing); host.playClip(f.moveId); st.playing = f.moveId; }
+      if (host.activeClip() !== f.moveId) { stop('other-clip'); return; }
+      if (f.locked) host.holdClip(f.moveId, f.moveTime);
+    }
+    const level = Math.max(f.pulse, st.flash);
+    host.glow(level, f.place.index);
+    host.ring(level, f.downbeat);
+  }
+
   function update(dt) {
     st.flash = Math.max(0, st.flash - dt * 5);
     if (!st.on) return;
@@ -184,6 +231,7 @@ export function mountParty(host) {
     // never steps backwards (the audio is untouched, and a tap is timed from its own event, not from this).
     const t = Math.max(audio.songTime(now()), st.frameT);
     if (t > PARTY_SECONDS - 1) { stop('time'); return; }
+    if (isBreak()) { updateBreak(t); return; }
     const f = partyFrame(st.plan, st.map, t);
     st.frame = f;
     st.frameT = t;
@@ -204,7 +252,7 @@ export function mountParty(host) {
 
   /** A tap, at `perfMs` on the performance clock (an input event's timeStamp). Returns what it did, or null when no party is on. */
   function tap(perfMs) {
-    if (!st.on || !st.run) return null;
+    if (!st.on || !st.run || isBreak()) return null;
     const o = registerTap(st.run, st.map, audio.songTime(perfMs ?? now()));
     if (tapFlashes(o)) st.flash = 1;
     st.lastOutcome = o;
@@ -216,7 +264,18 @@ export function mountParty(host) {
   }
 
   function describe() {
-    if (!st.on && !st.starting) return st.note || 'Pick a song (or the practice beat), the ages and a dance, then switch Party on. Tap the stage on the beat.';
+    if (!st.on && !st.starting) return st.note || (isBreak()
+      ? 'Movement break: pick a song (or the practice beat) and the ages, then switch it on and copy Kip. Nothing you do is watched or scored.'
+      : 'Pick a song (or the practice beat), the ages and a dance, then switch Party on. Tap the stage on the beat.');
+    if (isBreak()) {
+      const bf = st.frame;
+      const heads = st.worn ? '' : ' · no headphones on this head';
+      const song = chosenSong();
+      const source = song ? `${song.title} (made by AI)` : 'practice beat';
+      const mv = st.playing ? host.label(st.playing) : '…';
+      const turn = bf && bf.kind === 'choose' ? 'your turn: choose what Kip does next' : 'copy Kip!';
+      return `Movement break · ${source} · ${mv} · ${bf ? `${bf.count8} of 8 · move ${bf.step + 1} of ${bf.steps}` : '…'} · ${turn}${heads}`;
+    }
     const plan = st.plan;
     const dance = st.playing ? `${host.label(st.playing)}${plan?.mix ? ' (mix)' : ''}` : 'lights only (no dance fits this tempo)';
     const f = st.frame;
@@ -239,6 +298,8 @@ export function mountParty(host) {
       count: f ? f.count : null, pulse: f ? f.pulse : 0, danceTime: f ? f.danceTime : null, frameSongTime: Number.isFinite(st.frameT) ? st.frameT : 0,
       taps: sum.taps, hits: sum.hits, meanAbsErrorMs: sum.meanAbsErrorMs, lastOutcome: st.lastOutcome, mode: st.run?.mode ?? null,
       gain: audio.getGain(),
+      mode: st.mode, style: st.bplan ? st.bplan.style : breakStyleFor(st.band), pick: st.pick, picks: st.picks.slice(),
+      break: st.bplan ? { steps: st.bplan.steps.length, seconds: st.bplan.seconds, pool: st.bplan.pool.map((m) => m.clip.id), step: f && isBreak() ? f.step : null, kind: f && isBreak() ? f.kind : null, count8: f && isBreak() ? f.count8 : null, moveId: f && isBreak() ? f.moveId : null, locked: f && isBreak() ? f.locked : null, moveTime: f && isBreak() ? f.moveTime : null } : null,
     };
   }
 
@@ -258,7 +319,11 @@ export function mountParty(host) {
       const ok = id === 'auto' || (id === 'mix' && mixList(currentBpm(), host.dances()).length >= 2) || fittingClips(currentBpm(), host.dances()).some((f) => f.clip.id === id);
       if (ok) { st.dance = id; replan(); }
     },
-    setBand(b) { if (Number.isInteger(b) && b >= 0 && b < PARTY_BANDS.length) { st.band = b; if (st.run) st.run = newTapRun(b); } },
+    setBand(b) { if (Number.isInteger(b) && b >= 0 && b < PARTY_BANDS.length) { st.band = b; if (st.run) st.run = newTapRun(b); if (isBreak()) restartIfOn(); } },
+    /** 'party' (a dance party) or 'break' (a movement break: moves to copy). Changing it while it plays starts the other one on the same song. */
+    setMode(m) { if ((m === 'party' || m === 'break') && m !== st.mode) { st.mode = m; restartIfOn(); } },
+    /** The child's choice for what Kip does next in a break (a move of the pool), or 'keep' / anything else for no pick: Kip keeps doing his last move. */
+    setPick(id) { st.pick = breakMoves().some((m) => m.clip.id === id) ? id : null; },
     setGain: (g) => audio.setGain(g),
     dispose() {
       stop();
@@ -279,6 +344,14 @@ export function mountParty(host) {
       mood: () => st.mood,
       tempo: () => st.tempo,
       dances: danceOptions,
+      modes: [{ value: 'party', label: 'Dance party' }, { value: 'break', label: 'Movement break (copy Kip)' }],
+      mode: () => st.mode,
+      setMode: (m) => api.setMode(m),
+      isBreak: () => isBreak(),
+      pickStyle: () => breakStyleFor(st.band),
+      picks: () => [{ value: 'keep', label: 'Kip keeps doing his last move' }, ...breakMoves().map((m) => ({ value: m.clip.id, label: host.label(m.clip.id) }))],
+      pick: () => st.pick ?? 'keep',
+      setPick: (v) => api.setPick(v),
       dance: () => { dropChoiceIfUnfit(); return st.dance; },
       band: () => String(st.band),
       start, stop: () => stop('switch'),
