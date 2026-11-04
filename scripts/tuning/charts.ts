@@ -12,6 +12,7 @@
  * Two generations of the measuring instrument are kept apart (see results.ts): "v1" = the name rule as it was until 2026-11-04 20:26, "v2" = labels ending -v2 / -v2b, after the echo fix.
  * Each generation is judged against its own base run. A pass is permission to run beside the base, never a claim of child safety.
  */
+import { forgeExplainer, forgePipelineSvg } from "./lib/forgeExplainer";
 import { rescoreFile } from "./rescore";
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -125,7 +126,7 @@ svg.dot text{font-size:13px}svg.dot text.m{font-size:11.5px}svg .m{fill:var(--mu
 .l-lr{fill:none;stroke:var(--accent);stroke-width:2}.l-gn{fill:none;stroke:var(--train);stroke-width:1.2}
 .resume{stroke:var(--warn);stroke-width:1.5;stroke-dasharray:4 3}
 .zone-pass{fill:var(--passbg)}.passline{stroke:var(--pass);stroke-width:1.5;stroke-dasharray:5 3}
-.pt-pass{fill:var(--pass)}.pt-fail{fill:var(--fail)}.pt-base{fill:none;stroke:var(--base);stroke-width:2}.bar-safety{fill:var(--eval)}.bar-echo{fill:var(--grid);stroke:var(--line);stroke-width:1}
+.pt-pass{fill:var(--pass)}.pt-fail{fill:var(--fail)}.pt-base{fill:none;stroke:var(--base);stroke-width:2}.fp-in{fill:var(--card);stroke:var(--line);stroke-width:1.5}.fp-check{fill:var(--passbg);stroke:var(--pass);stroke-width:1.5}.fp-model{fill:var(--card);stroke:var(--eval);stroke-width:2.5}.fp-code{fill:var(--card);stroke:var(--muted);stroke-width:1.5}.fp-arrow{fill:none;stroke:var(--muted);stroke-width:1.6}.fp-head{fill:var(--muted)}.fp-loop{fill:none;stroke:var(--muted);stroke-width:1.3;stroke-dasharray:4 3}svg text.fp-t1{font-weight:700;fill:var(--fg)}svg text.fp-t2{fill:var(--muted)}.about svg{width:100%;height:auto;max-width:960px}svg text.fp-t1{font-size:10px}svg text.fp-t2{font-size:8.6px}.about p{margin:6px 0}.about h3{margin:16px 0 2px}.bar-safety{fill:var(--eval)}.bar-echo{fill:var(--grid);stroke:var(--line);stroke-width:1}
 .t-pass{fill:var(--pass)!important;font-weight:650}.t-fail{fill:var(--fail)!important;font-weight:650}
 .k1{fill:var(--m1);stroke:var(--m1)}.k2{fill:var(--m2);stroke:var(--m2)}.k3{fill:var(--m3);stroke:var(--m3)}
 .hdr{font-weight:650}
@@ -506,6 +507,26 @@ function chartBlind(): string {
   return `${head}<p class="says"><b>What it says here.</b> ${esc(says)}</p><figure>${svgOpen(470, H, `Brand-free share on the blind dev half: ${stats.map((s) => (s.ok ? `${s.name} ${s.brand ? s.brand.passed + " of " + s.brand.total : "n/a"}` : `${s.name} ${(s as { note: string }).note}`)).join("; ")}`)}${rows}</svg></figure>${table}`;
 }
 
+// ---- 0: what Forge is ----------------------------------------------------------------------------------------------------
+
+/** The explanation that opens the page, from the same source as the one-page pitch (lib/forgeExplainer.ts), so the two cannot disagree. */
+function aboutForge(runs: Run[]): string {
+  const find = (label: string) => runs.find((r) => r.label === label);
+  const b2 = find("base-v2"), p8 = find("tuned-p8-v2");
+  const bb = existsSync(join(BLIND_DIR, "eval-blind-dev-base.json")) ? loadRun(join(BLIND_DIR, "eval-blind-dev-base.json")) : null;
+  const b8 = existsSync(join(BLIND_DIR, "eval-blind-dev-p8.json")) ? loadRun(join(BLIND_DIR, "eval-blind-dev-p8.json")) : null;
+  const pct = (t: Run | null | undefined, b: Run | null | undefined) => (t && b && t.metrics.p50 && b.metrics.p50 ? Math.round(100 * (1 - t.metrics.p50 / b.metrics.p50)) : 0);
+  const ex = forgeExplainer({ warmSeconds: p8?.metrics.p50 ?? 13, tunedMain: p8?.metrics.p50 ?? 0, baseMain: b2?.metrics.p50 ?? 0, speedMainPct: pct(p8, b2), speedBlindPct: pct(b8, bb) });
+  return `<section class="about"><h2>0 · What Forge is</h2>
+<p>${ex.intro}</p>
+<figure>${forgePipelineSvg()}<figcaption class="small muted">The model only proposes a small recipe (numbers and named features); everything that touches a child, a printer or a file is code that checks it. Green boxes are checks that can say no.</figcaption></figure>
+<h3>How it works</h3><p>${ex.how}</p>
+<h3>How it was trained and judged</h3><p>${ex.trained}</p>
+<h3>Why we tuned it</h3>${ex.why}
+<h3>What ships, and the honest limits</h3><p>${ex.ships}</p>
+<p class="small muted">The one-page version of this story, with the headline charts, is <code>pitch.html</code>. Everything below is the evidence: the charts a training report normally shows, and how every run scored.</p></section>`;
+}
+
 // ---- 7b: what the filter count is made of ---------------------------------------------------------------------------------
 
 function chartRescored(): string {
@@ -632,6 +653,7 @@ function main(): void {
   for (const p of PILOTS) metrics.set(p.n, readJson<TrainMetrics>(join(METRICS_DIR, `pilot-${p.n}.json`)));
   const exampleN = metrics.get(5) ? 5 : (PILOTS.find((p) => metrics.get(p.n))?.n ?? 5);
   const body = [
+    aboutForge(runs),
     summary(runs),
     legendTable(runs),
     chartTrainingLoss(metrics),

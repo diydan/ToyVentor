@@ -36,16 +36,18 @@ ul{margin:4px 0 4px 18px;padding:0}
 li{margin:2px 0}
 code{font-size:11.5px;background:#f2f2f2;padding:0 4px;border-radius:4px}
 @media print{main{padding:0;max-width:none}h2{break-after:avoid}table{break-inside:avoid}}
+
+.bar-safety{fill:#174a8b}.bar-echo{fill:#d4d6da;stroke:#b8bbc1;stroke-width:1}.bar-warn{fill:#b85c00}.dot-base{fill:#5d6470}
 </style></head><body><main>
 <h1>Forge: type a wish, wear it, print it</h1>
-<p class="sub">You open Make from words and type what you want to wear, like <i>a pink princess hat</i> or <i>I want to be a frog</i>. It thinks for about 10–15 seconds and shows a little hat or animal head that fits your toy. You preview it, try it on, then print it with a grown-up's OK to snap onto the real toy. A brand, rude word, or phone number just gets a calm no and another try.</p>
-<p class="meta">ToyVentor Forge &middot; hackathon pitch &middot; 16 eval runs (v2 below) &middot; 2026-11-04</p>
+<p class="sub">You open Make from words and type what you want to wear, like <i>a pink princess hat</i> or <i>I want to be a frog</i>. About 13 seconds once the model is warm, you see a little hat or animal head that fits your toy. You preview it, try it on, then print it with a grown-up's OK to snap onto the real toy. A brand, a rude word or a phone number just gets a calm no, or a generic name, and another try.</p>
+<p class="meta">ToyVentor Forge &middot; hackathon pitch &middot; 17 evaluation runs on file &middot; every number below is computed from the run files &middot; 2026-11-04</p>
 
 <h2>How it works</h2>
-<p>Wish &rarr; Muse Glimmer 30B (self-hosted LoRA) &rarr; one small JSON recipe + 7-language names &rarr; deterministic compiler + print gates &rarr; printable STL. The model never emits mesh; code builds and checks it. Scope now: crown (hat) or head only; vehicle slots and hand still go to the base. One wish = one call; a repair resends the failed recipe with gate feedback, max 4 tries.</p>
+<p>Wish &rarr; our own tuned Muse Glimmer 30B (LoRA, self-hosted) &rarr; one small JSON recipe + names in 7 languages &rarr; deterministic compiler + print gates &rarr; printable STL. The model never emits mesh; code builds and checks it. Hat and head wishes go to the tuned model first; vehicle parts, the held prop, every repair and any failure go to our own base Glimmer. Both are OUR models on OUR servers: the hosted model is not used for Make unless an operator switches on a safety net. Every name the model writes is checked before a child sees or hears it: unsafe words in 7 languages, a long brand list, and names that just copy the wish. One wish = one call; a repair resends the failed recipe with the gate's feedback, at most 4 tries.</p>
 
 <h2>How it was trained</h2>
-<p>QLoRA fine-tune (Unsloth, Modal L40S/H100, 1–2 epochs, LR 2e-4, reasoning strength low) on 910 &rarr; 1,014 &rarr; 1,754 wish&rarr;recipe pairs. Every example passed production intake, print gates, recipe allowlist, and 7-language unsafe + brand filters. No hosted-model output, no child text in training. Judged on the same 243 wishes per run vs the untuned base: latency, printable share, first-call share, name-filter fixes, 70-item red-team. Blind dev (204) + 38-prompt slot probe are pointers.</p>
+<p>QLoRA fine-tune (Unsloth, Modal L40S/H100, 1&ndash;2 epochs, LR 2e-4) on 910 &rarr; 1,014 &rarr; 1,754 wish&rarr;recipe pairs. The answers are our own base model's, on synthetic wishes; every example passed the production intake, the print gates, the recipe allowlist and the 7-language unsafe and brand filters. No hosted-model output and no child text in training. Judged on the same 243 wishes per run against the untuned base (Muse Glimmer 30B on our own server with the production prompt; not the hosted Spark model, which was not evaluated): latency, printable share, first-call share, name-filter fixes and a 70-item red-team; then on a blind set of 404 wishes written separately, of which only the dev half (204) has been used.</p>
 
 <h2>Training: learned, not memorised</h2>
 <div class="figs">
@@ -59,7 +61,7 @@ code{font-size:11.5px;background:#f2f2f2;padding:0 4px;border-radius:4px}
 <circle class="dot" cx="60" cy="78" r="4"/><circle class="dot" cx="106" cy="96" r="4"/><circle class="dot" cx="152" cy="110" r="4"/><circle class="dot" cx="198" cy="113" r="4"/><circle class="dot-best" cx="244" cy="120" r="5"/><circle class="dot" cx="290" cy="116" r="4"/><circle class="dot-best" cx="334" cy="113" r="5"/>
 <text x="60" y="68">0.128</text><text x="236" y="134">0.116</text><text x="322" y="103">0.118</text>
 </svg></figure>
-<figure><figcaption><b>Dials behind the curve — healthy</b>LR 2e-4, peak step 6, linear decay. Grad norm 0.2–1.0, median 0.3; one p8 first-step spike (9.3) recovered. Resumed p6 @450, p8 @300; p4 died, never scored.</figcaption>
+<figure><figcaption><b>Dials behind the curve — healthy</b>LR 2e-4, peak step 6, linear decay. Grad norm 0.2&ndash;1.0, median 0.3; one pilot-8 first-step spike (9.3) recovered. Resumed pilot 6 @450 and pilot 8 @300; pilot 4 died, never scored.</figcaption>
 <svg viewBox="0 0 360 150" role="img" aria-label="Learning rate decay and gradient norm band">
 <line class="tick" x1="44" x2="350" y1="20" y2="20"/><line class="tick" x1="44" x2="350" y1="70" y2="70"/><line class="tick" x1="44" x2="350" y1="120" y2="120"/>
 <text class="m" x="40" y="23" text-anchor="end">2e-4</text><text class="m" x="40" y="123" text-anchor="end">0</text>
@@ -70,68 +72,39 @@ code{font-size:11.5px;background:#f2f2f2;padding:0 4px;border-radius:4px}
 </svg></figure>
 </div>
 
-<h2>Headline result (v2) — pilot 8 passes, on the line</h2>
+<h2>Headline result — pilot 8 passes the decision rule in 2 of 2 runs on the main set</h2>
 <div class="figs">
-<figure><figcaption><b>Latency: median (bar) + p90 (tick) — lower wins</b>Dashed line = pass at 70% of base (19.9 s). p8 13.1 / 22.6 s.</figcaption>
-<svg viewBox="0 0 360 150" role="img" aria-label="Median seconds: base 28.4, p6 13.2, p8 13.1; p90 51.7, 24.9, 22.6">
-<line class="tick" x1="60" x2="60" y1="10" y2="120"/><line class="tick" x1="160" x2="160" y1="10" y2="120"/><line class="tick" x1="260" x2="260" y1="10" y2="120"/>
-<text class="m" x="60" y="133" text-anchor="middle">0</text><text class="m" x="160" y="133" text-anchor="middle">20</text><text class="m" x="260" y="133" text-anchor="middle">40</text><text class="m" x="340" y="133" text-anchor="middle">60s</text>
-<line class="passline" x1="169" x2="169" y1="10" y2="122"/><text class="m" x="169" y="8" text-anchor="middle">pass 19.9</text>
-<text class="m" x="6" y="42">base</text><rect class="bar-base" x="60" y="30" width="170" height="14"/><rect x="60" y="30" width="310" height="3" fill="#5d6470"/><text x="236" y="42">28.4 / 51.7</text>
-<text class="m" x="6" y="72">p6</text><rect class="bar-tuned" x="60" y="60" width="79" height="14"/><rect x="60" y="60" width="149" height="3" fill="#174a8b"/><text x="144" y="72">13.2 / 24.9</text>
-<text class="m" x="6" y="102">p8</text><rect class="bar-best" x="60" y="90" width="79" height="14"/><rect x="60" y="90" width="136" height="3" fill="#14724a"/><text x="144" y="102">13.1 / 22.6</text>
-</svg></figure>
-<figure><figcaption><b>Safety: filters fixed (lower wins) + red-team (higher wins)</b>Filter line = half base (6). p8: 6 exactly; red-team 68/70 vs 61.</figcaption>
-<svg viewBox="0 0 360 150" role="img" aria-label="Filter fixes: base 12, p6 7, p8 6. Red-team: base 61, p6 67, p8 68 of 70">
-<text class="m" x="6" y="30">filters</text>
-<rect class="bar-base" x="70" y="18" width="216" height="12"/><text x="290" y="28">12</text>
-<rect class="bar-tuned" x="70" y="34" width="126" height="12"/><text x="200" y="44">7</text>
-<rect class="bar-best" x="70" y="50" width="108" height="12"/><text x="182" y="60">6 ✓</text>
-<line class="passline" x1="178" x2="178" y1="12" y2="66"/>
-<text class="m" x="6" y="96">red-team</text>
-<rect x="70" y="84" width="262" height="12" fill="#ddd"/><rect class="bar-base" x="70" y="84" width="228" height="12"/><text x="304" y="94">61</text>
-<rect x="70" y="100" width="262" height="12" fill="#ddd"/><rect class="bar-tuned" x="70" y="100" width="251" height="12"/><text x="325" y="110">67</text>
-<rect x="70" y="116" width="262" height="12" fill="#ddd"/><rect class="bar-best" x="70" y="116" width="255" height="12"/><text x="329" y="126">68</text>
-<text class="m" x="70" y="140">0</text><text class="m" x="332" y="140" text-anchor="end">70</text>
-</svg></figure>
+<figure><figcaption><b>Median seconds per wish — lower wins</b>Dashed line = the pass line, 70% of that set's base (19.9 s main, 18.1 s blind). Pilot 8 is about 54% faster on the main set and 54% on wishes it never saw.</figcaption><svg viewBox="0 0 360 176" role="img" aria-label="Median seconds per wish"><text x="90" y="20" text-anchor="end">main: base</text><rect x="96" y="11" width="115.1" height="12" class="bar-base"/><text class="m" x="216.1" y="20">28.4 s (p90 51.7)</text><text x="90" y="42" text-anchor="end">pilot 6</text><rect x="96" y="33" width="53.5" height="12" class="bar-tuned"/><text class="m" x="154.5" y="42">13.2 s (p90 24.9)</text><text x="90" y="64" text-anchor="end">pilot 8</text><rect x="96" y="55" width="53.1" height="12" class="bar-best"/><text class="m" x="154.1" y="64">13.1 s (p90 22.6)</text><text x="90" y="86" text-anchor="end">pilot 8, run 2</text><rect x="96" y="77" width="54.3" height="12" class="bar-best"/><text class="m" x="155.3" y="86">13.4 s (p90 23.8)</text><text x="90" y="108" text-anchor="end">blind: base</text><rect x="96" y="99" width="104.6" height="12" class="bar-base"/><text class="m" x="205.6" y="108">25.8 s (p90 49.3)</text><text x="90" y="130" text-anchor="end">pilot 6</text><rect x="96" y="121" width="51.5" height="12" class="bar-tuned"/><text class="m" x="152.5" y="130">12.7 s (p90 20.4)</text><text x="90" y="152" text-anchor="end">pilot 8</text><rect x="96" y="143" width="48.2" height="12" class="bar-best"/><text class="m" x="149.2" y="152">11.9 s (p90 19.6)</text><line class="passline" x1="176.6" x2="176.6" y1="9" y2="93"/><line class="passline" x1="169.2" x2="169.2" y1="97" y2="159"/><line class="axis" x1="96" x2="96" y1="8" y2="164"/></svg></figure>
+<figure><figcaption><b>Main set, the rule's safety count — lower wins</b>Name filters had to fix an answer (bar) and red-team passed. Dashed line = half the base (6): the safety goal. Pilot 8 is on or under it in both runs.</figcaption><svg viewBox="0 0 360 110" role="img" aria-label="Filter fixes and red-team on the main set"><text x="90" y="20" text-anchor="end">base</text><rect x="96" y="11" width="128.6" height="12" class="bar-base"/><text class="m" x="229.6" y="20">12 fixes · red-team 61/70</text><text x="90" y="42" text-anchor="end">pilot 6</text><rect x="96" y="33" width="75.0" height="12" class="bar-tuned"/><text class="m" x="176.0" y="42">7 · 67/70</text><text x="90" y="64" text-anchor="end">pilot 8</text><rect x="96" y="55" width="64.3" height="12" class="bar-best"/><text class="m" x="165.3" y="64">6 · 68/70</text><text x="90" y="86" text-anchor="end">pilot 8, run 2</text><rect x="96" y="77" width="53.6" height="12" class="bar-best"/><text class="m" x="154.6" y="86">5 · 69/70</text><line class="passline" x1="160.3" x2="160.3" y1="31" y2="93"/><line class="axis" x1="96" x2="96" y1="8" y2="98"/></svg></figure>
 </div>
-<p class="small">Quality held: printable 100 &rarr; 98.8 / 98.8; first-call 94.4 &rarr; 96.9 / 96.9. v1: p6 speed 3/3, safety 0/3; prefill control fast (12.1 s) but broken (printable 96.9%, filters 22, red-team 57/70). Full matrix: <code>charts.html</code> &sect;4.</p>
+<p class="small">Quality held: printable 100% &rarr; 98.8% / 98.8%; first call 94.4% &rarr; 96.9% / 93.8%. Pilot 6 passes the speed goal in every run and the safety goal in none. The zero-training control (the base with its thinking skipped) was fast (12.1 s) but failed the quality and safety gates (printable 96.9%, filters 22, red-team 57/70): tuning is what buys the speed without those losses. Full matrix and the other charts: <code>charts.html</code>.</p>
+
+<h2>Wishes the models never saw (blind set, dev half, 204 wishes, one run each)</h2>
+<p class="small">Median 25.8 s (base) &rarr; 12.7 s (pilot 6) / 11.9 s (pilot 8); first call 92.9% &rarr; 95.7% / 95%; red-team 32/49 &rarr; 40/49 / 39/49. By the rule's stored filter count neither tuned model passes here (25 and 23 against 18): the next chart shows why that number is not what it looks like.</p>
+<div class="figs">
+<figure><figcaption><b>Blind half: what the filter count is made of</b>Blue = a brand or an unsafe word was replaced. Grey = a name only copied the child's words, so that language falls back to English. The word rule = what the decision rule counted. The tuned models copy a short wish more often than the base; that, not unsafe content, is most of the gap the rule saw.</figcaption><svg viewBox="0 0 360 88" role="img" aria-label="Blind half filter count split into safety and echo"><text x="90" y="20" text-anchor="end">base</text><rect x="96.0" y="11" width="50.0" height="12" class="bar-safety"/><rect x="146.0" y="11" width="53.3" height="12" class="bar-echo"/><text class="m" x="204.3" y="20">safety 15 · echo 16 · rule 18</text><text x="90" y="42" text-anchor="end">pilot 6</text><rect x="96.0" y="33" width="30.0" height="12" class="bar-safety"/><rect x="126.0" y="33" width="80.0" height="12" class="bar-echo"/><text class="m" x="211.0" y="42">safety 9 · echo 24 · rule 25</text><text x="90" y="64" text-anchor="end">pilot 8</text><rect x="96.0" y="55" width="36.7" height="12" class="bar-safety"/><rect x="132.7" y="55" width="73.3" height="12" class="bar-echo"/><text class="m" x="211.0" y="64">safety 11 · echo 22 · rule 23</text><line class="axis" x1="96" x2="96" y1="8" y2="76"/></svg></figure>
+<figure><figcaption><b>A brand in no list, written into the part (42 wishes)</b>Bar = how often the model wrote the brand into the part's name or text by itself. After the filters with the longer brand list: 4, 0, 0 (a coverage check of brands added afterwards, NOT a test on unseen ones).</figcaption><svg viewBox="0 0 360 88" role="img" aria-label="Brand in the model's own text"><text x="90" y="20" text-anchor="end">base</text><rect x="96.0" y="11" width="112.5" height="12" class="bar-warn"/><text class="m" x="213.5" y="20">18/42 own text · 4 after list</text><text x="90" y="42" text-anchor="end">pilot 6</text><rect x="96.0" y="33" width="50.0" height="12" class="bar-warn"/><text class="m" x="151.0" y="42">8/42 · 0</text><text x="90" y="64" text-anchor="end">pilot 8</text><rect x="96.0" y="55" width="62.5" height="12" class="bar-warn"/><text class="m" x="163.5" y="64">10/42 · 0</text><line class="axis" x1="96" x2="96" y1="8" y2="76"/></svg></figure>
+</div>
+<p class="small">The base wrote a brand that was in no list into the part on 18 of 42 brand wishes, pilot 6 on 8 and pilot 8 on 10, and the filters of that moment did not know those brands. We then extended the production brand list (about 300 entries, tested so it does not eat ordinary words); a brand nobody listed still gets through, and the new list was built after the dev half was scored.</p>
 
 <h2>Noise ≈ the margin — one run can't prove it</h2>
 <div class="figs">
-<figure><figcaption><b>Repeat spread: filter fixes per run</b>Bar = range across runs. p8 6–7: one wish flips the pass.</figcaption>
-<svg viewBox="0 0 360 130" role="img" aria-label="Filter ranges: base 12 to 12, p5 5 to 9, p6 7 to 12, p8 6 to 7">
-<line class="tick" x1="70" x2="70" y1="8" y2="105"/><line class="tick" x1="178" x2="178" y1="8" y2="105"/><line class="tick" x1="286" x2="286" y1="8" y2="105"/>
-<text class="m" x="70" y="116" text-anchor="middle">0</text><text class="m" x="178" y="116" text-anchor="middle">6</text><text class="m" x="286" y="116" text-anchor="middle">12</text>
-<line class="passline" x1="178" x2="178" y1="8" y2="105"/>
-<text class="m" x="8" y="32">base</text><line class="range" x1="286" x2="286" y1="28" y2="28"/>
-<text class="m" x="8" y="54">p5</text><line class="range" x1="160" x2="232" y1="50" y2="50"/><text x="236" y="54">5–9</text>
-<text class="m" x="8" y="76">p6</text><line class="range" x1="196" x2="286" y1="72" y2="72"/><text x="150" y="76">7–12</text>
-<text class="m" x="8" y="98">p8</text><line class="range" x1="178" x2="196" y1="94" y2="94" stroke="#14724a"/><text x="200" y="98">6–7</text>
-</svg></figure>
-<figure><figcaption><b>Repeat spread: median seconds per run</b>Base itself moves 28.4–32.4 s. p8 13.1–14.8.</figcaption>
-<svg viewBox="0 0 360 130" role="img" aria-label="Median ranges: base 28.4 to 32.4, p5 22.3 to 27.1, p6 13.2 to 14.0, p8 13.1 to 14.8">
-<line class="tick" x1="70" x2="70" y1="8" y2="105"/><line class="tick" x1="170" x2="170" y1="8" y2="105"/><line class="tick" x1="270" x2="270" y1="8" y2="105"/>
-<text class="m" x="70" y="116" text-anchor="middle">10</text><text class="m" x="170" y="116" text-anchor="middle">20</text><text class="m" x="270" y="116" text-anchor="middle">30s</text>
-<text class="m" x="8" y="32">base</text><line class="range" x1="254" x2="294" y1="28" y2="28"/>
-<text class="m" x="8" y="54">p5</text><line class="range" x1="193" x2="241" y1="50" y2="50"/>
-<text class="m" x="8" y="76">p6</text><line class="range" x1="102" x2="110" y1="72" y2="72"/>
-<text class="m" x="8" y="98">p8</text><line class="range" x1="101" x2="118" y1="94" y2="94" stroke="#14724a"/>
-</svg></figure>
+<figure><figcaption><b>Same model, repeated: filter fixes</b>Dots = separate runs of ONE model (the first run of each used the older name rule). The spread is as big as the margins: one wish moves a goal.</figcaption><svg viewBox="0 0 360 100" role="img" aria-label="Filter fixes per run"><text x="90" y="22" text-anchor="end">base</text><line class="range" x1="207.4" x2="207.4" y1="18" y2="18"/><circle cx="207.4" cy="18" r="3.6" class="dot-base"/><circle cx="207.4" cy="18" r="3.6" class="dot-base"/><text class="m" x="215.4" y="22">12 · 2 runs</text><text x="90" y="48" text-anchor="end">pilot 6</text><line class="range" x1="161.0" x2="207.4" y1="44" y2="44"/><circle cx="207.4" cy="44" r="3.6" class="dot"/><circle cx="198.1" cy="44" r="3.6" class="dot"/><circle cx="161.0" cy="44" r="3.6" class="dot"/><text class="m" x="215.4" y="48">7–12 · 3 runs</text><text x="90" y="74" text-anchor="end">pilot 8</text><line class="range" x1="142.4" x2="161.0" y1="70" y2="70"/><circle cx="161.0" cy="70" r="3.6" class="dot"/><circle cx="151.7" cy="70" r="3.6" class="dot"/><circle cx="142.4" cy="70" r="3.6" class="dot"/><text class="m" x="169.0" y="74">5–7 · 3 runs</text><line class="axis" x1="96" x2="96" y1="8" y2="88"/></svg></figure>
+<figure><figcaption><b>Same model, repeated: median seconds</b>Even the base moves by a few seconds between runs (the laptop and the servers were shared); the tuned models' gap to it does not.</figcaption><svg viewBox="0 0 360 100" role="img" aria-label="Median seconds per run"><text x="90" y="22" text-anchor="end">base</text><line class="range" x1="198.6" x2="213.0" y1="18" y2="18"/><circle cx="213.0" cy="18" r="3.6" class="dot-base"/><circle cx="198.6" cy="18" r="3.6" class="dot-base"/><text class="m" x="221.0" y="22">28.4–32.4 s · 2 runs</text><text x="90" y="48" text-anchor="end">pilot 6</text><line class="range" x1="143.7" x2="146.6" y1="44" y2="44"/><circle cx="146.6" cy="44" r="3.6" class="dot"/><circle cx="145.1" cy="44" r="3.6" class="dot"/><circle cx="143.7" cy="44" r="3.6" class="dot"/><text class="m" x="154.6" y="48">13.2–14 s · 3 runs</text><text x="90" y="74" text-anchor="end">pilot 8</text><line class="range" x1="143.3" x2="149.4" y1="70" y2="70"/><circle cx="149.4" cy="70" r="3.6" class="dot"/><circle cx="143.3" cy="70" r="3.6" class="dot"/><circle cx="144.4" cy="70" r="3.6" class="dot"/><text class="m" x="157.4" y="74">13.1–14.8 s · 3 runs</text><line class="axis" x1="96" x2="96" y1="8" y2="88"/></svg></figure>
 </div>
 <ul>
-<li>Blind dev (unseen brands): p8 76.2%, one run — pointer only. Slot probe (38 non-hat prompts): base 38/38, p8 36/38, p6 34/38; ship routes non-hat/head to base.</li>
-<li>Cost ~$68 Modal GPU. A pass = permission to run beside the base, not a child-safety claim.</li>
+<li>Slot probe (38 vehicle and prop prompts): base 38/38, pilot 8 36/38, pilot 6 34/38, so vehicle slots and the held prop go to the base.</li>
+<li>Modal GPU for the whole sweep: on the order of $100 over 8 training runs and about 25 evaluation runs (our ledger's estimate; the Modal bill is the record). A pass is permission to run beside the base, not a child-safety claim.</li>
 </ul>
 
 <h2>Why we tuned it</h2>
 <ul>
-<li><b>Kids can't use the hosted model.</b> Meta API terms bar under-18 end users and kid-targeted products, so the demo runs hosted with adults only and production must be self-hosted Glimmer.</li>
-<li><b>Safety by construction, measured.</b> Trained only on answers that already passed every gate, so it never saw a brand, unsafe, or refused wish — judged against the base on the same red-team.</li>
-<li><b>A smaller job.</b> One narrow recipe writer (~600-char prompt vs ~10k) — less to do, less to red-team.</li>
-<li><b>Speed and cost.</b> ~54% faster median (13.1 vs 28.4 s), tail halved, fewer tokens per call, 4-bit weights on scale-to-zero GPU. Sweep cost ~$68.</li>
+<li><b>Kids can't use the hosted model.</b> Its terms (Meta Model API, section 10.1) bar under-18 end users and training on its outputs, so the child-facing path has to run on our own model, trained only on our own model's answers.</li>
+<li><b>Safety by construction, measured.</b> Trained only on answers that had already passed every gate and filter, then judged against the base on the same red-team and on 204 wishes it never saw.</li>
+<li><b>A smaller job.</b> One narrow recipe writer (about 600 characters of prompt in the short form, about 10,000 in production) instead of a general assistant: less to do, less to red-team.</li>
+<li><b>Speed and cost.</b> About 54% faster median on the main set (13.1 vs 28.4 s) and 54% on the blind half, the slow tail roughly halved, 4-bit weights on scale-to-zero GPUs.</li>
 </ul>
 
 <h2>What ships</h2>
-<p>Fast-path router: tuned model first for <b>hat/head first attempts only</b>; base on any failure, repair, or other slot. Off unless <code>FORGE_FAST_MODE</code> + <code>SELF_FAST_URL/MODEL</code> are set. A pass is permission to run beside the base — not a child-safety claim. Next: second p8 run, native-speaker read of 7-language names, match-to-wish score.</p>
+<p>Our own models are the default for Make-from-words: the tuned model first for hat and head first attempts, our own base for repairs, vehicle slots and any failure, no setting for a parent or a request, and no hosted fallback (an operator safety net exists for cold servers). <code>FORGE_FAST_MODE=off</code> turns the tuned model off; a test pins the production prompt to the text the tuned models were trained on. Honest limits: the blind test half is sealed and unused, nobody who reads the seven languages has reviewed the word lists, the brand list or the names, there is no score yet for whether a part looks like the wish, the hosted model's own numbers on these wishes were never measured, and the risk assessment is unsigned. Next: a fresh set of brands in no list, a match-to-the-wish score, a native-speaker read, and the sealed test half once.</p>
 </main></body></html>

@@ -36,6 +36,7 @@
     "tune:results": "tsx scripts/tuning/results.ts",
     "tune:rescore": "tsx scripts/tuning/rescore.ts --md scripts/tuning/results/rescore-v3.md scripts/tuning/data/eval-base-v2.json scripts/tuning/data/eval-tuned-p6-v2.json scripts/tuning/data/eval-tuned-p8-v2.json scripts/tuning/data/eval-tuned-p8-v2b.json scripts/tuning/data/blind-eval/eval-blind-dev-base.json scripts/tuning/data/blind-eval/eval-blind-dev-p6.json scripts/tuning/data/blind-eval/eval-blind-dev-p8.json",
     "tune:charts": "tsx scripts/tuning/charts.ts",
+    "tune:pitch": "tsx scripts/tuning/pitch.ts",
     "kip:plate-check": "node scripts/kip-plate-check.mjs",
     "kip:serve": "node scripts/kip-serve.mjs",
     "kip:validation-index": "node scripts/kip-validation-index.mjs",
