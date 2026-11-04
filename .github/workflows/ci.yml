@@ -1,8 +1,12 @@
 name: ci
 
+# PAUSED for the hackathon dev loop (2026-11-04): runs only when started by
+# hand from the Actions tab. To re-enable at beta, delete workflow_dispatch
+# and uncomment push and pull_request.
 on:
-  push:
-  pull_request:
+  workflow_dispatch:
+  # push:
+  # pull_request:
 
 # Minimal trunk guard for a multi-session tree: typecheck, unit tests,
 # set validation, and the production build on every push and PR.
