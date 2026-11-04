@@ -146,6 +146,7 @@ Dan: browser and installed web app only, no store app. What is in place (2026-11
 
 ## 6. After the hackathon (not today)
 
+- **Stretch goal added (Dan, 2026-11-04): Finish it.** Turn a prototyped brick toy into a smooth, polished one with fewer constraints and more about function and looks, for the game and for printing, optimised for printing and built as one piece or as few as needed (decided the same day). It is [forge-ai-spec.md](../specs/forge-ai-spec.md) F6 (brief under "F6 pipeline", stretch item 10, open question 9) and [spec.md](spec.md) "Stretch goals"; nothing is built, and it is not part of the November 4 demo or what the write-up may claim.
 - Flip `DEFAULT_MODE` in `worker/modelBackend.ts` away from hosted and deploy without the Meta key for children; deploy our own Whisper and end the voice exception.
 - Children's privacy: [coppa-readiness-spec.md](../specs/coppa-readiness-spec.md) P0 to P2 before any child uses it; the native read of the six translated word lists.
 - Real phone pass and real-child sessions ([qa.md](qa.md) parts 5 and 6); C4 waits on them.

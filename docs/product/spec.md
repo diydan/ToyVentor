@@ -356,6 +356,14 @@ physics check.
 - **Parametric `Recipe v1` + `F3` Repair Loop:** `Muse Spark` proposes bounded
   slot parameters (`crown`, `head`, `back`, `hand`, `hood`, `roof`, `spoiler`)
   compiled by `kip_partspec_sdk.py` with up to four automated gate-repair turns.
+- **Finish it (`F6`): from a prototyped brick toy to a smooth, polished one:** the
+  snap-part build stays the prototype; Finish merges it into one polished toy with
+  fewer constraints (no studs, sockets or seams where nothing attaches) and more
+  about how it works and how it looks (blended joins, one finish, moving parts kept
+  clear), as a game mesh and a print STL from the same result. Printing comes first:
+  one piece, or as few pieces as it needs, each gated. The model picks a look
+  from a closed list; deterministic code makes and checks the geometry, and the
+  brick build is kept so Finish is undoable ([forge-ai-spec.md](../specs/forge-ai-spec.md), F6).
 
 ### ToyVentor Town Phases B-E stretch ([toyventor-town-vision.md](../specs/toyventor-town-vision.md))
 
