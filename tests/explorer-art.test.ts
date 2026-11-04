@@ -145,9 +145,6 @@ describe("winding roads", () => {
 });
 
 describe("winding roads with every secret exit open and every branch grown", () => {
-  // Every age band times every road curve point against every node, which is the
-  // second-slowest test in the suite: 1.2 s on an idle machine, about 5.7 s when the
-  // box is busy. Vitest's 5 s default is too tight for it, so it gets its own budget.
   it("still never run under a node they skip, in any age band", () => {
     const CLEAR = 0.3 * UNIT;
     const walked = new Set(FRONTIER_BRANCHES.map((b) => `frontier:${b.from}:${FRONTIER_MAX_DEPTH}`));
@@ -167,7 +164,7 @@ describe("winding roads with every secret exit open and every branch grown", () 
         }
       }
     }
-  }, 30_000);
+  });
 });
 
 describe("scenery", () => {
