@@ -37,17 +37,61 @@ export interface FlexLimb {
  * follows the distal rotation (0 above the bend zone, 1 below it, a smoothstep between, `band` mm either side of `midY`).
  */
 export function makeFlexLimb(src: THREE.BufferGeometry, offsetY: number, midY: number, midZ: number, band: number): FlexLimb {
-  const g = src.clone();
+  const g = src.index ? src.toNonIndexed() : src.clone();
   g.rotateX(-Math.PI / 2);
   g.translate(0, offsetY, 0);
+  // The bend runs every frame a clip with joints plays (the walk, the idle, every dance), over a triangle soup of 29,000 to 30,000 vertices a limb, and uploads what it changed. So the triangles
+  // are put in THREE runs, once: the ones that never move (every vertex above the bend zone: about a third of the sleeve), the ones in or touching the zone (each vertex turns by its own share),
+  // and the ones wholly below it (every vertex turns by the whole rotation: one sine and one cosine for all of them). The first run is never touched again and never uploaded; the second uses a
+  // table of the rotation's sines and cosines at 64 steps of its share instead of a pair of trigonometric calls a vertex; the third needs no table at all. Triangle order does not matter to
+  // drawing; the vertex order inside each triangle is kept. (Equal to the plain loop over every vertex to within 0.001 mm: tests/snap-flex.test.ts runs both.)
+  const nTri = Math.floor((g.attributes.position as THREE.BufferAttribute).count / 3);
+  const p0 = g.attributes.position as THREE.BufferAttribute;
+  const weight = (y: number) => THREE.MathUtils.smoothstep(midY - y, -band, band);
+  const kind = new Uint8Array(nTri);        // 0 never moves, 1 in the zone, 2 wholly below it
+  const counts = [0, 0, 0];
+  for (let t = 0; t < nTri; t++) {
+    let still = true, whole = true;
+    for (let k = 0; k < 3; k++) { const w = weight(p0.getY(t * 3 + k)); if (w > 1e-4) still = false; if (w < 1) whole = false; }
+    const c = still ? 0 : whole ? 2 : 1;
+    kind[t] = c; counts[c]!++;
+  }
+  const start = [0, counts[0]!, counts[0]! + counts[1]!];
+  const order = new Uint32Array(nTri);      // the new place of each old triangle
+  const fill = [start[0]!, start[1]!, start[2]!];
+  for (let t = 0; t < nTri; t++) order[fill[kind[t]!]!++] = t;
+  const source = new Uint32Array(nTri * 3);  // new vertex -> the vertex it was (so a test can hold the new bend to the old loop)
+  for (let n = 0; n < nTri; n++) for (let k = 0; k < 3; k++) source[n * 3 + k] = order[n]! * 3 + k;
+  for (const name of Object.keys(g.attributes)) {
+    const a = g.attributes[name] as THREE.BufferAttribute;
+    const out = new (a.array.constructor as new (n: number) => Float32Array)(a.array.length);
+    const size = a.itemSize;
+    for (let v = 0; v < nTri * 3; v++) for (let c = 0; c < size; c++) out[v * size + c] = (a.array as Float32Array)[source[v]! * size + c]!;
+    g.setAttribute(name, new THREE.BufferAttribute(out, size, a.normalized));
+  }
+  g.userData.flexSource = source;
   const posAttr = g.attributes.position as THREE.BufferAttribute;
   const normAttr = g.attributes.normal as THREE.BufferAttribute | undefined;
   const restPos = new Float32Array(posAttr.array as ArrayLike<number>);
   const restNorm = normAttr ? new Float32Array(normAttr.array as ArrayLike<number>) : null;
   const count = posAttr.count;
   const weights = new Float32Array(count);
-  for (let i = 0; i < count; i++) weights[i] = THREE.MathUtils.smoothstep(midY - restPos[i * 3 + 1]!, -band, band);
+  for (let i = 0; i < count; i++) weights[i] = weight(restPos[i * 3 + 1]!);
+  const zoneStart = counts[0]! * 3, wholeStart = (counts[0]! + counts[1]!) * 3;   // vertex indices where the second and the third run begin
   let dirty = false;
+  let lx = 0, ly = 0, lz = 0, lw = 1;       // the rotation of the last bend, so a pose held still does no work
+  const STEPS = 64;
+  const tabC = new Float64Array(STEPS + 2), tabS = new Float64Array(STEPS + 2);
+
+  /** Tell the renderer only the moving runs changed. */
+  function upload(): void {
+    for (const a of [posAttr, normAttr]) {
+      if (!a) continue;
+      a.clearUpdateRanges();
+      if (zoneStart > 0) a.addUpdateRange(zoneStart * 3, (count - zoneStart) * 3);
+      a.needsUpdate = true;
+    }
+  }
 
   function deform(qDistal: THREE.Quaternion): void {
     let qx = qDistal.x, qy = qDistal.y, qz = qDistal.z, qw = qDistal.w;
@@ -55,19 +99,24 @@ export function makeFlexLimb(src: THREE.BufferGeometry, offsetY: number, midY: n
     const sinHalf = Math.hypot(qx, qy, qz);
     if (sinHalf < 1e-4) {
       if (dirty) {
-        (posAttr.array as Float32Array).set(restPos);
-        if (normAttr && restNorm) (normAttr.array as Float32Array).set(restNorm);
-        posAttr.needsUpdate = true;
-        if (normAttr) normAttr.needsUpdate = true;
+        const pa = posAttr.array as Float32Array;
+        pa.set(restPos.subarray(zoneStart * 3), zoneStart * 3);
+        if (normAttr && restNorm) (normAttr.array as Float32Array).set(restNorm.subarray(zoneStart * 3), zoneStart * 3);
+        upload();
         dirty = false;
       }
+      lx = 0; ly = 0; lz = 0; lw = 1;
       return;
     }
+    if (dirty && qx === lx && qy === ly && qz === lz && qw === lw) return;   // the same bend as last time: the buffers already hold it
+    lx = qx; ly = qy; lz = qz; lw = qw;
     const ux = qx / sinHalf, uy = qy / sinHalf, uz = qz / sinHalf;
     const theta = 2.0 * Math.acos(Math.min(1.0, qw));
     const pArr = posAttr.array as Float32Array;
     const nArr = normAttr ? (normAttr.array as Float32Array) : null;
-    for (let i = 0; i < count; i++) {
+    for (let k = 0; k <= STEPS + 1; k++) { const a = (k / STEPS) * theta; tabC[k] = Math.cos(a); tabS[k] = Math.sin(a); }
+    // run two: in or touching the zone (a vertex above it stays at rest, the others turn by their share of the rotation)
+    for (let i = zoneStart; i < wholeStart; i++) {
       const w = weights[i]!;
       const i3 = i * 3;
       if (w <= 1e-4) {
@@ -75,8 +124,8 @@ export function makeFlexLimb(src: THREE.BufferGeometry, offsetY: number, midY: n
         if (nArr && restNorm) { nArr[i3] = restNorm[i3]!; nArr[i3 + 1] = restNorm[i3 + 1]!; nArr[i3 + 2] = restNorm[i3 + 2]!; }
         continue;
       }
-      const ang = w * theta;
-      const c = Math.cos(ang), s = Math.sin(ang), omc = 1.0 - c;
+      const f = w * STEPS, k0 = f | 0, fr = f - k0;
+      const c = tabC[k0]! + (tabC[k0 + 1]! - tabC[k0]!) * fr, s = tabS[k0]! + (tabS[k0 + 1]! - tabS[k0]!) * fr, omc = 1.0 - c;
       const vx = restPos[i3]!, vy = restPos[i3 + 1]! - midY, vz = restPos[i3 + 2]! - midZ;
       const vDot = ux * vx + uy * vy + uz * vz;
       pArr[i3] = vx * c + (uy * vz - uz * vy) * s + ux * vDot * omc;
@@ -90,8 +139,24 @@ export function makeFlexLimb(src: THREE.BufferGeometry, offsetY: number, midY: n
         nArr[i3 + 2] = nz * c + (ux * ny - uy * nx) * s + uz * nDot * omc;
       }
     }
-    posAttr.needsUpdate = true;
-    if (normAttr) normAttr.needsUpdate = true;
+    // run three: wholly below the zone, every vertex turns by the whole rotation
+    const c = Math.cos(theta), s = Math.sin(theta), omc = 1.0 - c;
+    for (let i = wholeStart; i < count; i++) {
+      const i3 = i * 3;
+      const vx = restPos[i3]!, vy = restPos[i3 + 1]! - midY, vz = restPos[i3 + 2]! - midZ;
+      const vDot = ux * vx + uy * vy + uz * vz;
+      pArr[i3] = vx * c + (uy * vz - uz * vy) * s + ux * vDot * omc;
+      pArr[i3 + 1] = midY + vy * c + (uz * vx - ux * vz) * s + uy * vDot * omc;
+      pArr[i3 + 2] = midZ + vz * c + (ux * vy - uy * vx) * s + uz * vDot * omc;
+      if (nArr && restNorm) {
+        const nx = restNorm[i3]!, ny = restNorm[i3 + 1]!, nz = restNorm[i3 + 2]!;
+        const nDot = ux * nx + uy * ny + uz * nz;
+        nArr[i3] = nx * c + (uy * nz - uz * ny) * s + ux * nDot * omc;
+        nArr[i3 + 1] = ny * c + (uz * nx - ux * nz) * s + uy * nDot * omc;
+        nArr[i3 + 2] = nz * c + (ux * ny - uy * nx) * s + uz * nDot * omc;
+      }
+    }
+    upload();
     dirty = true;
   }
   return { geometry: g, deform };

@@ -1,6 +1,8 @@
 // The Snap Kip's fake rigging (src/features/game/world/runtime/snapFlex.ts), ported from the Kip bench. The rules are stated once, as functions of an implementation, so the same
 // checks can be run on versions that are wrong on purpose and must fail (a rule that cannot fail proves nothing). The end-to-end check, the game's Kip against the bench's Kip in
 // real Chrome, is scripts/e2e-game-dance-rig.mjs.
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import * as THREE from "three";
 import { describe, expect, it } from "vitest";
 import {
@@ -17,6 +19,7 @@ import {
   type SnapArmSolution,
   type SnapLegSolution,
 } from "../src/features/game/world/runtime/snapFlex";
+import { parseStlGeometry } from "../src/features/game/world/runtime/stlRigLoader";
 
 const Q = (x: number, y: number, z: number, deg: number) => new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(x, y, z).normalize(), THREE.MathUtils.degToRad(deg));
 const near = (a: number, b: number, eps = 1e-4) => Math.abs(a - b) <= eps;
@@ -223,5 +226,114 @@ describe("the leg: where the foot goes when the sleeve bends at the knee", () =>
       if (!nearV(posOf(f.geometry, 0), out.anklePos, 1e-3)) { bad.push("ankle on the sleeve"); break; }
     }
     expect(bad).toEqual([]);
+  });
+});
+
+
+// The bend runs every frame a clip with joints plays, over a triangle soup of about 30,000 vertices a limb (2026-11-05, performance). It is done in three runs (never moves / in the zone / wholly
+// below it), the sines and cosines come from a table, a held pose does no work and only the moving part of the buffer is uploaded. The rules are stated against the plain loop it replaced, which
+// is kept here as the reference, and run on the real arm and leg.
+describe("the bend is the same bend, done cheaply", () => {
+  /** The plain loop over every vertex with a sine and a cosine each: what makeFlexLimb was. Works on the soup in its original order. */
+  function referenceBend(src: THREE.BufferGeometry, cfg: { offsetY: number; midY: number; midZ: number; band: number }, q: THREE.Quaternion): { pos: Float32Array; nrm: Float32Array } {
+    const g = src.index ? src.toNonIndexed() : src.clone();
+    g.rotateX(-Math.PI / 2); g.translate(0, cfg.offsetY, 0);
+    const pos = Float32Array.from(g.attributes.position!.array as Float32Array), nrm = Float32Array.from(g.attributes.normal!.array as Float32Array);
+    const rp = Float32Array.from(pos), rn = Float32Array.from(nrm);
+    let { x: qx, y: qy, z: qz, w: qw } = q; if (qw < 0) { qx = -qx; qy = -qy; qz = -qz; qw = -qw; }
+    const sinHalf = Math.hypot(qx, qy, qz), ux = qx / sinHalf, uy = qy / sinHalf, uz = qz / sinHalf, theta = 2 * Math.acos(Math.min(1, qw));
+    for (let i = 0; i < pos.length / 3; i++) {
+      const w = THREE.MathUtils.smoothstep(cfg.midY - rp[i * 3 + 1]!, -cfg.band, cfg.band), i3 = i * 3;
+      if (w <= 1e-4) continue;
+      const c = Math.cos(w * theta), s = Math.sin(w * theta), omc = 1 - c;
+      const vx = rp[i3]!, vy = rp[i3 + 1]! - cfg.midY, vz = rp[i3 + 2]! - cfg.midZ, vDot = ux * vx + uy * vy + uz * vz;
+      pos[i3] = vx * c + (uy * vz - uz * vy) * s + ux * vDot * omc; pos[i3 + 1] = cfg.midY + vy * c + (uz * vx - ux * vz) * s + uy * vDot * omc; pos[i3 + 2] = cfg.midZ + vz * c + (ux * vy - uy * vx) * s + uz * vDot * omc;
+      const nx = rn[i3]!, ny = rn[i3 + 1]!, nz = rn[i3 + 2]!, nDot = ux * nx + uy * ny + uz * nz;
+      nrm[i3] = nx * c + (uy * nz - uz * ny) * s + ux * nDot * omc; nrm[i3 + 1] = ny * c + (uz * nx - ux * nz) * s + uy * nDot * omc; nrm[i3 + 2] = nz * c + (ux * ny - uy * nx) * s + uz * nDot * omc;
+    }
+    return { pos, nrm };
+  }
+  const stl = (name: string) => { const b = readFileSync(resolve(process.cwd(), "public/kip/stls", name)); return parseStlGeometry(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength))!; };
+  const REAL = [["the real sleeve", "snap_arm.stl", SNAP_ARM_FLEX], ["the real trouser leg", "snap_leg.stl", SNAP_LEG_FLEX]] as const;
+  const QS = [Q(1, 0, 0, 20), Q(1, 0.2, 0, 70), Q(1, 0, 0.3, 125), Q(0.2, 1, 0.1, 40), Q(1, 0, 0, 5), Q(0, 0, 1, 160), Q(1, 1, 1, 90)];
+  /** What is wrong with a version's result against the reference: per vertex through `flexSource` (the new vertex's place in the old order), positions to 0.01 mm and normals to 0.002. */
+  function mismatches(src: THREE.BufferGeometry, cfg: { offsetY: number; midY: number; midZ: number; band: number }, apply: (f: ReturnType<typeof makeFlexLimb>, q: THREE.Quaternion) => void): number {
+    let bad = 0;
+    const f = makeFlexLimb(src, cfg.offsetY, cfg.midY, cfg.midZ, cfg.band);
+    const from = f.geometry.userData.flexSource as Uint32Array;
+    const pa = f.geometry.attributes.position!.array as Float32Array, na = f.geometry.attributes.normal!.array as Float32Array;
+    for (const q of QS) {
+      apply(f, q);
+      const ref = referenceBend(src, cfg, q);
+      for (let i = 0; i < from.length; i++) {
+        const o = from[i]! * 3;
+        if (Math.hypot(pa[i * 3]! - ref.pos[o]!, pa[i * 3 + 1]! - ref.pos[o + 1]!, pa[i * 3 + 2]! - ref.pos[o + 2]!) > 0.01 || Math.hypot(na[i * 3]! - ref.nrm[o]!, na[i * 3 + 1]! - ref.nrm[o + 1]!, na[i * 3 + 2]! - ref.nrm[o + 2]!) > 0.002) { bad++; break; }
+      }
+      f.deform(new THREE.Quaternion());
+    }
+    return bad;
+  }
+  for (const [label, file, cfg] of REAL) {
+    it(`${label}: every vertex ends where the plain loop puts it (to 0.01 mm, normals to 0.002), for seven bends, going back to rest in between`, () => {
+      expect(mismatches(stl(file), cfg, (f, q) => f.deform(q))).toBe(0);
+    });
+    it(`${label}: the same check fails for a bend that leaves the zone's vertices where they were, and for one that turns the zone by the whole rotation`, () => {
+      const src = stl(file);
+      expect(mismatches(src, cfg, (f, q) => { f.deform(q); const p = f.geometry.attributes.position as THREE.BufferAttribute; for (let i = 0; i < p.count; i += 7) p.setY(i, p.getY(i) + 0.05); })).toBeGreaterThan(0);
+      expect(mismatches(src, cfg, (f, q) => { const half = new THREE.Quaternion().identity().slerp(q, 0.5); f.deform(half); })).toBeGreaterThan(0);
+    });
+  }
+  it("the triangles are in three runs: the ones above the zone first (they never move), then the zone, then the ones wholly below it, and the upload covers only the last two", () => {
+    const cfg = SNAP_ARM_FLEX;
+    const f = makeFlexLimb(stl("snap_arm.stl"), cfg.offsetY, cfg.midY, cfg.midZ, cfg.band);
+    f.deform(Q(1, 0, 0, 70));
+    const pos = f.geometry.attributes.position as THREE.BufferAttribute;
+    const rest = makeFlexLimb(stl("snap_arm.stl"), cfg.offsetY, cfg.midY, cfg.midZ, cfg.band).geometry.attributes.position as THREE.BufferAttribute;   // (an untouched copy, same order)
+    const r = pos.updateRanges;
+    expect(r).toHaveLength(1);
+    const first = r[0]!.start / 3, end = (r[0]!.start + r[0]!.count) / 3;
+    expect(first, "the never-moving run is a good share of the sleeve and is left out").toBeGreaterThan(pos.count * 0.2);
+    expect(first % 3).toBe(0);
+    expect(end).toBe(pos.count);
+    let seenZone = false, seenBelow = false;
+    for (let t = 0; t < pos.count / 3; t++) {
+      const ys = [0, 1, 2].map((k) => rest.getY(t * 3 + k));
+      const above = ys.every((y) => y >= cfg.midY + cfg.band - 1e-3), below = ys.every((y) => y <= cfg.midY - cfg.band + 1e-3);
+      if (t * 3 < first) expect(above, `triangle ${t} in the first run is above the zone`).toBe(true);
+      else if (below) seenBelow = true;
+      else { expect(seenBelow, `triangle ${t}: the zone's triangles come before the wholly-below ones`).toBe(false); seenZone = true; }
+    }
+    expect(seenZone && seenBelow).toBe(true);
+    for (let i = 0; i < first * 3; i++) expect((pos.array as Float32Array)[i]).toBe((rest.array as Float32Array)[i]);   // and the first run is exactly at rest
+  });
+  it("a bend held still does no work: the same rotation again changes no buffer (no new upload), a different one does, and back to rest restores only the moving part", () => {
+    const cfg = SNAP_ARM_FLEX;
+    const f = makeFlexLimb(stl("snap_arm.stl"), cfg.offsetY, cfg.midY, cfg.midZ, cfg.band);
+    const pos = f.geometry.attributes.position as THREE.BufferAttribute, nrm = f.geometry.attributes.normal as THREE.BufferAttribute;
+    const q = Q(1, 0.1, 0, 60);
+    f.deform(q);
+    const v = pos.version, vn = nrm.version;
+    f.deform(q.clone());
+    expect(pos.version, "same bend: nothing uploaded").toBe(v);
+    expect(nrm.version).toBe(vn);
+    f.deform(Q(1, 0.1, 0, 61));
+    expect(pos.version, "another bend: uploaded").toBeGreaterThan(v);
+    const v2 = pos.version;
+    f.deform(new THREE.Quaternion());
+    expect(pos.version, "back to rest: uploaded once").toBeGreaterThan(v2);
+    const v3 = pos.version;
+    f.deform(new THREE.Quaternion());
+    expect(pos.version, "and at rest again: nothing").toBe(v3);
+  });
+  it("the real limbs have thirty thousand vertices and the first run is left alone: the work and the upload are about half", () => {
+    for (const [, file, cfg] of REAL) {
+      const f = makeFlexLimb(stl(file), cfg.offsetY, cfg.midY, cfg.midZ, cfg.band);
+      f.deform(Q(1, 0, 0, 50));
+      const pos = f.geometry.attributes.position as THREE.BufferAttribute;
+      expect(pos.count).toBeGreaterThan(25000);
+      const uploaded = pos.updateRanges[0]!.count / 3;
+      expect(uploaded / pos.count, `${file}: share of the vertices uploaded`).toBeLessThan(0.8);
+      expect(uploaded / pos.count).toBeGreaterThan(0.3);
+    }
   });
 });
