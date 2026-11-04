@@ -1,0 +1,9 @@
+{
+  "name": "toyventor-forge-maker",
+  "private": true,
+  "type": "module",
+  "description": "The Make-from-words maker (scripts/forge_optimizer_daemon.py) as a Cloudflare Container behind a Worker that has no public address; the main Worker reaches it through a service binding.",
+  "dependencies": {
+    "@cloudflare/containers": "0.3.7"
+  }
+}
