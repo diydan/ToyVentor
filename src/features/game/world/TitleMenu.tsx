@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import "../../../onboarding.css";
 import { TITLE_ENTRIES, TITLE_TAGLINE, type TitleChoice } from "./titleEntries";
 
 interface TitleMenuProps {
@@ -7,6 +8,8 @@ interface TitleMenuProps {
   /** False until the world has built its scene: the entries wait, because there is nothing to start yet. */
   ready: boolean;
   onChoose: (choice: TitleChoice) => void;
+  /** Opens the new-player setup. A small link under the three entries, not a fourth entry (the entries stay Play, Build, Create). */
+  onNewPlayer?: () => void;
 }
 
 /**
@@ -14,7 +17,7 @@ interface TitleMenuProps {
  * stage, the gears turn under it (both are the world's own showcase scene), the name and the three entries sit above and below. The overlay lets touches through
  * everywhere except the buttons.
  */
-export function TitleMenu({ toyName, ready, onChoose }: TitleMenuProps) {
+export function TitleMenu({ toyName, ready, onChoose, onNewPlayer }: TitleMenuProps) {
   const playRef = useRef<HTMLButtonElement>(null);
   // the Play button takes focus as soon as it can be pressed, so a keyboard or a switch device is one key from the world
   useEffect(() => {
@@ -45,6 +48,11 @@ export function TitleMenu({ toyName, ready, onChoose }: TitleMenuProps) {
           </button>
         ))}
       </div>
+      {onNewPlayer ? (
+        <button type="button" className="tv-title-new" disabled={!ready} onClick={onNewPlayer} data-new-player>
+          New here? Set up a player with a grown-up
+        </button>
+      ) : null}
     </section>
   );
 }

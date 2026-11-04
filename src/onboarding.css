@@ -1,0 +1,104 @@
+/* The new-player setup (src/features/game/world/OnboardingSheet.tsx). A full-stage overlay over the title screen; the game is landscape-only, so every screen is built for about 844 by 390
+   (two columns where it helps, the card scrolls inside rather than the page). Tap targets are at least 56 px. Every animation stops for prefers-reduced-motion. */
+.tv-onb {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(8px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  background: rgba(5, 8, 32, 0.78);
+  color: #fff;
+  font-family: inherit;
+}
+.tv-onb-card {
+  width: min(760px, 100%);
+  max-height: 100%;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 20px 16px;
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(30, 40, 110, 0.97), rgba(14, 24, 70, 0.97));
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), inset 0 0 0 2px rgba(255, 255, 255, 0.12);
+}
+.tv-onb-h { margin: 0; font-size: 24px; line-height: 1.15; outline: none; }
+.tv-onb-p { margin: 0; font-size: 17px; line-height: 1.35; }
+.tv-onb-note { margin: 0; font-size: 14px; opacity: 0.8; }
+.tv-onb-err { margin: 0; padding: 8px 12px; border-radius: 12px; background: rgba(255, 90, 77, 0.22); font-size: 15px; font-weight: 700; }
+.tv-onb-big { display: flex; flex-wrap: wrap; gap: 12px; }
+.tv-onb-big .tv-ctl { flex: 1 1 220px; min-height: 64px; font-size: 18px; }
+.tv-onb-nav { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; }
+.tv-onb-nav .tv-ctl { min-height: 56px; min-width: 96px; }
+.tv-onb-input { width: 100%; min-height: 56px; padding: 0 14px; border-radius: 14px; border: 3px solid rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.1); color: #fff; font: inherit; font-size: 20px; }
+.tv-onb-input:focus { outline: none; border-color: #ffd24d; }
+.tv-onb-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.tv-onb-field { display: flex; flex-direction: column; gap: 6px; font-size: 15px; font-weight: 700; }
+
+.tv-onb-row { display: flex; align-items: center; gap: 10px; }
+.tv-onb-rowlabel { flex: 0 0 150px; font-size: 15px; }
+.tv-onb-tiles { display: flex; flex-wrap: wrap; gap: 8px; }
+.tv-onb-tile {
+  width: 56px; height: 56px; padding: 0; border-radius: 16px; border: 3px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.1); color: #fff; font-size: 28px; line-height: 1; cursor: pointer;
+}
+.tv-onb-swatch { font-size: 24px; font-weight: 900; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6); }
+.tv-onb-tile[aria-pressed="true"] { border-color: #ffd24d; box-shadow: 0 0 0 3px rgba(255, 210, 77, 0.45); transform: scale(1.06); }
+
+/* the pile of bricks that builds Kip */
+.tv-onb-buildrow { display: flex; gap: 18px; align-items: center; }
+.tv-onb-pile { position: relative; flex: 0 0 190px; height: 232px; }
+.tv-onb-brick {
+  position: absolute; left: 0; top: 0; display: block; border-radius: 6px;
+  box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.22), inset 0 3px 0 rgba(255, 255, 255, 0.25), 0 2px 5px rgba(0, 0, 0, 0.35);
+  transition: transform 720ms cubic-bezier(0.2, 0.9, 0.3, 1.25), opacity 500ms ease;
+}
+.tv-onb-brick.is-round { border-radius: 14px; }
+.tv-onb-spare { z-index: 0; }
+.tv-onb-face { position: absolute; left: 0; top: 0; width: 60px; height: 52px; z-index: 6; transition: opacity 400ms ease 1.5s; pointer-events: none; }
+.tv-onb-face i { position: absolute; top: 20px; width: 7px; height: 9px; border-radius: 50%; background: #2a1a12; }
+.tv-onb-face i:first-child { left: 15px; }
+.tv-onb-face i:nth-child(2) { right: 15px; }
+.tv-onb-face b { position: absolute; left: 21px; top: 36px; width: 18px; height: 8px; border-bottom: 3px solid #2a1a12; border-radius: 0 0 14px 14px; }
+.tv-onb-buildtext { flex: 1; display: flex; flex-direction: column; gap: 12px; }
+.tv-onb-buildbtn { min-height: 72px; font-size: 22px; }
+
+/* the intro: the world shows behind (the dancing Kip), the card is a small panel at the bottom, confetti falls over everything */
+/* on the RIGHT: the landscape HUD puts every card on the left and Kip stands there, so the tour must not cover him or the song card */
+.tv-onb-intro { background: linear-gradient(180deg, rgba(5, 8, 32, 0) 30%, rgba(5, 8, 32, 0.45) 100%); align-items: flex-end; justify-content: flex-end; pointer-events: none; }
+.tv-onb-intro .tv-onb-card { width: min(450px, 54%); pointer-events: auto; margin-bottom: 4px; }
+.tv-onb-tour { display: flex; flex-direction: column; gap: 8px; }
+.tv-onb-slide { display: flex; flex-direction: column; gap: 6px; animation: tv-onb-in 380ms cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+.tv-onb-icon { font-size: 40px; line-height: 1; }
+.tv-onb-song { margin: 0; padding: 6px 10px; border-radius: 12px; background: rgba(255, 210, 77, 0.2); font-size: 15px; font-weight: 700; }
+.tv-onb-dots { display: flex; gap: 6px; justify-content: center; }
+.tv-onb-dots i { width: 9px; height: 9px; border-radius: 50%; background: rgba(255, 255, 255, 0.3); }
+.tv-onb-dots i.on { background: #ffd24d; }
+.tv-onb-confetti { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 2; }
+.tv-onb-confetti i { position: absolute; top: -20px; display: block; border-radius: 2px; opacity: 0.95; animation-name: tv-onb-fall; animation-timing-function: linear; animation-iteration-count: 3; animation-fill-mode: both; }
+@keyframes tv-onb-fall { from { transform: translate3d(0, 0, 0) rotate(0deg); } to { transform: translate3d(var(--dx, 0), 120vh, 0) rotate(var(--spin, 360deg)); } }
+@keyframes tv-onb-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+@media (max-height: 420px) {
+  .tv-onb-card { padding: 10px 16px 12px; gap: 8px; }
+  .tv-onb-h { font-size: 21px; }
+  .tv-onb-p { font-size: 15px; }
+  .tv-onb-tile { width: 50px; height: 50px; font-size: 25px; }
+  .tv-onb-pile { transform: scale(0.85); transform-origin: top left; flex-basis: 165px; height: 200px; }
+}
+@media (max-width: 560px) { .tv-onb-fields { grid-template-columns: 1fr; } .tv-onb-rowlabel { flex-basis: 100%; } .tv-onb-row { flex-wrap: wrap; } }
+@media (prefers-reduced-motion: reduce) {
+  .tv-onb-brick, .tv-onb-face { transition: none; }
+  .tv-onb-slide { animation: none; }
+  .tv-onb-confetti { display: none; }
+}
+
+/* the small link under the title screen's three entries */
+.tv-title-new {
+  pointer-events: auto; align-self: center; min-height: 48px; padding: 0 18px; border-radius: 24px; border: 2px solid rgba(255, 255, 255, 0.35);
+  background: rgba(14, 24, 70, 0.55); color: #fff; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer;
+}
+.tv-title-new:disabled { opacity: 0.5; cursor: default; }
+.tv-onb-intro { padding-bottom: 80px; }

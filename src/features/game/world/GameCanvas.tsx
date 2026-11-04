@@ -133,6 +133,7 @@ import { ToyMiniIcon } from "./ToyMiniIcon";
 import { ScavengerCamera } from "./ScavengerCamera";
 import { SCAVENGER_QUESTS, type ScavengerQuest } from "../../../lib/scavenger";
 import { TitleMenu } from "./TitleMenu";
+import { OnboardingSheet } from "./OnboardingSheet";
 import { shouldShowTitle, type TitleChoice } from "./titleEntries";
 
 /** Every part any drop ever loans, so a part from a past weekend is taken back on Monday. */
@@ -224,6 +225,8 @@ export function GameCanvas({
   );
   const [moodsOpen, setMoodsOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
+  // The new-player setup (OnboardingSheet.tsx, docs/specs/accounts-and-new-user-spec.md): opt-in, from the title screen, the Grown-Ups sheet, or ?onboarding=1.
+  const [onboardOpen, setOnboardOpen] = useState(() => { try { return /[?&]onboarding=1(&|$)/.test(window.location.search); } catch { return false; } });
   const propLang = usePropLang();
   const [liveStatus, setLiveStatus] = useState<LivePlayStatus>({
     playing: false,
@@ -931,6 +934,17 @@ export function GameCanvas({
     [closeReactOverlays, openBuildSheet],
   );
 
+  const openOnboarding = useCallback(() => {
+    closeReactOverlays();
+    setGrownUpsOpen(false);
+    setOnboardOpen(true);
+  }, [closeReactOverlays]);
+  /** The intro begins: leave the title screen so the world, and Kip dancing to his song, show behind it. */
+  const onboardIntroStart = useCallback(() => { if (titleOpen) chooseTitle("play"); }, [titleOpen, chooseTitle]);
+  /** The favourite colour becomes Kip's shirt. */
+  const onboardPaint = useCallback((hex: string) => { const e = engineRef.current; e?.setPaintZone("c1"); e?.setPaint(hex); }, []);
+  const onboardSong = useCallback((idea: string) => startFromSheet(() => void getSong().flow.start(idea, "prompt")), [startFromSheet, getSong]);
+
   const handleCloseBuild = useCallback(() => {
     engine()?.closeCustomizer();
     if (placements.length > 0) {
@@ -1586,7 +1600,8 @@ export function GameCanvas({
 
       <div className="tv-stage">
         <div ref={stageHostRef} className="tv-stage-canvas-host" />
-        {titleOpen && <TitleMenu toyName={label} ready={state.ready} onChoose={chooseTitle} />}
+        {titleOpen && <TitleMenu toyName={label} ready={state.ready} onChoose={chooseTitle} onNewPlayer={openOnboarding} />}
+        {onboardOpen && <OnboardingSheet onClose={() => setOnboardOpen(false)} onPaint={onboardPaint} onIntroStart={onboardIntroStart} onSong={onboardSong} song={songFlow} />}
         {!sleepActive &&
           (demoMode ? (
             <div className="tv-worlds" role="tablist" aria-label="Worlds">
@@ -2161,6 +2176,7 @@ export function GameCanvas({
             setProgression(next);
             void pushProgression(next);
           }}
+          onNewPlayer={openOnboarding}
           onOpenMap={() => {
             setGrownUpsOpen(false);
             closeEngineSheets();

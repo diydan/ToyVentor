@@ -4805,6 +4805,78 @@ button.tv-badge-pill:hover {
   color: var(--ink-muted);
 }
 
+/* The grown-up gate's maths answer: a big question, a big answer box, the PIN pad's keys (src/features/game/world/GateMathPad.tsx) */
+.tv-math {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  outline: none;
+}
+.tv-math-q {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.15;
+  color: var(--ink);
+  text-align: center;
+}
+.tv-math-answer {
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  border: 3px solid var(--sky-500);
+  background: rgb(var(--night-rgb) / 0.95);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+.tv-math-hint {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--ink-muted);
+}
+.tv-math-go {
+  margin: 0;
+  min-height: 52px;
+  font-size: 18px;
+}
+/* A phone held sideways has about 390 px of height: question, answer and Continue on the left, the number pad beside them on the right, so nothing needs scrolling */
+@media (orientation: landscape) and (max-height: 520px) {
+  .tv-parent-gate-card-math {
+    width: min(660px, 100%);
+    padding: 12px 14px;
+    gap: 6px;
+  }
+  .tv-math {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      "q pad"
+      "answer pad"
+      "go pad"
+      "err pad";
+    grid-template-rows: auto auto auto 1fr;
+    column-gap: 14px;
+    row-gap: 8px;
+    align-items: start;
+  }
+  .tv-math-q { grid-area: q; font-size: 22px; text-align: left; }
+  .tv-math-answer { grid-area: answer; min-height: 56px; font-size: 34px; }
+  .tv-math .tv-pin-pad { grid-area: pad; gap: 6px; }
+  .tv-math .tv-pin-key { min-height: 46px; }
+  .tv-math-go { grid-area: go; min-height: 48px; }
+  .tv-math > p[role="alert"] { grid-area: err; }
+}
+.tv-math:focus-visible .tv-math-answer {
+  box-shadow: 0 0 0 3px rgba(82, 183, 255, 0.35);
+}
+
 .tv-pin-foot {
   display: flex;
   justify-content: center;
@@ -4846,7 +4918,7 @@ button.tv-badge-pill:hover {
   display: none;
 }
 
-.tv-host--titled .tv-stage > :not(.tv-stage-canvas-host):not(.tv-title) {
+.tv-host--titled .tv-stage > :not(.tv-stage-canvas-host):not(.tv-title):not(.tv-onb) {
   display: none;
 }
 

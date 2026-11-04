@@ -114,7 +114,7 @@ describe("the wiring", () => {
     const page = read("src/features/game/world/GameCanvas.tsx");
     expect(page).toContain("{ contract: contractRef.current, title: wantTitleRef.current }");
     expect(page).toContain("shouldShowTitle(typeof window === \"undefined\" ? \"\" : window.location.search)");
-    expect(page).toMatch(/\{titleOpen && <TitleMenu toyName=\{label\} ready=\{state\.ready\} onChoose=\{chooseTitle\} \/>\}/);
+    expect(page).toMatch(/\{titleOpen && <TitleMenu toyName=\{label\} ready=\{state\.ready\} onChoose=\{chooseTitle\} onNewPlayer=\{openOnboarding\} \/>\}/); // the small new-player link (tests/onboarding-wiring.test.ts)
     expect(page.indexOf('<div ref={stageHostRef} className="tv-stage-canvas-host" />')).toBeLessThan(page.indexOf("<TitleMenu"));
     expect(page).toContain('titleOpen ? " tv-host--titled" : ""');
     const choose = page.slice(page.indexOf("const chooseTitle = useCallback("), page.indexOf("[closeReactOverlays, openBuildSheet]"));
@@ -130,7 +130,7 @@ describe("the wiring", () => {
   it("the styles hide the dock and the other stage overlays while the menu is up, and let touches through everywhere but its buttons", () => {
     const css = read("src/index.css");
     expect(css).toMatch(/\.tv-host--titled \.tv-dock \{\s*display: none;/);
-    expect(css).toMatch(/\.tv-host--titled \.tv-stage > :not\(\.tv-stage-canvas-host\):not\(\.tv-title\) \{\s*display: none;/);
+    expect(css).toMatch(/\.tv-host--titled \.tv-stage > :not\(\.tv-stage-canvas-host\):not\(\.tv-title\):not\(\.tv-onb\) \{\s*display: none;/); // the new-player sheet is the one other overlay allowed over the menu
     expect(css).toMatch(/\.tv-host--titled \.tv-stage-canvas-host #tray \{\s*display: none;/); // the ability buttons are in the canvas host's #tray
     expect(css).toMatch(/\.tv-title \{[^}]*pointer-events: none;/);
     expect(css).toMatch(/\.tv-title-btns \{[^}]*pointer-events: auto;/);

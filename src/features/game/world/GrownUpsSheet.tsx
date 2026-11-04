@@ -66,6 +66,8 @@ export interface GrownUpsSheetProps {
   onSetAgeBand?: (band: number | null) => void;
   /** Open the Map carousel (Levels row). */
   onOpenMap?: () => void;
+  /** Open the new-player setup (names, favourites, a pile of bricks that builds Kip, a theme song and a quick tour). */
+  onNewPlayer?: () => void;
   /** The map's look: follow the time of day, or pin day or night (device setting). */
   timeOfDayMode?: TimeOfDayMode;
   onSetTimeOfDayMode?: (mode: TimeOfDayMode) => void;
@@ -135,6 +137,7 @@ export function GrownUpsSheet({
   onToggleSandbox,
   onSetAgeBand,
   onOpenMap,
+  onNewPlayer,
   timeOfDayMode,
   onSetTimeOfDayMode,
   onToggleChore,
@@ -1463,6 +1466,20 @@ export function GrownUpsSheet({
             </div>
           </details>
 
+          {onNewPlayer && (
+            <details className="tv-disclosure">
+              <summary>
+                <span>New player</span>
+                <span className="tv-disclosure-meta">names, favourites, a song</span>
+              </summary>
+              <div className="tv-parent-adv">
+                <p>Set up a new player with their name, their favourite colour, fruit and animal, a pile of bricks that builds their Kip, and a theme song. Anyone under 13 is set up by a grown-up. Names stay on this device.</p>
+                <button type="button" className="tv-ctl tv-ctl-primary" onClick={onNewPlayer} data-new-player>
+                  Set up a new player
+                </button>
+              </div>
+            </details>
+          )}
           {/* Showcase & developer: Demo Mode and its tools. Closed unless Demo Mode is on, so a parent never meets it. */}
           <details className="tv-disclosure" open={demoMode}>
             <summary>

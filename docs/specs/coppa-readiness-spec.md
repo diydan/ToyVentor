@@ -43,6 +43,8 @@ The grown-up check in the Grown-Ups sheet is **not** consent. A hold plus a math
 
 **D4. Account model.** `toyventor-town-vision.md` says "no child accounts: a grown-up's account holds the saves". Decide before the notice is written, because the notice describes it.
 
+*Now proposed in `docs/specs/accounts-and-new-user-spec.md` (2026-11-04): grown-up accounts only, children as profiles with no email or login, a parent sets up anyone under 13, phase 0 on-device only. Still Dan's decision; section 5 of that spec lists what a compliance owner has to review.*
+
 ## 3. Phases
 
 **P0. Before any child uses a deployed build (about a day, mostly switches).**

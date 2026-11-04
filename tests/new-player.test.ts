@@ -1,0 +1,127 @@
+// The new-player setup, phase 0 (src/lib/newPlayer.ts): names, the closed favourite lists, who needs a grown-up, the profile on the device, the song idea, the intro, the confetti.
+import { describe, expect, it } from "vitest";
+import {
+  FAVOURITE_ANIMALS, FAVOURITE_COLOURS, FAVOURITE_FRUITS, NAME_MAX, PROFILE_KEY, buildProfile, cleanName, clearProfile, confetti, grownUpQuestion, introSlides, readProfile, saveProfile,
+  songIdea, stepsFor, type Draft, type Store,
+} from "../src/lib/newPlayer";
+import { PAINTS } from "../src/features/game/world/runtime/catalog";
+
+const mem = (): Store & { data: Record<string, string> } => {
+  const data: Record<string, string> = {};
+  return { data, getItem: (k) => (k in data ? data[k]! : null), setItem: (k, v) => { data[k] = v; }, removeItem: (k) => { delete data[k]; } };
+};
+const draft = (over: Partial<Draft> = {}): Draft => ({ under13: true, kidName: "Mia", parentName: "Sam", favourites: { colour: "blue", fruit: "apple", animal: "elephant" }, songConsent: true, ...over });
+
+describe("names", () => {
+  it("accepts a first name or nickname in any language, with a space, hyphen or apostrophe between letters", () => {
+    for (const n of ["Mia", "Zoë", "Åsa", "Jean-Luc", "O'Neil", "Mary Ann", "Chloé", "李雷", "Ömer"]) expect(cleanName(n), n).toEqual({ ok: true, name: n });
+  });
+  it("trims and collapses spaces", () => { expect(cleanName("  Mary   Ann ")).toEqual({ ok: true, name: "Mary Ann" }); });
+  it("refuses what could carry contact details, a link or a number: digits, @, :, /, symbols, emoji", () => {
+    for (const n of ["Mia2", "mia@x.com", "http://x", "a/b", "Mia!", "Mia 😀", "555-1234", "-Mia", "Mia-", "Mia--Lee", "'"]) expect(cleanName(n), n).toEqual({ ok: false, problem: "characters" });
+  });
+  it("says empty and too long", () => {
+    for (const n of ["", "   ", undefined, null, 5]) expect(cleanName(n), String(n)).toEqual({ ok: false, problem: "empty" });
+    expect(cleanName("a".repeat(NAME_MAX))).toMatchObject({ ok: true });
+    expect(cleanName("a".repeat(NAME_MAX + 1))).toEqual({ ok: false, problem: "too-long" });
+  });
+});
+
+describe("the closed lists", () => {
+  it("have unique ids and labels and an icon each", () => {
+    for (const list of [FAVOURITE_COLOURS, FAVOURITE_FRUITS, FAVOURITE_ANIMALS]) {
+      expect(new Set(list.map((c) => c.id)).size).toBe(list.length);
+      expect(new Set(list.map((c) => c.label)).size).toBe(list.length);
+      for (const c of list) expect(c.icon.length).toBeGreaterThan(0);
+    }
+    expect(FAVOURITE_COLOURS.length).toBeGreaterThanOrEqual(6);
+  });
+  it("the colours start with the game's own paint swatches, in order, so the shirt takes exactly that colour", () => {
+    expect(FAVOURITE_COLOURS.slice(0, PAINTS.length).map((c) => c.hex)).toEqual([...PAINTS]);
+    for (const c of FAVOURITE_COLOURS) expect(c.hex).toMatch(/^#[0-9a-f]{6}$/);
+  });
+});
+
+describe("who needs a grown-up", () => {
+  it("under 13 goes through the grown-up check and names the parent; 13 and over skips only the check", () => {
+    expect(stepsFor(true)).toEqual(["who", "grownup", "names", "favourites", "song", "build", "intro"]);
+    expect(stepsFor(false)).toEqual(["who", "names", "favourites", "song", "build", "intro"]);
+  });
+  it("the grown-up question is a small multiplication with the right answer, and survives a bad random draw", () => {
+    for (const r of [0, 0.5, 0.999999, Number.NaN, 7, -3]) { const q = grownUpQuestion(() => r); expect(q.answer).toBe(q.a * q.b); expect(q.a).toBeGreaterThanOrEqual(6); expect(q.a).toBeLessThanOrEqual(9); }
+  });
+});
+
+describe("the profile", () => {
+  it("is built from a good draft and holds nothing else", () => {
+    const r = buildProfile(draft(), "2026-11-04T22:00:00.000Z");
+    expect(r).toEqual({ ok: true, profile: { version: 1, kidName: "Mia", parentName: "Sam", under13: true, favourites: { colour: "blue", fruit: "apple", animal: "elephant" }, songConsent: true, createdAt: "2026-11-04T22:00:00.000Z" } });
+  });
+  it("an under-13 setup needs the parent's name; a 13-and-over setup does not", () => {
+    expect(buildProfile(draft({ parentName: "" }), "")).toEqual({ ok: false, problem: "parent name: empty" });
+    expect(buildProfile(draft({ under13: false, parentName: "" }), "")).toMatchObject({ ok: true, profile: { parentName: "", under13: false } });
+  });
+  it("names the first thing that is wrong", () => {
+    expect(buildProfile(draft({ kidName: "M1a" }), "")).toEqual({ ok: false, problem: "kid name: characters" });
+    expect(buildProfile(draft({ favourites: { fruit: "apple", animal: "dog" } }), "")).toEqual({ ok: false, problem: "favourite colour" });
+    expect(buildProfile(draft({ favourites: { colour: "blue", fruit: "kale", animal: "dog" } }), "")).toEqual({ ok: false, problem: "favourite fruit" });
+    expect(buildProfile(draft({ favourites: { colour: "blue", fruit: "apple", animal: "ogre" } }), "")).toEqual({ ok: false, problem: "favourite animal" });
+  });
+  it("consent is only ever an explicit true", () => {
+    expect(buildProfile(draft({ songConsent: "yes" as unknown as boolean }), "")).toMatchObject({ profile: { songConsent: false } });
+  });
+  it("saves, reads back, and forgets; a missing, hand-edited or old value reads as no profile", () => {
+    const s = mem();
+    expect(readProfile(s)).toBeNull();
+    const p = (buildProfile(draft(), "t") as { profile: ReturnType<typeof readProfile> & object }).profile;
+    expect(saveProfile(s, p)).toBe(true);
+    expect(readProfile(s)).toEqual(p);
+    s.data[PROFILE_KEY] = JSON.stringify({ ...p, kidName: "x@y.com" }); expect(readProfile(s)).toBeNull();
+    s.data[PROFILE_KEY] = JSON.stringify({ ...p, version: 0 }); expect(readProfile(s)).toBeNull();
+    s.data[PROFILE_KEY] = "{not json"; expect(readProfile(s)).toBeNull();
+    saveProfile(s, p); clearProfile(s); expect(readProfile(s)).toBeNull();
+    expect(saveProfile(null, p)).toBe(false);
+    expect(readProfile(null)).toBeNull();
+  });
+});
+
+describe("the song idea", () => {
+  const profile = (consent: boolean) => (buildProfile(draft({ songConsent: consent }), "t") as { profile: Parameters<typeof songIdea>[0] }).profile;
+  it("is one sentence made only from the first name and three picks from the lists", () => {
+    expect(songIdea(profile(true))).toBe("a happy welcome song for Mia, who loves the colour blue, apple and elephants, and has just built a Kip to play with");
+  });
+  it("is null without the grown-up's yes, and the parent's name never appears in it", () => {
+    expect(songIdea(profile(false))).toBeNull();
+    expect(songIdea(profile(true))).not.toContain("Sam");
+  });
+});
+
+describe("the intro", () => {
+  const slides = introSlides("Mia");
+  it("names the child, says the three tiers, the weekend challenge, STEM, printing and kits, each with the file it comes from", () => {
+    expect(slides.map((s) => s.id)).toEqual(["welcome", "benefits", "tiers", "weekly", "stem", "real"]);
+    expect(slides[0]!.title).toContain("Mia");
+    const text = (id: string) => slides.find((s) => s.id === id)!.lines.join(" ");
+    expect(text("tiers")).toMatch(/Starter.*Tinker.*Engineer/);
+    expect(text("weekly")).toMatch(/Friday, Saturday and Sunday/);
+    expect(text("stem")).toMatch(/Sprout.*Tinker.*Master/);
+    expect(text("real")).toMatch(/3D printer/);
+    for (const s of slides) { expect(s.source.length).toBeGreaterThan(0); expect(s.title.length).toBeGreaterThan(0); expect(s.lines.length).toBeGreaterThan(0); }
+  });
+  it("makes no claim the repo does not make: no standards alignment, no price, no subscription that exists", () => {
+    const all = slides.flatMap((s) => [s.title, ...s.lines]).join(" ");
+    expect(all).not.toMatch(/NGSS|standards|aligned|Common Core|\$|£|€|per month|subscribe now|buy/i);
+    expect(slides.find((s) => s.id === "real")!.lines.join(" ")).toMatch(/coming soon/i);
+  });
+});
+
+describe("confetti", () => {
+  it("is the same every time for a seed, bounded, and only in the game's colours", () => {
+    expect(confetti(40)).toEqual(confetti(40));
+    expect(confetti(40)).not.toEqual(confetti(40, 8));
+    expect(confetti(1000)).toHaveLength(120);
+    expect(confetti(-5)).toEqual([]);
+    const hexes = new Set(FAVOURITE_COLOURS.map((c) => c.hex));
+    for (const p of confetti(60)) { expect(hexes.has(p.colour)).toBe(true); expect(p.left).toBeGreaterThanOrEqual(0); expect(p.left).toBeLessThanOrEqual(100); expect(p.duration).toBeGreaterThan(2); }
+  });
+});
