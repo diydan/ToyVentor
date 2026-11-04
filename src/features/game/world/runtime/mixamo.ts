@@ -44,7 +44,17 @@ export interface BakedClip {
   joints?: ClipJoints;
   /** The bake planted the feet (the stance foot stays put in the rig): the driver may stand the lowest sole on the floor while this clip plays. */
   planted?: boolean;
+  /**
+   * Joint bends for a clip that drives the limbs by DIRECTION (the hand-built ones, proceduralClips.ts): per frame, radians. A straight Snap arm is 0.85 long to the fist, so a hand that has to
+   * touch the body (the mouth, the belly, a book against the chest) cannot be reached by direction alone; these fold the elbow or the knee, or tilt the ankle, on the bench's own flex, and the
+   * hand or foot rides the bent end. Absent for every clip that has none (and for the clips made from the bench's joint JSON, which carry all of this exactly).
+   */
+  bends?: Record<BendKey, Float32Array>;
 }
+/** The joints a direction clip can bend: elbows and knees fold (0 = straight, positive = the forearm forward / the shin back), an ankle tilts (positive = toes down). frames each. */
+export const BEND_KEYS = ["elbowL", "elbowR", "kneeL", "kneeR", "ankleL", "ankleR"] as const;
+export type BendKey = (typeof BEND_KEYS)[number];
+export type PoseBends = Record<BendKey, number>;
 /** Per-frame joint rotations (x, y, z, w; frames * 4 each), local, in the CAD frame: Hips > shoulder > elbow > wrist, Hips > hip > knee > ankle; and the hips' position in rig mm (frames * 3, absolute: standing is about (0, 61.5, 0)). */
 export interface ClipJoints {
   shoulderL: Float32Array; shoulderR: Float32Array; elbowL: Float32Array; elbowR: Float32Array; wristL: Float32Array; wristR: Float32Array;
@@ -68,6 +78,8 @@ export interface Pose {
   /** 0 to 1: how much the lowest sole is stood on the floor (a planted clip). */
   gw: number;
   j: PoseJoints;
+  /** The elbow, knee and ankle bends of a direction clip (radians); all 0 for a clip without them. */
+  bend: PoseBends;
 }
 export type PoseJoints = Record<ClipJointKey, THREE.Quaternion> & { hipsMm: THREE.Vector3 };
 function newPoseJoints(): PoseJoints {
@@ -78,6 +90,7 @@ function newPoseJoints(): PoseJoints {
 export function newPose(): Pose {
   return {
     jw: 0, gw: 0, j: newPoseJoints(),
+    bend: { elbowL: 0, elbowR: 0, kneeL: 0, kneeR: 0, ankleL: 0, ankleR: 0 },
     hips: new THREE.Vector3(),
     body: new THREE.Quaternion(),
     head: new THREE.Quaternion(),
@@ -284,6 +297,8 @@ export function sampleClip(c: BakedClip, time: number, out: Pose): void {
   sampleVec(c.armR, i0, i1, f, out.armR, true);
   sampleVec(c.legL, i0, i1, f, out.legL, true);
   sampleVec(c.legR, i0, i1, f, out.legR, true);
+  const B = c.bends;
+  for (const k of BEND_KEYS) out.bend[k] = B ? B[k][i0]! + (B[k][i1]! - B[k][i0]!) * f : 0;
   const J = c.joints;
   if (J) {
     for (const k of CLIP_JOINT_KEYS) sampleQuat(J[k], i0, i1, f, out.j[k]);
@@ -306,6 +321,7 @@ export function mixPose(into: Pose, other: Pose, w: number): void {
   into.armR.lerp(other.armR, w).normalize();
   into.legL.lerp(other.legL, w).normalize();
   into.legR.lerp(other.legR, w).normalize();
+  for (const k of BEND_KEYS) into.bend[k] += (other.bend[k] - into.bend[k]) * w;
   // the exact joint rotations, where either side has them: each side counts in proportion to how much of its own pose is exact
   const ow = other.jw, iw = into.jw;
   if (ow > 0 || iw > 0) {
@@ -416,6 +432,7 @@ export class MixamoDriver {
   private readonly sa = newSnapArmSolution();
   private readonly sl = newSnapLegSolution();
   private readonly q3 = new THREE.Quaternion();
+  private readonly qb = new THREE.Quaternion();
   private readonly qw = new THREE.Quaternion();
   private readonly qx = new THREE.Quaternion();
   private readonly v2 = new THREE.Vector3();
@@ -630,9 +647,10 @@ export class MixamoDriver {
     const sn = j.snap;
     if (!sn || !j.arms || !j.hips) return;
     const jw0 = Math.max(0, Math.min(1, p.jw));
-    if (jw0 < 0.001 && !this.snapOn) return;
+    const bending = BEND_KEYS.some((k) => Math.abs(p.bend[k]) > 1e-4);       // a direction clip with elbow, knee or ankle bends: the Snap limbs bend for it too
+    if (jw0 < 0.001 && !this.snapOn && !bending) return;
     const on = jw0 >= 0.001;
-    this.snapOn = on;
+    this.snapOn = on || bending;
     const jw = on ? jw0 : 0; // the frame the pose has faded out: put the limbs back at EXACTLY rest, not at a thousandth of the bend
     const t = this.tuning;
     const S = j.hipY / KIP_HIP_REST_MM; // stage units per rig mm
@@ -663,7 +681,9 @@ export class MixamoDriver {
       const a = armKeys[i]!;
       this.q3.identity().slerp(p.j[a[1]], jw);
       this.qw.identity().slerp(p.j[a[2]], jw);
-      solveSnapArm(p.j[a[0]], this.q3, this.qw, flex, this.sa);
+      const eb = i === 0 ? p.bend.elbowL : p.bend.elbowR;                                  // a direction clip's own elbow fold: on top of any the joints carry, on the bench's flex
+      if (eb > 1e-4) this.q3.multiply(this.qb.setFromAxisAngle(AXIS_X, -eb));
+      solveSnapArm(p.j[a[0]], this.q3, this.qw, Math.max(flex, FLEX_ASSEMBLED * Math.min(1, eb / 0.2)), this.sa);
       if (on) j.arms[i]!.quaternion.slerp(this.qx.copy(CAD_TO_STAGE).multiply(this.sa.shoulder).multiply(STAGE_TO_CAD), jw);
       const h = sn.arms[i]!;
       h.flex.deform(this.sa.flex);
@@ -677,7 +697,10 @@ export class MixamoDriver {
       const l = legKeys[i]!;
       this.q3.identity().slerp(p.j[l[1]], jw);
       this.qw.identity().slerp(p.j[l[2]], jw);
-      solveSnapLeg(p.j[l[0]], this.q3, this.qw, flex, this.sl);
+      const kb = i === 0 ? p.bend.kneeL : p.bend.kneeR, ab = i === 0 ? p.bend.ankleL : p.bend.ankleR;
+      if (kb > 1e-4) this.q3.multiply(this.qb.setFromAxisAngle(AXIS_X, kb));
+      if (Math.abs(ab) > 1e-4) this.qw.multiply(this.qb.setFromAxisAngle(AXIS_X, ab));
+      solveSnapLeg(p.j[l[0]], this.q3, this.qw, Math.max(flex, FLEX_ASSEMBLED * Math.min(1, kb / 0.2)), this.sl);
       if (on) j.hips[i]!.quaternion.slerp(this.qx.copy(CAD_TO_STAGE).multiply(this.sl.hip).multiply(STAGE_TO_CAD), jw);
       const g = sn.legs[i]!;
       g.flex.deform(this.sl.flex);

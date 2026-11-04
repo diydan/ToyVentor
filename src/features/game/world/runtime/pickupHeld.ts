@@ -11,7 +11,7 @@
 // aside (it is only taken off the arm, not forgotten); when the act lets go (and when a world switch clears the slot) it comes back. Putting it away is the child's choice: tap Kip, or
 // the chip. A vehicle has no arms, so the item waits (and comes back with the character). In memory only: no storage, no network; the card's texture is let go when it is put away.
 import { T } from "./worldScene";
-import { HELD as HELD_SPECS, type Held, type HeldItem } from "./heldItems";
+import { HELD as HELD_SPECS, followHandsMesh, placeHeldMesh, type Held, type HeldItem } from "./heldItems";
 import type * as THREE from "three";
 
 export interface PickupCutout {
@@ -100,6 +100,8 @@ export function cardSize(w: number, h: number, long = CARD_LONG, minShort = CARD
 
 /** Where the card hangs: at the hand (in the arm's own frame) for its x and y, and a fixed CARD_FRONT in front of Kip's BODY (towards the camera, in the world) for its depth. The right arm is on the camera side when Kip faces right and on the far side when he faces left (the arm sits 0.33 either side of the body), so a depth taken from the arm hid the card inside him. */
 export const CARD_HAND: readonly [number, number, number] = [0, -0.42, 0];
+/** ... and when what carries it is the FIST's grip anchor (rig.grips: its origin is the fist) rather than the arm holder, the card hangs right there. */
+export const CARD_FIST: readonly [number, number, number] = [0, 0, 0];
 export const CARD_FRONT = 0.62;
 /** The plain sticker (no cut-out) is smaller than a real cut-out: it is only a label. */
 export const STICKER_LONG = 0.75;
@@ -108,8 +110,8 @@ export const STICKER_LONG = 0.75;
  * Where the card goes in the arm's own frame: the hand's world x and y, and the world depth `bodyZ + CARD_FRONT` (see CARD_FRONT). `parentWorld` is the arm's world matrix (its rotation, scale and
  * position, whatever Kip is doing), `bodyZ` the body's world z. Writes and returns `out`.
  */
-export function cardLocalPosition(parentWorld: THREE.Matrix4, bodyZ: number, out: THREE.Vector3): THREE.Vector3 {
-  out.set(CARD_HAND[0], CARD_HAND[1], CARD_HAND[2]).applyMatrix4(parentWorld);
+export function cardLocalPosition(parentWorld: THREE.Matrix4, bodyZ: number, out: THREE.Vector3, hand: readonly [number, number, number] = CARD_HAND): THREE.Vector3 {
+  out.set(hand[0], hand[1], hand[2]).applyMatrix4(parentWorld);
   out.z = bodyZ + CARD_FRONT;
   return out.applyMatrix4(new T.Matrix4().copy(parentWorld).invert());
 }
@@ -241,7 +243,7 @@ export function createPickupHeld(opts: PickupHeldOptions) {
     parent.getWorldQuaternion(q);
     g.quaternion.copy(inv.copy(q).invert());
     model.getWorldPosition(bodyPos);
-    g.position.copy(cardLocalPosition(parent.matrixWorld, bodyPos.z, off));
+    g.position.copy(cardLocalPosition(parent.matrixWorld, bodyPos.z, off, parent.userData.grip ? CARD_FIST : CARD_HAND));
   }
 
   /** Put it on Kip if there is something to put on, an arm to put it on and nothing else in Kip's hands. True when it is on. */
@@ -258,9 +260,7 @@ export function createPickupHeld(opts: PickupHeldOptions) {
       detach();
       mounted = parents.map((p) => {
         const mesh = spec.build();
-        mesh.position.set(...spec.position);
-        mesh.rotation.set(...spec.rotation);
-        mesh.scale.setScalar(spec.scale);
+        placeHeldMesh(mesh, spec, p!);                                  // the same placement as the acts' items: in the fist (a grip) or at the end of the arm holder
         p!.add(mesh);
         return mesh;
       });
@@ -361,6 +361,7 @@ export function createPickupHeld(opts: PickupHeldOptions) {
     tick(): void {
       if (!wanted || disposed) return;
       carry(); // cheap and idempotent: puts it back on a rebuilt rig or after a vehicle turns back into a character
+      if (wanted.item && mounted) { const r = opts.rig(); if (r) followHandsMesh(mounted[0]!, HELD_SPECS[wanted.item], r.model, [r.armL, r.armR]); }   // a tool or a book keeps its handle in the hands
       const card = wanted?.card;
       if (!card || !mounted) return;
       const g = card.group;

@@ -96,12 +96,7 @@ export function createHeld() {
       if (parents.some((p) => !p)) return false;
       const meshes = parents.map((parent) => {
         const mesh = spec.build();
-        mesh.position.set(...spec.position);
-        mesh.rotation.set(...spec.rotation);
-        if (spec.at) mesh.position.sub(_at.set(...spec.at).multiplyScalar(spec.scale).applyEuler(mesh.rotation));   // the item's own grip point goes where its origin would have been
-        if (spec.parent !== "model" && !(parent as THREE.Object3D).userData.grip) mesh.position.add({ x: ARM_FIST[0], y: ARM_FIST[1], z: ARM_FIST[2] } as THREE.Vector3); // from an arm holder, not a grip: the fist is that far down it
-        mesh.rotation.set(...spec.rotation);
-        mesh.scale.setScalar(spec.scale);
+        placeHeldMesh(mesh, spec, parent!);
         parent!.add(mesh);
         return mesh;
       });
@@ -115,21 +110,34 @@ export function createHeld() {
      */
     follow(model: THREE.Object3D | null | undefined, grips: ReadonlyArray<THREE.Object3D | null | undefined> | null | undefined): void {
       if (!current || !model || !grips) return;
-      const spec = HELD[current.item];
-      const mesh = current.meshes[0]!;
-      if (!spec.hands || mesh.parent !== model) return;
-      const right = grips[1], left = grips[0];
-      if (!right) return;
-      model.updateWorldMatrix(true, false);
-      right.updateWorldMatrix(true, false);
-      right.getWorldPosition(_target);
-      if (spec.hands.both && left) { left.updateWorldMatrix(true, false); left.getWorldPosition(_other); _target.add(_other).multiplyScalar(0.5); }
-      model.worldToLocal(_target);
-      _grip.set(...spec.hands.grip).multiplyScalar(spec.scale).applyEuler(mesh.rotation);   // where the grip point is from the item's origin, in the body's frame
-      mesh.position.copy(_target).sub(_grip);
+      followHandsMesh(current.meshes[0]!, HELD[current.item], model, grips);
     },
   };
 }
 const _target = new T.Vector3(), _other = new T.Vector3(), _grip = new T.Vector3(), _at = new T.Vector3();
+
+/** Put a freshly built item where its spec says in `parent`'s frame: the spec's place and turn, its own grip point (`at`) in the fist, and (from an arm holder rather than a fist) the fist's distance down the arm. */
+export function placeHeldMesh(mesh: THREE.Object3D, spec: HeldSpec, parent: THREE.Object3D): void {
+  mesh.position.set(...spec.position);
+  mesh.rotation.set(...spec.rotation);
+  if (spec.at) mesh.position.sub(_at.set(...spec.at).multiplyScalar(spec.scale).applyEuler(mesh.rotation));   // the item's own grip point goes where its origin would have been
+  if (spec.parent !== "model" && !parent.userData.grip) mesh.position.add({ x: ARM_FIST[0], y: ARM_FIST[1], z: ARM_FIST[2] } as THREE.Vector3);     // from an arm holder, not a grip: the fist is that far down it
+  mesh.scale.setScalar(spec.scale);
+}
+
+/** A tool or the book (a spec with `hands`) hung from `model`: move it so its grip point is in the fist, or midway between the fists, keeping its tilt. True when it did. */
+export function followHandsMesh(mesh: THREE.Object3D, spec: HeldSpec, model: THREE.Object3D | null | undefined, grips: ReadonlyArray<THREE.Object3D | null | undefined> | null | undefined): boolean {
+  if (!spec.hands || !model || !grips || mesh.parent !== model) return false;
+  const right = grips[1], left = grips[0];
+  if (!right) return false;
+  model.updateWorldMatrix(true, false);
+  right.updateWorldMatrix(true, false);
+  right.getWorldPosition(_target);
+  if (spec.hands.both && left) { left.updateWorldMatrix(true, false); left.getWorldPosition(_other); _target.add(_other).multiplyScalar(0.5); }
+  model.worldToLocal(_target);
+  _grip.set(...spec.hands.grip).multiplyScalar(spec.scale).applyEuler(mesh.rotation);   // where the grip point is from the item's origin, in the body's frame
+  mesh.position.copy(_target).sub(_grip);
+  return true;
+}
 
 export type Held = ReturnType<typeof createHeld>;

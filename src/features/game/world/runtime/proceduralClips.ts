@@ -12,7 +12,7 @@
 // The driver applies only `bodyGain` (0.7) of a clip's body rotation, so a pose that must read as a true 90 degrees is authored at
 // 90 / 0.7 and its head follows the body's applied share; `gainFor` does that sum so the numbers here stay in real degrees.
 import * as THREE from "three";
-import { DEFAULT_TUNING, type BakedClip, type ClipBank } from "./mixamo";
+import { BEND_KEYS, DEFAULT_TUNING, type BakedClip, type BendKey, type ClipBank } from "./mixamo";
 
 const FPS = 30;
 type V3 = readonly [number, number, number];
@@ -27,6 +27,8 @@ export interface Key {
   armR?: V3;
   legL?: V3;
   legR?: V3;
+  /** Elbow and knee folds and ankle tilts, radians (see BakedClip.bends); like the directions, an omitted one carries the previous key's value, and 0 is straight. */
+  elbowL?: number; elbowR?: number; kneeL?: number; kneeR?: number; ankleL?: number; ankleR?: number;
 }
 
 const REST = {
@@ -58,6 +60,11 @@ export function bake(name: string, duration: number, loop: boolean, keys: Key[],
     ks.forEach((k, i) => { if (k[c]) cur = k[c]!; full[i]![c] = cur; });
   });
   const frames = Math.max(2, Math.round(duration * FPS) + 1);
+  // the bends, resolved the same way: an omitted one carries the previous key's value
+  const bendFull = ks.map(() => ({} as Record<BendKey, number>));
+  const usesBends = ks.some((k) => BEND_KEYS.some((c) => k[c] !== undefined && k[c] !== 0));
+  BEND_KEYS.forEach((c) => { let cur = 0; ks.forEach((k, i) => { if (k[c] !== undefined) cur = k[c]!; bendFull[i]![c] = cur; }); });
+  const bends = Object.fromEntries(BEND_KEYS.map((c) => [c, new Float32Array(frames)])) as Record<BendKey, Float32Array>;
   const hips = new Float32Array(frames * 3), body = new Float32Array(frames * 4), head = new Float32Array(frames * 4);
   const limbs = { armL: new Float32Array(frames * 3), armR: new Float32Array(frames * 3), legL: new Float32Array(frames * 3), legR: new Float32Array(frames * 3) };
   const lerp3 = (a: V3, b: V3, f: number): V3 => [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f];
@@ -76,8 +83,9 @@ export function bake(name: string, duration: number, loop: boolean, keys: Key[],
     if (opts.followBody) hq.premultiply(new THREE.Quaternion().identity().slerp(bq, DEFAULT_TUNING.bodyGain));
     head.set([hq.x, hq.y, hq.z, hq.w], i * 4);
     for (const c of ["armL", "armR", "legL", "legR"] as const) limbs[c].set(unit(at(c)), i * 3);
+    for (const c of BEND_KEYS) bends[c][i] = bendFull[s]![c] + (bendFull[Math.min(s + 1, full.length - 1)]![c] - bendFull[s]![c]) * f;
   }
-  return { name, duration, loop, pose: false, frames, hips, body, head, ...limbs };
+  return { name, duration, loop, pose: false, frames, hips, body, head, ...limbs, ...(usesBends ? { bends } : {}) };
 }
 
 const PI = Math.PI;
@@ -87,7 +95,12 @@ const HAND_TO_MOUTH: V3 = [-0.2, 0.5, 0.85];                                  //
  * The right hand at the mouth when EATING: from the shoulder, toward the middle of the face (inward, up, a little forward). The arm is a straight one 0.85 long to the fist and the mouth is only 0.62
  * from the shoulder, so this puts the fist in front of the mouth, level with it (the old direction went outward and far forward: the fist floated half a unit in front of the face, or over the head).
  */
-export const HAND_AT_MOUTH: V3 = [0.6, 0.4, 0.45];
+export const HAND_AT_MOUTH: V3 = [-0.72, 0.3, 0.62];
+/** ... and the elbow folded for it (radians): the upper arm points out and forward and the forearm curls back to the cheek. A straight arm reaches 0.85, the mouth is 0.6 away (`scratchpad/arm-ik.cjs`: this puts the fist about 0.05 from the corner of the mouth). */
+export const ELBOW_AT_MOUTH = 2.25;
+/** The belly pat: the upper arms down by the sides and a little back, the elbows folded (the left is the right's mirror). */
+const BELLY_ARM_R: V3 = [0.25, -0.858, -0.449];
+const BELLY_ARM_L: V3 = [-0.25, -0.858, -0.449];
 const HAND_DOWN: V3 = [-0.12, -0.95, 0.15];
 // Lying down tips the figure about its FEET, so the body would stretch away behind them. Moving the hips forward by about half a body length
 // (in hip-heights) puts the middle of the lying body where the standing figure was, which is what a bed needs.
@@ -187,10 +200,10 @@ export const PROCEDURAL_CLIPS: ClipBank = {
   // One bite: hand to mouth, three chews (the head bobs), a swallow, then a little happy hop. 1.7 s.
   eat: bake("eat", 1.7, false, [
     { t: 0 },
-    { t: 0.35, armR: HAND_AT_MOUTH, head: [0.12, 0, 0], body: [0.06, 0, 0] },
+    { t: 0.35, armR: HAND_AT_MOUTH, elbowR: ELBOW_AT_MOUTH, head: [0.12, 0, 0], body: [0.06, 0, 0] },
     { t: 0.5, head: [0.3, 0, 0] }, { t: 0.65, head: [0.1, 0, 0] },
     { t: 0.8, head: [0.3, 0, 0] }, { t: 0.95, head: [0.1, 0, 0] },
-    { t: 1.1, head: [0.3, 0, 0] }, { t: 1.25, head: [-0.12, 0, 0], armR: HAND_DOWN, body: [0, 0, 0] },
+    { t: 1.1, head: [0.3, 0, 0] }, { t: 1.25, head: [-0.12, 0, 0], armR: HAND_DOWN, elbowR: 0, body: [0, 0, 0] },
     { t: 1.4, hips: [0, 0.1, 0], head: [-0.05, 0, 0], armL: [0.45, -0.5, 0.1], armR: [-0.45, -0.5, 0.1] },
     { t: 1.7, hips: [0, 0, 0], head: [0, 0, 0], armL: REST.armL, armR: REST.armR },
   ]),
@@ -206,10 +219,11 @@ export const PROCEDURAL_CLIPS: ClipBank = {
     { t: 0 },
     // the hands are in front of the belly, level with the hips, one over the other (the arms are straight and 0.85 long, the belly only 0.6 from the shoulders: the nearest the fists can be is
     // just in front of it, so they meet at the middle instead of floating half a unit out to each side)
-    { t: 0.3, armL: [-0.48, -0.6, 0.63], armR: [0.48, -0.6, 0.63], head: [-0.15, 0, 0], body: [-0.1, 0, 0] },
-    { t: 0.5, armL: [-0.48, -0.55, 0.69], armR: [0.48, -0.55, 0.69] }, { t: 0.7, armL: [-0.48, -0.66, 0.58], armR: [0.48, -0.66, 0.58] },
-    { t: 0.9, armL: [-0.48, -0.55, 0.69], armR: [0.48, -0.55, 0.69] }, { t: 1.1, armL: [-0.48, -0.66, 0.58], armR: [0.48, -0.66, 0.58] },
-    { t: 1.6, armL: REST.armL, armR: REST.armR, head: [0, 0, 0], body: [0, 0, 0] },
+    // (with the elbows folded now: the upper arms hang by the sides, a little back, and the forearms come forward across the belly: `scratchpad/arm-ik.cjs`, fists 0.1 out from the middle, level with the hips)
+    { t: 0.3, armL: BELLY_ARM_L, armR: BELLY_ARM_R, elbowL: 1.81, elbowR: 1.81, head: [-0.15, 0, 0], body: [-0.1, 0, 0] },
+    { t: 0.5, elbowL: 1.62, elbowR: 1.62 }, { t: 0.7, elbowL: 1.86, elbowR: 1.86 },
+    { t: 0.9, elbowL: 1.62, elbowR: 1.62 }, { t: 1.1, elbowL: 1.86, elbowR: 1.86 },
+    { t: 1.6, armL: REST.armL, armR: REST.armR, elbowL: 0, elbowR: 0, head: [0, 0, 0], body: [0, 0, 0] },
   ]),
   // A big yawn: head back, arms stretch up and out, a settle. 1.8 s.
   yawn: bake("yawn", 1.8, false, [

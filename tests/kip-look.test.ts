@@ -35,7 +35,7 @@ import {
 } from "../src/features/game/world/runtime/kipLook";
 import { buildFaceDecalGeometry } from "../src/features/game/world/runtime/kipFacePlate";
 import { buildToy, clearStlRigCache, resolveStlHeroRecipe, upgradeRigWithStl, type RigSel } from "../src/features/game/world/runtime/playerRig";
-import { FIST_IN_HOLDER, KIP_HIP_MM } from "../src/features/game/world/runtime/stlRigLoader";
+import { BALL_JOINT_MM, FIST_IN_HOLDER, KIP_HIP_MM } from "../src/features/game/world/runtime/stlRigLoader";
 import { paintMat, plastic } from "../src/features/game/world/runtime/worldScene";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -312,7 +312,8 @@ describe("the rig wears it", () => {
     const skin = plastic(col.skin).color.getHexString();
     for (const arm of rig.arms) expect(colours(arm), "an arm and its hand are skin").toEqual([skin]);
     expect(colours(rig.body!), "the torso is the shirt").toEqual([paintMat(col.c1).color.getHexString()]);
-    for (const foot of rig.feet) expect(colours(foot).sort(), "the legs are the pants and the boots the demo's boot colour").toEqual([paintMat(col.c2).color.getHexString(), plastic(KIP_BOOT_HEX).color.getHexString(), plastic("#ff6b4a").color.getHexString()].filter((v, i, a2) => a2.indexOf(v) === i).sort());
+    // the legs are the pants and the boots the demo's boot colour, and the ball joint at each ankle is bare skin (it shows between the trouser hem and the boot)
+    for (const foot of rig.feet) expect(colours(foot).sort(), "the legs are the pants and the boots the demo's boot colour, the ankle ball skin").toEqual([paintMat(col.c2).color.getHexString(), plastic(KIP_BOOT_HEX).color.getHexString(), plastic("#ff6b4a").color.getHexString(), skin].filter((v, i, a2) => a2.indexOf(v) === i).sort());
     // the plate: found by its place in the head, seated at the demo's holder position and turned half a turn
     let holder: THREE.Object3D | null = null;
     rig.head!.traverse((o: THREE.Object3D) => {
@@ -376,6 +377,33 @@ describe("the rig wears it", () => {
       expect(mesh.position.y, `${kind} lowered by half its length`).toBeCloseTo(-h / 2, 6);
       expect(mesh.rotation.x, `${kind} stood up like every other part`).toBeCloseTo(-Math.PI / 2, 9);
       expect(o.rotation.z, `${kind} axis`).toBeCloseTo(kind === "shoulder" ? Math.PI / 2 : 0, 9);
+    }
+  });
+
+  it("every joint where a limb meets the body or the next part has a ball joint, so nothing hangs: a ball at each shoulder and hip (fixed to the body), each wrist (on the end of the sleeve) and each ankle (on the end of the leg) (Dan: \"connected by the ball joint for aesthetics\")", async () => {
+    const sel = stockSel().character as unknown as RigSel;
+    const col = stockCol();
+    const rig = buildToy("character", sel, col);
+    expect(await upgradeRigWithStl(rig, { type: "character", sel, col, toyId: "seed-kip", fetcher: diskFetcher })).toBe(true);
+    rig.g.updateMatrixWorld(true);
+    const found: Record<string, THREE.Mesh[]> = { shoulder: [], hip: [], wrist: [], ankle: [] };
+    rig.g.traverse((o: THREE.Object3D) => { const k = o.userData.ballJoint as string | undefined; if (k) found[k]!.push(o as THREE.Mesh); });
+    for (const k of Object.keys(BALL_JOINT_MM)) expect(found[k], k).toHaveLength(2);
+    const snap = rig.snap as { arms: Array<{ fore: THREE.Object3D }>; legs: Array<{ lower: THREE.Object3D }> };
+    for (const b of found.wrist!) expect(snap.arms.some((a) => b.parent === a.fore), "a wrist ball turns with the end of the sleeve, the hand about it").toBe(true);
+    for (const b of found.ankle!) expect(snap.legs.some((l) => b.parent === l.lower), "an ankle ball is on the end of the leg, the boot about it").toBe(true);
+    const frame = found.shoulder![0]!.parent!;
+    for (const b of [...found.shoulder!, ...found.hip!]) expect(b.parent, "fixed to the body").toBe(frame);
+    // where the bench's joints are (kip-rig.js): shoulders 18.2 out and 33.5 above the hips, hips 10.8 out; and each ball's size fits what it joins (the sleeve's cuff is 10.1 across its radius, the leg's hem 12)
+    expect(found.shoulder!.map((b) => +b.position.x.toFixed(2)).sort((a, b) => a - b)).toEqual([-18.2, 18.2]);
+    expect(found.hip!.map((b) => +b.position.x.toFixed(2)).sort((a, b) => a - b)).toEqual([-10.8, 10.8]);
+    for (const b of found.shoulder!) expect(b.position.y).toBeCloseTo(KIP_HIP_MM + 33.5, 6);
+    for (const b of found.hip!) expect(b.position.y).toBeCloseTo(KIP_HIP_MM, 6);
+    for (const [k, list] of Object.entries(found)) for (const b of list) {
+      const r = (b.geometry as THREE.SphereGeometry).parameters.radius;
+      expect(r, k).toBe(BALL_JOINT_MM[k as keyof typeof BALL_JOINT_MM]);
+      expect(r, `${k} ball is bigger than the limb end's thinnest part and no bigger than its widest`).toBeGreaterThan(6);
+      expect(r, k).toBeLessThanOrEqual(k === "wrist" ? 10.1 : k === "ankle" ? 12 : 9);
     }
   });
 

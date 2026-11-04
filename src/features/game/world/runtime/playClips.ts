@@ -1,7 +1,7 @@
 // Hand-authored clips for the outdoor things to do (docs/specs/playful-interactions-spec.md section 6): a snow angel, pouring from a watering can, picking and smelling flowers, offering a carrot,
 // eating a sandwich sitting down, and sitting on a swing. Authored exactly like proceduralClips.ts (keyframes baked into the Mixamo clip format) and added to the same driver bank, so they blend like any
 // other clip. Limbs are body-local unit vectors (rest is straight down), body and head Euler angles in radians (see proceduralClips.ts for the frame); a lying pose is authored at `gainFor`(real angle).
-import { HAND_AT_MOUTH, bake, gainFor, type Key } from "./proceduralClips";
+import { ELBOW_AT_MOUTH, HAND_AT_MOUTH, bake, gainFor, type Key } from "./proceduralClips";
 import type { BakedClip, ClipBank } from "./mixamo";
 
 type V3 = readonly [number, number, number];
@@ -68,9 +68,9 @@ for (let i = 0; i < ANGEL_SWEEPS; i++) {
 angelKeys.push({ t: ANGEL_S, armL: [0.12, -1, 0.04], armR: [-0.12, -1, 0.04], legL: [0.04, -1, 0], legR: [-0.04, -1, 0] });
 
 const biteKeys: Key[] = BITES_S.flatMap((t): Key[] => [
-  { t: t - 0.35, armR: HAND_TO_MOUTH, head: [0.1, 0, 0] },
+  { t: t - 0.35, armR: HAND_TO_MOUTH, elbowR: ELBOW_AT_MOUTH, head: [0.1, 0, 0] },
   { t: t - 0.05, head: [0.3, 0, 0] }, { t: t + 0.15, head: [0.1, 0, 0] }, { t: t + 0.35, head: [0.3, 0, 0] },
-  { t: t + 0.65, armR: [-0.3, -0.5, 0.75], head: [0.02, 0, 0] },
+  { t: t + 0.65, armR: [-0.3, -0.5, 0.75], elbowR: 0.5, head: [0.02, 0, 0] },
 ]);
 
 export const PLAY_CLIPS: ClipBank = {
@@ -94,12 +94,12 @@ export const PLAY_CLIPS: ClipBank = {
   ]),
   // Smell the bouquet: it comes up to the face, the head tips down into it, a deep sniff (the chest rises), then a happy sway. 2.3 s.
   smell: bake("smell", SMELL_S, false, [
-    { t: 0, armR: [-0.3, 0.2, 0.9] },
-    { t: 0.5, armR: [-0.15, 0.55, 0.82], head: [0.25, 0, 0], body: [0.05, 0, 0] },
+    { t: 0, armR: [-0.3, 0.2, 0.9], elbowR: 0.4 },
+    { t: 0.5, armR: HAND_AT_MOUTH, elbowR: ELBOW_AT_MOUTH - 0.2, head: [0.25, 0, 0], body: [0.05, 0, 0] },       // the bouquet at the nose: the elbow out and forward, the forearm curled up
     { t: SMELL_SNIFF_S, head: [0.32, 0, 0], body: [-0.04, 0, 0], hips: [0, 0.03, 0] },
     { t: 1.4, head: [0.2, 0, 0.1], body: [0.04, 0, 0.06], hips: [0, 0, 0] },
     { t: 1.8, head: [0.2, 0, -0.1], body: [0.04, 0, -0.06] },
-    { t: SMELL_S, armR: REST_ARM, head: [0, 0, 0], body: [0, 0, 0] },
+    { t: SMELL_S, armR: REST_ARM, elbowR: 0, head: [0, 0, 0], body: [0, 0, 0] },
   ]),
   // Offer a carrot: crouch and lean forward, the right hand out low in front (the bunny takes it at OFFER_TAKE_S), the head following the bunny, then a pleased wiggle and up again. 2.7 s.
   offer: bake("offer", OFFER_S, false, [
@@ -122,8 +122,9 @@ export const PLAY_CLIPS: ClipBank = {
   swing: bake("swing", SWING_S, false, [
     { t: 0 },
     { t: 0.5, ...SIT, armL: [0.3, 0.45, 0.4], armR: [-0.3, 0.45, 0.4], body: [-0.03, 0, 0] },
-    ...swingEndTimes(SWING_S).map(({ t, forward }): Key => ({ t, legL: forward ? [0.1, -0.12, 0.99] : [0.1, -0.6, 0.6], legR: forward ? [-0.1, -0.12, 0.99] : [-0.1, -0.6, 0.6], body: [forward ? -0.1 : 0.06, 0, 0], head: [forward ? -0.08 : 0.04, 0, 0] })),
-    { t: SWING_S, armL: REST_ARM, armR: REST_ARM, body: [0, 0, 0], head: [0, 0, 0], hips: [0, 0, 0], legL: REST_ARM, legR: REST_ARM },
+    // the legs pump with the knees: out straight at the forward end, the thighs stay forward and the shins fold back and down at the back end (a child on a swing tucks its feet under the seat)
+    ...swingEndTimes(SWING_S).map(({ t, forward }): Key => ({ t, legL: [0.1, -0.12, 0.99], legR: [-0.1, -0.12, 0.99], kneeL: forward ? 0.1 : 1.4, kneeR: forward ? 0.1 : 1.4, ankleL: forward ? 0 : -0.6, ankleR: forward ? 0 : -0.6, body: [forward ? -0.1 : 0.06, 0, 0], head: [forward ? -0.08 : 0.04, 0, 0] })),
+    { t: SWING_S, armL: REST_ARM, armR: REST_ARM, body: [0, 0, 0], head: [0, 0, 0], hips: [0, 0, 0], legL: REST_ARM, legR: REST_ARM, kneeL: 0, kneeR: 0, ankleL: 0, ankleR: 0 },
   ]),
 };
 

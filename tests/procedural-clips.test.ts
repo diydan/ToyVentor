@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { describe, expect, it } from "vitest";
 import { stockCol, stockSel } from "../src/features/game/world/runtime/catalog";
-import { DEFAULT_TUNING, MixamoDriver, sampleClip, newPose, type ClipBank } from "../src/features/game/world/runtime/mixamo";
+import { DEFAULT_TUNING, MixamoDriver, mixPose, sampleClip, newPose, type ClipBank } from "../src/features/game/world/runtime/mixamo";
 import { BLOW_PUFFS_S, HUG_SQUEEZE_S, KICK_CONTACT_S, MALLET_COUNT, MALLET_EVERY_S, MALLET_START_S, PET_STROKES_S, PROCEDURAL_ACTIONS, PROCEDURAL_CLIPS, READ_PAGES_S, STRUM_COUNT, STRUM_EVERY_S, bake, gainFor } from "../src/features/game/world/runtime/proceduralClips";
 import { buildToy } from "../src/features/game/world/runtime/playerRig";
 
@@ -78,7 +78,7 @@ describe("eat: the hand goes to the mouth and the head chews", () => {
     const p = pose(eat, 0.5);
     expect(p.armR.y).toBeGreaterThan(0.3); // up
     expect(p.armR.z).toBeGreaterThan(0.3); // forward
-    expect(p.armR.x).toBeGreaterThan(0.4); // inward, toward the middle of the face (it used to go outward and float in front of it)
+    expect(p.armR.x).toBeLessThan(-0.4);   // the upper arm points outward (the right arm's outward is -x) and the forearm curls back to the face: the elbow is folded for it (below)
     expect(p.armL.y).toBeLessThan(-0.9);
   });
   it("the head bobs three times while chewing (three distinct nods down)", () => {
@@ -356,5 +356,61 @@ describe("wiring", () => {
     const world = readFileSync(new URL("../src/features/game/world/runtime/world.ts", import.meta.url), "utf8");
     expect(world).toMatch(/from "\.\/proceduralClips"/);
     expect(world).toMatch(/new MixamoDriver\(\{\.\.\.b,\.\.\.PROCEDURAL_CLIPS(,\.\.\.PLAY_CLIPS)?\}\)/);
+  });
+});
+
+describe("elbow, knee and ankle bends in hand-built clips (Dan: \"for the ankles and elbows do this\")", () => {
+  it("a clip with no bends has none, so every clip that was not given any plays exactly as it did", () => {
+    for (const name of ["hug", "kick", "cheer", "yawn", "sour", "read", "strum", "mop", "tidy", "oops"]) {
+      const c = PROCEDURAL_CLIPS[name];
+      if (c) expect(c.bends, name).toBeUndefined();
+    }
+    const p = pose(PROCEDURAL_CLIPS.hug!, 0.8);
+    expect(Object.values(p.bend)).toEqual([0, 0, 0, 0, 0, 0]);
+  });
+  it("bake() resolves a bend like a direction: an omitted one carries the previous key's value, it eases between keys, and only the joint asked for bends", () => {
+    const c = bake("t", 1, false, [{ t: 0 }, { t: 0.5, elbowR: 2 }, { t: 0.8, kneeL: 0.6 }, { t: 1 }]);
+    expect(c.bends).toBeDefined();
+    const at = (t: number) => pose(c, t).bend;
+    expect(at(0).elbowR).toBe(0);
+    expect(at(0.5).elbowR).toBeCloseTo(2, 1);
+    expect(at(0.8).elbowR).toBeCloseTo(2, 1);               // carried through the key that did not mention it
+    expect(at(1).elbowR).toBeCloseTo(2, 1);
+    expect(at(0.25).elbowR).toBeGreaterThan(0.5);           // on its way up
+    expect(at(0.25).elbowR).toBeLessThan(1.5);
+    expect(at(0.8).kneeL).toBeCloseTo(0.6, 1);
+    expect(at(0.5).elbowL).toBe(0);
+    expect(at(0.8).ankleR).toBe(0);
+  });
+  it("the bends blend with the clip they are mixed with (a clip without bends fades them out)", () => {
+    const c = bake("t", 1, false, [{ t: 0 }, { t: 0.2, elbowR: 2 }, { t: 1, elbowR: 2 }]);
+    const a = pose(c, 0.6), b = pose(PROCEDURAL_CLIPS.hug!, 0.6);
+    const mixed = newPose(); mixed.bend.elbowR = a.bend.elbowR;
+    mixPose(mixed, b, 0.25);
+    expect(mixed.bend.elbowR).toBeCloseTo(2 * 0.75, 6);
+    mixPose(mixed, b, 1);
+    expect(mixed.bend.elbowR).toBeCloseTo(0, 6);
+  });
+  it("the eating hand is at the mouth with the elbow folded and the aim out and forward, and the bend is let go as the hand comes down", () => {
+    const eat = PROCEDURAL_CLIPS.eat!;
+    const bite = pose(eat, 0.5);
+    expect(bite.bend.elbowR).toBeGreaterThan(1.8);
+    expect(bite.armR.x).toBeLessThan(-0.4);                     // the upper arm points outward (the right arm's outward is -x)
+    expect(bite.armR.z).toBeGreaterThan(0.4);
+    expect(pose(eat, 1.5).bend.elbowR).toBeLessThan(0.3);
+    expect(pose(eat, eat.duration).bend.elbowR).toBe(0);
+    expect(pose(eat, 0.5).bend.elbowL).toBe(0);                 // the other arm stays down, straight
+  });
+  it("the belly pat folds both elbows (a mirror pair), keeps the upper arms down by the sides, and pats: the bend swings", () => {
+    const c = PROCEDURAL_CLIPS.belly_pat!;
+    for (const t of [0.4, 0.8]) {
+      const p = pose(c, t);
+      expect(p.bend.elbowL, `t=${t}`).toBeGreaterThan(1.4);
+      expect(p.bend.elbowL, `t=${t}`).toBeCloseTo(p.bend.elbowR, 6);
+      expect(p.armR.y, `t=${t}`).toBeLessThan(-0.7);
+      expect(p.armR.x, `t=${t}`).toBeCloseTo(-p.armL.x, 6);
+    }
+    expect(Math.abs(pose(c, 0.5).bend.elbowR - pose(c, 0.7).bend.elbowR)).toBeGreaterThan(0.1);
+    expect(pose(c, c.duration).bend.elbowR).toBe(0);
   });
 });

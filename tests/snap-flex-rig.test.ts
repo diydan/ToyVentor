@@ -476,3 +476,39 @@ describe("the head turns on its neck, not about its own base (Dan: \"we also nee
     expect(1 - Math.abs(n.head.quaternion.w)).toBeLessThan(1e-12);
   });
 });
+
+describe("a direction clip with an elbow bend (the hand-built clips: eat, the belly pat, the bouquet)", () => {
+  /** A one-second clip that holds the right arm pointing forward-down with the elbow folded `bend` radians (and no joint data: it drives the limbs by direction, as the hand-built ones do). */
+  function bent(bend: number): BakedClip {
+    const n = 4, c = neutral("fold", n, 1);
+    const armR = new Float32Array(n * 3); for (let i = 0; i < n; i++) armR.set([-0.1, -0.7, 0.7], i * 3);
+    const mk = (v: number) => new Float32Array(n).fill(v);
+    return { ...c, loop: false, armR, bends: { elbowL: mk(0), elbowR: mk(bend), kneeL: mk(0), kneeR: mk(0), ankleL: mk(0), ankleR: mk(0) } };
+  }
+  const handPos = (r: ReturnType<typeof makeRig>) => { r.world.updateMatrixWorld(true); return r.snap.arms[1].hand.getWorldPosition(new THREE.Vector3()); };
+  const shoulder = (r: ReturnType<typeof makeRig>) => (r.rig as unknown as { arms: THREE.Object3D[] }).arms[1]!.getWorldPosition(new THREE.Vector3());
+  function play(bend: number, seconds = 0.6) {
+    const r = makeRig();
+    const d = driver({ fold: bent(bend) });
+    d.trigger("fold" as never);
+    settle(d, r.rig as never, seconds);
+    return { r, d };
+  }
+  it("folds the sleeve and brings the hand in toward the shoulder, and a straight clip is exactly as before", () => {
+    const straight = play(0), folded = play(1.8);
+    const reach = (x: { r: ReturnType<typeof makeRig> }) => handPos(x.r).distanceTo(shoulder(x.r));
+    expect(reach(straight)).toBeGreaterThan(0.6);                                    // the straight Snap arm reaches 0.66 to the wrist (0.85 to the fist)
+    expect(reach(folded)).toBeLessThan(reach(straight) - 0.15);                      // folded, the hand is well in
+    expect(folded.r.snap.arms[1].fore.position.distanceTo(new THREE.Vector3(0, -35, 3.8))).toBeGreaterThan(5);   // the cuff swung away from the straight arm
+    expect(straight.r.snap.arms[1].fore.position.distanceTo(new THREE.Vector3(0, -35, 3.8))).toBeLessThan(1e-6);  // and with no bend it did not
+    expect(folded.r.snap.arms[0].fore.position.distanceTo(new THREE.Vector3(0, -35, 3.8))).toBeLessThan(1e-6);    // the other arm, with no bend asked for, is straight
+  });
+  it("puts the limb back exactly when the clip is over (the bend is let go, nothing is left folded)", () => {
+    const { r, d } = play(1.8, 0.6);
+    settle(d, r.rig as never, 2);                                                    // well past the one-second clip
+    for (const a of r.snap.arms) {
+      expect(a.fore.position.distanceTo(new THREE.Vector3(0, -35, 3.8))).toBeLessThan(1e-6);
+      expect(1 - Math.abs(a.fore.quaternion.dot(SNAP_CUFF_Q))).toBeLessThan(1e-9);
+    }
+  });
+});

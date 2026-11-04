@@ -830,7 +830,8 @@ describe("the swing hangs where it swings (Dan, 2026-11-04: \"swing is not align
     const total = RIDE_S - 2 * HOP_S;
     const angle = (t: number) => swingAngle(t - HOP_S, total);        // ride time t
     const c = PLAY_CLIPS.swing!;
-    const legZ = (t: number) => c.legL[Math.round(Math.min(c.duration, Math.max(0, t)) / c.duration * (c.frames - 1)) * 3 + 2]!;
+    // the legs pump with the KNEES: the thighs stay forward, and the shins fold back and down at the back end (a bend of 1.4) and are straight (0.1) at the forward end; `legZ` reads that as how straight the leg is
+    const legZ = (t: number) => 1 - (c.bends!.kneeL[Math.round(Math.min(c.duration, Math.max(0, t)) / c.duration * (c.frames - 1))]! / 1.4) * 0.6;
     const peaks: number[] = [], troughs: number[] = [];
     for (let t = HOP_S + 0.3; t < RIDE_S - HOP_S - 0.2; t += 0.01) {
       const a = angle(t), l = angle(t - 0.01), r = angle(t + 0.01);

@@ -1,7 +1,9 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import * as THREE from "three";
 import { describe, expect, it } from "vitest";
-import { HELD, createHeld } from "../src/features/game/world/runtime/heldItems";
-import { CARD_FRONT, CARD_HAND, CARD_LONG, CARD_MAX_LONG, CARD_MIN_SHORT, cardLocalPosition, cardSize, cleanLabel, createPickupHeld, heldItemFor, parsePickup, putAwayLabel } from "../src/features/game/world/runtime/pickupHeld";
+import { ARM_FIST, HELD, createHeld, placeHeldMesh } from "../src/features/game/world/runtime/heldItems";
+import { CARD_FIST, CARD_FRONT, CARD_HAND, CARD_LONG, CARD_MAX_LONG, CARD_MIN_SHORT, cardLocalPosition, cardSize, cleanLabel, createPickupHeld, heldItemFor, parsePickup, putAwayLabel } from "../src/features/game/world/runtime/pickupHeld";
 
 // What Kip picked up with the camera, shown on the game's Kip (src/features/game/world/runtime/pickupHeld.ts). The card (a canvas texture) needs a browser: it is checked by
 // scripts/e2e-game-pickup.mjs. Everything here runs in node.
@@ -118,6 +120,54 @@ describe("where the card hangs (two bugs the screenshots found: facing left it s
     a.updateMatrixWorld(true);
     const p = cardLocalPosition(a.matrixWorld, 0, new THREE.Vector3());
     expect([p.x, p.y, p.z].every(Number.isFinite)).toBe(true);
+  });
+});
+
+describe("what he picks up with the camera goes in his fist (the grip anchor), not on the middle of his arm", () => {
+  /** An arm holder with a grip anchor under it 0.85 down (as the rig has: rig.grips), or a plain holder. */
+  function holder(withGrip: boolean) {
+    const model = new THREE.Group();
+    const arm = new THREE.Group();
+    arm.position.set(0.1, 1.8, 0.33);
+    arm.rotation.set(0.4, 0, 0.3);
+    model.add(arm);
+    const grip = new THREE.Group();
+    grip.position.set(0.125, -0.845, 0.03);
+    grip.userData.grip = true;
+    arm.add(grip);
+    model.updateMatrixWorld(true);
+    return { model, arm, grip, parent: withGrip ? grip : arm };
+  }
+  it("a card hangs AT the fist when what carries it is the grip, at the old place down the arm when it is a plain arm holder, whatever the arm is doing", () => {
+    for (const tilt of [0, 0.6, -0.8]) {
+      const h = holder(true);
+      h.arm.rotation.x = tilt; h.model.updateMatrixWorld(true);
+      const fist = h.grip.getWorldPosition(new THREE.Vector3());
+      const local = cardLocalPosition(h.grip.matrixWorld, 0, new THREE.Vector3(), CARD_FIST);
+      const world = local.applyMatrix4(h.grip.matrixWorld);
+      expect(world.x, `tilt ${tilt}`).toBeCloseTo(fist.x, 6);
+      expect(world.y, `tilt ${tilt}`).toBeCloseTo(fist.y, 6);
+      expect(world.z, `tilt ${tilt}`).toBeCloseTo(CARD_FRONT, 6);
+    }
+    const plain = holder(false);
+    const old = cardLocalPosition(plain.arm.matrixWorld, 0, new THREE.Vector3());
+    const handOld = new THREE.Vector3(...CARD_HAND).applyMatrix4(plain.arm.matrixWorld);
+    expect(old.applyMatrix4(plain.arm.matrixWorld).y).toBeCloseTo(handOld.y, 6);
+    expect(CARD_FIST).toEqual([0, 0, 0]);
+  });
+  it("a 3D item he is given sits where the acts' items sit: in the fist for a grip, and the fist's distance down the arm for a plain holder", () => {
+    for (const withGrip of [true, false]) {
+      const h = holder(withGrip);
+      const spec = HELD.sandwich;
+      const mesh = spec.build();
+      placeHeldMesh(mesh, spec, h.parent);
+      const want = withGrip ? [...spec.position] : [spec.position[0] + ARM_FIST[0], spec.position[1] + ARM_FIST[1], spec.position[2] + ARM_FIST[2]];
+      expect(mesh.position.toArray(), `grip ${withGrip}`).toEqual(want);
+    }
+  });
+  it("the world gives the pick-up the grips (falling back to the arms), as it does the acts", () => {
+    const w = readFileSync(join(__dirname, "..", "src/features/game/world/runtime/world.ts"), "utf8");
+    expect(w).toContain("var PICK=createPickupHeld({held:HELD,rig:function(){return P.rig&&P.model?{model:P.model,armR:handOf(1),armL:handOf(0)}:null},");
   });
 });
 

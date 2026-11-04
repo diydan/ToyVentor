@@ -253,6 +253,20 @@ function scadMesh(
  * `big` ones go at the shoulders and hips, the small ones at the wrists and ankles. They close the joint: without them the sleeve's and the trouser leg's open ends show the hole they plug into.
  */
 export const SNAP_TURRET_LENGTH_MM = { big: 17.9, small: 14.6 } as const;
+/**
+ * A ball joint where a limb meets the body or the next part (Dan, 2026-11-04, after the turrets: "some feet and hands and shoulders just hang, we want them connected by the ball joint for
+ * aesthetics"): a sphere of the limb's own colour centred on the joint's pivot, so whatever the limb does the two parts stay joined by a ball and nothing shows a gap. Radii (mm) are
+ * measured against the limb ends: the sleeve's top is 6.2 across its radius and its cuff 10.1; the trouser leg's top 7 and its hem 12.
+ */
+export const BALL_JOINT_MM = { shoulder: 8, hip: 7.5, wrist: 9, ankle: 8.5 } as const;
+export type BallJointKind = keyof typeof BALL_JOINT_MM;
+function ballJoint(mat: THREE.Material, kind: BallJointKind): THREE.Mesh {
+  const m = new T.Mesh(new T.SphereGeometry(BALL_JOINT_MM[kind], 22, 16), mat);
+  m.castShadow = true;
+  m.receiveShadow = true;
+  m.userData.ballJoint = kind;
+  return m;
+}
 function snapTurretMesh(geo: THREE.BufferGeometry, mat: THREE.Material, axis: "x" | "y", big: boolean): THREE.Object3D {
   if (!geo.boundingBox) geo.computeBoundingBox();
   const bb = geo.boundingBox;
@@ -746,6 +760,7 @@ function applyCharacterStlRig(
     armCad.add(foreJoint);
     // The wrist turret (the bench's `snap_wri`): on the end of the bent sleeve, under the hand, which turns about it
     if (geos.snapTurret) { const wt = snapTurretMesh(geos.snapTurret, limbMat, "y", false); wt.userData.snapTurret = "wrist"; foreJoint.add(wt); }
+    { const wb = ballJoint(limbMat, "wrist"); wb.position.y = -1.5; foreJoint.add(wb); }      // the ball the hand turns on, just past the sleeve's end (so it shows in the cuff)
     const handJoint = new T.Group();
     handJoint.position.set(0, -0.5, 0);
     foreJoint.add(handJoint);
@@ -790,6 +805,16 @@ function applyCharacterStlRig(
     }
   }
 
+  // The shoulder and hip balls, fixed to the body like the turrets: the sleeve and the trouser leg turn about them.
+  for (const side of [1, -1] as const) {
+    const sb = ballJoint(limbMat, "shoulder");
+    sb.position.set(side * 18.2, KIP_HIP_MM + 33.5, 0);
+    kipFrame.add(sb);
+    const hb = ballJoint(c2Mat, "hip");
+    hb.position.set(side * 10.8, KIP_HIP_MM, 0);
+    kipFrame.add(hb);
+  }
+
   // Articulated legs + sneaker boots wired to rig.feet for vertical walk step
   const bootsSlot = rig.slots.boots ?? baseSlot;
   for (const side of [1, -1] as const) {
@@ -824,6 +849,7 @@ function applyCharacterStlRig(
     hipCad.add(lowerJoint);
     // The ankle turret (the bench's `snap_ank`): on the end of the bent leg, over the boot
     if (geos.snapTurret) { const at = snapTurretMesh(geos.snapTurret, c2Mat, "y", false); at.userData.snapTurret = "ankle"; lowerJoint.add(at); }
+    lowerJoint.add(ballJoint(limbMat, "ankle"));      // the ball the boot turns on, at the leg's end (a bare ankle between the trouser and the boot)
     const footJoint = new T.Group();
     footJoint.position.set(0, -0.4, -1.5);
     lowerJoint.add(footJoint);
