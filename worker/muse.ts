@@ -8,6 +8,7 @@
 //
 // The game falls back to its own word parser when this route answers with
 // an error, so a model hiccup never breaks Create mode for a kid.
+import { containsUnsafeTerm } from "../shared/kidSafeTerms";
 import { readCappedJson } from "./body";
 import type { MetaEnv } from "./meta";
 import { DEFAULT_TEXT_MODEL, askText, resolveBackend, resolveModel } from "./modelBackend";
@@ -42,9 +43,10 @@ export function museRateLimited(ip: string | null | undefined, now = Date.now())
   recentHits.set(ip, hits);
   return hits.length > RATE_MAX_PER_WINDOW;
 }
-/** The game gives up after 18s, so answer before that. This budget covers
- *  every attempt combined, including the reasoning-parameter retry. */
-const MODEL_TIMEOUT_MS = 13_000;
+/** The game waits 48 s for this route, so the answer has to be inside that. This budget covers every attempt combined, including the reasoning-parameter retry and the one
+ *  retry of a dropped connection. Glimmer needs a budget this size: a measured Glimmer answer took 11 to 46 s (median about 20 s), so the old 13 s was never enough for our own
+ *  model and the retry could only have turned a 500 into a timeout. The hosted model answers in a second or two and is unaffected, because a budget is a ceiling, not a wait. */
+const MODEL_TIMEOUT_MS = 45_000;
 const THEMES = ["garden", "sky", "junk", "beach", "snow", "room"];
 
 /** Kid-facing rules, applied to every request. */
@@ -84,12 +86,9 @@ export function firstJsonObject(text: string): unknown {
   }
 }
 
-/** Backstop for text a kid reads. The model prompt asks for kind, safe
- *  lines, but a prompt is not a filter: anything with a link, contact
- *  details, scary or adult terms, or the child's own words echoed back
- *  is replaced by a fixed safe line instead of shown. */
-const UNSAFE_TERMS =
-  /\b(scary|haunt\w*|horror|nightmare\w*|kill\w*|dead|death|blood\w*|gun|guns|knife|knives|weapon\w*|hate\w*|naked|nude|sexy|drug\w*|beer|wine|vodka|cigarette\w*)\b|\bwar\b/i;
+/** Backstop for text a kid reads (and for what a kid types). The model prompt asks for kind, safe lines, but a prompt is not a filter: anything with a link, contact
+ *  details, an unsafe term in any of the seven languages (shared/kidSafeTerms.ts: age-fit words and obscenities), or the child's own words echoed back is replaced
+ *  by a fixed safe line instead of shown, and a wish that carries one is refused. */
 const LINKISH = /https?:\/\/|www\.|\b[\w-]+\.(?:com|net|org|io|co|info|xyz|gg)\b/i;
 const CONTACTISH = /@|(?:\d[\s-]?){7,}/;
 
@@ -115,7 +114,7 @@ export function scrubContactDetails(text: string): string {
 
 export function kidSafeText(text: string, childSaid = ""): boolean {
   if (!text) return true;
-  if (UNSAFE_TERMS.test(text) || LINKISH.test(text) || CONTACTISH.test(text)) return false;
+  if (containsUnsafeTerm(text) || LINKISH.test(text) || CONTACTISH.test(text)) return false;
   if (childSaid.length >= 8) {
     const squished = squish(text);
     if (squished.includes(childSaid)) return false;
