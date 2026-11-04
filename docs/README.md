@@ -105,6 +105,22 @@ without a decision; **reference** = a third-party surface or a lookup table.
 | [partspec/README.md](parts/partspec/README.md) | generated | The generated readable snapshot. Edit the sources, then regenerate. |
 | [partspec/specs/](parts/partspec/specs/README.md) | generated | The numbered standards, catalog, agent instructions and design log. |
 
+The numbered PartSpec standards, in the order to read them:
+
+| # | File | What it covers |
+| --- | --- | --- |
+| 01 | [interface_standard.md](parts/partspec/specs/01_interface_standard.md) | The standard: lattice, interfaces, checks, fit and tolerance, conformance (generated from `interfaces.json`) |
+| 02 | [snap_spec.md](parts/partspec/specs/02_snap_spec.md) | The Snap line: sizes, part types, how parts connect, design and safety rules |
+| 03 | [pro_spec.md](parts/partspec/specs/03_pro_spec.md) | The Pro line: base standard, families, pin-and-bore and gear rules, fit, print rules |
+| 04 | [forge_mount_spec.md](parts/partspec/specs/04_forge_mount_spec.md) | The Forge Mount: faces, outlines, peg hole, hugging and clip-on shoes, join pins |
+| 05 | [catalog.md](parts/partspec/specs/05_catalog.md) | The part catalog and its live status (generated) |
+| 06 | [agent_instructions.md](parts/partspec/specs/06_agent_instructions.md) | Rules, commands and part list for AI agents (generated) |
+| 07 | [compliance.md](parts/partspec/specs/07_compliance.md) | The US toy-safety checklist and status |
+| 08 | [licensing.md](parts/partspec/specs/08_licensing.md) | Licences: code, designs, docs, name |
+| 09 | [third_party.md](parts/partspec/specs/09_third_party.md) | The libraries we depend on and their licences |
+| 10 | [design_log.md](parts/partspec/specs/10_design_log.md) | The dated design decisions (the independent-design record) |
+| 11 | [why_not_blockml_machineblocks.md](parts/partspec/specs/11_why_not_blockml_machineblocks.md) | Why BlockML and MachineBlocks are not used |
+
 ## UX (`ux/`)
 
 | File | Status | What it is |
