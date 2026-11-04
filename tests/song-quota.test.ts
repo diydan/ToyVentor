@@ -1,13 +1,14 @@
-// The song maker's weekly limit and monthly budget (shared/songQuota.ts; docs/specs/dance-party-spec.md 4.6, D4: 5 new songs a week per user).
+// The song maker's daily limit and monthly budget (shared/songQuota.ts; docs/specs/dance-party-spec.md 4.6, D4; Dan, 2026-11-04 evening: 10 new songs a DAY per device, it was 5 a week).
 //
-// The week-boundary check and the random-sequence invariants are functions of an implementation, and both are also run on versions broken on
-// purpose (a UTC week, a missing idempotency check, a missing budget check, a missing weekly limit): each must be caught, or the check
-// proves nothing.
+// The period is the family's own calendar day. The names `weekKey`, `usedInWeek`, `nextWeekKey` and the denial "week_used" are the old ones, kept so the D1 column, the Worker and the
+// UI did not change; here they mean the day. The day-boundary check and the random-sequence invariants are functions of an implementation, and both are also run on versions broken on
+// purpose (a UTC day, a missing idempotency check, a missing budget check, a missing daily limit): each must be caught, or the check proves nothing.
 import { describe, expect, it } from "vitest";
 import {
   REFUND_FREES_BUDGET,
   RESERVE_TTL_MS,
   MAX_SONGS_PER_CALL,
+  DAILY_SONGS,
   WEEKLY_SONGS,
   budgetSongs,
   commit,
@@ -37,9 +38,10 @@ import {
 const A = "device-aaaaaaaa";
 const B = "device-bbbbbbbb";
 const key = (n: number) => `key-${String(n).padStart(6, "0")}`;
-/** Tuesday 2026-11-03 12:00 UTC: the week of Monday 2026-11-02. */
+/** Tuesday 2026-11-03 12:00 UTC: the day "2026-11-03" (and the week of Monday 2026-11-02, which no longer matters). */
 const TUE = Date.UTC(2026, 10, 3, 12, 0, 0);
 const DAY = 86_400_000;
+const TODAY = "2026-11-03"; // the day key of TUE
 
 const cfg = (over: Partial<QuotaConfig> = {}): QuotaConfig => ({ enabled: true, songsPerCall: 1, monthlyBudget: 1000, timezone: "UTC", ...over });
 
@@ -60,57 +62,61 @@ function make(state: QuotaState, k: number, nowMs: number, deviceId = A, c: Quot
 
 const denied = (r: { result: ReserveResult }) => (r.result.ok ? "ok" : r.result.reason);
 
-// ---- the week ------------------------------------------------------------------------------------------------------------
+// ---- the day ------------------------------------------------------------------------------------------------------------
 
-describe("the week is Monday to Sunday in the family's own clock", () => {
-  /** The boundary cases as a function of the week-key implementation, so it can be run on a broken one. Returns the failures. */
-  function weekFailures(wk: (nowMs: number, tz: string) => string): string[] {
+describe("the day is the family's own calendar day", () => {
+  /** The boundary cases as a function of the day-key implementation, so it can be run on a broken one. Returns the failures. */
+  function dayFailures(dk: (nowMs: number, tz: string) => string): string[] {
     const bad: string[] = [];
     const want = (label: string, got: string, expected: string) => {
       if (got !== expected) bad.push(`${label}: ${got}, wanted ${expected}`);
     };
-    want("Tuesday, UTC", wk(TUE, "UTC"), "2026-11-02");
-    want("Monday 00:00 UTC", wk(Date.UTC(2026, 10, 2, 0, 0, 0), "UTC"), "2026-11-02");
-    want("Sunday 23:59:59 UTC", wk(Date.UTC(2026, 10, 8, 23, 59, 59), "UTC"), "2026-11-02");
-    want("Monday 00:00:00 UTC, a week on", wk(Date.UTC(2026, 10, 9, 0, 0, 0), "UTC"), "2026-11-09");
-    // Sunday 23:30 in Los Angeles (UTC-8 after the clocks went back on 1 Nov) is already Monday in UTC: still the old week locally
-    want("Sunday night, Los Angeles", wk(Date.UTC(2026, 10, 9, 7, 30, 0), "America/Los_Angeles"), "2026-11-02");
-    // Monday 00:30 in Auckland (UTC+13) is still Sunday in UTC: already the new week locally
-    want("Monday small hours, Auckland", wk(Date.UTC(2026, 10, 8, 11, 30, 0), "Pacific/Auckland"), "2026-11-09");
-    // across a new year: Friday 2027-01-01 belongs to the week that opened Monday 2026-12-28
-    want("new year", wk(Date.UTC(2027, 0, 1, 12, 0, 0), "UTC"), "2026-12-28");
-    // across a leap day: Tuesday 2028-02-29 is in the week of Monday 2028-02-28
-    want("leap day", wk(Date.UTC(2028, 1, 29, 12, 0, 0), "UTC"), "2028-02-28");
+    want("Tuesday noon, UTC", dk(TUE, "UTC"), "2026-11-03");
+    want("00:00:00 UTC is the new day", dk(Date.UTC(2026, 10, 3, 0, 0, 0), "UTC"), "2026-11-03");
+    want("23:59:59 UTC is still the day", dk(Date.UTC(2026, 10, 3, 23, 59, 59), "UTC"), "2026-11-03");
+    want("00:00:00 UTC, a day on", dk(Date.UTC(2026, 10, 4, 0, 0, 0), "UTC"), "2026-11-04");
+    // Sunday 23:30 in Los Angeles (UTC-8 after the clocks went back on 1 Nov) is already Monday in UTC: still Sunday's day locally
+    want("late evening, Los Angeles", dk(Date.UTC(2026, 10, 9, 7, 30, 0), "America/Los_Angeles"), "2026-11-08");
+    // Monday 00:30 in Auckland (UTC+13) is still Sunday in UTC: already Monday's day locally
+    want("small hours, Auckland", dk(Date.UTC(2026, 10, 8, 11, 30, 0), "Pacific/Auckland"), "2026-11-09");
+    // across the end of a month, a new year and a leap day
+    want("end of a month", dk(Date.UTC(2026, 10, 30, 23, 59, 59), "UTC"), "2026-11-30");
+    want("new year", dk(Date.UTC(2027, 0, 1, 12, 0, 0), "UTC"), "2027-01-01");
+    want("leap day", dk(Date.UTC(2028, 1, 29, 12, 0, 0), "UTC"), "2028-02-29");
     return bad;
   }
 
   it("holds at every boundary", () => {
-    expect(weekFailures(weekKey)).toEqual([]);
+    expect(dayFailures(weekKey)).toEqual([]);
   });
 
-  it("fails the same check on a UTC week (so the check can fail)", () => {
-    const utcWeek = (nowMs: number) => mondayOf(new Date(nowMs).toISOString().slice(0, 10));
-    expect(weekFailures(utcWeek).length).toBeGreaterThan(0);
+  it("fails the same check on a UTC day (so the check can fail: a family's midnight is not UTC's)", () => {
+    const utcDay = (nowMs: number) => new Date(nowMs).toISOString().slice(0, 10);
+    const failures = dayFailures(utcDay);
+    expect(failures.length).toBeGreaterThan(0);
+    expect(failures.some((f) => f.includes("Los Angeles"))).toBe(true);
+    expect(failures.some((f) => f.includes("Auckland"))).toBe(true);
   });
 
   it("reads an unknown timezone as UTC, as the time gate does", () => {
     expect(weekKey(Date.UTC(2026, 10, 9, 7, 30, 0), "Not/AZone")).toBe("2026-11-09");
   });
 
-  it("the Monday of any day is a Monday, at most six days back, and the next week is seven on", () => {
+  it("the day key of any moment is that moment's own day, and the next one is exactly one day on (across months and years)", () => {
     for (let n = 0; n < 800; n++) {
-      const dayKey = new Date(Date.UTC(2026, 0, 1) + n * DAY).toISOString().slice(0, 10);
-      const monday = mondayOf(dayKey);
-      expect(new Date(`${monday}T00:00:00Z`).getUTCDay()).toBe(1);
-      const back = (Date.parse(`${dayKey}T00:00:00Z`) - Date.parse(`${monday}T00:00:00Z`)) / DAY;
-      expect(back).toBeGreaterThanOrEqual(0);
-      expect(back).toBeLessThanOrEqual(6);
-      expect(mondayOf(nextWeekKey(monday))).toBe(nextWeekKey(monday));
-      expect((Date.parse(`${nextWeekKey(monday)}T00:00:00Z`) - Date.parse(`${monday}T00:00:00Z`)) / DAY).toBe(7);
+      const noon = Date.UTC(2026, 0, 1, 12) + n * DAY;
+      const dayKey = new Date(noon).toISOString().slice(0, 10);
+      expect(weekKey(noon, "UTC")).toBe(dayKey);
+      const next = nextWeekKey(dayKey);
+      expect((Date.parse(`${next}T00:00:00Z`) - Date.parse(`${dayKey}T00:00:00Z`)) / DAY).toBe(1);
+      expect(weekKey(noon + DAY, "UTC")).toBe(next);
     }
+    expect(nextWeekKey("2026-11-30")).toBe("2026-12-01");
+    expect(nextWeekKey("2026-12-31")).toBe("2027-01-01");
+    expect(nextWeekKey("2028-02-28")).toBe("2028-02-29");
   });
 
-  it("refuses a string that is not a day", () => {
+  it("refuses a string that is not a day (mondayOf is unchanged and still strict)", () => {
     expect(() => mondayOf("2026-11")).toThrow();
     expect(() => mondayOf("tomorrow")).toThrow();
   });
@@ -124,13 +130,14 @@ describe("the week is Monday to Sunday in the family's own clock", () => {
 // ---- the grown-up's limit ---------------------------------------------------------------------------------------------------
 
 describe("the limit a grown-up can set", () => {
-  it("is 5 when unset, 0 to 5 when set, never above 5, and 0 when it is not a whole number in range", () => {
-    expect(WEEKLY_SONGS).toBe(5);
-    expect(effectiveLimit(undefined)).toBe(5);
-    expect(effectiveLimit(null)).toBe(5);
-    for (const n of [0, 1, 2, 3, 4, 5]) expect(effectiveLimit(n)).toBe(n);
-    expect(effectiveLimit(6)).toBe(5);
-    expect(effectiveLimit(1000)).toBe(5);
+  it("is 10 when unset, 0 to 10 when set, never above 10, and 0 when it is not a whole number in range", () => {
+    expect(DAILY_SONGS).toBe(10);
+    expect(WEEKLY_SONGS).toBe(DAILY_SONGS); // the old name is an alias: the limit per period, which is a day
+    expect(effectiveLimit(undefined)).toBe(10);
+    expect(effectiveLimit(null)).toBe(10);
+    for (const n of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) expect(effectiveLimit(n)).toBe(n);
+    expect(effectiveLimit(11)).toBe(10);
+    expect(effectiveLimit(1000)).toBe(10);
     expect(effectiveLimit(-1)).toBe(0);
     for (const bad of [2.5, NaN, Infinity, "3", "", {}, [], true]) expect(effectiveLimit(bad)).toBe(0);
   });
@@ -138,39 +145,52 @@ describe("the limit a grown-up can set", () => {
 
 // ---- reserve, commit, refund ----------------------------------------------------------------------------------------------
 
-describe("five new songs a week", () => {
-  it("allows five, refuses the sixth, and opens again on Monday", () => {
+describe("ten new songs a day", () => {
+  it("allows ten, refuses the eleventh, and opens again at the family's next midnight", () => {
     let s = emptyQuota();
-    for (let i = 1; i <= 5; i++) {
+    for (let i = 1; i <= DAILY_SONGS; i++) {
       const r = make(s, i, TUE + i * 1000);
       expect(r.result.ok).toBe(true);
       s = r.state;
     }
-    expect(denied(reserve(s, { key: key(6), deviceId: A, nowMs: TUE + 9000 }, cfg()))).toBe("week_used");
-    // Sunday 23:59 UTC is still that week
-    expect(denied(reserve(s, { key: key(6), deviceId: A, nowMs: Date.UTC(2026, 10, 8, 23, 59, 59) }, cfg()))).toBe("week_used");
-    // Monday 00:00 UTC opens the next
-    const monday = Date.UTC(2026, 10, 9, 0, 0, 0);
-    expect(reserve(s, { key: key(6), deviceId: A, nowMs: monday }, cfg()).result.ok).toBe(true);
+    const eleventh = key(DAILY_SONGS + 1);
+    expect(denied(reserve(s, { key: eleventh, deviceId: A, nowMs: TUE + 99_000 }, cfg()))).toBe("week_used");
+    // 23:59:59 UTC is still that day
+    expect(denied(reserve(s, { key: eleventh, deviceId: A, nowMs: Date.UTC(2026, 10, 3, 23, 59, 59) }, cfg()))).toBe("week_used");
+    // 00:00 UTC opens the next
+    expect(reserve(s, { key: eleventh, deviceId: A, nowMs: Date.UTC(2026, 10, 4, 0, 0, 0) }, cfg()).result.ok).toBe(true);
   });
 
-  it("counts per device: one child's week is not another's", () => {
+  it("opens at the FAMILY's midnight, not UTC's", () => {
+    const la = cfg({ timezone: "America/Los_Angeles" });
     let s = emptyQuota();
-    for (let i = 1; i <= 5; i++) s = make(s, i, TUE, A).state;
-    expect(make(s, 10, TUE, B).result.ok).toBe(true);
+    for (let i = 1; i <= DAILY_SONGS; i++) s = make(s, i, Date.UTC(2026, 10, 3, 20, 0, 0) + i * 1000, A, la).state; // 12:00 in Los Angeles
+    const eleventh = key(DAILY_SONGS + 1);
+    // UTC midnight has passed (it is 16:00 on the 3rd in Los Angeles): still the same family day
+    expect(denied(reserve(s, { key: eleventh, deviceId: A, nowMs: Date.UTC(2026, 10, 4, 0, 0, 1) }, la))).toBe("week_used");
+    // 07:59:59 UTC on the 4th is 23:59:59 on the 3rd in Los Angeles: still full
+    expect(denied(reserve(s, { key: eleventh, deviceId: A, nowMs: Date.UTC(2026, 10, 4, 7, 59, 59) }, la))).toBe("week_used");
+    // 08:00:00 UTC is 00:00 on the 4th in Los Angeles: a new day
+    expect(reserve(s, { key: eleventh, deviceId: A, nowMs: Date.UTC(2026, 10, 4, 8, 0, 0) }, la).result.ok).toBe(true);
+  });
+
+  it("counts per device: one child's day is not another's", () => {
+    let s = emptyQuota();
+    for (let i = 1; i <= DAILY_SONGS; i++) s = make(s, i, TUE, A).state;
+    expect(make(s, 20, TUE, B).result.ok).toBe(true);
     expect(status(s, B, TUE, cfg()).used).toBe(0);
-    expect(status(s, A, TUE, cfg()).used).toBe(5);
+    expect(status(s, A, TUE, cfg()).used).toBe(DAILY_SONGS);
   });
 
-  it("counts a slot in the week it was RESERVED, even if the song finishes after midnight", () => {
-    const sunday = Date.UTC(2026, 10, 8, 23, 59, 50);
-    const monday = Date.UTC(2026, 10, 9, 0, 0, 10);
+  it("counts a slot in the day it was RESERVED, even if the song finishes after midnight", () => {
+    const lateEvening = Date.UTC(2026, 10, 3, 23, 59, 50);
+    const afterMidnight = Date.UTC(2026, 10, 4, 0, 0, 10);
     let s = emptyQuota();
-    const r = reserve(s, { key: key(1), deviceId: A, nowMs: sunday }, cfg());
-    s = commit(r.state, key(1), monday).state; // the song lands 20 s later, in the new week
-    expect(usedInWeek(s, A, "2026-11-02")).toBe(1);
-    expect(usedInWeek(s, A, "2026-11-09")).toBe(0);
-    expect(status(s, A, monday, cfg()).left).toBe(5);
+    const r = reserve(s, { key: key(1), deviceId: A, nowMs: lateEvening }, cfg());
+    s = commit(r.state, key(1), afterMidnight).state; // the song lands 20 s later, in the new day
+    expect(usedInWeek(s, A, "2026-11-03")).toBe(1);
+    expect(usedInWeek(s, A, "2026-11-04")).toBe(0);
+    expect(status(s, A, afterMidnight, cfg()).left).toBe(DAILY_SONGS);
   });
 
   it("a lowered limit applies at once, and zero means none", () => {
@@ -185,14 +205,21 @@ describe("five new songs a week", () => {
     expect(reserve(emptyQuota(), { key: key(1), deviceId: A, nowMs: TUE }, cfg({ parentLimit: 9 })).result.ok).toBe(true);
   });
 
-  it("shows pips left and the Monday they come back", () => {
+  it("a setting above ten does not open more than ten", () => {
     let s = emptyQuota();
-    expect(status(s, A, TUE, cfg())).toEqual({ weekKey: "2026-11-02", resetsOn: "2026-11-09", limit: 5, used: 0, left: 5 });
+    for (let i = 1; i <= DAILY_SONGS; i++) s = make(s, i, TUE).state;
+    expect(denied(reserve(s, { key: key(DAILY_SONGS + 1), deviceId: A, nowMs: TUE }, cfg({ parentLimit: 50 })))).toBe("week_used");
+    expect(denied(reserve(s, { key: key(DAILY_SONGS + 1), deviceId: A, nowMs: TUE }, cfg({ parentLimit: 11 })))).toBe("week_used");
+  });
+
+  it("shows pips left and the next day they come back", () => {
+    let s = emptyQuota();
+    expect(status(s, A, TUE, cfg())).toEqual({ weekKey: "2026-11-03", resetsOn: "2026-11-04", limit: 10, used: 0, left: 10 });
     s = make(s, 1, TUE).state;
     s = make(s, 2, TUE).state;
-    expect(status(s, A, TUE, cfg())).toMatchObject({ used: 2, left: 3 });
+    expect(status(s, A, TUE, cfg())).toMatchObject({ used: 2, left: 8 });
     expect(status(s, A, TUE, cfg({ parentLimit: 1 }))).toMatchObject({ limit: 1, used: 2, left: 0 }); // never negative
-    expect(status(s, A, Date.UTC(2026, 10, 9, 0, 0, 1), cfg())).toMatchObject({ weekKey: "2026-11-09", used: 0, left: 5 });
+    expect(status(s, A, Date.UTC(2026, 10, 4, 0, 0, 1), cfg())).toMatchObject({ weekKey: "2026-11-04", resetsOn: "2026-11-05", used: 0, left: 10 });
   });
 });
 
@@ -203,7 +230,7 @@ describe("a retry never spends twice", () => {
     const again = reserve(first.state, { key: key(1), deviceId: A, nowMs: TUE + 5000 }, cfg());
     expect(again.result).toMatchObject({ ok: true, replay: true });
     expect(again.state).toBe(first.state); // nothing changed
-    expect(usedInWeek(again.state, A, "2026-11-02")).toBe(1);
+    expect(usedInWeek(again.state, A, TODAY)).toBe(1);
   });
 
   it("tells the Worker whether the song exists (committed) or is being made (reserved)", () => {
@@ -215,17 +242,17 @@ describe("a retry never spends twice", () => {
     expect(replay.result.ok && replay.result.reservation.state).toBe("committed");
   });
 
-  it("a replay is free even when the week is full or the budget is spent", () => {
+  it("a replay is free even when the day is full or the budget is spent", () => {
     let s = emptyQuota();
-    for (let i = 1; i <= 5; i++) s = make(s, i, TUE).state;
-    expect(reserve(s, { key: key(5), deviceId: A, nowMs: TUE + 1 }, cfg()).result).toMatchObject({ ok: true, replay: true });
-    expect(reserve(s, { key: key(5), deviceId: A, nowMs: TUE + 1 }, cfg({ monthlyBudget: 5 })).result).toMatchObject({ ok: true, replay: true });
+    for (let i = 1; i <= DAILY_SONGS; i++) s = make(s, i, TUE).state;
+    expect(reserve(s, { key: key(DAILY_SONGS), deviceId: A, nowMs: TUE + 1 }, cfg()).result).toMatchObject({ ok: true, replay: true });
+    expect(reserve(s, { key: key(DAILY_SONGS), deviceId: A, nowMs: TUE + 1 }, cfg({ monthlyBudget: 5 })).result).toMatchObject({ ok: true, replay: true });
   });
 
   it("a key held by another device is refused, not shared", () => {
     const s = reserve(emptyQuota(), { key: key(1), deviceId: A, nowMs: TUE }, cfg()).state;
     expect(denied(reserve(s, { key: key(1), deviceId: B, nowMs: TUE }, cfg()))).toBe("key_in_use");
-    expect(usedInWeek(s, B, "2026-11-02")).toBe(0);
+    expect(usedInWeek(s, B, TODAY)).toBe(0);
   });
 
   it("a key whose reservation was refunded is a fresh attempt under the same checks", () => {
@@ -233,23 +260,23 @@ describe("a retry never spends twice", () => {
     s = refund(s, key(1), "provider_failed", TUE).state;
     const retry = reserve(s, { key: key(1), deviceId: A, nowMs: TUE + 1000 }, cfg());
     expect(retry.result).toMatchObject({ ok: true, replay: false });
-    expect(usedInWeek(retry.state, A, "2026-11-02")).toBe(1);
-    // ...and a retry loop cannot go past the week
+    expect(usedInWeek(retry.state, A, TODAY)).toBe(1);
+    // ...and a retry loop cannot go past the day
     let t = emptyQuota();
-    for (let i = 1; i <= 5; i++) t = make(t, i, TUE).state;
-    t = refund(t, key(5), "removed", TUE).state; // a grown-up removed the fifth
-    t = make(t, 6, TUE).state; // a new song takes the slot
-    expect(denied(reserve(t, { key: key(5), deviceId: A, nowMs: TUE }, cfg()))).toBe("week_used"); // the old key cannot sneak a sixth in
+    for (let i = 1; i <= DAILY_SONGS; i++) t = make(t, i, TUE).state;
+    t = refund(t, key(DAILY_SONGS), "removed", TUE).state; // a grown-up removed the tenth
+    t = make(t, DAILY_SONGS + 1, TUE).state; // a new song takes the slot
+    expect(denied(reserve(t, { key: key(DAILY_SONGS), deviceId: A, nowMs: TUE }, cfg()))).toBe("week_used"); // the old key cannot sneak an eleventh in
   });
 });
 
-describe("failures and removals give the week's slot back", () => {
+describe("failures and removals give the day's slot back", () => {
   it("a refused or failed call frees the slot and the budget", () => {
     for (const reason of ["rejected_before_call", "provider_failed"] as RefundReason[]) {
       let s = reserve(emptyQuota(), { key: key(1), deviceId: A, nowMs: TUE }, cfg()).state;
       expect(spentInMonth(s, "2026-11")).toBe(1);
       s = refund(s, key(1), reason, TUE).state;
-      expect(usedInWeek(s, A, "2026-11-02")).toBe(0);
+      expect(usedInWeek(s, A, TODAY)).toBe(0);
       expect(spentInMonth(s, "2026-11")).toBe(0);
     }
   });
@@ -257,7 +284,7 @@ describe("failures and removals give the week's slot back", () => {
   it("a song a grown-up removes frees the child's slot but not the budget: the money was spent", () => {
     let s = make(emptyQuota(), 1, TUE).state;
     s = refund(s, key(1), "removed", TUE).state;
-    expect(usedInWeek(s, A, "2026-11-02")).toBe(0);
+    expect(usedInWeek(s, A, TODAY)).toBe(0);
     expect(spentInMonth(s, "2026-11")).toBe(1);
     expect(REFUND_FREES_BUDGET).toEqual({ rejected_before_call: true, provider_failed: true, removed: false, expired: false });
   });
@@ -305,11 +332,11 @@ describe("a call that never finished", () => {
     expect(commit(s, key(1), TUE).result).toEqual({ ok: false, reason: "refunded" });
   });
 
-  it("a crashed call cannot hold a slot for the whole week", () => {
+  it("a crashed call cannot hold a slot for the whole day", () => {
     let s = emptyQuota();
-    for (let i = 1; i <= 5; i++) s = reserve(s, { key: key(i), deviceId: A, nowMs: TUE }, cfg()).state; // five calls, all crash
-    expect(denied(reserve(s, { key: key(6), deviceId: A, nowMs: TUE + 1000 }, cfg()))).toBe("week_used");
-    expect(reserve(s, { key: key(6), deviceId: A, nowMs: TUE + RESERVE_TTL_MS }, cfg()).result.ok).toBe(true);
+    for (let i = 1; i <= DAILY_SONGS; i++) s = reserve(s, { key: key(i), deviceId: A, nowMs: TUE }, cfg()).state; // ten calls, all crash
+    expect(denied(reserve(s, { key: key(DAILY_SONGS + 1), deviceId: A, nowMs: TUE + 1000 }, cfg()))).toBe("week_used");
+    expect(reserve(s, { key: key(DAILY_SONGS + 1), deviceId: A, nowMs: TUE + RESERVE_TTL_MS }, cfg()).result.ok).toBe(true);
   });
 });
 
@@ -321,7 +348,7 @@ describe("a late or repeated call cannot undo what was spent", () => {
     const again = reserve(s, { key: key(1), deviceId: A, nowMs: TUE + 1000 }, cfg());
     expect(again.result).toMatchObject({ ok: true, replay: false });
     expect(spentInMonth(again.state, "2026-11")).toBe(2); // the removed song AND the new attempt
-    expect(usedInWeek(again.state, A, "2026-11-02")).toBe(1);
+    expect(usedInWeek(again.state, A, TODAY)).toBe(1);
     // and again: the archive never collides with itself
     let t = refund(commit(again.state, key(1), TUE + 2000).state, key(1), "removed", TUE + 3000).state;
     t = reserve(t, { key: key(1), deviceId: A, nowMs: TUE + 4000 }, cfg()).state;
@@ -358,7 +385,7 @@ describe("the monthly budget fails closed, and is the guard when a device id is 
     expect(denied(reserve(s, { key: key(9), deviceId: "device-fresh0001", nowMs: TUE }, cfg({ monthlyBudget: 3 })))).toBe("budget_spent");
   });
 
-  it("a cleared device id gets a fresh week but not a fresh budget", () => {
+  it("a cleared device id gets a fresh day but not a fresh budget", () => {
     let s = emptyQuota();
     let ok = 0;
     for (let i = 1; i <= 20; i++) {
@@ -382,10 +409,10 @@ describe("the monthly budget fails closed, and is the guard when a device id is 
     expect(denied(reserve(emptyQuota(), { key: key(1), deviceId: A, nowMs: TUE }, cfg({ monthlyBudget: 0 })))).toBe("budget_spent");
   });
 
-  it("is named before the week, so a resting maker never promises a Monday", () => {
+  it("is named before the day's limit, so a resting maker never promises tomorrow", () => {
     let s = emptyQuota();
-    for (let i = 1; i <= 5; i++) s = make(s, i, TUE).state;
-    expect(denied(reserve(s, { key: key(9), deviceId: A, nowMs: TUE }, cfg({ monthlyBudget: 5 })))).toBe("budget_spent");
+    for (let i = 1; i <= DAILY_SONGS; i++) s = make(s, i, TUE).state; // the day is full AND a budget of ten is spent
+    expect(denied(reserve(s, { key: key(99), deviceId: A, nowMs: TUE }, cfg({ monthlyBudget: DAILY_SONGS })))).toBe("budget_spent");
   });
 });
 
@@ -452,12 +479,12 @@ describe("the live maker is on by default, and billed per song", () => {
     expect(denied(reserve(s, { key: key(2), deviceId: B, nowMs: TUE }, bad))).toBe("budget_spent");
   });
 
-  it("the child's week is still five slots, whatever a call is billed", () => {
+  it("the child's day is still ten slots, whatever a call is billed", () => {
     const three = cfg({ songsPerCall: 3, monthlyBudget: 1000 });
     let s = emptyQuota();
-    for (let i = 1; i <= 5; i++) s = make(s, i, TUE, A, three).state;
-    expect(usedInWeek(s, A, "2026-11-02")).toBe(5);
-    expect(denied(reserve(s, { key: key(6), deviceId: A, nowMs: TUE }, three))).toBe("week_used");
+    for (let i = 1; i <= DAILY_SONGS; i++) s = make(s, i, TUE, A, three).state;
+    expect(usedInWeek(s, A, TODAY)).toBe(DAILY_SONGS);
+    expect(denied(reserve(s, { key: key(DAILY_SONGS + 1), deviceId: A, nowMs: TUE }, three))).toBe("week_used");
   });
 });
 
@@ -528,10 +555,10 @@ const LIMIT = 2;
 const BUDGET = 12;
 
 // Building an Intl formatter per call is slow; the harness asks for the same instants over and over.
-const weekMemo = new Map<number, string>();
-const utcWeek = (ms: number) => {
-  let w = weekMemo.get(ms);
-  if (w === undefined) weekMemo.set(ms, (w = weekKey(ms, "UTC")));
+const dayMemo = new Map<number, string>();
+const utcDay = (ms: number) => {
+  let w = dayMemo.get(ms);
+  if (w === undefined) dayMemo.set(ms, (w = weekKey(ms, "UTC")));
   return w;
 };
 
@@ -593,14 +620,14 @@ function violation(impl: Impl, seed: number, songsPerCall = 1): string | null {
 
     const live = expireStale(s, now);
     for (const [m, n] of paid) if (n > BUDGET) return `step ${step}: ${n} songs paid for in ${m}, the budget is ${BUDGET}`;
-    const weeks = new Set(Object.values(live.reservations).map((r) => `${r.deviceId}|${r.weekKey}`));
-    for (const w of weeks) {
+    const days = new Set(Object.values(live.reservations).map((r) => `${r.deviceId}|${r.weekKey}`));
+    for (const w of days) {
       const [d, wk] = w.split("|") as [string, string];
       if (usedInWeek(live, d, wk) > LIMIT) return `step ${step}: ${d} holds ${usedInWeek(live, d, wk)} slots in ${wk}`;
     }
     for (const r of Object.values(s.reservations)) {
       if (r.state === "refunded" && r.refundReason === undefined) return `step ${step}: a refund with no reason`;
-      if (r.weekKey !== utcWeek(r.createdMs)) return `step ${step}: a slot counted for a week it was not reserved in`;
+      if (r.weekKey !== utcDay(r.createdMs)) return `step ${step}: a slot counted for a day it was not reserved in`;
     }
     // the state's own books agree with the harness's: no spend has gone missing
     for (const [m, n] of paid) if (spentInMonth(live, m) < n) return `step ${step}: the state counts ${spentInMonth(live, m)} songs in ${m}, ${n} were paid for`;
@@ -611,7 +638,7 @@ function violation(impl: Impl, seed: number, songsPerCall = 1): string | null {
 describe("random sequences keep the invariants", () => {
   const seeds = Array.from({ length: 16 }, (_, i) => 1000 + i * 7919);
 
-  it("the real code never goes past the weekly limit or the budget, never double-counts a retry, and never loses a reason", () => {
+  it("the real code never goes past the daily limit or the budget, never double-counts a retry, and never loses a reason", () => {
     for (const seed of seeds) expect(violation(REAL, seed), `seed ${seed}`).toBeNull();
   }, 30_000);
 
@@ -632,7 +659,7 @@ describe("random sequences keep the invariants", () => {
     expect(seeds.some((seed) => violation(noBudget, seed) !== null)).toBe(true);
   });
 
-  it("catches a missing weekly limit", () => {
+  it("catches a missing daily limit", () => {
     const noLimit: Impl = { ...REAL, reserve: (s, req, c) => reserve(s, req, { ...c, parentLimit: 5 }) };
     expect(seeds.some((seed) => violation(noLimit, seed) !== null)).toBe(true);
   });

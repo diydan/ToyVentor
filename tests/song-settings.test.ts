@@ -24,7 +24,8 @@ function fakeFetch(answers: Record<string, { status: number; body: unknown } | "
   }) as unknown as typeof fetch;
   return { fn, calls };
 }
-const WEEK = { limit: 5, used: 1, left: 4, resetsOn: "2026-11-09", makerOn: true };
+// The limit is 10 new songs a DAY since 2026-11-04 evening (it was 5 a week): `resetsOn` is the next day, and the name WEEK is the old one for "the quota the route reports".
+const WEEK = { limit: 10, used: 1, left: 9, resetsOn: "2026-11-05", makerOn: true };
 
 describe("the headers every song request carries", () => {
   it("are the device and the family's clock, plus the parent proof only when there is a real one", async () => {
@@ -65,7 +66,7 @@ describe("saving a change", () => {
   it("never sends a bad value, nothing to change, or the local-only unlock (it would only be refused)", async () => {
     const { saveSongSettings } = await lib();
     const f = fakeFetch({});
-    for (const bad of [{ limit: 6 }, { limit: -1 }, { limit: 1.5 }, { makerOn: "no" as never }, {}]) expect(await saveSongSettings(bad, "p", f.fn), JSON.stringify(bad)).toEqual({ ok: false, reason: "invalid" });
+    for (const bad of [{ limit: 11 }, { limit: 100 }, { limit: -1 }, { limit: 1.5 }, { makerOn: "no" as never }, {}]) expect(await saveSongSettings(bad, "p", f.fn), JSON.stringify(bad)).toEqual({ ok: false, reason: "invalid" });
     expect(await saveSongSettings({ limit: 1 }, "local-proof", f.fn)).toEqual({ ok: false, reason: "gate" });
     expect(await saveSongSettings({ limit: 1 }, "", f.fn)).toEqual({ ok: false, reason: "gate" });
     expect(f.calls).toHaveLength(0);
@@ -79,15 +80,30 @@ describe("saving a change", () => {
   });
 });
 
-describe("what the Songs sheet says about the week", () => {
-  const Q = { limit: 5, used: 2, left: 3, resetsOn: "2026-11-09", makerOn: true };
+describe("the client library takes the whole range the Worker now allows (0 to 10 a day)", () => {
+  // The Worker's default is 10 and a grown-up may set 0 to 10 (worker/songStore.ts parseSongSettingsUpdate, shared/songQuota.ts effectiveLimit): the library that reads and writes those settings must accept 10, or the Grown-ups Songs panel reads every device's default as "offline".
+  it("reads a device whose limit is the default ten", async () => {
+    const f = fakeFetch({ "GET /api/theme-song": { status: 200, body: { enabled: true } }, "GET /api/theme-song/settings": { status: 200, body: { settings: { makerOn: true, limit: 10 }, quota: WEEK } } });
+    const { loadSongSettings } = await lib();
+    expect(await loadSongSettings(f.fn)).toEqual({ ok: true, settings: { makerOn: true, limit: 10 }, week: WEEK });
+  });
+  it("saves a limit of ten, and anything above ten is invalid", async () => {
+    const f = fakeFetch({ "POST /api/theme-song/settings": { status: 200, body: { settings: { makerOn: true, limit: 10 }, quota: WEEK } } });
+    const { saveSongSettings } = await lib();
+    expect(await saveSongSettings({ limit: 10 }, "real.proof.token", f.fn)).toEqual({ ok: true, settings: { makerOn: true, limit: 10 }, week: WEEK });
+    expect(await saveSongSettings({ limit: 11 }, "real.proof.token", f.fn)).toEqual({ ok: false, reason: "invalid" });
+  });
+});
+
+describe("what the Songs sheet says about the day", () => {
+  const Q = { limit: 10, used: 2, left: 8, resetsOn: "2026-11-05", makerOn: true };
   it("counts the songs left with notes, in the singular and plural", () => {
-    expect(quotaLine(Q)).toMatchObject({ blocked: false, text: expect.stringContaining("3 new songs left this week") });
-    expect(quotaLine({ ...Q, left: 1 }).text).toContain("1 new song left this week");
+    expect(quotaLine(Q)).toMatchObject({ blocked: false, text: expect.stringContaining("8 new songs left today") });
+    expect(quotaLine({ ...Q, left: 1 }).text).toContain("1 new song left today");
     expect(quotaLine({ ...Q, left: 1 }).text).not.toContain("songs left");
   });
-  it("blocks making when the week is used up or a grown-up switched songs off, and says so kindly", () => {
-    expect(quotaLine({ ...Q, used: 5, left: 0 })).toEqual({ blocked: true, text: "No new songs until Monday. Dance to the ones you made!" });
+  it("blocks making when the day is used up or a grown-up switched songs off, and says so kindly", () => {
+    expect(quotaLine({ ...Q, used: 10, left: 0 })).toEqual({ blocked: true, text: "No new songs until tomorrow. Dance to the ones you made!" });
     expect(quotaLine({ ...Q, makerOn: false })).toMatchObject({ blocked: true, text: expect.stringContaining("switched off by a grown-up") });
   });
   it("says nothing about a quota it does not know", () => {
@@ -97,7 +113,7 @@ describe("what the Songs sheet says about the week", () => {
 });
 
 describe("what the Songs sheet says while it waits, and when songs are really off", () => {
-  const Q = { limit: 5, used: 0, left: 5, resetsOn: "2026-11-09", makerOn: true };
+  const Q = { limit: 10, used: 0, left: 10, resetsOn: "2026-11-05", makerOn: true };
   it("says 'checking' until the route has answered: it never claims songs are resting before anyone has said so", () => {
     expect(sheetMode(null, null)).toMatchObject({ mode: "checking", text: expect.stringMatching(/Checking/) });
     expect(sheetMode(null, Q).text).not.toMatch(/resting/);
@@ -106,10 +122,10 @@ describe("what the Songs sheet says while it waits, and when songs are really of
     expect(sheetMode(false, null)).toMatchObject({ mode: "resting", text: expect.stringMatching(/resting/) });
     expect(sheetMode(false, Q).mode).toBe("resting");
   });
-  it("is open when songs are on with a song left (or no quota to speak of), and blocked, with its own words, when the week is used or a grown-up switched songs off", () => {
+  it("is open when songs are on with a song left (or no quota to speak of), and blocked, with its own words, when the day is used or a grown-up switched songs off", () => {
     expect(sheetMode(true, Q).mode).toBe("open");
     expect(sheetMode(true, null).mode).toBe("open");
-    expect(sheetMode(true, { ...Q, used: 5, left: 0 })).toMatchObject({ mode: "blocked", text: expect.stringMatching(/until Monday/) });
+    expect(sheetMode(true, { ...Q, used: 10, left: 0 })).toMatchObject({ mode: "blocked", text: expect.stringMatching(/until tomorrow/) });
     expect(sheetMode(true, { ...Q, makerOn: false })).toMatchObject({ mode: "blocked", text: expect.stringMatching(/switched off by a grown-up/) });
   });
 });
@@ -120,17 +136,19 @@ describe("the Grown-ups sheet carries the Songs section", () => {
     expect(read("src/features/game/world/GrownUpsSheet.tsx")).toContain("<SongSettingsPanel proof={activeProof} />");
     const panel = read("src/features/game/world/SongSettingsPanel.tsx");
     expect(panel).toContain("if (absent) return null;");
-    expect(panel).toContain('aria-label="Fewer songs a week"');
-    expect(panel).toContain('aria-label="More songs a week"');
+    expect(panel).toContain('aria-label="Fewer songs a day"');
+    expect(panel).toContain('aria-label="More songs a day"');
+    expect(panel).toContain("settings.limit >= 10"); // the plus button stops at the day's ten
+    expect(panel).toContain("Today: {week.used} made, {week.left} left. New songs come back tomorrow ({week.resetsOn}).");
     expect(panel).not.toMatch(/mureka|api\.meta/i);
   });
   it("is a closed group like the sheet's others: the summary says where it stands, one tap opens the controls", () => {
     const panel = read("src/features/game/world/SongSettingsPanel.tsx");
     expect(panel).toContain('<details className="tv-disclosure" data-testid="song-settings">');
     expect(panel).not.toMatch(/<details[^>]*\sopen[\s={>]/);
-    expect(panel).toMatch(/<summary>[\s\S]{0,120}<span>Songs<\/span>[\s\S]{0,120}tv-disclosure-meta[\s\S]{0,200}makerOn \? "Maker on" : "Maker off"[\s\S]{0,60}settings\.limit\} a week/);
+    expect(panel).toMatch(/<summary>[\s\S]{0,120}<span>Songs<\/span>[\s\S]{0,120}tv-disclosure-meta[\s\S]{0,200}makerOn \? "Maker on" : "Maker off"[\s\S]{0,60}settings\.limit\} a day/);
     // the controls are inside the group
     const inside = panel.slice(panel.indexOf('<div className="tv-parent-adv">'), panel.indexOf("</details>"));
-    for (const needle of ["Song maker: On", 'aria-label="Fewer songs a week"', 'aria-label="More songs a week"', 'data-testid="song-limit"']) expect(inside).toContain(needle);
+    for (const needle of ["Song maker: On", 'aria-label="Fewer songs a day"', 'aria-label="More songs a day"', 'data-testid="song-limit"']) expect(inside).toContain(needle);
   });
 });

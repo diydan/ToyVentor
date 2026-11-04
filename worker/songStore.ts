@@ -9,7 +9,7 @@
 //   refundSong    the call was refused or failed, or a grown-up removed the song
 //   statusFor     what a child sees: pips left this week, and when they come back
 //   ownerOfTask   which device a task belongs to (the audio relay answers only that device)
-//   read/writeSongSettings   a grown-up's two choices: the maker on or off, and the weekly limit 0 to 5
+//   read/writeSongSettings   a grown-up's two choices: the maker on or off, and the daily limit 0 to 10 (the column is still `weekly_limit`: it holds the per-period limit, which is now a day's)
 //
 // The monthly budget is global and its rows are bounded by the budget itself (a month holds at most SONG_MONTHLY_BUDGET songs), so loading a month is small.
 // A cleared device id starts a fresh week: the monthly budget is the real guard (4.6).
@@ -131,7 +131,7 @@ export async function readSongSettings(db: SongDb, deviceId: string): Promise<So
   });
 }
 
-/** Validate a grown-up's update: `makerOn` a boolean, `limit` a whole number 0 to 5. Either may be left out. */
+/** Validate a grown-up's update: `makerOn` a boolean, `limit` a whole number 0 to 10. Either may be left out. */
 export function parseSongSettingsUpdate(input: unknown): { ok: true; makerOn?: boolean; limit?: number } | { ok: false; error: string } {
   if (typeof input !== "object" || input === null || Array.isArray(input)) return { ok: false, error: "settings must be an object" };
   const v = input as Record<string, unknown>;
@@ -141,7 +141,7 @@ export function parseSongSettingsUpdate(input: unknown): { ok: true; makerOn?: b
     out.makerOn = v.makerOn;
   }
   if (v.limit !== undefined) {
-    if (typeof v.limit !== "number" || !Number.isInteger(v.limit) || v.limit < 0 || v.limit > 5) return { ok: false, error: "limit must be a whole number from 0 to 5" };
+    if (typeof v.limit !== "number" || !Number.isInteger(v.limit) || v.limit < 0 || v.limit > 10) return { ok: false, error: "limit must be a whole number from 0 to 10" };
     out.limit = v.limit;
   }
   if (out.makerOn === undefined && out.limit === undefined) return { ok: false, error: "nothing to change" };

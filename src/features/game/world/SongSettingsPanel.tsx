@@ -38,12 +38,12 @@ export function SongSettingsPanel({ proof }: { proof: string }) {
     if (r.ok) { setSettings(r.settings); setWeek(r.week); } else setNote(NOTE[r.reason] ?? NOTE.offline!);
   };
 
-  // A closed group like the others in the sheet: the summary says where it stands (maker on or off, songs a week), one tap opens the two controls.
+  // A closed group like the others in the sheet: the summary says where it stands (maker on or off, songs a day), one tap opens the two controls.
   return (
     <details className="tv-disclosure" data-testid="song-settings">
       <summary>
         <span>Songs</span>
-        <span className="tv-disclosure-meta">{settings ? `${settings.makerOn ? "Maker on" : "Maker off"} · ${settings.limit} a week` : "…"}</span>
+        <span className="tv-disclosure-meta">{settings ? `${settings.makerOn ? "Maker on" : "Maker off"} · ${settings.limit} a day` : "…"}</span>
       </summary>
       <div className="tv-parent-adv">
         <div className="tv-parent-row-head" style={{ marginBottom: 0 }}>
@@ -66,23 +66,23 @@ export function SongSettingsPanel({ proof }: { proof: string }) {
         </p>
         <div className="tv-parent-row-head" style={{ marginBottom: 0 }}>
           <div>
-            <b>New songs a week</b>
+            <b>New songs a day</b>
           </div>
-          <div className="tv-chips" role="group" aria-label="New songs a week">
-            <button type="button" className="tv-sc" aria-label="Fewer songs a week" disabled={!settings || busy || settings.limit <= 0} onClick={() => settings && void change({ limit: settings.limit - 1 })}>
+          <div className="tv-chips" role="group" aria-label="New songs a day">
+            <button type="button" className="tv-sc" aria-label="Fewer songs a day" disabled={!settings || busy || settings.limit <= 0} onClick={() => settings && void change({ limit: settings.limit - 1 })}>
               −
             </button>
             <span data-testid="song-limit" aria-live="polite" style={{ minWidth: 24, textAlign: "center", fontWeight: 800 }}>
               {settings ? settings.limit : "…"}
             </span>
-            <button type="button" className="tv-sc" aria-label="More songs a week" disabled={!settings || busy || settings.limit >= 5} onClick={() => settings && void change({ limit: settings.limit + 1 })}>
+            <button type="button" className="tv-sc" aria-label="More songs a day" disabled={!settings || busy || settings.limit >= 10} onClick={() => settings && void change({ limit: settings.limit + 1 })}>
               +
             </button>
           </div>
         </div>
         {week ? (
           <p className="tv-moves" style={{ margin: 0, fontSize: 12 }}>
-            This week: {week.used} made, {week.left} left. New songs come back on Monday ({week.resetsOn}).
+            Today: {week.used} made, {week.left} left. New songs come back tomorrow ({week.resetsOn}).
           </p>
         ) : null}
         {note ? (

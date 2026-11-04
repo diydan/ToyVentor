@@ -206,7 +206,7 @@ const quotaOf = (s: SongStatus): Quota => ({ limit: s.limit, used: s.used, left:
 /** The reply for a slot the quota would not give, in words a child can be told. */
 function denial(reason: string, quota: Quota | null): Response {
   switch (reason) {
-    case "week_used": return json({ error: "No new songs until Monday. Dance to the ones you made!", reason, ...(quota ? { quota } : {}) }, 429);
+    case "week_used": return json({ error: "No new songs until tomorrow. Dance to the ones you made!", reason, ...(quota ? { quota } : {}) }, 429);
     case "not_enabled": return json({ error: "Songs are switched off by a grown-up.", reason: "songs_off", ...(quota ? { quota } : {}) }, 403);
     case "budget_spent": return json({ error: "The song studio is resting this month.", reason }, 429);
     case "key_in_use": return json({ error: "That song belongs to someone else.", reason }, 409);

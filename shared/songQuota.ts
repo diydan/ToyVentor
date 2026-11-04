@@ -1,5 +1,5 @@
 /**
- * The song maker's limits (docs/specs/dance-party-spec.md, 4.6, D4: "5 new songs a week per user"), as pure state transitions.
+ * The song maker's limits (docs/specs/dance-party-spec.md, 4.6, D4; Dan, 2026-11-04 evening: "10 song limit per day", it was 5 a week), as pure state transitions.
  *
  * The Worker will keep this in D1; the rules are here so they can be tested without a database, and the D1 code is a thin copy of them.
  * Every function takes the state and returns the NEXT state and a result: nothing is mutated, nothing reads a clock (the caller passes `nowMs`).
@@ -12,8 +12,9 @@
  *
  * A "user" is the anonymous device id today (4.6); a cleared id would reset the week, which is why the monthly budget is the real guard.
  *
- * WEEK. Monday to Sunday in the family's timezone, from the parent-time day key (`localDay`), so a song made on Sunday night counts for
- * that week and Monday midnight in the family's own clock opens the next one. The week a slot counts for is fixed when it is RESERVED.
+ * PERIOD (named `week` throughout, from when it was one: the names are kept so the D1 column `week_key`, the `week_used` denial and every caller stay as they were). It is now a DAY: the family's
+ * own calendar day from the parent-time day key (`localDay`), so a song made at 23:50 counts for that day and the family's midnight opens the next one. The day a slot counts for is fixed when it is RESERVED.
+ * (Rows written before the change hold a Monday in `week_key`: they match no day, so every device starts the first day with all of its songs.)
  *
  * BUDGET is a count of SONGS a month (`SONG_MONTHLY_BUDGET`; `budgetSongs` turns a dollar cap and the price per song into it), global, by UTC month.
  * The provider bills per song and one call can return several, so a reservation counts `songsPerCall` songs, not one: a call that would
@@ -25,7 +26,10 @@
  */
 import { localDay } from "./parent-time";
 
-export const WEEKLY_SONGS = 5;
+/** New songs a device may make in a family day (Dan, 2026-11-04: 10 a day; it was 5 a week). */
+export const DAILY_SONGS = 10;
+/** The old name, kept for importers: the limit per period, which is now a day. */
+export const WEEKLY_SONGS = DAILY_SONGS;
 /** Longer than any song takes to make; a slot held longer than this is a crashed call. */
 export const RESERVE_TTL_MS = 10 * 60 * 1000;
 
@@ -82,13 +86,16 @@ export function mondayOf(dayKey: string): string {
   return dayKeyOf(n - sinceMonday);
 }
 
-/** The week a moment falls in, by the family's own clock. An unknown timezone reads as UTC (as `localDay` does). */
+/** The period a moment falls in, by the family's own clock: its DAY ("YYYY-MM-DD"). An unknown timezone reads as UTC (as `localDay` does). */
 export function weekKey(nowMs: number, timezone: string): string {
-  return mondayOf(localDay(nowMs, timezone));
+  const day = localDay(nowMs, timezone);
+  if (!DAY_KEY.test(day)) throw new Error(`not a day key: ${day}`);
+  return day;
 }
 
-export function nextWeekKey(week: string): string {
-  return dayKeyOf(dayNum(week) + 7);
+/** The next period: the next day. */
+export function nextWeekKey(day: string): string {
+  return dayKeyOf(dayNum(day) + 1);
 }
 
 export function monthKey(nowMs: number): string {
@@ -96,8 +103,8 @@ export function monthKey(nowMs: number): string {
 }
 
 /**
- * The limit a grown-up may set: 0 to 5, never above 5. Not set (`undefined` or `null`) is 5. Anything else that is not a whole number
- * from 0 to 5 is read as 0, because a corrupt setting must not open more than a chosen one would.
+ * The limit a grown-up may set: 0 to 10 a day, never above 10. Not set (`undefined` or `null`) is 10. Anything else that is not a whole number
+ * from 0 to 10 is read as 0, because a corrupt setting must not open more than a chosen one would.
  */
 export function effectiveLimit(parentLimit: unknown): number {
   if (parentLimit === undefined || parentLimit === null) return WEEKLY_SONGS;
@@ -180,7 +187,7 @@ export interface QuotaConfig {
   enabled: boolean;
   /** Songs the provider bills for one call (it returns 2 by default, up to 3). Required: a wrong number here is a wrong budget. See `effectiveSongsPerCall`. */
   songsPerCall: number;
-  /** The weekly limit the grown-up set, 0 to 5; see `effectiveLimit`. */
+  /** The daily limit the grown-up set, 0 to 10; see `effectiveLimit`. */
   parentLimit?: unknown;
   /** `SONG_MONTHLY_BUDGET`: songs a month, all families (`budgetSongs(dollars, price)`). */
   monthlyBudget: unknown;
@@ -272,7 +279,7 @@ export function refund(state: QuotaState, key: string, reason: RefundReason, now
 
 export interface QuotaStatus {
   weekKey: string;
-  /** The Monday the pips come back ("new notes on Monday"). */
+  /** The day the pips come back ("new notes tomorrow"), "YYYY-MM-DD". */
   resetsOn: string;
   limit: number;
   used: number;

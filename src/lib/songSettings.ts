@@ -37,7 +37,7 @@ export function songHeaders(proof?: string): Record<string, string> {
 
 const settingsOf = (v: unknown): SongSettings | null => {
   const s = v as Partial<SongSettings> | null | undefined;
-  return s && typeof s.makerOn === "boolean" && ID(s.limit) && s.limit >= 0 && s.limit <= 5 ? { makerOn: s.makerOn, limit: s.limit } : null;
+  return s && typeof s.makerOn === "boolean" && ID(s.limit) && s.limit >= 0 && s.limit <= 10 ? { makerOn: s.makerOn, limit: s.limit } : null;
 };
 const weekOf = (v: unknown): SongWeek | null => {
   const q = v as Partial<SongWeek> | null | undefined;
@@ -65,7 +65,7 @@ export async function loadSongSettings(fetchImpl: typeof fetch = (...a) => fetch
 export async function saveSongSettings(patch: Partial<SongSettings>, proof: string, fetchImpl: typeof fetch = (...a) => fetch(...a)): Promise<SongSettingsSave> {
   const clean: Partial<SongSettings> = {};
   if (patch.makerOn !== undefined) { if (typeof patch.makerOn !== "boolean") return { ok: false, reason: "invalid" }; clean.makerOn = patch.makerOn; }
-  if (patch.limit !== undefined) { if (!ID(patch.limit) || patch.limit < 0 || patch.limit > 5) return { ok: false, reason: "invalid" }; clean.limit = patch.limit; }
+  if (patch.limit !== undefined) { if (!ID(patch.limit) || patch.limit < 0 || patch.limit > 10) return { ok: false, reason: "invalid" }; clean.limit = patch.limit; }
   if (clean.makerOn === undefined && clean.limit === undefined) return { ok: false, reason: "invalid" };
   if (!proof || proof === "local-proof") return { ok: false, reason: "gate" }; // the local-only unlock never reaches the Worker, which would only refuse it
   try {

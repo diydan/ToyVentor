@@ -43,8 +43,8 @@ export function sheetMode(available: boolean | null, quota: SongQuota | null | u
 export function quotaLine(q: SongQuota | null | undefined): { text: string; blocked: boolean } {
   if (!q) return { text: "Songs are made by AI and take about a minute.", blocked: false };
   if (!q.makerOn) return { text: "Songs are switched off by a grown-up. The songs you already made can still dance!", blocked: true };
-  if (q.left <= 0) return { text: "No new songs until Monday. Dance to the ones you made!", blocked: true };
-  return { text: `${"🎵".repeat(q.left)} ${q.left} new song${q.left === 1 ? "" : "s"} left this week. Songs are made by AI and take about a minute.`, blocked: false };
+  if (q.left <= 0) return { text: "No new songs until tomorrow. Dance to the ones you made!", blocked: true };
+  return { text: `${"🎵".repeat(q.left)} ${q.left} new song${q.left === 1 ? "" : "s"} left today. Songs are made by AI and take about a minute.`, blocked: false };
 }
 
 export function SongStudioSheet({ songs, available, quota, onMake, onDance, onClose }: SongStudioSheetProps) {

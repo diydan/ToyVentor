@@ -3,7 +3,7 @@ import worker from "../worker/index";
 import { resetThemeSongLimits, themeSongEnabled } from "../worker/themeSong";
 import { sqliteD1, type SqliteD1 } from "./helpers/sqliteD1";
 
-// The metered route (docs/specs/dance-party-spec.md 4.6): a slot before any paid call, five a week per device, a monthly budget, a grown-up's switch, ownership of a song's
+// The metered route (docs/specs/dance-party-spec.md 4.6): a slot before any paid call, ten a DAY per device (Dan, 2026-11-04 evening; it was five a week), a monthly budget, a grown-up's switch, ownership of a song's
 // status and audio, and our own copy in R2. Real SQLite runs the real migration and the real parent gate.
 const GOOD = {
   name: "Zippy Roadster", mood: "bouncy", tempo: "fast", instruments: ["drums"],
@@ -87,41 +87,51 @@ describe("metered means the quota has somewhere to live", () => {
 });
 
 describe("the probe says how many songs are left", () => {
-  it("is free, says the route is on, and with a device id says what this device has left this week", async () => {
+  it("is free, says the route is on, and with a device id says what this device has left today", async () => {
     const w = world();
     expect(await json(await get(w, "", null))).toMatchObject({ ok: true, enabled: true });
     expect((await json(await get(w, "", null))).quota).toBeUndefined();
-    expect((await json(await get(w, ""))).quota).toMatchObject({ limit: 5, used: 0, left: 5, makerOn: true });
+    expect((await json(await get(w, ""))).quota).toMatchObject({ limit: 10, used: 0, left: 10, makerOn: true });
     expect(w.text.calls).toBe(0);
   });
 });
 
-describe("five songs a week", () => {
-  it("takes a slot per song, tells the child how many are left, and the sixth is turned away BEFORE any model or provider call", async () => {
+describe("ten songs a day", () => {
+  it("takes a slot per song, tells the child how many are left, and the eleventh is turned away BEFORE any model or provider call", async () => {
     const w = world();
     const lefts: number[] = [];
-    for (let i = 0; i < 5; i++) { const r = await post(w, { description: "a race car", key: `tap-${i}-aaaaaaaa` }); expect(r.status).toBe(200); lefts.push((await json(r)).quota.left); }
-    expect(lefts).toEqual([4, 3, 2, 1, 0]);
+    for (let i = 0; i < 10; i++) { const r = await post(w, { description: "a race car", key: `tap-${i}-aaaaaaaa` }); expect(r.status).toBe(200); lefts.push((await json(r)).quota.left); }
+    expect(lefts).toEqual([9, 8, 7, 6, 5, 4, 3, 2, 1, 0]);
     const callsBefore = { text: w.text.calls, orders: w.orders.length };
-    const sixth = await post(w, { description: "a race car", key: "tap-6-aaaaaaaa" });
-    expect(sixth.status).toBe(429);
-    expect(await json(sixth)).toMatchObject({ reason: "week_used", error: expect.stringMatching(/until Monday/), quota: { left: 0, used: 5 } });
+    const eleventh = await post(w, { description: "a race car", key: "tap-11-aaaaaaaa" });
+    expect(eleventh.status).toBe(429);
+    expect(await json(eleventh)).toMatchObject({ reason: "week_used", quota: { left: 0, used: 10 } });
     expect({ text: w.text.calls, orders: w.orders.length }).toEqual(callsBefore);
   });
-  it("is per device, and the probe of the second device still says five", async () => {
+  it("says so kindly, and says TOMORROW, not Monday: the limit comes back at the family's midnight now", async () => {
+    // worker/themeSong.ts still words the refusal for a week ("until Monday") at the case "week_used": until it says tomorrow this fails, and only this
     const w = world();
-    for (let i = 0; i < 5; i++) await post(w, { description: "a car", key: `tap-${i}-bbbbbbbb` });
-    expect((await post(w, { description: "a car", key: "tap-x-bbbbbbbb" }, OTHER)).status).toBe(200);
-    expect((await json(await get(w, "", OTHER))).quota.left).toBe(4);
+    for (let i = 0; i < 10; i++) await post(w, { description: "a race car", key: `tap-${i}-eeeeeeee` });
+    const eleventh = await post(w, { description: "a race car", key: "tap-11-eeeeeeee" });
+    expect(eleventh.status).toBe(429);
+    const body = await json(eleventh);
+    expect(body.error).toMatch(/until tomorrow/);
+    expect(body.error).not.toMatch(/Monday/);
   });
-  it("eight at once from one device: exactly five songs are ordered, the rest are turned away", async () => {
+  it("is per device, and the probe of the second device still says nine left after one song", async () => {
     const w = world();
-    const results = await Promise.all(Array.from({ length: 8 }, (_, i) => post(w, { description: "a race car", key: `race-${i}-cccccccc` })));
+    for (let i = 0; i < 10; i++) await post(w, { description: "a car", key: `tap-${i}-bbbbbbbb` });
+    expect((await post(w, { description: "a car", key: "tap-x-bbbbbbbb" }, OTHER)).status).toBe(200);
+    expect((await json(await get(w, "", OTHER))).quota.left).toBe(9);
+  });
+  it("sixteen at once from one device: exactly ten songs are ordered, the rest are turned away", async () => {
+    const w = world();
+    const results = await Promise.all(Array.from({ length: 16 }, (_, i) => post(w, { description: "a race car", key: `race-${i}-cccccccc` })));
     const codes = results.map((r) => r.status).sort();
-    expect(codes.filter((c) => c === 200)).toHaveLength(5);
-    expect(codes.filter((c) => c === 429)).toHaveLength(3);
-    expect(w.orders).toHaveLength(5);
-    expect((await json(await get(w, ""))).quota).toMatchObject({ used: 5, left: 0 });
+    expect(codes.filter((c) => c === 200)).toHaveLength(10);
+    expect(codes.filter((c) => c === 429)).toHaveLength(6);
+    expect(w.orders).toHaveLength(10);
+    expect((await json(await get(w, ""))).quota).toMatchObject({ used: 10, left: 0 });
   });
   it("a retry of the same tap returns the same song and spends nothing: no model call, no order, no slot", async () => {
     const w = world();
@@ -139,14 +149,14 @@ describe("a slot is given back when nothing was sung", () => {
     w.text.replies = [{ ...GOOD, name: "Lego Racer" }];
     expect((await post(w)).status).toBe(502);
     expect(w.orders).toHaveLength(0);
-    expect((await json(await get(w, ""))).quota).toMatchObject({ used: 0, left: 5 });
+    expect((await json(await get(w, ""))).quota).toMatchObject({ used: 0, left: 10 });
   });
   it("the song studio refusing the order gives the slot back, and the child still gets the name and the words", async () => {
     const w = world();
     w.mureka.orderStatus = 500;
     const r = await json(await post(w));
     expect(r).toMatchObject({ name: "Zippy Roadster", task: null, songError: expect.any(String) });
-    expect(r.quota).toMatchObject({ used: 0, left: 5 });
+    expect(r.quota).toMatchObject({ used: 0, left: 10 });
   });
   it("a song the provider fails on gives the slot back when the child's poll learns of it", async () => {
     const w = world();
@@ -243,14 +253,14 @@ describe("a grown-up's switch", () => {
   it("reading is open, changing needs the parent proof, and a bad update is refused", async () => {
     const w = world();
     const read = await worker.fetch(req("/api/theme-song/settings"), w.env as never);
-    expect(await json(read)).toMatchObject({ settings: { makerOn: true, limit: 5 }, quota: { left: 5 } });
+    expect(await json(read)).toMatchObject({ settings: { makerOn: true, limit: 10 }, quota: { left: 10 } });
     const noProof = await worker.fetch(req("/api/theme-song/settings", { method: "POST", body: JSON.stringify({ makerOn: false }) }), w.env as never);
     expect(noProof.status).toBe(401);
     expect(await json(noProof)).toMatchObject({ status: "gate-required" });
     expect((await json(await get(w, ""))).quota.makerOn).toBe(true); // nothing changed
     const proof = await gateProof(w);
     const bad = (b: unknown) => worker.fetch(req("/api/theme-song/settings", { method: "POST", body: JSON.stringify(b) }, DEV, { "x-parent-proof": proof }), w.env as never);
-    for (const b of [{ limit: 9 }, { limit: -1 }, { limit: 1.5 }, { makerOn: "no" }, {}, []]) expect((await bad(b)).status, JSON.stringify(b)).toBe(422);
+    for (const b of [{ limit: 11 }, { limit: 90 }, { limit: -1 }, { limit: 1.5 }, { makerOn: "no" }, {}, []]) expect((await bad(b)).status, JSON.stringify(b)).toBe(422);
   });
   it("a proof for ANOTHER device does not open this device's settings", async () => {
     const w = world();
@@ -272,7 +282,7 @@ describe("a grown-up's switch", () => {
     expect((await set({ makerOn: true })).status).toBe(200);
     expect((await post(w)).status).toBe(200);
   });
-  it("a lower weekly limit is honoured, 0 means no new songs, and it cannot go above five", async () => {
+  it("a lower daily limit is honoured, 0 means no new songs, and it cannot go above ten", async () => {
     const w = world();
     const proof = await gateProof(w);
     const set = (b: unknown) => worker.fetch(req("/api/theme-song/settings", { method: "POST", body: JSON.stringify(b) }, DEV, { "x-parent-proof": proof }), w.env as never);
@@ -282,7 +292,8 @@ describe("a grown-up's switch", () => {
     expect((await post(w, { description: "a car", key: "l3-ffffffffff" })).status).toBe(429);
     await set({ limit: 0 });
     expect((await json(await get(w, ""))).quota).toMatchObject({ limit: 0, left: 0 });
-    expect((await set({ limit: 6 })).status).toBe(422);
+    expect((await set({ limit: 11 })).status).toBe(422);
+    expect((await set({ limit: 10 })).status).toBe(200); // ten is the ceiling, and allowed
   });
   it("is a settings page that does not exist when the route is unmetered", async () => {
     const w = world({ THEME_SONG_QUOTA: "off", DB: undefined });
