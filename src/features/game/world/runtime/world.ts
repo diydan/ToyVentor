@@ -175,6 +175,7 @@ import { buildXylophone } from "./xylophone";
 import { createMess } from "./mess";
 import { migrateOldStockKip } from "./kipLook";
 import { trimTinyCasters } from "./shadowProxy";
+import { createFaceUser } from "./faceUser";
 import { buildCleanCart } from "./cleanScene";
 import { buildHobProp } from "./cookScene";
 import { createActivities } from "./activities";
@@ -583,11 +584,12 @@ var GESTURES=createGestureLibrary({fetchImpl:(function(){return fetch.apply(wind
 var CHEERS=createCheers({fetchImpl:(function(){return fetch.apply(window,arguments as any)}) as typeof fetch,addClips:function(c: Record<string,BakedClip>){if(mix)mix.addClips(c)}});var ACTIONS=createActions({fetchImpl:(function(){return fetch.apply(window,arguments as any)}) as typeof fetch,addClips:function(c: Record<string,BakedClip>){if(mix)mix.addClips(c)}});
 var IDLEB=createIdle({mix:function(){return mix},ok:idleOk,begin:function(){if(P.danceBack==null){P.danceBack=P.tface;P.tface=-Math.PI/2}},rng:Math.random,now:function(){return performance.now()/1000},durations:function(){var m=new Map(GESTURES.durations());if(mix&&mix.hasClip(SAMBA_CLIP))m.set(SAMBA_CLIP,4.4);return m}});
 function idleOk(){return !disposed&&!reduce&&S.type==="character"&&!HELD.item&&!!P.rig&&P.rig.type==="character"&&!!mix&&mix.canDrive(P.rig)&&!P.showcase&&!P.busy&&!P.mDrive&&!P.target&&P.speed<.1&&!ED.on&&!paused&&!hostEl.classList.contains("building")}
+var FACEU=createFaceUser(Math.random);
 function startGestures(){CHEERS.load().catch(function(){});ACTIONS.load().catch(function(){});GESTURES.ensure(["react_wave","dance_silly","dance_hiphop","react_clap","dance_locking","dance_chicken","dance_swing"]).then(function(){return GESTURES.ensure(IDLE_FILES.fidget)}).catch(function(){});if(P.title&&!reduce)IDLEB.startShow()}
 void IDLE_IDS;
 /* The jump and the shove are the Mixamo Jump and Push clips (gameMoves.ts), loaded once the driver exists; until then, or if they fail, the old procedural hop and lunge play. */
 var MOVES={shoveContact:.6,shoveDur:2.2};
-function mixGo(a: MixAction,o?: {lift?: number;fade?: number;rate?: number;until?: number}){if(a==="cheer")CHEERS.roll();return !!(mix&&!reduce&&P.rig&&mix.canDrive(P.rig)&&mix.trigger(a,o))}
+function mixGo(a: MixAction,o?: {lift?: number;fade?: number;rate?: number;until?: number}){if(a==="cheer")CHEERS.roll();var ok=!!(mix&&!reduce&&P.rig&&mix.canDrive(P.rig)&&mix.trigger(a,o));if(ok&&a==="cheer"&&S.type==="character"&&!P.showcase)P.tface=-Math.PI/2;return ok}
 var P: Record<string, any>={pos:new T.Vector3(2,0,0),face:0,tface:0,speed:0,phase:0,busy:false,target:null,spin:0,lunge:0,hop:0,root:new T.Group(),model:null,rig:null,blinkT:2,dropT:1,showcase:false};
 scene.add(P.root);
 function buildPlayer(drop: string | null){if(P.stlToken)P.stlToken.cancelled=true;if(P.model)P.root.remove(P.model);P.rig=buildToy(S.type,cur() as any,S.col);P.model=new T.Group();P.model.add(P.rig.g);P.root.add(P.model);P.dropSlot=null;
@@ -842,6 +844,7 @@ if(!P.showcase&&!P.busy&&!P.mDrive){tidySpots.forEach(function(ts){if(ts.done)re
  P.blinkT-=dt;if(P.blinkT<0)P.blinkT=2.5+Math.random()*3;P.happy=Math.max(0,(P.happy||0)-dt);var bl=P.blinkT<.12?.12:(P.happy>0?.42:1),fyw=P.root.rotation.y,lxw=-Math.sin(fyw),lzw=Math.cos(fyw),lkY=Math.max(-.5,Math.min(.5,Math.atan2(-lzw,lxw)))*(P.speed>1?.35:1);rig.eyes.forEach(function(m: any){m.scale.y=bl;if(m.userData.look){m.rotation.y+=(lkY-m.rotation.y)*Math.min(1,dt*6);m.rotation.z=.06}});if(rig.type==="character"&&rig.head&&!driven)rig.head.rotation.z=P.spA*.35;if(rig.hair)rig.hair.rotation.z=P.spA*.25;if(rig.tail)rig.tail.rotation.z=P.spA*1.2+Math.sin(t*2)*.05;
  if(P.danceBack!=null&&!(mix&&(mix.busyAction==="dance"||mix.busyAction===IDLE_LABEL))){if(Math.abs(P.tface+Math.PI/2)<1e-6)P.tface=P.danceBack;P.danceBack=null}
  IDLEB.update();
+ if(S.type==="character"){var fnew=FACEU.step(dt,(P.showcase||P.danceBack!=null||P.mDrive||ED.on||paused||ACT.active||ACTS.busy||SLEEPH.busy||MESS.phase!=="idle"||(mix&&mix.busyAction))?"owned":idleOk()?"free":"away",P.tface);if(fnew!==null)P.tface=fnew}
  if(driven&&mix){mix.update(rig,dt,P.speed,{headYaw:P.noticeYaw||0,headPitch:-(P.spA||0)*.35});if(rig.hover)rig.g.position.y+=.12+Math.sin(t*3)*.06}
  HELD.follow(P.model,rig.grips);
  var hvv=(P.hop-(P.prevHop==null?P.hop:P.prevHop))/Math.max(dt,.001);P.prevHop=P.hop;if(!P.showcase&&!reduce&&!P.squashing){var kq=Math.max(-.1,Math.min(.12,hvv*.025));P.model.scale.set(1-kq*.5,1+kq,1-kq*.5)}
@@ -856,7 +859,7 @@ if(!P.showcase&&!P.busy&&!P.mDrive){tidySpots.forEach(function(ts){if(ts.done)re
   if(P.speed>1&&P.hop<.01){P.dustT=(P.dustT||0)-dt;if(P.dustT<0){P.dustT=.13;puff()}}
   if(P.speed<.1&&!P.busy&&!P.target){P.idleT=(P.idleT||0)+dt;if(P.idleT>(P.idleGap||(P.idleGap=idleGapSeconds(Math.random,P.idleN||0)))){P.idleT=0;P.idleGap=0;if(!reduce&&!(mix&&mix.busyAction))idleAct()}}else{P.idleT=0;P.idleN=0;P.idleGap=0}
   if(P.joyPending&&!P.busy){P.joyPending=false;if(!reduce)joy()}
-  var dirNow=Math.cos(P.tface)>0?1:-1;if(P.lastDir&&dirNow!==P.lastDir&&!P.busy&&!reduce)fx.push({t:0,d:.32,f:function(k){if(!P.busy)P.hop=Math.max(P.hop,.2*Math.sin(Math.PI*k))},end:function(){if(!P.busy)P.hop=0}});P.lastDir=dirNow;
+  var dirNow=Math.abs(P.tface+Math.PI/2)<1e-6?(P.lastDir||1):(Math.cos(P.tface)>0?1:-1);if(P.lastDir&&dirNow!==P.lastDir&&!P.busy&&!reduce)fx.push({t:0,d:.32,f:function(k){if(!P.busy)P.hop=Math.max(P.hop,.2*Math.sin(Math.PI*k))},end:function(){if(!P.busy)P.hop=0}});P.lastDir=dirNow;
   if(S.type!=="vehicle"&&P.speed>.6&&P.hop<.01){var sgn=Math.sin(P.phase)>0?1:-1;if(sgn!==P.lastStep){P.lastStep=sgn;if(sound&&AC){if(S.type==="robot")tone(210,0,.05,"square",.025,150);else tone(300,0,.06,"sine",.045,180)}}}
   var nj: any=null;spots.forEach(function(s){if(s.junk&&!s.got&&!s.broken&&Math.abs(s.d.x-P.pos.x)<3.8)nj=s});P.nearJunk=nj;var act=$("#act");if(act.hidden!==!nj)act.hidden=!nj}
  motor(S.type==="vehicle"&&!P.showcase?P.speed:0);
