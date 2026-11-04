@@ -12,7 +12,7 @@ const CHROME =
 const DEV_PORT = Number(process.env.E2E_PORT ?? 5198);
 const DEBUG_PORT = Number(process.env.E2E_DEBUG_PORT ?? 9333);
 const PROFILE = process.env.E2E_PROFILE ?? "/tmp/toyforge-e2e-profile";
-const APP_URL = `http://localhost:${DEV_PORT}/`;
+const APP_URL = `http://localhost:${DEV_PORT}/?title=0`; // ?title=0: straight into the world, not the main menu (src/features/game/world/titleEntries.ts)
 const VIEWPORT = { width: 390, height: 844, deviceScaleFactor: 2, mobile: true };
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

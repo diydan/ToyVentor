@@ -11,7 +11,7 @@ const DEV_PORT = Number(process.env.E2E_PORT ?? 5200);
 const DEBUG_PORT = Number(process.env.E2E_DEBUG_PORT ?? 9350);
 const PROFILE = process.env.E2E_PROFILE ?? "/tmp/toyforge-e2e-toyroom-profile";
 const SHOTS = process.env.E2E_SHOTS ?? "";
-const APP = `http://localhost:${DEV_PORT}/`;
+const APP = `http://localhost:${DEV_PORT}/?title=0`; // ?title=0: straight into the world, not the main menu (src/features/game/world/titleEntries.ts)
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function waitFor(fn, { timeoutMs = 60000, everyMs = 250, label = "?" } = {}) {

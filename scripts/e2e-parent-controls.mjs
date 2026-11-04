@@ -47,7 +47,7 @@ let chrome;
 const tabs = [];
 
 /** A fresh tab with the given seed; resolves once the dock is up. */
-async function tab(name, opts, url = `${BASE}/`) {
+async function tab(name, opts, url = `${BASE}/?title=0`) { // ?title=0: straight into the world, not the main menu
   const t = await chrome.open("about:blank", { width: 390, height: 844, mobile: true });
   tabs.push(t);
   await t.send("Page.addScriptToEvaluateOnNewDocument", { source: seed(opts) });
@@ -175,7 +175,7 @@ try {
   // ================= P5: the address bar does nothing =================
   console.log("P5: the address bar");
   {
-    const t = await tab("P5", { spent: true, demo: true, sessionOff: false }, `${BASE}/?parentControls=off&PARENT_CONTROLS=off&VITE_PARENT_CONTROLS=off#parentControls=off`);
+    const t = await tab("P5", { spent: true, demo: true, sessionOff: false }, `${BASE}/?title=0&parentControls=off&PARENT_CONTROLS=off&VITE_PARENT_CONTROLS=off#parentControls=off`);
     check("P5: ?parentControls=off (and the other spellings) leave the checks on: curtain up, no banner", (await toyPillDisabled(t)) && (await bannerText(t)) === null);
     await closeTab(t);
   }

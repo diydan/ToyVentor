@@ -130,6 +130,8 @@ import { SleepCurtain } from "./SleepCurtain";
 import { WorkshopLauncher } from "./WorkshopLauncher";
 import { ToyCustomizer } from "./ToyCustomizer";
 import { ToyMiniIcon } from "./ToyMiniIcon";
+import { TitleMenu } from "./TitleMenu";
+import { shouldShowTitle, type TitleChoice } from "./titleEntries";
 
 /** Every part any drop ever loans, so a part from a past weekend is taken back on Monday. */
 const KNOWN_LOANERS: string[] = GARAGE_DROPS.flatMap(loanKeys);
@@ -198,6 +200,9 @@ export function GameCanvas({
   const [store] = useState(createWorldStore);
   const state = useSyncExternalStore(store.subscribe, store.getState);
   const toyUrl = useMemo(() => worldUrlFor(contract), [contract]);
+  // The main menu (titleEntries.ts): the world boots on its title, the toy on the turntable, and waits for Play, Build or Create. `?title=0` goes straight in.
+  const wantTitleRef = useRef(shouldShowTitle(typeof window === "undefined" ? "" : window.location.search));
+  const [titleOpen, setTitleOpen] = useState(wantTitleRef.current);
   const firstToy = useRef(true);
   const pendingEngineOpenRef = useRef<"build" | "create" | "editor" | null>(
     initialOverlay === "build" ? "build" : null,
@@ -559,7 +564,7 @@ export function GameCanvas({
           }
         },
       },
-      { contract: contractRef.current },
+      { contract: contractRef.current, title: wantTitleRef.current },
     );
     engineRef.current = engine;
     if (import.meta.hot) {
@@ -869,6 +874,31 @@ export function GameCanvas({
     }
   }, [closeReactOverlays, create.open, editor.open, state.ready]);
 
+  // The menu is up only while the world is on its title. Play, Build and Create below leave it; so does anything else that opens a panel (a deep link to Create, the
+  // editor), because the engine ends the title state when it opens one. This notices that, so the menu never stays over a world that is already playing.
+  useEffect(() => {
+    if (!titleOpen || !state.ready) return;
+    const id = window.setInterval(() => {
+      if (!engineRef.current?.isTitle()) setTitleOpen(false);
+    }, 120);
+    return () => window.clearInterval(id);
+  }, [titleOpen, state.ready]);
+
+  const chooseTitle = useCallback(
+    (choice: TitleChoice) => {
+      if (choice === "play") {
+        engineRef.current?.start();
+      } else if (choice === "build") {
+        openBuildSheet();
+      } else {
+        closeReactOverlays();
+        engineRef.current?.openCreate();
+      }
+      setTitleOpen(false);
+    },
+    [closeReactOverlays, openBuildSheet],
+  );
+
   const handleCloseBuild = useCallback(() => {
     engine()?.closeCustomizer();
     if (placements.length > 0) {
@@ -1074,7 +1104,7 @@ export function GameCanvas({
   return (
     <div
       ref={hostRef}
-      className={isFullscreen ? "tv-host tv-host-fullscreen" : "tv-host"}
+      className={`${isFullscreen ? "tv-host tv-host-fullscreen" : "tv-host"}${titleOpen ? " tv-host--titled" : ""}`}
     >
       <div className="tv-dock" role="toolbar" aria-label="ToyVentor World studio">
         <button
@@ -1430,6 +1460,7 @@ export function GameCanvas({
 
       <div className="tv-stage">
         <div ref={stageHostRef} className="tv-stage-canvas-host" />
+        {titleOpen && <TitleMenu toyName={label} ready={state.ready} onChoose={chooseTitle} />}
         {!sleepActive &&
           (demoMode ? (
             <div className="tv-worlds" role="tablist" aria-label="Worlds">

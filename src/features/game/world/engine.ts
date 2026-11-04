@@ -885,6 +885,8 @@ export interface EngineHandle {
   editorIoAction: (action: EditorIoAction) => void;
   /** Leave the title screen and start playing. */
   start: () => void;
+  /** True while the world is still on its title (the main menu is up): boot waits there when `createEngine` was given `title: true`. */
+  isTitle: () => boolean;
   /** Quiet the engine's background music when the calm Sleep Curtain fades in. */
   muteSound: () => void;
   /** Stock blueprints, forged tools, and Garden river position for Demo Mode v1 without mutating earned XP. */
@@ -1034,7 +1036,7 @@ interface LegacyHooks {
 export function createEngine(
   hostEl: HTMLElement,
   events: EngineEvents,
-  initial: { contract: ToyContract | null },
+  initial: { contract: ToyContract | null; title?: boolean },
 ): EngineHandle {
   let disposed = false;
   let ready = false;
@@ -1342,6 +1344,7 @@ export function createEngine(
   runtime = createWorldRuntime(hostEl, {
     contract: initial.contract,
     onNotify: schedulePoll,
+    title: initial.title,
   });
   poll();
 
@@ -1551,6 +1554,7 @@ export function createEngine(
     start: () => {
       hooks()?.start?.(false);
     },
+    isTitle: () => !disposed && Boolean(hooks()?.P?.title),
     muteSound: () => {
       hooks()?.mute?.();
     },

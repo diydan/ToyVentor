@@ -54,7 +54,7 @@ try {
   const t = await chrome.open("about:blank", { width: 390, height: 844, mobile: true });
   await t.send("Page.addScriptToEvaluateOnNewDocument", { source: INSTRUMENT });
   await t.send("Network.enable");
-  await t.send("Page.navigate", { url: `${BASE}/` });
+  await t.send("Page.navigate", { url: `${BASE}/?title=0` }); // ?title=0: straight into the world, not the main menu
 
   // ---- the game ----
   check("the game loads to its dock, with a Workshop button that opens a dialog", await t.waitFor(`!!document.querySelector('.tv-dock-right')`, 120000)

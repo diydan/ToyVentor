@@ -225,6 +225,8 @@ declare global {
 export interface WorldRuntimeOptions {
   contract?: ToyContract | null;
   onNotify?: () => void;
+  /** True: boot on the title (the toy on the turntable) and wait for `start` (the main menu, src/features/game/world/titleEntries.ts). Unset: go straight into play, as before. */
+  title?: boolean;
 }
 
 export interface WorldRuntimeHandle {
@@ -1300,7 +1302,7 @@ toyFromURL();
 mInit();
 if(!WORLDS[S.world])S.world="garden";
 setupPost(hostEl.clientWidth,hostEl.clientHeight);buildFactory();buildWorld(S.world);buildPlayer(null);moves();resize();
-P.title=true;P.showcase=true;P.pos.set(FX,0,0);cam.x=FX;facA=-.55;hostEl.classList.add("titled");S.started=true;startPlay(false);var loadEl=$("#load");if(loadEl)loadEl.hidden=true;notify();
+P.title=true;P.showcase=true;P.pos.set(FX,0,0);cam.x=FX;facA=-.55;hostEl.classList.add("titled");S.started=true;if(!options.title)startPlay(false);var loadEl=$("#load");if(loadEl)loadEl.hidden=true;notify();
 function startPlay(build: boolean){if(!P.title)return;P.title=false;S.started=true;save();hostEl.classList.remove("titled");ctx();musInit();MUS.on=true;musGain(sound?.7:0,1.2);
  if(build){P.pos.set(2,0,0);P.showcase=false;openSheet();return}
  camera.clearViewOffset();P.showcase=false;P.pos.set(2,0,0);P.face=P.tface=0;cam.x=3;flash();setTimeout(function(){showIntro(S.world)},250)}
