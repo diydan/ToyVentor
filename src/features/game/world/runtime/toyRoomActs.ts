@@ -232,7 +232,7 @@ export function createActs(w: ActsWorld) {
     return {
       standX: x - dir * KICK_STAND, face: dir, seconds: KICK_S,
       begin: () => { w.clip("kick"); },
-      cues: [{ at: KICK_CONTACT_S, fn: () => { w.fx.kickBall(inst, dir * KICK_VX, KICK_VY); w.tone(160, 0, 0.1, "square", 0.07, 90); fetched = w.fetch ? w.fetch(inst) : false; } }],
+      cues: [{ at: KICK_CONTACT_S, fn: () => { w.fx.placeProp?.(inst, inst.base.px, { z: w.position().z, zSnap: true }); w.fx.kickBall(inst, dir * KICK_VX, KICK_VY); w.tone(160, 0, 0.1, "square", 0.07, 90); fetched = w.fetch ? w.fetch(inst) : false; } }],
       end: () => { if (!fetched) following = { inst, dir }; },            // (a reset cuts a kick short and clears this again) a dog that fetches the ball saves Kip the trot
     };
   }
@@ -347,6 +347,7 @@ export function createActs(w: ActsWorld) {
       following = null;
       const visit = THING_KINDS.has(kind) ? things.visitFor(kind as ThingKind, inst) : kind === "spill" || kind === "dump" ? w.mess?.visitFor(kind, inst) ?? null : kind === "scrub" || kind === "cook" ? w.activity?.visitFor(kind, inst) ?? null : { hug: hugVisit, kick: kickVisit, jump: jumpVisit, read: readVisit, play: playVisit, blow: blowVisit, pet: petVisit, mallet: malletVisit }[kind as "hug" | "kick" | "jump" | "read" | "play" | "blow" | "pet" | "mallet"](inst);
       const started = visit ? visitor.start(visit) : false;
+      if (started && kind === "kick") w.fx.placeProp?.(inst, inst.base.px, { z: w.position().z });     // the ball rolls out onto Kip's lane while he walks over (props stand behind it), so the foot meets the ball, not the air in front of it
       if (started && kind === "pet") w.fx.placeProp?.(inst, inst.base.px, { z: w.position().z });   // the dog steps onto Kip's lane while he walks over, so they stand side by side, not one behind the other
       return started;
     },
