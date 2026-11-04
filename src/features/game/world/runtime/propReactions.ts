@@ -136,6 +136,8 @@ export interface PropInst {
   lift: number;
   /** Where in depth the prop is walking to (`placeProp` with `z`): `base.pz` eases there at Z_EASE_SPEED, so a dog stepping onto Kip's lane crosses the floor instead of popping. Null: not moving in depth. */
   zTo: number | null;
+  /** Where along the floor the prop is stepping to (`placeProp` with `walk`): `base.px` eases there at WALK_SPEED, a small shuffle (the dog flopping closer to Kip). Null: not stepping. */
+  xTo: number | null;
   /** The turn the prop is easing to (`placeProp` with `ry`, for a prop whose holder says `userData.easeTurn`): a dog about face swings round instead of flipping. Null: not turning. */
   turnTo: number | null;
   /** A ball that has been kicked and is still moving: where it is along the floor and how high; null when it is at rest. */
@@ -203,6 +205,8 @@ function meshBox(root: THREE.Object3D): THREE.Box3 {
 const clamp01 = (k: number) => Math.max(0, Math.min(1, k));
 /** How fast a prop walks in depth when `placeProp` is given a `z` (units per second): a dog stepping onto Kip's lane, a ball it brings there. */
 export const Z_EASE_SPEED = 3.2;
+/** How fast a prop shuffles along the floor when `placeProp` is given `walk` (units per second): a dog's little step in towards Kip, slow enough that its paws step at a walk, not a trot. */
+export const WALK_SPEED = 1.4;
 /** How fast a prop that eases its turns (the dog) swings round (radians per second): about a third of a second for a half turn. */
 export const TURN_SPEED = 9;
 /** The short way round from `from` to `to`, in radians (-pi to pi). */
@@ -318,11 +322,12 @@ export function createPropFx(deps: PropFxDeps) {
   }
   /**
    * Move a prop along the floor (the dog running, the ball in its mouth): its place is `x` from now on, optionally turned to `ry` (the dog faces -x at pi and +x at 0), held `lift` units off the ground
-   * and walked to depth `z` (eased at Z_EASE_SPEED; `zSnap` puts it there at once, for the ball in the dog's mouth, which has to keep exactly the dog's depth). A prop whose holder says
+   * (`walk` shuffles to `x` at WALK_SPEED instead of putting it there) and walked to depth `z` (eased at Z_EASE_SPEED; `zSnap` puts it there at once, for the ball in the dog's mouth, which has to keep exactly the dog's depth). A prop whose holder says
    * `userData.easeTurn` (the dog) swings round to `ry` at TURN_SPEED instead of flipping. What it was doing is left alone (a roll or a wag carries on from the new place).
    */
-  function placeProp(inst: PropInst, x: number, opts: { ry?: number; lift?: number; z?: number; zSnap?: boolean } = {}) {
-    inst.base.px = x;
+  function placeProp(inst: PropInst, x: number | null, opts: { ry?: number; lift?: number; z?: number; zSnap?: boolean; walk?: boolean } = {}) {
+    if (x !== null && opts.walk) inst.xTo = x;                // a shuffle: it steps there at WALK_SPEED (a placement somewhere else cancels it; null or the same x leaves it alone)
+    else if (x !== null && x !== inst.base.px) { inst.base.px = x; inst.xTo = null; }
     if (opts.ry !== undefined) {
       if (inst.holder.userData.easeTurn) inst.turnTo = opts.ry;
       else inst.base.ry = opts.ry;
@@ -781,7 +786,7 @@ export function createPropFx(deps: PropFxDeps) {
       base: { px: holder.position.x, py: holder.position.y, pz: holder.position.z, rx: holder.rotation.x, ry: holder.rotation.y, rz: holder.rotation.z, sx: holder.scale.x, sy: holder.scale.y, sz: holder.scale.z },
       phase: Math.random() * Math.PI * 2, size, on: true,
       lightColor: type === "lantern" && typeof arg === "string" && /^#[0-9a-f]{6}$/i.test(arg) ? arg : null,
-      lights: [], sprites: [], glows: [], kids: new Map(), slots: [], kick: null, lift: 0, zTo: null, turnTo: null, fruit: "apple", fruitSlots: 3, dir: 1, taps: 0, proxy: null,
+      lights: [], sprites: [], glows: [], kids: new Map(), slots: [], kick: null, lift: 0, zTo: null, xTo: null, turnTo: null, fruit: "apple", fruitSlots: 3, dir: 1, taps: 0, proxy: null,
     };
     for (const c of (pivot ?? holder).children) inst.kids.set(c, { pos: c.position.clone(), rot: c.rotation.clone(), scale: c.scale.clone() });
 
@@ -957,6 +962,10 @@ export function createPropFx(deps: PropFxDeps) {
     }
     for (const inst of insts) {
       const b = inst.base;
+      if (inst.xTo !== null) {                                // shuffling along the floor at a walking pace
+        const d = inst.xTo - b.px, step = WALK_SPEED * Math.max(0, dt);
+        if (Math.abs(d) <= step) { b.px = inst.xTo; inst.xTo = null; } else b.px += Math.sign(d) * step;
+      }
       if (inst.zTo !== null) {                                // walking to a depth: a steady pace, no overshoot
         const d = inst.zTo - b.pz, step = Z_EASE_SPEED * Math.max(0, dt);
         if (Math.abs(d) <= step) { b.pz = inst.zTo; inst.zTo = null; } else b.pz += Math.sign(d) * step;

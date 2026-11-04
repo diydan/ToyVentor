@@ -22,7 +22,7 @@ export interface FollowAdapter {
   /** Place the dog along the floor, facing right (+1) or left (-1). */
   moveDog(x: number, dir: 1 | -1): void;
   /** What the dog is doing, for its animation. */
-  cue(name: "run" | "sit" | "idle" | "happy"): void;
+  cue(name: "run" | "sit" | "lie" | "idle" | "happy"): void;
   /** Where Kip is in depth, and tell the dog to walk to a depth (its own lane is Kip's): once it has met Kip it keeps to his path, side by side along the floor, not a room behind. Optional: absent, the dog keeps its depth. */
   toyZ?(): number;
   laneTo?(z: number): void;
@@ -48,6 +48,8 @@ const spotOffset = (k: number, behind: 1 | -1) => (k % 2 === 0 ? behind : -behin
 export const ARRIVE = 0.15;
 /** How long Kip has to stand still, with the dog by it, before the dog sits. */
 export const SIT_AFTER_S = 1.8;
+/** How much longer Kip stays still, with the dog sitting by him, before it settles onto its belly. It gets up again as soon as Kip walks. */
+export const LIE_AFTER_S = 12;
 export const TROT_SPEED = 4.2;
 /** It slows down over the last stretch so it does not stop dead. */
 const SLOW_WITHIN = 1.0, SLOW_SPEED = 1.3;
@@ -64,6 +66,8 @@ export function createFollow(a: FollowAdapter) {
   let heading: 1 | -1 = 1;                                     // the way Kip last walked
   let lastToy: number | null = null;
   let stillFor = 0;
+  let sitFor = 0;                                              // how long it has been sitting with Kip still (it lies down after LIE_AFTER_S)
+  let lying = false;
   let wasAllowed = true;
 
   /** The first choice of place with nothing in it, or if there is none the one with the most room (the earlier choice wins a tie). */
@@ -77,12 +81,14 @@ export function createFollow(a: FollowAdapter) {
     return best;
   };
   const faceKip = (dx: number) => { a.moveDog(dx, sign(a.toyX() - dx)); };
-  const startTrot = (dx: number) => { x = dx; behind = heading === 1 ? -1 : 1; spot = 0; chosen = false; a.cue("run"); phase = "trotting"; stillFor = 0; };
+  const startTrot = (dx: number) => { x = dx; behind = heading === 1 ? -1 : 1; spot = 0; chosen = false; a.cue("run"); phase = "trotting"; stillFor = 0; lying = false; };
 
   return {
     get phase(): FollowPhase { return phase; },
     /** Has the dog met Kip (and so follows it)? */
     get engaged(): boolean { return phase !== "home"; },
+    /** Is the dog lying on its belly (it was sitting by Kip for LIE_AFTER_S while he stood still)? `phase` stays "sitting". */
+    get lying(): boolean { return lying; },
     update(dt: number): void {
       const ok = a.allowed();
       const dx0 = a.dogX();
@@ -91,7 +97,7 @@ export function createFollow(a: FollowAdapter) {
         if (wasAllowed) {                                      // something else has the dog: stop whatever this was doing and begin again from standing when it is free
           if (phase === "trotting") a.cue("idle");
           if (phase !== "home") phase = "standing";
-          stillFor = 0;
+          stillFor = 0; lying = false;
         }
         wasAllowed = false;
         return;
@@ -125,20 +131,24 @@ export function createFollow(a: FollowAdapter) {
       const far = Math.abs(toy - dx) > FOLLOW_START;
       if (phase === "sitting") {
         if (far) startTrot(dx);
-        else if (!a.toyStill()) { phase = "standing"; stillFor = 0; a.cue("idle"); }
+        else if (!a.toyStill()) { phase = "standing"; stillFor = 0; lying = false; a.cue("idle"); }
+        else {
+          sitFor += Math.max(0, dt);
+          if (!lying && sitFor >= LIE_AFTER_S) { lying = true; a.cue("lie"); }           // Kip has been still a long while: it settles onto its belly
+        }
         return;
       }
       // standing
       if (far) { startTrot(dx); return; }
       if (a.toyStill()) {
         stillFor += Math.max(0, dt);
-        if (stillFor >= SIT_AFTER_S) { faceKip(dx); a.cue("sit"); phase = "sitting"; }
+        if (stillFor >= SIT_AFTER_S) { faceKip(dx); a.cue("sit"); phase = "sitting"; sitFor = 0; lying = false; }
       } else stillFor = 0;
     },
     /** A world change or a new toy: it forgets Kip (it has not met it) and stands about. */
     reset(): void {
       if (phase === "trotting" || phase === "sitting") a.cue("idle");
-      phase = "home"; stillFor = 0; wasAllowed = true;
+      phase = "home"; stillFor = 0; lying = false; wasAllowed = true;
     },
   };
 }

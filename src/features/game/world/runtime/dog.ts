@@ -7,7 +7,7 @@
 import { T, M, plastic } from "./worldScene";
 import type * as THREE from "three";
 
-export type DogCue = "bark" | "pet" | "run" | "happy" | "sit" | "idle";
+export type DogCue = "bark" | "pet" | "run" | "happy" | "sit" | "lie" | "idle";
 /** How long a cue's reaction lasts, in seconds. */
 export const BARK_S = 0.9;
 export const PET_REACTION_S = 2.8;
@@ -97,6 +97,111 @@ export function steerFor(vx: number, vz: number, speed: number): number {
   return Math.max(-Math.PI / 2, Math.min(Math.PI / 2, ang)) + 0;                   // (+ 0: never -0)
 }
 
+// ---- lying down, looking at Kip, and the small things a dog does when nothing is happening --------------------------------------------------------------
+/** How quickly it settles onto its belly and gets up again (the share of the way it covers per second, roughly): slower than sitting, a settle is lazy. */
+export const LIE_RATE = 4.5;
+/** How far the body comes down when it lies (units): its belly is then on the floor. */
+export const LIE_DROP = 0.28;
+const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
+const smooth01 = (x: number) => { const k = clamp01(x); return k * k * (3 - 2 * k); };
+
+/** The posture of a dog lying on its belly, `k` of the way there: the body down, the chin down (on its paws), the tail low, the ears loose and the eyes half shut. Add it to a pose (it stacks on a sit it is easing out of). */
+export function withLie(p: DogPose, k: number): DogPose {
+  const s = clamp01(k);
+  if (s === 0) return p;
+  return {
+    ...p, bob: p.bob - LIE_DROP * s, bodyPitch: p.bodyPitch - 0.03 * s, headDrop: (p.headDrop ?? 0) + 0.6 * s, headPitch: p.headPitch - 0.12 * s, headFwd: (p.headFwd ?? 0) + 0.14 * s,
+    tailLift: p.tailLift * (1 - s), tailDrop: (p.tailDrop ?? 0) + 0.3 * s, earFlop: p.earFlop + 0.22 * s, squint: Math.max(p.squint ?? 0, 0.4 * s), lieK: s,
+  };
+}
+
+/** Is the dog's own reaction to a cue over (or was there none), so that it is free to look about, wag at Kip and do its small things? A bark, a pet and a happy hop count until they finish; running never does. */
+export function cueIsCalm(name: string | null, age: number): boolean {
+  if (name === null || name === "idle" || name === "sit" || name === "lie") return true;
+  if (name === "bark") return age >= BARK_S;
+  if (name === "pet") return age >= PET_REACTION_S;
+  if (name === "happy") return age >= HAPPY_S;
+  if (name === "run") return false;
+  return true;
+}
+
+/** Looking at Kip: within LOOK_RANGE (along the floor) the head turns to him, fully within LOOK_NEAR. Clamped to what a neck does. */
+export const LOOK_RANGE = 7, LOOK_NEAR = 2.8, LOOK_YAW_MAX = 0.9, LOOK_PITCH_MAX = 0.45, LOOK_RATE = 5;
+/** Where Kip's eyes are (world units off the floor) and where the dog's head is (its own frame), for the upward look. */
+export const KIP_EYE_Y = 1.9, DOG_HEAD_Y = 1.18;
+/**
+ * Where to look and how much the dog cares: `lx` is how far ahead of the dog's nose Kip is, `lz` how far to the side (its own frame, the dog faces +x), `dy` how far above its head his eyes are. `near` is 1
+ * when he is close and 0 beyond the range (smooth in between): it drives the look, the ears and the wag. A Kip right behind it is not looked at over the shoulder (the turn tapers to nothing past a bit over
+ * a quarter turn, so the head never flips from one side to the other).
+ */
+export function lookFor(lx: number, lz: number, dy: number): { yaw: number; pitch: number; near: number } {
+  const h = Math.hypot(lx, lz);
+  const near = 1 - smooth01((h - LOOK_NEAR) / (LOOK_RANGE - LOOK_NEAR));
+  const raw = Math.atan2(-lz, lx);
+  const taper = 1 - smooth01((Math.abs(raw) - 1.6) / 1.0);
+  const yaw = Math.max(-LOOK_YAW_MAX, Math.min(LOOK_YAW_MAX, raw)) * taper;
+  const pitch = Math.max(-LOOK_PITCH_MAX, Math.min(LOOK_PITCH_MAX, Math.atan2(dy, Math.max(h, 0.3))));
+  return { yaw: yaw + 0, pitch, near };
+}
+/** How fast the tail goes (radians per second), how wide, how high and how far the ears flare, for a dog that is `near` (0 to 1) Kip: a lazy wag when he is far, a flat-out one when he is close. `base` is its resting wag. */
+export const wagFreq = (base: number, near: number): number => base + 6.3 * clamp01(near);
+export const wagAmp = (base: number, near: number): number => base + 0.3 * clamp01(near);
+export const wagLift = (near: number): number => 0.25 * clamp01(near);
+export const wagEar = (near: number): number => 0.14 * clamp01(near);
+
+export type IdleKind = "sniff" | "scratch" | "yawn" | "tilt" | "twitch";
+export type Posture = "stand" | "sit" | "lie";
+/** How long each small thing takes (seconds), which of them a standing, sitting or lying dog does, and how long it waits between them. */
+export const IDLE_LEN: Readonly<Record<IdleKind, number>> = { sniff: 2.4, scratch: 1.9, yawn: 2.1, tilt: 1.6, twitch: 1.0 };
+export const IDLE_KINDS: Readonly<Record<Posture, readonly IdleKind[]>> = { stand: ["sniff", "yawn", "tilt"], sit: ["scratch", "yawn", "tilt"], lie: ["yawn", "twitch", "tilt"] };
+export const IDLE_GAP_S: readonly [number, number] = [5, 12];
+/** A random wait (`r` is 0 to 1) until the next small thing, and which one (`r` again, 0 to 1). */
+export const nextIdleDelay = (r: number): number => IDLE_GAP_S[0] + (IDLE_GAP_S[1] - IDLE_GAP_S[0]) * clamp01(r);
+export function pickIdle(posture: Posture, r: number): IdleKind {
+  const list = IDLE_KINDS[posture];
+  return list[Math.min(list.length - 1, Math.floor(clamp01(r) * list.length))]!;
+}
+/** What a small thing adds to the pose, `age` seconds into it. `env` is how much of it there is (0 to 1): it eases in and out so nothing pops. All zero outside its time. */
+export interface IdleBits {
+  env: number; headPitch: number; headDrop: number; headYaw: number; headRoll: number; headFwd: number; bodyPitch: number; jaw: number; squint: number; earFlop: number; stretch: number;
+  /** The hind leg that scratches: how far it is raised (0 to 1) and where its shake is. */
+  scratch: number; scratchPhase: number;
+}
+export const NO_IDLE: IdleBits = { env: 0, headPitch: 0, headDrop: 0, headYaw: 0, headRoll: 0, headFwd: 0, bodyPitch: 0, jaw: 0, squint: 0, earFlop: 0, stretch: 0, scratch: 0, scratchPhase: 0 };
+export function idleBits(kind: IdleKind, age: number): IdleBits {
+  const len = IDLE_LEN[kind];
+  if (age < 0 || age > len) return NO_IDLE;
+  const e = smooth01(age / 0.4) * smooth01((len - age) / 0.4);
+  const b: IdleBits = { ...NO_IDLE, env: e };
+  switch (kind) {
+    case "sniff":                                    // the nose goes down to the floor, forward, and searches about with little pulses
+      b.headDrop = 0.52 * e; b.headPitch = -0.55 * e + 0.06 * e * Math.sin(age * 22); b.headFwd = 0.2 * e; b.headYaw = 0.24 * e * Math.sin(age * 8); b.bodyPitch = -0.05 * e; break;
+    case "scratch":                                  // sitting: a hind leg comes up and scratches, the head tips, the eyes screw up
+      b.scratch = e; b.scratchPhase = age * 17; b.headRoll = 0.24 * e; b.headDrop = 0.05 * e; b.squint = 0.7 * e; break;
+    case "yawn":                                     // the head goes back, the jaw drops wide, the eyes shut, the body stretches
+      b.headPitch = 0.42 * e; b.jaw = Math.min(1, e * 1.5); b.squint = e; b.stretch = 0.05 * e; b.earFlop = -0.08 * e; b.headDrop = -0.03 * e; break;
+    case "tilt":                                     // a curious head tilt, the ears up
+      b.headRoll = 0.4 * e; b.headPitch = 0.08 * e; b.earFlop = 0.16 * e; break;
+    case "twitch":                                   // a lying dog's ears flick
+      b.earFlop = 0.36 * e * Math.sin(age * 30); break;
+  }
+  return b;
+}
+export function scaleIdle(b: IdleBits, k: number): IdleBits {
+  const o = { ...b };
+  for (const key of Object.keys(o) as Array<keyof IdleBits>) if (key !== "scratchPhase") o[key] = b[key] * k;
+  return o;
+}
+/** Lay a small thing over a pose. `side` is the side of the dog (its own z, +1 or -1) the camera sees: the scratching leg is that one, and the head dips towards it. */
+export function withIdle(p: DogPose, b: IdleBits, side = 1): DogPose {
+  if (b.env === 0) return p;
+  return {
+    ...p, headPitch: p.headPitch + b.headPitch, headDrop: (p.headDrop ?? 0) + b.headDrop, headYaw: p.headYaw + b.headYaw, headRoll: p.headRoll + b.headRoll * (b.scratch > 0 ? -side : 1), headFwd: (p.headFwd ?? 0) + b.headFwd,
+    bodyPitch: p.bodyPitch + b.bodyPitch, jaw: Math.max(p.jaw ?? 0, b.jaw), squint: Math.max(p.squint ?? 0, b.squint), earFlop: p.earFlop + b.earFlop, stretch: (p.stretch ?? 0) + b.stretch,
+    scratch: b.scratch, scratchPhase: b.scratchPhase, scratchSide: side,
+  };
+}
+
 export interface DogPose {
   /** The tail's sweep about the vertical (radians) and how far it is lifted. */
   tailYaw: number;
@@ -123,7 +228,17 @@ export interface DogPose {
   gaitPhase?: number;
   gaitBlend?: number;
   sitK?: number;
+  /** How far it lies on its belly (0 to 1). */
+  lieK?: number;
   airborne?: number;
+  /** The head forward of where it sits (a sniff, a chin on the paws), how wide the jaw is open (0 to 1), how far the body is stretched along its length, and the scratching hind leg (raised 0 to 1, shake). */
+  headFwd?: number;
+  jaw?: number;
+  stretch?: number;
+  scratch?: number;
+  scratchPhase?: number;
+  /** Which side the scratching leg is on (its own z: +1 left, -1 right): the side the camera sees, so the leg is not hidden behind the body. */
+  scratchSide?: number;
 }
 
 const bump = (age: number, at: number, len: number) => (age >= at && age <= at + len ? Math.sin((Math.PI * (age - at)) / len) : 0);
@@ -147,6 +262,7 @@ export function dogPose(t: number, cue: string | null, age: number): DogPose {
     pose.tailYaw = 0.6 * Math.sin(t * 20);
     pose.tailLift = 0.5;
     pose.earFlop += 0.15 * e;
+    pose.jaw = 0.9 * e;                                                                         // the mouth opens on each woof
   } else if (cue === "pet" && age >= 0 && age < PET_REACTION_S) {
     const push = Math.max(0, ...PET_PUSH_AGES.map((at) => bump(age, at - 0.18, 0.5)));          // the head rises into the hand on each stroke
     const settle = Math.min(1, age / 0.25);                                                     // and the lean eases in rather than popping
@@ -162,6 +278,7 @@ export function dogPose(t: number, cue: string | null, age: number): DogPose {
     pose.headDrop = (PET_HEAD_DROP - 0.04 * push) * settle;                                    // lowered to meet a hand that is held low, then up into it on each stroke
     pose.bodyPitch = 0.04 * settle + 0.03 * push;                                               // the chest comes up with it
     pose.squint = Math.min(1, settle * 1.2);                                                    // eyes screwed shut with joy
+    pose.jaw = (0.14 + 0.1 * Math.sin(t * 9)) * settle;                                         // a happy pant
   }
   else if (cue === "sit") {                          // sitting waiting for Kip: a slow, lazy wag (the posture itself is `withSit`, eased in and out by the tick)
     pose.tailYaw = 0.3 * Math.sin(t * 2.4);
@@ -174,12 +291,14 @@ export function dogPose(t: number, cue: string | null, age: number): DogPose {
     pose.headPitch = -0.05;
     pose.earFlop = 0.25 * Math.sin(t * 13);
     pose.bodyPitch = -0.04;
+    pose.jaw = 0.25 + 0.12 * Math.sin(t * 16);                                  // panting as it runs
   } else if (cue === "happy" && age >= 0 && age < HAPPY_S) {   // delighted: hopping on the spot, tail going round
     pose.bob = 0.06 * Math.abs(Math.sin(t * 11));
     pose.tailYaw = 0.7 * Math.sin(t * 18);
     pose.tailLift = 0.55;
     pose.headPitch = -0.1;
     pose.earFlop = 0.2;
+    pose.jaw = 0.3;
   }
   return pose;
 }
@@ -189,6 +308,10 @@ export interface DogParts {
   tail: THREE.Group; head: THREE.Group; body: THREE.Group; earL: THREE.Mesh; earR: THREE.Mesh; baseY: number; tailY: number; headY: number;
   /** The head's and the body's place along the dog's nose when it is standing at ease (a lean moves them from there), the two eyes (they squint) and the four legs. */
   headX?: number; eyes?: THREE.Mesh[]; legs?: DogLeg[];
+  /** The body's own length scale as built (1.5: the group is stretched along the dog, a yawn stretches it a little more). */
+  bodyX?: number;
+  /** The lower jaw (it hinges down) and the dark of the mouth (it shows as the jaw opens). */
+  jaw?: THREE.Group; mouth?: THREE.Mesh;
 }
 
 /** The posture of a sitting dog, `k` of the way there (0 standing, 1 seated): the rump down, the chest and head up, the tail low and trailing. */
@@ -217,23 +340,34 @@ export function hipPlace(lx: number, bodyY: number, pitch: number): { x: number;
  * sits, and lifted when the whole dog is off the floor (a hop tucks its paws). The floor is y = PAW_R for the centre of a paw.
  */
 export function footTarget(leg: { front: boolean; left: boolean; lx: number }, p: DogPose): { x: number; y: number } {
-  const blend = (p.gaitBlend ?? 0) * (1 - (p.sitK ?? 0));
+  const sit = p.sitK ?? 0, lie = p.lieK ?? 0;
+  const blend = (p.gaitBlend ?? 0) * Math.max(0, 1 - sit - lie);
   const st = footStep((p.gaitPhase ?? 0) + legPhase(leg.front, leg.left));
-  const sit = p.sitK ?? 0;
-  const x = leg.lx + st.dx * blend + (leg.front ? 0 : 0.3 * sit);
+  // sitting: the hind paws come forward under the haunch; lying: the front paws stretch out ahead and the hind ones tuck in under the belly
+  const x = leg.lx + st.dx * blend + (leg.front ? 0.42 * lie : 0.3 * sit + 0.35 * lie);
   const y = PAW_R + st.lift * blend + 0.7 * (p.airborne ?? 0);
   return { x, y };
 }
 
 /** Write the legs of the pose: each hip follows the body (it bobs, tilts and leans), the paw goes where `footTarget` says, and the two bones are solved to join them. */
+/** How far out to the side the scratching hind leg swings (radians) so the paw is clear of the body. */
+export const SCRATCH_SPLAY = 0.6;
 export function applyLegs(parts: DogParts, p: DogPose): void {
   if (!parts.legs) return;
-  const bodyY = parts.baseY + p.bob, lean = p.leanX ?? 0;
+  const bodyY = parts.baseY + p.bob, lean = p.leanX ?? 0, sc = p.scratch ?? 0, side = p.scratchSide ?? 1;
   for (const leg of parts.legs) {
     const h = hipPlace(leg.lx, bodyY, p.bodyPitch), f = footTarget(leg, p);
     const hx = h.x + lean;
-    const sol = solveLeg(f.x - hx, h.y - f.y, !leg.front);
+    let fx = f.x - hx, fy = h.y - f.y;
+    const scratching = sc > 0 && !leg.front && leg.left === side > 0;
+    if (scratching) {                                // the foot comes up to the neck, in front of and above the hip, and shakes
+      const ph = p.scratchPhase ?? 0;
+      fx += (0.3 + 0.05 * Math.sin(ph) - fx) * sc;
+      fy += (-0.42 + 0.06 * Math.cos(ph * 0.5) - fy) * sc;
+    }
+    const sol = solveLeg(fx, fy, !leg.front);
     leg.hip.position.set(hx, h.y, leg.lz);
+    leg.hip.rotation.x = scratching ? side * SCRATCH_SPLAY * sc : 0;
     leg.upper.rotation.z = sol.upper;
     leg.lower.rotation.z = sol.lower;
   }
@@ -247,13 +381,16 @@ export function applyDogPose(parts: DogParts, p: DogPose): void {
   parts.body.position.x = p.leanX ?? 0;
   parts.tail.position.y = parts.tailY - (p.tailDrop ?? 0);
   parts.head.position.y = parts.headY - (p.headDrop ?? 0);
-  parts.head.position.x = (parts.headX ?? 0.78) + (p.leanX ?? 0) * 1.4;
+  parts.head.position.x = (parts.headX ?? 0.78) + (p.leanX ?? 0) * 1.4 + (p.headFwd ?? 0);
   parts.head.position.z = p.leanZ ?? 0;
   parts.body.scale.y = p.bodyScaleY;
+  parts.body.scale.x = (parts.bodyX ?? 1) * (1 + (p.stretch ?? 0));
   parts.body.rotation.z = p.bodyPitch;
   parts.earL.rotation.x = p.earFlop;
   parts.earR.rotation.x = -p.earFlop;
   if (parts.eyes) for (const e of parts.eyes) e.scale.y = 1 - 0.85 * (p.squint ?? 0);
+  if (parts.jaw) parts.jaw.rotation.z = -0.8 * (p.jaw ?? 0);
+  if (parts.mouth) { parts.mouth.visible = (p.jaw ?? 0) > 0.02; parts.mouth.scale.y = Math.max(0.001, p.jaw ?? 0); }       // (a flat dark disc under a muzzle that is shut would show from below)
   applyLegs(parts, p);
 }
 
@@ -299,6 +436,14 @@ export function buildDog(x: number, z: number): THREE.Group {
   const snout = M(new T.SphereGeometry(0.22, 14, 10), cream, 0.3, -0.1, 0); snout.scale.set(1.25, 0.85, 0.9);
   head.add(snout);
   head.add(M(new T.SphereGeometry(0.075, 10, 8), ink, 0.54, -0.04, 0));
+  const mouthMat = plastic("#6a2a2a", { roughness: 0.6 });
+  const mouth = M(new T.SphereGeometry(0.15, 12, 8), mouthMat, 0.32, -0.28, 0); mouth.scale.set(1.45, 0.001, 0.8);           // the dark of the mouth: flat (hidden) until the jaw opens
+  mouth.castShadow = false;
+  head.add(mouth);
+  const jaw = new T.Group();                                           // the lower jaw hinges at the back of the snout; shut, it sits inside the snout's underside
+  jaw.position.set(0.12, -0.2, 0);
+  jaw.add(M(new T.SphereGeometry(0.14, 12, 8), cream, 0.19, -0.015, 0)).scale.set(1.5, 0.45, 0.9);
+  head.add(jaw);
   const eyes: THREE.Mesh[] = [];
   for (const ez of [-0.17, 0.17]) { const e = M(new T.SphereGeometry(0.055, 10, 8), ink, 0.28, 0.1, ez); eyes.push(e); head.add(e); }
   const earL = M(new T.SphereGeometry(0.2, 12, 10), dark, -0.02, 0.2, 0.3); earL.scale.set(0.5, 1.1, 0.5);
@@ -312,22 +457,31 @@ export function buildDog(x: number, z: number): THREE.Group {
   tailMesh.rotation.z = 1.1;
   tail.add(tailMesh);
   rig.add(tail);
-  const parts: DogParts = { tail, head, body, earL, earR, baseY: 0.78, tailY: 0.95, headY: 1.18, headX: 0.78, eyes, legs };
+  const parts: DogParts = { tail, head, body, earL, earR, baseY: 0.78, tailY: 0.95, headY: 1.18, headX: 0.78, eyes, legs, jaw, mouth, bodyX: body.scale.x };
   g.userData.dogParts = parts;
   g.userData.rig = rig;
   g.userData.easeTurn = true;                                          // propReactions swings it round to a new facing (placeProp `ry`) instead of flipping it
   applyDogPose(parts, dogPose(0, null, Infinity));                     // the legs are posed at once: paws on the floor from the first frame
-  let sit = 0;                                                         // how far seated it is now (0 to 1), eased towards what the cue asks for
+  let sit = 0, lie = 0;                                                // how far seated / lying it is now (0 to 1), eased towards what the cue asks for
   // What it is doing in the world, as seen from its own holder: where it was and which way it faced at the last tick, how fast it is really going, and where in its stride it is.
   let lastX = Number.NaN, lastZ = Number.NaN, lastRy = Number.NaN;
   let speed = 0, phase = 0, steer = 0;
+  // Its mood: the wag (a phase, so a faster wag never jumps), how much it cares about Kip (0 to 1, eased), and where its head is turned to look at him (eased: it never snaps).
+  let wagPhase = 0, nearS = 0, lookYaw = 0, lookPitch = 0;
+  // Its small things: which is under way (and when it began), when the next is due, and the one that was cut short fading out. `userData.rng` replaces the randomness (tests).
+  let idleKind: IdleKind | null = null, idleAt = 0, idleNext = Number.NaN, idlePosture: Posture = "stand";
+  let fadeKind: IdleKind | null = null, fadeAge = 0, fadeW = 0, fadePosture: Posture = "stand";
+  const rng = (): number => { const r = g.userData.rng as (() => number) | undefined; return r ? r() : Math.random(); };
   g.userData.tick = (t: number, dt = 1 / 60) => {
     const cue = g.userData.cue as { name: string; at: number } | undefined;
     const d = Math.max(0, Number.isFinite(dt) ? dt : 0);
-    const want = cue && cue.name === "sit" ? 1 : 0;
-    sit += (want - sit) * (1 - Math.exp(-SIT_RATE * d));
-    if (Math.abs(want - sit) < 0.003) sit = want;
+    const wantSit = cue && cue.name === "sit" ? 1 : 0, wantLie = cue && cue.name === "lie" ? 1 : 0;
+    sit += (wantSit - sit) * (1 - Math.exp(-SIT_RATE * d));
+    if (Math.abs(wantSit - sit) < 0.003) sit = wantSit;
+    lie += (wantLie - lie) * (1 - Math.exp(-LIE_RATE * d));
+    if (Math.abs(wantLie - lie) < 0.003) lie = wantLie;
     g.userData.sitK = sit;
+    g.userData.lieK = lie;
     // How fast it is really going (the world places it, nothing tells it), and how fast it is turning.
     let vx = 0, vz = 0, turn = 0;
     if (d > 0 && Number.isFinite(lastX) && Number.isFinite(lastZ)) {
@@ -349,8 +503,59 @@ export function buildDog(x: number, z: number): THREE.Group {
     const pace = stepSpeed(speed, turn);
     phase = (phase + (pace / STRIDE) * d) % 1;
     const blend = gaitBlend(pace);
-    const base = withSit(dogPose(t, cue ? cue.name : null, cue ? t - cue.at : Infinity), sit);
-    const pose = withGait(base, phase, blend);
+    const cueName = cue ? cue.name : null, age = cue ? t - cue.at : Infinity;
+    let pose = dogPose(t, cueName, age);
+    const calm = cueIsCalm(cueName, age);
+
+    // Where Kip is (the world writes `userData.kip` every frame): how much it cares and where to look.
+    const kip = g.userData.kip as { x: number; z: number } | undefined;
+    let nearT = 0, yawT = 0, pitchT = 0;
+    if (kip && Number.isFinite(kip.x) && Number.isFinite(kip.z)) {
+      const dxw = kip.x - g.position.x, dzw = kip.z - g.position.z;
+      const c = Math.cos(g.rotation.y), s = Math.sin(g.rotation.y);
+      const L = lookFor(dxw * c - dzw * s, dxw * s + dzw * c, KIP_EYE_Y - (DOG_HEAD_Y + g.position.y));
+      nearT = L.near; yawT = L.yaw - steer; pitchT = L.pitch;
+    }
+    const lookOn = calm && speed < 1.2;
+    const kk = 1 - Math.exp(-LOOK_RATE * d);
+    nearS += ((calm ? nearT : 0) - nearS) * kk;
+    lookYaw += ((lookOn ? yawT * nearT : 0) - lookYaw) * kk;
+    lookPitch += ((lookOn ? pitchT * nearT * (1 - 0.4 * lie) : 0) - lookPitch) * kk;
+    if (calm) {                                                      // a calm dog wags at Kip the faster the closer he is, with its ears out and its tail up
+      const restFreq = sit > 0.5 ? 2.4 : lie > 0.5 ? 1.6 : 3.2, restAmp = sit > 0.5 ? 0.3 : lie > 0.5 ? 0.2 : 0.35;
+      wagPhase = (wagPhase + wagFreq(restFreq, nearS) * d) % (Math.PI * 2);
+      pose = { ...pose, tailYaw: wagAmp(restAmp, nearS) * Math.sin(wagPhase), tailLift: pose.tailLift + wagLift(nearS), earFlop: pose.earFlop + wagEar(nearS) };
+    }
+
+    // Its small things, on a slow random timer: only when it is calm and settled (standing, sitting or lying, not moving, not mid-posture-change). A reaction (pet, bark, run) cuts one short and it fades out.
+    const settled = speed < 0.2 && g.position.y < 0.05 && Math.abs(sit - wantSit) < 0.05 && Math.abs(lie - wantLie) < 0.05;
+    const idleOk = calm && settled;
+    if (Number.isNaN(idleNext)) idleNext = t + nextIdleDelay(rng());
+    const forced = g.userData.forceIdle as IdleKind | undefined;     // (a test or a look-at-it script asks for a particular small thing now)
+    if (idleKind === null && idleOk && (forced || t >= idleNext)) {
+      idlePosture = lie > 0.6 ? "lie" : sit > 0.6 ? "sit" : "stand";
+      idleKind = forced && IDLE_LEN[forced] !== undefined ? forced : pickIdle(idlePosture, rng());
+      idleAt = t;
+      delete g.userData.forceIdle;
+    }
+    if (idleKind !== null) {
+      const a = t - idleAt;
+      if (!idleOk || a >= IDLE_LEN[idleKind]) {
+        if (!idleOk && a < IDLE_LEN[idleKind]) { fadeKind = idleKind; fadeAge = a; fadeW = 1; fadePosture = idlePosture; }
+        idleKind = null;
+        idleNext = t + nextIdleDelay(rng());
+      }
+    }
+    if (fadeKind !== null) { fadeW = Math.max(0, fadeW - 5 * d); if (fadeW === 0) fadeKind = null; }
+    let bits = NO_IDLE;
+    if (idleKind !== null) bits = idleBits(idleKind, t - idleAt);
+    else if (fadeKind !== null) bits = scaleIdle(idleBits(fadeKind, fadeAge), fadeW);
+    g.userData.idle = idleKind;
+    void fadePosture;
+
+    pose = { ...pose, headYaw: pose.headYaw + lookYaw * (1 - bits.env), headPitch: pose.headPitch + lookPitch * (1 - bits.env) };
+    pose = withIdle(withLie(withSit(pose, sit), lie), bits, Math.cos(g.rotation.y) < 0 ? -1 : 1);       // (the camera is on the world's +z side: facing -x it sees the dog's right, facing +x its left)
+    pose = withGait(pose, phase, blend);
     pose.airborne = Math.max(0, Math.min(0.3, g.position.y * 0.6));
     g.userData.speed = speed;
     g.userData.phase = phase;

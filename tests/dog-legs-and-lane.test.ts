@@ -7,14 +7,17 @@ import * as THREE from "three";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   DUTY, GAIT_DIP, HIP_LX, HIP_Y, MAX_SPEED, PAW_R, PET_PUSH_AGES, SEG, STEP_FROM_SPEED, STEP_LEN, STEP_LIFT, STRIDE, TURN_STEP,
-  applyDogPose, buildDog, dogPose, footStep, footTarget, gaitBlend, gaitBody, hipPlace, legPhase, solveLeg, steerFor, stepSpeed, withGait, withSit,
+  IDLE_GAP_S, IDLE_KINDS, IDLE_LEN, KIP_EYE_Y, LIE_DROP, LOOK_NEAR, LOOK_PITCH_MAX, LOOK_RANGE, LOOK_YAW_MAX, NO_IDLE, SCRATCH_SPLAY,
+  applyDogPose, buildDog, cueIsCalm, dogPose, footStep, footTarget, gaitBlend, gaitBody, hipPlace, idleBits, legPhase, lookFor, nextIdleDelay, pickIdle, scaleIdle, solveLeg, steerFor, stepSpeed,
+  wagAmp, wagEar, wagFreq, wagLift, withGait, withIdle, withLie, withSit,
 } from "../src/features/game/world/runtime/dog";
+import type { IdleKind, Posture } from "../src/features/game/world/runtime/dog";
 import type { DogLeg } from "../src/features/game/world/runtime/dog";
-import { createFollow } from "../src/features/game/world/runtime/dogFollow";
+import { LIE_AFTER_S, SIT_AFTER_S, createFollow } from "../src/features/game/world/runtime/dogFollow";
 import { createFetch, LANE_ARRIVE, MOUTH } from "../src/features/game/world/runtime/dogFetch";
-import { PET_CUE_S, PET_STAND } from "../src/features/game/world/runtime/toyRoomActs";
+import { PET_CUE_S, PET_S, PET_STAND, PET_STEP_IN } from "../src/features/game/world/runtime/toyRoomActs";
 import { PET_STROKES_S } from "../src/features/game/world/runtime/proceduralClips";
-import { TURN_SPEED, Z_EASE_SPEED, createPropFx, turnDelta } from "../src/features/game/world/runtime/propReactions";
+import { TURN_SPEED, WALK_SPEED, Z_EASE_SPEED, createPropFx, turnDelta } from "../src/features/game/world/runtime/propReactions";
 import { PROP_LANG_KEY } from "../src/lib/propSpeech";
 import { resetVoiceBackoff } from "../src/lib/propVoice";
 
@@ -433,9 +436,416 @@ describe("petting: the dog steps onto Kip's lane while he walks over", () => {
 describe("the world wires the dog's depth", () => {
   const world = readFileSync(join(__dirname, "../src/features/game/world/runtime/world.ts"), "utf8");
   it("the follow and the fetch both tell the dog to walk to a depth (Kip's, or the ball's), and the carried ball keeps the dog's depth exactly", () => {
-    expect(world).toContain("function dogLaneTo(z: number){var d=theDog();if(d)PFX.placeProp(d,d.base.px,{z:z})}");
+    expect(world).toContain("function dogLaneTo(z: number){var d=theDog();if(d)PFX.placeProp(d,null,{z:z})}");                  // (null: only the depth, it must not cancel a shuffle in x)
     expect(world).toMatch(/var FOLLOW=createFollow\(\{[\s\S]*?toyZ:function\(\)\{return P\.pos\.z\},laneTo:dogLaneTo\}\);/);
     expect(world).toMatch(/var DOGF=createFetch\(\{[\s\S]*?dogZ:function\(\)\{var d=theDog\(\);return d\?d\.base\.pz:0\},ballZ:[\s\S]*?toyZ:function\(\)\{return P\.pos\.z\},laneTo:dogLaneTo\}\);/);
     expect(world).toContain("moveBall:function(x: number,l: number,z?: number){if(fetchBall)PFX.placeProp(fetchBall,x,z===undefined?{lift:l}:{lift:l,z:z,zSnap:true})}");
+  });
+});
+
+// ---------------------------------------------------------------------------------------------------------------------------------------------
+// 2026-11-04, round two: lying down, looking at Kip, small things on a timer, the step in after a pet.
+
+const pawsWorld = (d: THREE.Group): THREE.Vector3[] => (d.userData.dogParts.legs as DogLeg[]).map((l) => { l.lower.updateWorldMatrix(true, false); return l.lower.localToWorld(new THREE.Vector3(0, -SEG, 0)); });
+/** Tick a built dog for `seconds` at 60 fps from clock `t0`, keeping it still; returns the clock. */
+const frames = (d: THREE.Group, t0: number, seconds: number, each?: (t: number) => void): number => { let t = t0; for (let k = 0; k < Math.round(seconds * 60); k++) { t += 1 / 60; d.userData.tick(t, 1 / 60); each?.(t); } return t; };
+
+describe("lying down", () => {
+  const stand = dogPose(0, null, Infinity);
+  it("withLie leaves a standing pose alone at 0 and lowers the body, drops the chin and the tail and loosens the ears at 1", () => {
+    expect(withLie(stand, 0)).toBe(stand);
+    const l = withLie(stand, 1);
+    near(l.bob, stand.bob - LIE_DROP);
+    expect(l.headDrop!).toBeGreaterThan(0.5);
+    expect(l.tailDrop!).toBeGreaterThan(0.25);
+    expect(l.earFlop).toBeGreaterThan(stand.earFlop + 0.2);
+    expect(l.lieK).toBe(1);
+    expect(withLie(stand, 7).lieK).toBe(1);
+  });
+  it("the front paws stretch out ahead, the hind paws tuck in under the belly and the stride is switched off", () => {
+    const lie = withGait(withLie(stand, 1), 0.3, 1);
+    near(footTarget({ front: true, left: true, lx: HIP_LX }, lie).x, HIP_LX + 0.42);
+    near(footTarget({ front: false, left: true, lx: -HIP_LX }, lie).x, -HIP_LX + 0.35);
+    near(footTarget({ front: true, left: false, lx: HIP_LX }, lie).y, PAW_R);
+  });
+  it("the built dog eases down onto its belly (never past it, never a pop) with every paw on the floor and its body on the floor, then gets up the same way", () => {
+    const d = buildDog(10, 0);
+    let t = frames(d, 0, 0.5);
+    d.userData.cue = { name: "lie", at: t };
+    let prev = 0;
+    t = frames(d, t, 2, () => { expect(d.userData.lieK).toBeGreaterThanOrEqual(prev); expect(d.userData.lieK).toBeLessThanOrEqual(1); prev = d.userData.lieK; });
+    expect(d.userData.lieK).toBe(1);
+    d.updateMatrixWorld(true);
+    for (const p of pawsWorld(d)) near(p.y, PAW_R, 0.01);
+    near(d.userData.dogParts.body.position.y, 0.78 - LIE_DROP, 0.01);
+    const box = new THREE.Box3().setFromObject(d.userData.dogParts.body, true);
+    expect(box.min.y).toBeLessThan(0.06);                                              // its belly is on the floor
+    expect(box.min.y).toBeGreaterThanOrEqual(-0.02);                                   // and not through it
+    const front = (d.userData.dogParts.legs as DogLeg[]).filter((l) => l.front);
+    for (const l of front) { const p = l.lower.localToWorld(new THREE.Vector3(0, -SEG, 0)); d.worldToLocal(p); expect(p.x).toBeGreaterThan(HIP_LX + 0.3); }          // paws out in front
+    d.userData.cue = { name: "idle", at: t };
+    let lowest = 9;
+    t = frames(d, t, 0.25, () => { lowest = Math.min(lowest, d.userData.lieK); });
+    expect(d.userData.lieK).toBeLessThan(1);
+    expect(d.userData.lieK).toBeGreaterThan(0);                                        // on its way up, not up
+    frames(d, t, 2);
+    expect(d.userData.lieK).toBe(0);
+    near(d.userData.dogParts.body.position.y, 0.78, 1e-6);
+  });
+  it("the follow settles it onto its belly only after Kip has stood still LIE_AFTER_S more than it takes to sit, and it gets up when Kip walks or goes far", () => {
+    const s = { dog: 20, toy: 18, still: true, allowed: true };
+    const log: string[] = [];
+    const f = createFollow({ dogX: () => s.dog, toyX: () => s.toy, toyStill: () => s.still, clearance: () => Infinity, moveDog: (x) => { s.dog = x; }, cue: (n) => { log.push(n); }, allowed: () => s.allowed });
+    const run = (sec: number) => { for (let k = 0; k < Math.round(sec * 60); k++) f.update(1 / 60); };
+    run(0.1);
+    run(SIT_AFTER_S + 0.2);
+    expect(f.phase).toBe("sitting");
+    expect(f.lying).toBe(false);
+    run(LIE_AFTER_S - 1);
+    expect(log).not.toContain("lie");
+    run(1.5);
+    expect(f.lying).toBe(true);
+    expect(f.phase).toBe("sitting");
+    expect(log.filter((c) => c === "lie")).toHaveLength(1);                            // once
+    run(10);
+    expect(log.filter((c) => c === "lie")).toHaveLength(1);
+    s.still = false; f.update(1 / 60);                                                 // Kip walks: it gets up
+    expect(f.lying).toBe(false);
+    expect(f.phase).toBe("standing");
+    expect(log.at(-1)).toBe("idle");
+    s.still = true;
+    run(SIT_AFTER_S + LIE_AFTER_S + 2);                                                // and the clock starts again
+    expect(f.lying).toBe(true);
+    s.toy = 40; f.update(1 / 60);                                                      // far away: it trots after him
+    expect(f.lying).toBe(false);
+    expect(f.phase).toBe("trotting");
+    expect(log.at(-1)).toBe("run");
+  });
+  it("something else taking the dog (a pet, a fetch) stops its lying", () => {
+    const s = { dog: 20, toy: 18, allowed: true };
+    const f = createFollow({ dogX: () => s.dog, toyX: () => s.toy, toyStill: () => true, clearance: () => Infinity, moveDog: (x) => { s.dog = x; }, cue: () => {}, allowed: () => s.allowed });
+    for (let k = 0; k < Math.round((SIT_AFTER_S + LIE_AFTER_S + 3) * 60); k++) f.update(1 / 60);
+    expect(f.lying).toBe(true);
+    s.allowed = false; f.update(1 / 60);
+    expect(f.lying).toBe(false);
+  });
+});
+
+describe("a dog that is busy is not calm", () => {
+  it("a bark, a pet and a happy hop are over only after their time, running never is, no cue and the settled ones always are", () => {
+    for (const n of [null, "idle", "sit", "lie"]) expect(cueIsCalm(n, 0), String(n)).toBe(true);
+    expect(cueIsCalm("bark", 0.2)).toBe(false);
+    expect(cueIsCalm("bark", 5)).toBe(true);
+    expect(cueIsCalm("pet", 1)).toBe(false);
+    expect(cueIsCalm("pet", 3)).toBe(true);
+    expect(cueIsCalm("happy", 0.5)).toBe(false);
+    expect(cueIsCalm("happy", 2)).toBe(true);
+    expect(cueIsCalm("run", 100)).toBe(false);
+  });
+});
+
+describe("looking at Kip", () => {
+  it("cares fully when he is close, not at all beyond the range, and smoothly in between", () => {
+    near(lookFor(LOOK_NEAR - 0.5, 0, 0.7).near, 1);
+    near(lookFor(LOOK_RANGE + 1, 0, 0.7).near, 0);
+    let prev = 1;
+    for (let h = LOOK_NEAR; h <= LOOK_RANGE; h += 0.1) { const n = lookFor(h, 0, 0.7).near; expect(n).toBeLessThanOrEqual(prev + 1e-12); prev = n; }
+  });
+  it("turns the head towards him (positive yaw when he is on the dog's -z side, as the nose turns), clamped, and up at his eyes", () => {
+    near(lookFor(3, 0, 0).yaw, 0);
+    expect(lookFor(3, -1, 0).yaw).toBeGreaterThan(0.2);
+    expect(lookFor(3, 1, 0).yaw).toBeLessThan(-0.2);
+    expect(lookFor(0.2, -5, 0).yaw).toBeLessThanOrEqual(LOOK_YAW_MAX + 1e-9);
+    expect(lookFor(3, 0, 0.7).pitch).toBeGreaterThan(0.1);
+    expect(lookFor(1, 0, 9).pitch).toBeLessThanOrEqual(LOOK_PITCH_MAX + 1e-9);
+    expect(lookFor(3, 0, -0.5).pitch).toBeLessThan(0);
+  });
+  it("never flips from one side to the other: a Kip right behind it is not looked at over the shoulder, and the turn is continuous round the back", () => {
+    near(Math.abs(lookFor(-4, 0.01, 0).yaw), 0, 0.05);
+    near(Math.abs(lookFor(-4, -0.01, 0).yaw), 0, 0.05);
+    let prev = lookFor(4, 0, 0).yaw;
+    for (let a = 0; a <= Math.PI; a += 0.02) { const y = lookFor(4 * Math.cos(a), -4 * Math.sin(a), 0).yaw; expect(Math.abs(y - prev)).toBeLessThan(0.08); prev = y; }
+    prev = lookFor(4, 0, 0).yaw;
+    for (let a = 0; a <= Math.PI; a += 0.02) { const y = lookFor(4 * Math.cos(a), 4 * Math.sin(a), 0).yaw; expect(Math.abs(y - prev)).toBeLessThan(0.08); prev = y; }
+  });
+  it("the tail goes faster, wider and higher and the ears flare more the closer he is", () => {
+    for (const base of [1.6, 2.4, 3.2]) { expect(wagFreq(base, 1)).toBeGreaterThan(wagFreq(base, 0.5)); expect(wagFreq(base, 0.5)).toBeGreaterThan(wagFreq(base, 0)); }
+    expect(wagAmp(0.35, 1)).toBeGreaterThan(wagAmp(0.35, 0));
+    expect(wagLift(1)).toBeGreaterThan(wagLift(0));
+    expect(wagEar(1)).toBeGreaterThan(wagEar(0));
+    near(wagFreq(3.2, 0), 3.2);
+    near(wagFreq(3.2, 5), wagFreq(3.2, 1));                                            // clamped
+  });
+
+  const quiet = (d: THREE.Group) => { d.userData.rng = () => 1; return d; };                // (the longest wait to its next small thing: nothing but the look is going on)
+  const settle = (d: THREE.Group, kip: { x: number; z: number } | undefined, seconds = 2) => { d.userData.kip = kip; return frames(d, 0, seconds); };
+  it("the built dog's head ends up turned to Kip and tipped up at him, eased: it never moves more than a few hundredths of a radian in a frame, even when he jumps to the other side", () => {
+    const d = quiet(buildDog(40, 0));                                                  // faces -x: Kip is ahead of it at x < 40
+    const head = d.userData.dogParts.head as THREE.Group;
+    settle(d, { x: 36.5, z: -1.2 });                                                   // ahead and to the world -z side = the dog's local +z... 
+    const yawA = head.rotation.y;
+    expect(Math.abs(yawA)).toBeGreaterThan(0.1);
+    expect(head.rotation.z).toBeGreaterThan(0.05);                                     // nose up at his eyes
+    let t = 2, worst = 0, last = head.rotation.y;
+    d.userData.kip = { x: 36.5, z: 1.2 };                                              // he jumps to the other side
+    t = frames(d, t, 2, () => { worst = Math.max(worst, Math.abs(head.rotation.y - last)); last = head.rotation.y; });
+    expect(worst).toBeLessThan(0.06);
+    expect(Math.sign(head.rotation.y)).toBe(-Math.sign(yawA));
+    d.userData.kip = { x: 10, z: 0 };                                                  // far away: it looks ahead again
+    frames(d, t, 3);
+    near(head.rotation.y, 0, 0.12);                                                    // (what is left is its idle head sway)
+  });
+  it("a Kip within range makes the tail wag at least half as fast again as a Kip far away", () => {
+    const rate = (kip: { x: number; z: number }) => {
+      const d = quiet(buildDog(40, 0));
+      d.userData.kip = kip;
+      frames(d, 0, 1.5);
+      let crossings = 0, prev = d.userData.dogParts.tail.rotation.y;
+      frames(d, 1.5, 3, () => { const y = d.userData.dogParts.tail.rotation.y; if (Math.sign(y) !== Math.sign(prev) && y !== 0) crossings++; prev = y; });
+      return crossings / 3;
+    };
+    expect(rate({ x: 38, z: 0 })).toBeGreaterThan(rate({ x: 20, z: 0 }) * 1.5);
+  });
+  it("it does not look at Kip while it is running, or being petted", () => {
+    const yawWith = (name: string, kip: { x: number; z: number } | undefined) => {
+      const d = quiet(buildDog(40, 0));
+      d.userData.kip = kip;
+      d.userData.cue = { name, at: 0 };
+      frames(d, 0, 2);
+      return d.userData.dogParts.head.rotation.y as number;
+    };
+    for (const name of ["run", "pet"]) near(yawWith(name, { x: 37, z: -1.5 }), yawWith(name, undefined), 0.01);
+    expect(Math.abs(yawWith("idle", { x: 37, z: -1.5 }) - yawWith("idle", undefined))).toBeGreaterThan(0.2);          // (while calm it does)
+  });
+  it("Kip's eyes are above the dog's head", () => { expect(KIP_EYE_Y).toBeGreaterThan(1.18); });
+});
+
+describe("small things on a slow timer", () => {
+  it("each one eases in and out: nothing at its first instant or its last, most in the middle, nothing outside its time", () => {
+    for (const kind of Object.keys(IDLE_LEN) as IdleKind[]) {
+      const len = IDLE_LEN[kind];
+      expect(idleBits(kind, 0).env, kind).toBe(0);
+      expect(idleBits(kind, len).env, kind).toBe(0);
+      expect(idleBits(kind, len / 2).env, kind).toBe(1);
+      expect(idleBits(kind, -1)).toBe(NO_IDLE);
+      expect(idleBits(kind, len + 1)).toBe(NO_IDLE);
+      let prevE = 0, rose = true;
+      for (let a = 0; a <= len; a += 0.02) { const e = idleBits(kind, a).env; if (a < len / 2) { if (e < prevE - 1e-9) rose = false; prevE = e; } }
+      expect(rose, kind).toBe(true);
+    }
+  });
+  it("a sniff puts the nose to the floor, a yawn opens the jaw with the head back, a scratch lifts a hind leg, a tilt tips the head", () => {
+    const sn = idleBits("sniff", IDLE_LEN.sniff / 2), yw = idleBits("yawn", IDLE_LEN.yawn / 2), sc = idleBits("scratch", IDLE_LEN.scratch / 2), tl = idleBits("tilt", IDLE_LEN.tilt / 2);
+    expect(sn.headDrop).toBeGreaterThan(0.4); expect(sn.headPitch).toBeLessThan(-0.4);
+    expect(yw.jaw).toBe(1); expect(yw.headPitch).toBeGreaterThan(0.3); expect(yw.squint).toBe(1);
+    expect(sc.scratch).toBe(1);
+    expect(tl.headRoll).toBeGreaterThan(0.3);
+  });
+  it("which ones a dog does depends on how it is: scratching is for a sitting dog, sniffing for a standing one, a lying dog yawns, flicks an ear or tilts", () => {
+    expect(IDLE_KINDS.sit).toContain("scratch");
+    expect(IDLE_KINDS.stand).not.toContain("scratch");
+    expect(IDLE_KINDS.lie).not.toContain("scratch");
+    expect(IDLE_KINDS.stand).toContain("sniff");
+    expect(IDLE_KINDS.sit).not.toContain("sniff");
+    expect(IDLE_KINDS.lie).not.toContain("sniff");
+    for (const post of ["stand", "sit", "lie"] as Posture[]) for (let r = 0; r <= 1; r += 0.05) expect(IDLE_KINDS[post]).toContain(pickIdle(post, r));
+    expect(new Set([0, 0.4, 0.99].map((r) => pickIdle("stand", r))).size).toBe(3);
+  });
+  it("the wait between them is a slow random one", () => {
+    near(nextIdleDelay(0), IDLE_GAP_S[0]); near(nextIdleDelay(1), IDLE_GAP_S[1]);
+    expect(nextIdleDelay(-3)).toBe(IDLE_GAP_S[0]); expect(nextIdleDelay(9)).toBe(IDLE_GAP_S[1]);
+    expect(IDLE_GAP_S[0]).toBeGreaterThanOrEqual(4);
+  });
+  it("scaleIdle fades a small thing out and withIdle lays it over a pose (and does nothing when there is none)", () => {
+    const b = idleBits("yawn", 1);
+    expect(scaleIdle(b, 0.5).jaw).toBeCloseTo(b.jaw * 0.5, 9);
+    const stand = dogPose(2, null, Infinity);
+    expect(withIdle(stand, NO_IDLE)).toBe(stand);
+    expect(withIdle(stand, b).jaw).toBeCloseTo(b.jaw, 9);
+    expect(withIdle(stand, idleBits("scratch", 1), -1).scratchSide).toBe(-1);
+  });
+
+  const seq = (vals: number[]) => { let i = 0; return () => vals[i++ % vals.length]!; };
+  it("a dog that is standing and calm does its first small thing when the timer says so, and not before", () => {
+    const d = buildDog(40, 0);
+    d.userData.rng = seq([0, 0]);                                                      // delay 5 s, then the first kind for a standing dog (a sniff)
+    let t = frames(d, 0, 4.8);
+    expect(d.userData.idle).toBeNull();
+    t = frames(d, t, 0.6);
+    expect(d.userData.idle).toBe("sniff");
+    frames(d, t, IDLE_LEN.sniff + 0.2);
+    expect(d.userData.idle).toBeNull();
+  });
+  it("it never does one during a pet, a bark, a hop or a run, or while it is moving, and a pet that comes in the middle cuts it short and it fades away", () => {
+    for (const name of ["pet", "bark", "happy", "run"]) {
+      const d = buildDog(40, 0);
+      d.userData.rng = seq([0]);
+      d.userData.cue = { name, at: 0 };
+      d.userData.forceIdle = "sniff";
+      frames(d, 0, name === "run" ? 20 : 0.7, () => { expect(d.userData.idle, name).toBeNull(); });
+    }
+    const m = buildDog(40, 0);                                                         // moving (it takes a frame or two to see it is)
+    let t = 0;
+    for (let k = 0; k < 20; k++) { t += 1 / 60; m.userData.tick(t, 1 / 60); m.position.x -= 3 / 60; }
+    m.userData.forceIdle = "yawn";
+    for (let k = 0; k < 120; k++) { t += 1 / 60; m.userData.tick(t, 1 / 60); m.position.x -= 3 / 60; expect(m.userData.idle).toBeNull(); }
+    const d = buildDog(40, 0);
+    frames(d, 0, 0.5);
+    d.userData.forceIdle = "sniff";
+    let t2 = frames(d, 0.5, 1.0);
+    expect(d.userData.idle).toBe("sniff");
+    const drop = d.userData.dogParts.head.position.y;
+    expect(drop).toBeLessThan(1.18 - 0.3);                                             // nose well down
+    d.userData.cue = { name: "pet", at: t2 };
+    let last = drop;
+    t2 = frames(d, t2, 0.05, () => { last = d.userData.dogParts.head.position.y; });
+    expect(d.userData.idle).toBeNull();
+    expect(last).toBeLessThan(1.18);                                                   // it has not popped straight back
+    t2 = frames(d, t2, 0.6);
+    expect(d.userData.dogParts.head.position.y).toBeGreaterThan(1.18 - 0.12);          // and the sniff is gone (what is left is the pet's own lean)
+  });
+  it("a yawn opens the jaw and shows the mouth, then shuts them", () => {
+    const d = buildDog(40, 0), parts = d.userData.dogParts;
+    let t = frames(d, 0, 0.5);
+    expect(parts.mouth.visible).toBe(false);
+    d.userData.forceIdle = "yawn";
+    t = frames(d, t, IDLE_LEN.yawn / 2);
+    expect(parts.jaw.rotation.z).toBeLessThan(-0.6);
+    expect(parts.mouth.visible).toBe(true);
+    expect(parts.body.scale.x).toBeGreaterThan(parts.bodyX * 1.02);                    // stretched a little longer than it is built
+    frames(d, t, IDLE_LEN.yawn / 2 + 0.3);
+    near(parts.jaw.rotation.z, 0, 1e-9);
+    expect(parts.mouth.visible).toBe(false);
+    expect(parts.body.scale.x).toBe(parts.bodyX);
+    expect(parts.bodyX).toBeCloseTo(1.5, 9);                                           // (the body's length as it has always been built)
+  });
+  it("a sitting dog scratches with the hind leg on the side the camera sees, the other three paws stay down, and its head dips towards the leg", () => {
+    const d = buildDog(40, 0);                                                         // faces -x: the camera (world +z) sees its right side (local -z)
+    d.userData.cue = { name: "sit", at: 0 };
+    let t = frames(d, 0, 1.5);
+    d.userData.forceIdle = "scratch";
+    t = frames(d, t, IDLE_LEN.scratch / 2);
+    expect(d.userData.idle).toBe("scratch");
+    d.updateMatrixWorld(true);
+    const legs = d.userData.dogParts.legs as DogLeg[], paws = pawsWorld(d);
+    legs.forEach((l, i) => {
+      const scratching = !l.front && !l.left;
+      if (scratching) { expect(paws[i]!.y).toBeGreaterThan(0.4); expect(Math.abs(l.hip.rotation.x)).toBeGreaterThan(SCRATCH_SPLAY * 0.9); }
+      else { near(paws[i]!.y, PAW_R, 0.03); expect(l.hip.rotation.x).toBe(0); }
+    });
+    expect(d.userData.dogParts.head.rotation.x).toBeGreaterThan(0.1);                  // the head tips so the cheek on the leg's side (-z, the camera's) goes down towards it
+    const shaken: number[] = [];
+    frames(d, t, 0.4, () => { d.updateMatrixWorld(true); shaken.push(pawsWorld(d)[(legs.findIndex((l) => !l.front && !l.left))]!.x); });
+    expect(Math.max(...shaken) - Math.min(...shaken)).toBeGreaterThan(0.03);           // it shakes
+    frames(d, t + 0.4, IDLE_LEN.scratch);
+    d.updateMatrixWorld(true);
+    for (const p of pawsWorld(d)) near(p.y, PAW_R, 0.03);                              // and it puts the leg back
+  });
+  it("facing the other way it scratches with the other leg (the camera sees its left)", () => {
+    const d = buildDog(40, 0);
+    d.rotation.y = 0;
+    d.userData.cue = { name: "sit", at: 0 };
+    let t = frames(d, 0, 1.5);
+    d.userData.forceIdle = "scratch";
+    frames(d, t, IDLE_LEN.scratch / 2);
+    const legs = d.userData.dogParts.legs as DogLeg[];
+    expect(Math.abs(legs.find((l) => !l.front && l.left)!.hip.rotation.x)).toBeGreaterThan(0.5);
+    expect(legs.find((l) => !l.front && !l.left)!.hip.rotation.x).toBe(0);
+  });
+  it("it does one at random when nothing is forced, lying down as well (a lying dog yawns, flicks an ear or tilts, never sniffs or scratches)", () => {
+    const d = buildDog(40, 0);
+    d.userData.cue = { name: "lie", at: 0 };
+    const seen = new Set<string>();
+    let i = 0;
+    d.userData.rng = () => [0.01, 0.1, 0.5, 0.2, 0.9, 0.3][i++ % 6]!;
+    frames(d, 0, 90, () => { if (d.userData.idle) seen.add(d.userData.idle); });
+    expect(seen.size).toBeGreaterThan(0);
+    for (const k of seen) expect(IDLE_KINDS.lie).toContain(k as IdleKind);
+  });
+});
+
+describe("a prop that shuffles along the floor", () => {
+  function room() {
+    const root = new THREE.Group();
+    const canvas = { getBoundingClientRect: () => ({ left: 0, top: 0, width: 800, height: 400 }) } as unknown as HTMLElement;
+    const fx = createPropFx({ root: () => root, camera: () => new THREE.PerspectiveCamera(), canvas, toast: () => {}, boostWindmill: () => {}, reduced: () => false, canSpeak: () => false });
+    const dog = buildDog(20, 0);
+    root.add(dog);
+    return { fx, inst: fx.register("dog", [dog])!, dog };
+  }
+  const run = (fx: { update(dt: number, t: number): void }, seconds: number, t0 = 0) => { let t = t0; for (let k = 0; k < Math.round(seconds * 60); k++) { t += 1 / 60; fx.update(1 / 60, t); } return t; };
+  it("`walk` steps it to x at WALK_SPEED and stops exactly there; the dog's legs step at that pace", () => {
+    const { fx, inst, dog } = room();
+    fx.placeProp(inst, 19.65, { walk: true });
+    expect(inst.base.px).toBe(20);                                                    // not at once
+    run(fx, 0.1);
+    near(dog.position.x, 20 - WALK_SPEED * 0.1, 0.03);
+    run(fx, 0.5, 0.1);
+    near(dog.position.x, 19.65, 1e-9);
+    expect(0.35 / WALK_SPEED).toBeLessThan(0.4);                                      // a quick shuffle
+  });
+  it("a move in depth only (x null) or a turn on the spot (the same x) leaves a shuffle in progress alone, a move somewhere else cancels it", () => {
+    const { fx, inst, dog } = room();
+    fx.placeProp(inst, 19, { walk: true });
+    run(fx, 0.1);
+    fx.placeProp(inst, null, { z: 0.5 });
+    fx.placeProp(inst, inst.base.px, { ry: 0 });
+    run(fx, 1, 0.1);
+    near(dog.position.x, 19, 1e-9);
+    near(dog.position.z, 0.5, 1e-9);
+    fx.placeProp(inst, 19.5, { walk: true });
+    run(fx, 0.05, 1.1);
+    fx.placeProp(inst, 25);
+    run(fx, 1, 1.15);
+    near(dog.position.x, 25, 1e-9);
+  });
+  it("the dog's paws really step while it shuffles (a walking pace, so the paws do not skate)", () => {
+    const { fx, inst, dog } = room();
+    let t = run(fx, 0.5);
+    fx.placeProp(inst, 19.65, { walk: true });
+    let maxSpeed = 0;
+    t = run(fx, 0.4, t);
+    maxSpeed = dog.userData.speed;
+    expect(maxSpeed).toBeGreaterThan(0.1);
+  });
+});
+
+describe("the end of a pet: the dog shuffles a little closer to Kip", () => {
+  it("when the pet completes the dog is walked PET_STEP_IN towards Kip (x smaller), not teleported and not frozen; a pet cut short does not", async () => {
+    const { createActs } = await import("../src/features/game/world/runtime/toyRoomActs");
+    const placed: Array<{ x: number | null; walk?: boolean; z?: number }> = [];
+    const root = new THREE.Group();
+    const s = { pos: { x: 38, y: 0, z: 0.7 }, target: null as number | null };
+    const dog = { type: "dog", base: { px: 42.2, pz: 0.7 }, size: new THREE.Vector3(2.5, 1.6, 0.8) } as never;
+    const w = {
+      position: () => ({ ...s.pos }), targetX: () => s.target, walkTo: (x: number) => { s.target = x; }, stopWalk: () => { s.target = null; }, face: () => {},
+      root: () => root, eater: () => "character", allowed: () => true, clip: () => true, setPosition: () => {}, tone: () => {}, phase: () => {}, hold: () => {}, release: () => {},
+      mouth: () => ({ x: 0, y: 0, z: 0 }), bubbles: { blow: () => {} },
+      fx: { squish: () => {}, strike: () => null, kickBall: () => true, flutter: () => {}, say: () => {}, setVisible: () => {}, cue: () => {}, nearby: () => [], placeProp: (_i: unknown, x: number | null, o?: { walk?: boolean; z?: number }) => { placed.push({ x, walk: o?.walk, z: o?.z }); } },
+    };
+    const acts = createActs(w as never);
+    acts.tap(dog);
+    placed.length = 0;
+    s.pos.x = 42.2 - PET_STAND; s.target = null;
+    for (let k = 0; k < Math.round((PET_S + 0.5) * 30); k++) acts.update(1 / 30);
+    expect(placed).toEqual([{ x: 42.2 - PET_STEP_IN, walk: true, z: undefined }]);
+    expect(acts.busy).toBe(false);
+    expect(PET_STEP_IN).toBeGreaterThan(0.2);
+    expect(PET_STEP_IN).toBeLessThan(0.6);
+    placed.length = 0;
+    acts.tap(dog);
+    placed.length = 0;
+    s.pos.x = 42.2 - PET_STAND; s.target = null;
+    for (let k = 0; k < 10; k++) acts.update(1 / 30);
+    acts.reset();
+    expect(placed).toEqual([]);                                                        // cut short: it stays where it is
+  });
+});
+
+describe("the world tells the dog where Kip is", () => {
+  const world = readFileSync(join(__dirname, "../src/features/game/world/runtime/world.ts"), "utf8");
+  it("every frame, before the props are updated, the dog is given Kip's place", () => {
+    expect(world).toContain("function dogLook(){var d=theDog();if(d)d.holder.userData.kip={x:P.pos.x,z:P.pos.z}}");
+    expect(world).toContain(" dogLook();PFX.update(dt,t);");
   });
 });

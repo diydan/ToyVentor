@@ -50,6 +50,8 @@ export const BELT_TOYS: readonly BeltToy[] = ["guitar", "wand"];
 export const PLAY_STAND = 1.25;
 export const BLOW_STAND = 1.15;
 export const PET_STAND = 1.9;
+/** How far the dog flops in towards Kip when the pet is over (units): a small step, taken at a walking pace (propReactions WALK_SPEED), not a freeze. */
+export const PET_STEP_IN = 0.35;
 export const READ_S = 6.6;
 export const PLAY_S = 4.4;
 export const BLOW_S = 3.6;
@@ -141,7 +143,7 @@ export interface ActsWorld extends Omit<VisitAdapter, "onPhase"> {
     /** Tell a self-animating prop (the dog) something happened. */
     cue(inst: PropInst, name: string): void;
     /** Move a prop (the dog stepping onto Kip's lane): optional, a world without it leaves the prop where it is. */
-    placeProp?(inst: PropInst, x: number, opts?: { ry?: number; lift?: number; z?: number; zSnap?: boolean }): void;
+    placeProp?(inst: PropInst, x: number, opts?: { ry?: number; lift?: number; z?: number; zSnap?: boolean; walk?: boolean }): void;
     /** The named props nearest to x, except these types. */
     nearby(x: number, n: number, exclude?: ReadonlyArray<string>): PropInst[];
   };
@@ -310,7 +312,7 @@ export function createActs(w: ActsWorld) {
       begin: () => { w.clip("pet"); },
       // (the hearts rise from where the dog is when the hand lands: it has walked onto Kip's lane since the tap)
       cues: [{ at: PET_CUE_S, fn: () => w.fx.cue(inst, "pet") }, ...PET_STROKES_S.map((at, i) => ({ at, fn: () => { heart(new THREE.Vector3(x - 0.2, inst.size.y + 0.25, inst.base.pz + 0.3), 0.36); if (i % 2 === 1) w.tone(700, 0, 0.1, "triangle", 0.05, 900); } }))],
-      end: () => {},
+      end: (completed) => { if (completed) w.fx.placeProp?.(inst, inst.base.px - PET_STEP_IN, { walk: true }); },       // the pet is over: the dog shuffles a little closer to Kip, still wagging
     };
   }
 
