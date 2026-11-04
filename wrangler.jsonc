@@ -41,5 +41,8 @@
 	// The Make-from-words maker: a Container behind its own Worker with no public address (containers/forge-maker). It must be deployed FIRST,
 	// because a deploy of this Worker fails while the named service does not exist. With FORGE_OPTIMIZER_URL unset, worker/forgeOptimizer.ts uses it.
 	// Local dev (vite or wrangler dev) prints a warning that this service cannot be resolved; set FORGE_OPTIMIZER_URL in .dev.vars to use the Mac daemon.
-	"services": [{ "binding": "FORGE_MAKER", "service": "toyventor-forge-maker" }]
+	"services": [{ "binding": "FORGE_MAKER", "service": "toyventor-forge-maker" }],
+	// Cost backstop for every route that calls a model (worker/spendLimit.ts): 10 POSTs per minute per route and address, counted by Cloudflare per location
+	// (approximate). namespace_id is an account-wide number; bindings that share one share counters, so it is unique to this one. The account-wide rule is a dashboard setting.
+	"ratelimits": [{ "name": "MODEL_SPEND_LIMITER", "namespace_id": "4207311", "simple": { "limit": 10, "period": 60 } }]
 }
