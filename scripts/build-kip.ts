@@ -305,6 +305,16 @@ copyFileSync(
   join(kipSrcDir, "viewer/kip-theme-song.js"),
   join(kipOutDir, "kip-theme-song.js"),
 );
+// The camera pick-up (Tools > Pick it up): a full-screen live camera view over the Kip bench; point it at a spoon or a guitar and Kip picks it up. It scans through the print panel.
+copyFileSync(
+  join(kipSrcDir, "viewer/kip-pickup.js"),
+  join(kipOutDir, "kip-pickup.js"),
+);
+// The moment song (a button after a pick-up that makes a song about what Kip picked up, through the theme song card; hidden when the song route is off).
+copyFileSync(
+  join(kipSrcDir, "viewer/kip-moment-song.js"),
+  join(kipOutDir, "kip-moment-song.js"),
+);
 // The microphone button of the Describe & build tab (say what to build; hidden when the app's /api/transcribe is off).
 copyFileSync(
   join(kipSrcDir, "viewer/kip-describe-voice.js"),

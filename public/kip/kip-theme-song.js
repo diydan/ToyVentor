@@ -190,8 +190,9 @@ export function createThemeSong({
   }
 
   /** Name the creation and start its song. Resolves when the NAME is in (not the song). Never throws; a card that cannot work stays hidden. */
-  async function start(description) {
+  async function start(description, opts = {}) {
     const myRun = ++run;
+    label.textContent = typeof opts.label === 'string' && opts.label ? opts.label.slice(0, 30) : 'Theme song';   // the pick-up's song says "Song about it"
     clearTimer(); stopAudio();
     song = null; current = null; node.hidden = true; standIn.hidden = true; playBtn.hidden = true; lyrics.hidden = true;
     const text = String(description ?? '').trim();
@@ -221,7 +222,7 @@ export function createThemeSong({
     current = { name: body.name, verse: body.verse.map(String), chorus: body.chorus.map(String), mood: String(body.mood ?? ''), task: body.task ? String(body.task) : null };
     show(current);
     if (!current.task) { setState('failed', body.songError ? `${body.songError} The name and the words are still yours.` : 'No song this time. The name and the words are still yours.'); return true; }
-    setState('making', 'Singing your song. This takes about a minute, so keep building!');
+    setState('making', typeof opts.waiting === 'string' && opts.waiting ? opts.waiting.slice(0, 120) : 'Singing your song. This takes about a minute, so keep building!');
     loadStandIn(current.mood);
     poll(myRun, now());
     return true;

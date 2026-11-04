@@ -14,6 +14,7 @@
     "e2e:kip-forge-make": "tsx scripts/e2e-kip-forge-make.mjs",
     "e2e:kip-forge-wear": "tsx scripts/e2e-kip-forge-wear.mjs",
     "e2e:kip-household": "tsx scripts/e2e-kip-household.mjs",
+    "e2e:kip-pickup": "tsx scripts/e2e-kip-pickup.mjs",
     "e2e:workshop": "node scripts/e2e-workshop.mjs",
     "e2e:game-workshop": "node scripts/e2e-game-workshop.mjs",
     "e2e:bench-lifecycle": "node scripts/e2e-bench-lifecycle.mjs",

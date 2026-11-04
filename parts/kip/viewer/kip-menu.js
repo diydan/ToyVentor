@@ -347,6 +347,8 @@ export function buildMenu(ctx) {
         title: 'Open the conforming LLM part-maker SDK prompt and custom .stl loader', run: () => act.openLlm() },
       { kind: 'action', id: 'forge-make', label: '✨ Make from words',
         title: 'Say what you want, like a wizard hat or a robot head, and make it for Kip', run: () => act.openForgeMake() },
+      ...(act.openPickUp ? [{ kind: 'action', id: 'pickup', label: '📷 Pick it up',
+        title: 'Point the camera at a spoon, a guitar or a pan and Kip picks it up', run: () => act.openPickUp() }] : []),
       { kind: 'action', id: 'photo', label: '📸 Photo → Toy',
         title: 'Turn a webcam snapshot, uploaded drawing or kid sketch into a digital accessory', run: () => act.openPhoto() },
       { kind: 'file', id: 'file', label: '+ .stl / .glb',

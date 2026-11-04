@@ -189,7 +189,11 @@ describe("the panel's promises about the offer", () => {
     expect(take).toContain("await onLibraryItem(");
     expect(code).toMatch(/\$\.offerTake\.addEventListener\('click', \(\) => takeLibraryItem\(false\)\)/);
     expect(code).toMatch(/\$\.offerBoth\.addEventListener\('click', \(\) => takeLibraryItem\(true\)\)/);
-    expect(code.match(/takeLibraryItem\(/g)).toHaveLength(3); // the definition and the two buttons
+    // the definition, the two buttons, and ONE more caller: `takeOffered`, the camera pick-up's way in (kip-pickup.js), where the child's press of the camera's shutter is the press
+    expect(code.match(/takeLibraryItem\(/g)).toHaveLength(4);
+    const takeOffered = code.slice(code.indexOf("async takeOffered()"), code.indexOf("clearScan()"));
+    expect(takeOffered).toContain("await takeLibraryItem(false)");
+    expect(takeOffered).toMatch(/if \(disposed \|\| !state\.offer\) return \{ ok: false \};/); // it takes only an offer a scan just made, and nothing else
   });
 
   it("the offer's words are set as text, and come from the flow module's sentence", () => {

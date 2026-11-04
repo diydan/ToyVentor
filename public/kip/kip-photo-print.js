@@ -596,6 +596,55 @@ export function createPhotoPrint({ root, fetch: fetchFn, deviceId = defaultDevic
   }
 
   const api = {
+    /**
+     * For the camera pick-up (kip-pickup.js): scan a picture the page took, for a word, with none of the panel's screens. It builds the (closed) panel so the scan
+     * can draw into it. Answers `{ ok, message, w, h, canvas, points, offer }`: the cut line in the shrunk picture's pixels, that picture (`canvas`), and the library
+     * item the word and scan matched (`offer: { id, label }`, or null). `ok` is false when no outline came back; an `offer` can still be there (the right word, a photo
+     * that could not be traced). The picture is sent to /api/scan only, as in `findShape`.
+     */
+    async scanBlob(blob, word) {
+      if (disposed || state.busy) return { ok: false, message: 'One moment, still working. Try again.', offer: null };
+      const $ = build();
+      reset();
+      state.word = String(word ?? '');
+      $.word.value = state.word;
+      await pickFile(blob);
+      if (disposed) return { ok: false, message: '', offer: null };
+      if (!state.photo) return { ok: false, message: state.message || 'That picture could not be read. Try again.', offer: null };
+      await findShape();
+      if (disposed) return { ok: false, message: '', offer: null };
+      const offer = state.offer ? { id: state.offer.item.id, label: state.offer.item.label } : null;
+      if (!state.scan) return { ok: false, message: state.message, offer };
+      return { ok: true, message: '', w: state.photo.w, h: state.photo.h, canvas: state.photo.send, points: flow.overlayPoints(state.preview), offer };
+    },
+    /**
+     * For the camera pick-up when the child did not say what it is: ask the helper what is in the picture. Answers `{ ok, names, message }`: up to three names, best first,
+     * already screened by the Worker. The picture is sent to /api/scan only, as in `scanBlob`; the scan itself is a second call with the chosen name.
+     */
+    async nameBlob(blob) {
+      if (disposed || state.busy) return { ok: false, names: [], message: 'One moment, still working. Try again.' };
+      build();
+      reset();
+      await pickFile(blob);
+      if (disposed) return { ok: false, names: [], message: '' };
+      if (!state.photo) return { ok: false, names: [], message: state.message || 'That picture could not be read. Try again.' };
+      state.busy = true;
+      const r = await flow.nameObject(doFetch, { imageDataUrl: state.photo.dataUrl });
+      state.busy = false;
+      if (disposed) return { ok: false, names: [], message: '' };
+      return r.ok ? { ok: true, names: r.names, message: '' } : { ok: false, names: [], message: r.message };
+    },
+    /** Put the library item the last `scanBlob` matched in Kip's hand (as the offer's "Use the 3D one" does). Resolves `{ ok, coloured, label }`. */
+    async takeOffered() {
+      if (disposed || !state.offer) return { ok: false };
+      const label = state.offer.item.label;
+      await takeLibraryItem(false);
+      return { ok: state.equipped !== null, coloured: state.coloured, label };
+    },
+    /** Forget the photo and the scan (the camera view calls this when it opens and when the child tries again). */
+    clearScan() {
+      if (!disposed && !state.busy) reset();
+    },
     /** Show the panel on the first step. */
     open() {
       if (disposed) return;

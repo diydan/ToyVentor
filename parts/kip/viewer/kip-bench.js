@@ -2575,24 +2575,143 @@ function syncHouseholdChip() {
 
 // The print panel (F2b, kip-photo-print.js): loaded on the first click, so the bench loads the same with or without its bundle.
 let photoPrint = null;
+async function ensurePhotoPrint() {
+  if (!photoPrint) {
+    const { createPhotoPrint } = await import('/kip/kip-photo-print.js?v=10.0');
+    if (disposed) return null;
+    photoPrint = createPhotoPrint({ root: benchRoot, onLibraryItem: equipHouseholdItem, ageBand: readAgeBand });
+    globals.kipPhotoPrint = photoPrint;
+  }
+  return photoPrint;
+}
 if (!downloadsOn) $el('btn-print-photo').hidden = true; // the photo plate is a file to print
 $el('btn-print-photo').addEventListener('click', async () => {
   stopWebcamIfActive();
   modalPhoto.classList.remove('open');
   try {
-    if (!photoPrint) {
-      const { createPhotoPrint } = await import('/kip/kip-photo-print.js?v=10.0');
-      if (disposed) return;
-      photoPrint = createPhotoPrint({ root: benchRoot, onLibraryItem: equipHouseholdItem, ageBand: readAgeBand });
-      globals.kipPhotoPrint = photoPrint;
-    }
-    photoPrint.open();
+    const panel = await ensurePhotoPrint();
+    if (!panel) return;
+    panel.open();
   } catch (err) {
     console.error(err);
     photoStatus.textContent = 'The print panel could not be loaded. Try again in a minute.';
     modalPhoto.classList.add('open');
   }
 });
+
+// The camera pick-up (kip-pickup.js, Tools > Pick it up): a live camera view; the child names the object, SAM finds it, and Kip picks it up. A word that names one of the
+// bench's own hand props (guitar, trumpet, frying pan, broom ...) gives Kip that prop and its clip; any other word needs a household library item the scan matched.
+// Loaded on first use, with the print panel it scans through. Digital only: nothing here makes a file.
+let pickUp = null;
+let lastPick = null; // { word, kind, id, label, coloured, colours } for the song button (the page hook below), or null
+const handPoint3 = new THREE.Vector3();
+/** Where Kip's hand is on screen right now, for the cut-out's flight; null when it is behind the camera. */
+function handScreenPoint() {
+  try {
+    kip.exp.customHandContainer.getWorldPosition(handPoint3);
+    handPoint3.project(camera);
+    const r = renderer.domElement.getBoundingClientRect();
+    if (!(handPoint3.z < 1) || !r.width) return null;
+    return { x: r.left + (handPoint3.x * 0.5 + 0.5) * r.width, y: r.top + (-handPoint3.y * 0.5 + 0.5) * r.height };
+  } catch {
+    return null;
+  }
+}
+/** Put one of the bench's workshop props in Kip's hand; its clip starts on foot (setPropMode). Resolves `{ ok }`, never throws. */
+function holdWorkshopProp(id) {
+  if (!PROP_OPTIONS.some((p) => p.id === id && p.id !== 'off')) return { ok: false };
+  try {
+    customStlSlots.hand = null;
+    photoAccessorySlots.hand = null;
+    householdSlots.hand = null;
+    householdView = null;
+    kip.exp.customHandContainer.clear();
+    setPropMode(id);
+    return { ok: loco.prop === id };
+  } catch (err) {
+    console.error(err);
+    return { ok: false };
+  }
+}
+/**
+ * Put the object's cut-out (a small transparent PNG, from the camera pick-up) in Kip's hand as a flat card on a handle, like a photo plate: for anything the bench has no prop or 3D item
+ * for. It is built as a one-plane "item" in the library's frame (metres, y up, the grip at the origin, the front on -z) and goes through the same hand slot and hold as a household item.
+ * Digital only. Resolves `{ ok }`, never throws.
+ */
+async function holdCard(cutout, label) {
+  try {
+    if (!cutout || typeof cutout.dataUrl !== 'string' || !cutout.dataUrl.startsWith('data:image/png;base64,') || !(cutout.w > 0) || !(cutout.h > 0)) return { ok: false };
+    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('bad cut-out')); i.src = cutout.dataUrl; });
+    if (disposed) return { ok: false };
+    const tex = new THREE.Texture(img);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.needsUpdate = true;
+    const H = 0.14; // 140 mm tall, about the size of the household items
+    const W = Math.min(0.22, Math.max(0.04, H * (cutout.w / cutout.h)));
+    const plane = new THREE.Mesh(new THREE.PlaneGeometry(W, H), new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: 0.35, side: THREE.DoubleSide }));
+    plane.position.y = H / 2;
+    plane.rotation.y = Math.PI; // its front on -z, as every library item's front is
+    const scene = new THREE.Group();
+    scene.add(plane);
+    const meshGrp = buildHouseholdHandMesh(THREE, scene, { id: 'card', label: String(label || 'thing'), rimColor: '#ff6b4a', yaw: HOUSEHOLD_HOLD_YAW });
+    customStlSlots.hand = null;
+    photoAccessorySlots.hand = null;
+    householdSlots.hand = { id: 'card', label: String(label || 'thing') };
+    householdView = { id: 'card', label: String(label || 'thing'), ctl: null };
+    kip.exp.customHandContainer.clear();
+    kip.exp.customHandContainer.add(meshGrp);
+    setPropMode('custom');
+    if (loco.vehicle === 'none' && loco.buildMode === 'assembled' && actions.has(HOUSEHOLD_HOLD_CLIP)) triggerClip(HOUSEHOLD_HOLD_CLIP);
+    updateStatusText();
+    return { ok: true };
+  } catch (err) {
+    console.error(err);
+    return { ok: false };
+  }
+}
+// The moment song (kip-moment-song.js): after a pick-up, a button makes a song about it, through the theme song card, when the song route is on. Loaded on first use.
+// A finished song goes to My songs, so it is in the party's Song picker and Kip can dance to it.
+let momentSong = null;
+async function offerMomentSong(info) {
+  try {
+    if (!momentSong) {
+      const { createMomentSong } = await import('/kip/kip-moment-song.js?v=10.0');
+      if (disposed) return;
+      momentSong = createMomentSong({ root: benchRoot, onSong: (song) => mySongs.add(song) });
+      globals.kipMomentSong = momentSong;
+    }
+    await momentSong.offer(info);
+  } catch (err) {
+    console.error(err);
+  }
+}
+async function openPickUp() {
+  try {
+    if (!pickUp) {
+      const [{ createPickUp }, panel] = await Promise.all([import('/kip/kip-pickup.js?v=10.0'), ensurePhotoPrint()]);
+      if (disposed || !panel) return;
+      pickUp = createPickUp({
+        root: benchRoot,
+        panel,
+        getHandPoint: handScreenPoint,
+        holdWorkshopProp,
+        holdCard,
+        canPrintPlate: downloadsOn,
+        onPicked: (info) => {
+          lastPick = info;
+          offerMomentSong(info);
+          // Tell the page around the bench (the game's Kip holds it too): `detail` is `{ word, kind: 'workshop' | 'library' | 'card', id, label, coloured, colours, cutout: { dataUrl, w, h } | null, named }`,
+          // the cut-out being a small transparent PNG of the object. A listener that throws must never break the pick-up.
+          try { window.dispatchEvent(new CustomEvent('tv:kip-picked-up', { detail: info })); } catch { /* nobody listening, or a listener failed */ }
+        },
+      });
+      globals.kipPickUp = pickUp;
+    }
+    await pickUp.open();
+  } catch (err) {
+    console.error(err);
+  }
+}
 
 $el('btn-sync-hash').addEventListener('click', () => {
   const hash = encodeToyContractHash({
@@ -3412,6 +3531,7 @@ const kipMenuCtx = {
     openLlm: () => modalLlm.classList.add('open'),
     openPhoto: openPhotoModal,
     openForgeMake,
+    openPickUp,
     loadFile: loadCustomMixamoOrStlFile,
     equipHousehold: equipHouseholdItem,
     setHouseholdLook,
@@ -3429,7 +3549,7 @@ const ready = init().catch(err => {
   statusEl.textContent = `Error: ${err.message}`;
 });
 
-const PUBLISHED = ["__KIP_READY__", "kipClips", "kipDescribe", "kipForgeMake", "kipMenu", "kipParty", "kipPhotoPrint", "kipPrint", "kipRig", "kipSelfie"];
+const PUBLISHED = ["__KIP_READY__", "kipClips", "kipDescribe", "kipForgeMake", "kipMenu", "kipMomentSong", "kipParty", "kipPhotoPrint", "kipPickUp", "kipPrint", "kipRig", "kipSelfie"];
 function teardown() {
   householdChip?.root.remove();
   householdChip = null;
@@ -3444,6 +3564,10 @@ function teardown() {
   globals.kipSelfie?.dispose?.();
   globals.kipDescribe?.dispose?.();
   if (sharedPrint) unregisterPrint(); else globals.kipPrint?.dispose?.();
+  momentSong?.dispose?.();
+  momentSong = null;
+  pickUp?.dispose?.();
+  pickUp = null;
   photoPrint?.dispose?.();
   photoPrint = null;
   forgeMake?.dispose?.();
