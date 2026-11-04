@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { handleMuseSpark } from "../worker/muse";
+import type { BackendEnv } from "../worker/modelBackend";
 
 const RECIPE = {
   format: "toyventor.level/1",
@@ -186,6 +187,29 @@ describe("muse spark route", () => {
     now.mockRestore();
     expect(res.status).toBe(502);
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("asks our own model again when the proxy drops the connection before any token", async () => {
+    const fetchMock = vi.fn(async () => {
+      if (fetchMock.mock.calls.length === 1) return new Response("upstream reset", { status: 500 });
+      return new Response(
+        JSON.stringify({ choices: [{ message: { content: JSON.stringify({ say: "ok", recipe: RECIPE }) } }] }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      );
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const selfEnv: BackendEnv = {
+      MODEL_BACKEND: "self",
+      SELF_TEXT_URL: "https://glimmer.example.test/v1",
+      SELF_TEXT_MODEL: "muse-glimmer-30B",
+      SELF_TEXT_API: "chat",
+    };
+    const res = await handleMuseSpark(
+      post({ model: "muse-spark", input: "a garden", format: "json" }),
+      selfEnv,
+    );
+    expect(res.status).toBe(200);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it("keeps upstream error details out of the browser response", async () => {

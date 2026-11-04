@@ -155,9 +155,10 @@ export async function handleForgeMake(request: Request, env: ForgeMakeEnv): Prom
     }
   }
 
-  const asked = await askText(backend, buildMakePrompt({ text, ...(slot ? { slot } : {}), ...(previous ? { previous, feedback } : {}) }), { timeoutMs: MODEL_TIMEOUT_MS });
+  let retried = false; // our own model was asked a second time (worker/modelBackend.ts askText): said in the log line, so a retry can be counted
+  const asked = await askText(backend, buildMakePrompt({ text, ...(slot ? { slot } : {}), ...(previous ? { previous, feedback } : {}) }), { timeoutMs: MODEL_TIMEOUT_MS, onRetry: () => { retried = true; } });
   if (!asked.ok) {
-    logEvent("forge_make", asked.status === null ? "model_failed" : "model_status", { ...(asked.status !== null ? { httpStatus: asked.status } : {}), backend: backend.mode }); // error detail stays on the server
+    logEvent("forge_make", asked.status === null ? "model_failed" : "model_status", { ...(asked.status !== null ? { httpStatus: asked.status } : {}), backend: backend.mode, ...(retried ? { retried: true } : {}) }); // error detail stays on the server
     return reply(502, { ok: false, status: "unavailable", attempt });
   }
   const modelText = asked.text;
@@ -198,7 +199,7 @@ export async function handleForgeMake(request: Request, env: ForgeMakeEnv): Prom
   const names = Object.fromEntries(Object.entries(parsedNames.names).filter(([, n]) => !KID_BRAND_RE.test(n.w))) as typeof parsedNames.names;
   if (!names.en) for (const k of Object.keys(names)) delete names[k as keyof typeof names]; // English is every language's fallback: with no good English name nothing is kept
   const signed = await issueSpokenNames(env, names);
-  logEvent("forge_make", "ok", { backend: backend.mode, attempt, slot: recipe.slot, repaired: repair !== undefined, namesKept: Object.keys(names).length, spoken: Object.keys(signed).length });
+  logEvent("forge_make", "ok", { backend: backend.mode, ...(retried ? { retried: true } : {}), attempt, slot: recipe.slot, repaired: repair !== undefined, namesKept: Object.keys(names).length, spoken: Object.keys(signed).length });
   return reply(200, {
     ...scrubPreviewOutput(up.data),
     attempt,

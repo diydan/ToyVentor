@@ -24,8 +24,10 @@ const MAX_DESCRIPTION = 300; // the tab trims to 300 too
 const RATE_WINDOW_MS = 60_000;
 const RATE_MAX_PER_WINDOW = 10;
 const recentHits = new Map<string, number[]>();
-/** The tab waits up to 45 s for an endpoint, but a child does not: a quick pick or a quick fallback. Covers the retry too. */
-const MODEL_TIMEOUT_MS = 12_000;
+/** The tab waits up to 45 s for an endpoint (parts/kip/viewer/tools/describe-endpoint.mjs) and keeps a busy state meanwhile, but a child does not wait forever: a quick pick or a
+ *  quick fallback. Covers the retry too. Glimmer needs this budget: a measured Glimmer answer took 11 to 46 s (median about 20 s), so 12 s never fitted our own model and
+ *  Describe & Build would have fallen back to the word matcher on every call. The hosted model answers in a second or two and is unaffected, because a budget is a ceiling. */
+const MODEL_TIMEOUT_MS = 45_000;
 
 interface Recipe {
   id: string;

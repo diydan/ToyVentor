@@ -191,6 +191,19 @@ describe("POST /api/forge/make", () => {
       expect(seen.modelCalls[1]!.body).not.toHaveProperty("reasoning");
     });
 
+    it("a retried call shows in the log line, and a call that was not retried does not", async () => {
+      let n = 0;
+      model = () => (++n === 1 ? json({ error: "proxy dropped" }, 500) : json({ output_text: JSON.stringify({ recipe: recipeOf(), names: NAMES }) }));
+      expect((await make({ text: "a wizard hat" }, headers, { ...env, ...SELF, SELF_TEXT_API: "responses" })).status).toBe(200);
+      expect(seen.modelCalls).toHaveLength(2);
+      expect(logs().some((l) => l.includes('"status":"ok"') && l.includes('"retried":true'))).toBe(true);
+      resetForgeRateLimit();
+      vi.mocked(console.log).mockClear();
+      model = modelSays({ recipe: recipeOf(), names: NAMES });
+      await make({ text: "a wizard hat" }, headers, { ...env, ...SELF });
+      expect(logs().some((l) => l.includes('"status":"ok"') && l.includes("retried"))).toBe(false);
+    });
+
     it("self without a key sends no authorization header at all", async () => {
       await make({ text: "a wizard hat" }, headers, { ...env, ...SELF, SELF_TEXT_KEY: undefined });
       expect(seen.modelCalls[0]!.auth).toBeNull();

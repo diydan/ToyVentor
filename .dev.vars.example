@@ -32,7 +32,8 @@ IMAGE_BACKEND=
 TRANSCRIBE_BACKEND=
 # Our own models: https base URL (http only on localhost), optional key. Text also needs the served model name; SELF_TEXT_API is
 # "responses" (default) or "chat" (/chat/completions; llama.cpp serves Glimmer on this one). SELF_TEXT_REASONING is Glimmer's reasoning
-# strength, sent in the system prompt: low (default), medium, high, xhigh, or off to send none.
+# strength, sent in the system prompt: low (default), medium, high, xhigh. Do NOT set it to off or leave the line out: with no line Glimmer thinks about 4 times as long
+# (measured 2026-11-04: 3,600 to 4,000 tokens and 44 to 48 s per make call, against 800 to 1,100 tokens and 10 to 14 s with low).
 # Glimmer v1 on Modal (scripts/modal/glimmer_server.py), with MODEL_BACKEND=self (or TEXT_BACKEND=self for the text capability only):
 #   SELF_TEXT_URL=https://<workspace>--toyventor-glimmer.us-east.modal.run/v1   SELF_TEXT_MODEL=muse-glimmer-30B   SELF_TEXT_API=chat
 #   SELF_TEXT_KEY = the key you gave the Modal secret glimmer-api-key (LLAMA_API_KEY). Segment, image and transcribe have no adapter yet.
