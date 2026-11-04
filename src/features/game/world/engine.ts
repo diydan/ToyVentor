@@ -10,6 +10,7 @@ import {
   toyWorldUrl,
   type ToyContract,
 } from "../../../../shared/toycontract";
+import type { BakedClip, BeatSource } from "./runtime/mixamo";
 import { createWorldRuntime } from "./runtime";
 import { PORTRAIT_PX, type ToyPortrait } from "../../../lib/toyPortrait";
 import type { BuildSummary } from "../../../lib/garage";
@@ -801,8 +802,10 @@ export interface EngineHandle {
   buildSummary: () => BuildSummary | null;
   /** Open these parts to try (the Garage's loaner); any `known` loaner not in `active` and still worn goes back. */
   setLoanKeys: (active: string[], known: string[]) => void;
-  /** The dance party: start the character's dance on a song's clock (`time()` is the clip time in seconds, read every frame). False when it cannot dance (reduced motion, no rig). */
-  partyDanceStart: (time: () => number) => boolean;
+  /** The dance party: start the character's dance on a song's clock (`source()` says which dance and how far into it, in seconds, read every frame). False when it cannot dance (reduced motion, no rig). */
+  partyDanceStart: (source: BeatSource) => boolean;
+  /** Put converted dance clips into the character's bank (the party loads its dances on demand). */
+  partyAddClips: (clips: Record<string, BakedClip>) => void;
   partyDanceStop: () => void;
   /** Fade the world's own music out (true) and back (false) while a song plays. */
   partyMusicDuck: (on: boolean) => void;
@@ -927,7 +930,8 @@ interface LegacyHooks {
   playSeed?: (code?: string, theme?: string, opts?: SeedOptions) => string | null;
   buildSummary?: () => BuildSummary;
   setLoanKeys?: (active: string[], known: string[]) => void;
-  partyDanceStart?: (time: () => number) => boolean;
+  partyDanceStart?: (source: BeatSource) => boolean;
+  partyAddClips?: (clips: Record<string, BakedClip>) => void;
   partyDanceStop?: () => void;
   partyMusicDuck?: (on: boolean) => void;
   portraitSig?: () => string | null;
@@ -1359,7 +1363,10 @@ export function createEngine(
     setLoanKeys: (active, known) => {
       if (!disposed) hooks()?.setLoanKeys?.(active, known);
     },
-    partyDanceStart: (time) => (disposed ? false : (hooks()?.partyDanceStart?.(time) ?? false)),
+    partyDanceStart: (source) => (disposed ? false : (hooks()?.partyDanceStart?.(source) ?? false)),
+    partyAddClips: (clips) => {
+      if (!disposed) hooks()?.partyAddClips?.(clips);
+    },
     partyDanceStop: () => {
       if (!disposed) hooks()?.partyDanceStop?.();
     },

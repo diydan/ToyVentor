@@ -5,6 +5,7 @@ import {
   type GateStrictness,
   type ParentSettingsUpdateInput,
 } from "../../../../shared/parent-time";
+import { SongSettingsPanel } from "./SongSettingsPanel";
 import { kipDemoUrl } from "../../../../shared/toycontract";
 import { postRoomPhoto } from "../../../lib/api";
 import type { TimeOfDayMode } from "../../../lib/timeOfDay";
@@ -1406,6 +1407,9 @@ export function GrownUpsSheet({
             </div>
             </>
           )}
+
+          {/* The Songs section: the song maker on or off and the weekly limit (renders nothing when the song route is off here) */}
+          <SongSettingsPanel proof={activeProof} />
 
           {/* 2. One-Tap Presets */}
           <div>

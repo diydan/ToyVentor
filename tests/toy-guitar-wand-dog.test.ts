@@ -1,7 +1,7 @@
 // The new Toy Room toys' geometry (guitar, bubble set) and the dog: real three.js meshes and the pure dog pose.
 import * as THREE from "three";
 import { describe, expect, it } from "vitest";
-import { BARK_S, PET_REACTION_S, WOOFS, applyDogPose, buildDog, dogPose, fidget } from "../src/features/game/world/runtime/dog";
+import { BARK_S, PET_REACTION_S, SIT_RATE, WOOFS, applyDogPose, buildDog, dogPose, fidget, withSit } from "../src/features/game/world/runtime/dog";
 import { GUITAR_BODY_W, GUITAR_LENGTH, HELD_GUITAR_SCALE, buildGuitarMesh, buildGuitarProp } from "../src/features/game/world/runtime/guitar";
 import { WAND_LENGTH, WAND_RING_R, buildBubbleBottle, buildWandMesh } from "../src/features/game/world/runtime/bubbleWand";
 
@@ -212,5 +212,106 @@ describe("dogPose: running and being delighted (the fetch)", () => {
 
   it("the `idle` cue is the plain dog", () => {
     expect(dogPose(5, "idle", 0.2)).toEqual(dogPose(5, null, Infinity));
+  });
+});
+
+describe("the dog sitting (it waits for Kip)", () => {
+  it("sitting weight 0 is the standing pose exactly, and any pose can be seated", () => {
+    const p = dogPose(3, null, Infinity);
+    expect(withSit(p, 0)).toBe(p);
+    expect(withSit(p, -5)).toBe(p);
+    expect(withSit(p, Number.NaN)).toEqual(withSit(p, Number.NaN));
+  });
+  it("seated: the rump is down, the chest and head up, the tail low and dropped", () => {
+    const p = dogPose(3, null, Infinity), q = withSit(p, 1);
+    expect(q.bob).toBeLessThan(p.bob - 0.1);
+    expect(q.bodyPitch).toBeGreaterThan(p.bodyPitch + 0.2);
+    expect(q.headPitch).toBeGreaterThan(p.headPitch + 0.1);
+    expect(q.tailLift).toBeLessThan(p.tailLift);
+    expect(q.tailDrop).toBeGreaterThan(0.1);
+    expect(q.headDrop).toBeGreaterThan(0);
+    expect(q.tailYaw).toBe(p.tailYaw);                                    // the wag itself is the cue's business
+  });
+  it("is a smooth, one-way blend: every step towards seated lowers it a little more", () => {
+    const p = dogPose(3, null, Infinity);
+    let prev = withSit(p, 0);
+    for (let k = 0.1; k <= 1.0001; k += 0.1) {
+      const q = withSit(p, k);
+      expect(q.bob).toBeLessThan(prev.bob);
+      expect(q.bodyPitch).toBeGreaterThan(prev.bodyPitch);
+      prev = q;
+    }
+    expect(withSit(p, 7)).toEqual(withSit(p, 1));
+  });
+  it("the sit cue is a lazy wag and lasts for as long as the dog is cued", () => {
+    let wag = 0;
+    for (let t = 0; t < 4; t += 0.01) wag = Math.max(wag, Math.abs(dogPose(t, "sit", 100).tailYaw));
+    expect(wag).toBeGreaterThan(0.2);
+    expect(wag).toBeLessThanOrEqual(0.3 + 1e-9);
+    expect(dogPose(5, "sit", 0)).toEqual(dogPose(5, "sit", 1000));
+    expect(dogPose(5, "sit", 1000)).not.toEqual(dogPose(5, null, Infinity));
+  });
+
+  const sitCue = (d: ReturnType<typeof buildDog>, t: number) => { d.userData.cue = { name: "sit", at: t }; };
+  const frames = (d: ReturnType<typeof buildDog>, from: number, seconds: number) => { let t = from; for (let k = 0; k < seconds * 60; k++) { t += 1 / 60; d.userData.tick(t, 1 / 60); } return t; };
+
+  it("the built dog eases down into a seat over a moment, and the body, tail and head really are lower", () => {
+    const d = buildDog(0, 0);
+    const parts = d.userData.dogParts;
+    let t = frames(d, 0, 1);
+    const standing = { body: parts.body.position.y, tail: parts.tail.position.y, head: parts.head.position.y };
+    sitCue(d, t);
+    t = frames(d, t, 0.1);
+    expect(d.userData.sitK).toBeGreaterThan(0.2);
+    expect(d.userData.sitK).toBeLessThan(0.9);                            // on its way, not there yet
+    t = frames(d, t, 1.5);
+    expect(d.userData.sitK).toBe(1);
+    expect(parts.body.position.y).toBeLessThan(standing.body - 0.1);
+    expect(parts.tail.position.y).toBeLessThan(standing.tail - 0.2);
+    expect(parts.head.position.y).toBeLessThan(standing.head - 0.05);
+    expect(parts.body.rotation.z).toBeGreaterThan(0.3);
+  });
+  it("it sits down within about a third of a second (SIT_RATE) and never overshoots", () => {
+    const d = buildDog(0, 0);
+    sitCue(d, 0);
+    let prev = 0, t = 0;
+    for (let k = 0; k < 120; k++) { t += 1 / 60; d.userData.tick(t, 1 / 60); expect(d.userData.sitK).toBeGreaterThanOrEqual(prev); expect(d.userData.sitK).toBeLessThanOrEqual(1); prev = d.userData.sitK; if (k === 20) expect(prev).toBeGreaterThan(0.7); }
+    expect(1 - Math.exp(-SIT_RATE * 0.35)).toBeGreaterThan(0.85);
+  });
+  it("it gets up smoothly when cued to do something else (not a pop), and a bark on the way makes it stand and woof", () => {
+    const d = buildDog(0, 0);
+    const parts = d.userData.dogParts;
+    sitCue(d, 0);
+    let t = frames(d, 0, 2);
+    const seated = parts.body.position.y;
+    d.userData.cue = { name: "run", at: t };
+    t = frames(d, t, 1 / 60);
+    expect(d.userData.sitK).toBeLessThan(1);
+    expect(d.userData.sitK).toBeGreaterThan(0.8);                         // one frame later it is still mostly seated
+    t = frames(d, t, 1.5);
+    expect(d.userData.sitK).toBe(0);
+    expect(parts.body.position.y).toBeGreaterThan(seated + 0.1);
+    sitCue(d, t);
+    t = frames(d, t, 1);
+    d.userData.cue = { name: "bark", at: t };
+    t = frames(d, t, 1.2);
+    expect(d.userData.sitK).toBe(0);
+  });
+  it("a bad frame time changes nothing, and the tick still works with no frame time at all", () => {
+    const d = buildDog(0, 0);
+    sitCue(d, 0);
+    d.userData.tick(0.5, Number.NaN);
+    d.userData.tick(0.6, -1);
+    expect(d.userData.sitK).toBe(0);
+    d.userData.tick(0.7);
+    expect(d.userData.sitK).toBeGreaterThan(0);
+  });
+  it("applyDogPose with no sit fields (a standing pose) puts the tail and head back where they were built", () => {
+    const d = buildDog(0, 0);
+    const parts = d.userData.dogParts;
+    applyDogPose(parts, withSit(dogPose(1, null, Infinity), 1));
+    applyDogPose(parts, dogPose(1, null, Infinity));
+    expect(parts.tail.position.y).toBe(0.95);
+    expect(parts.head.position.y).toBe(1.18);
   });
 });

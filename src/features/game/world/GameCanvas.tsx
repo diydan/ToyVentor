@@ -94,10 +94,12 @@ import { LanguageSheet, usePropLang } from "./LanguageSheet";
 import { CreatePanel } from "./CreatePanel";
 import { EditorPanel } from "./EditorPanel";
 import { noteGesture, ctx as gameAudioCtx } from "./runtime/audio";
+import { createDanceLibrary } from "./runtime/gameDances";
 import { createGameParty, type GameParty } from "./runtime/gameParty";
+import { deviceId } from "../../../lib/sync";
 import { SongStudioSheet } from "./SongStudioSheet";
 import { ThemeSongCard } from "./ThemeSongCard";
-import { createThemeSongFlow, levelDescription, readKeptSongs, type FlowState, type KeptSong, type ThemeSongFlow } from "./themeSongFlow";
+import { createThemeSongFlow, levelDescription, readKeptSongs, type FlowState, type KeptSong, type SongQuota, type ThemeSongFlow } from "./themeSongFlow";
 import {
   createEngine,
   createWorldStore,
@@ -279,15 +281,22 @@ export function GameCanvas({
   const songRef = useRef<{ flow: ThemeSongFlow; party: GameParty } | null>(null);
   const getSong = useCallback(() => {
     if (!songRef.current) {
+      // the dances the character knows: the Samba, and the baked Mixamo dances loaded the first time a party needs them
+      const dances = createDanceLibrary({ fetchImpl: (...args) => fetch(...args), addClips: (clips) => engineRef.current?.partyAddClips(clips) });
       const party = createGameParty({
         ctx: () => gameAudioCtx(),
-        startDance: (time) => engineRef.current?.partyDanceStart(time) ?? false,
+        prepare: () => dances.prepare(),
+        dances: () => dances.list(),
+        ensureDances: (ids) => dances.ensure(ids),
+        startDance: (source) => engineRef.current?.partyDanceStart(source) ?? false,
         stopDance: () => engineRef.current?.partyDanceStop(),
         duckMusic: (on) => engineRef.current?.partyMusicDuck(on),
         onEnd: (reason) => songRef.current?.flow.partyEnded(reason),
       });
       const flow = createThemeSongFlow({
         fetchImpl: (...args) => fetch(...args),
+        // the device and the family's clock go with every song request: the weekly limit is per device and turns on the family's own Monday
+        headers: () => ({ "x-device-id": deviceId(), "x-client-timezone": (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"; } catch { return "UTC"; } })() }),
         decode: async (bytes) => {
           const Offline = window.OfflineAudioContext ?? (window as unknown as { webkitOfflineAudioContext?: typeof OfflineAudioContext }).webkitOfflineAudioContext;
           if (!Offline) throw new Error("no audio decoder");
@@ -307,7 +316,7 @@ export function GameCanvas({
     const s = getSong();
     const phase = s.flow.state().phase;
     if (phase === "writing" || phase === "making" || phase === "ready" || phase === "dancing") return; // a song is already on its way, or a party is on
-    void s.flow.isOn().then((on) => {
+    void s.flow.canMake().then((on) => { // the route is on, a grown-up has not switched songs off, and a song is left this week
       if (!on) return;
       if (phase === "over" || phase === "failed") s.flow.cancel(); // the old card gives way to the new offer
       setSongOffer(levelDescription(missionType));
@@ -325,13 +334,15 @@ export function GameCanvas({
   // The Map's Songs sheet: make a song from an idea, or dance to one already made. Either closes the Map and hands over to the card and the party above.
   const [songsOpen, setSongsOpen] = useState(false);
   const [songsAvailable, setSongsAvailable] = useState(false);
+  const [songsQuota, setSongsQuota] = useState<SongQuota | null>(null);
   const [keptSongs, setKeptSongs] = useState<KeptSong[]>([]);
   const localStore = () => { try { return window.localStorage; } catch { return null; } };
   const openSongs = useCallback(() => {
     setKeptSongs(readKeptSongs(localStore()));
     setSongsAvailable(false);
+    setSongsQuota(null);
     setSongsOpen(true);
-    void getSong().flow.isOn().then(setSongsAvailable);
+    void getSong().flow.probe(true).then((p) => { setSongsAvailable(p.enabled); setSongsQuota(p.quota); });
   }, [getSong]);
   const startFromSheet = useCallback((begin: () => void) => {
     noteGesture(); // this tap is what lets the song play later
@@ -1882,6 +1893,7 @@ export function GameCanvas({
           <SongStudioSheet
             songs={keptSongs}
             available={songsAvailable}
+            quota={songsQuota}
             onMake={(idea) => startFromSheet(() => void getSong().flow.start(idea, "prompt"))}
             onDance={(song) => startFromSheet(() => void getSong().flow.playKept(song))}
             onClose={() => setSongsOpen(false)}

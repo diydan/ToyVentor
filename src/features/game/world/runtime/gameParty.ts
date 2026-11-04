@@ -4,20 +4,23 @@
 // `planParty` says whether a dance fits its tempo (a quarter either way, never stretched), `songBeatMap` is the song's beat grid and `clipTime` is where in the dance
 // a moment of the song falls, counted in BEATS so the dance cannot drift from the sound. Everything here reads ONE clock, the audio clock.
 //
-// WHAT DANCES. The game's character has one baked dance, the Mixamo Samba (`bank.dance`, 4.4 s). It was counted once, by looking at the baked data (tests/game-party.test.ts
-// re-measures it and fails if the numbers below stop being true): the hips bounce eight times in the loop (109.09 bpm, 8 beats), and they are lowest, the "hit", about
-// 0.21 s into the clip. The dance is shifted by that, so the character's weight drops ON the beat.
+// WHAT DANCES. Every dance that fits the song's tempo (a quarter either way, never stretched): the built-in Samba and the baked Mixamo dances (runtime/gameDances.ts), taking turns
+// every 16 beats on the bar line with a short cross-fade (the Dance MIX), the one nearest its natural speed first. A tempo that only one dance fits is that one dance; a tempo
+// none fits is the song alone. Each dance is shifted by where its weight lands, so the dancer drops ON the beat (the Samba's was counted from its real clip, the others measured from
+// theirs by runtime/bakedDance.ts `beatHit`).
 //
 // WHAT THE SONG IS. A child's own theme song, already measured and cut to whole bars that loop on the beat grid (shared/themeParty.ts), as a library-shaped index entry and the
 // WAV bytes of the cut. The party loops it until it is stopped or `GAME_PARTY_SECONDS` pass.
 //
 // DEPENDENCIES ARE INJECTED (`GamePartyHost`), so the party is tested without a browser: the audio context, the character's dance, and the world's own music.
-import { clipTime, parseSongIndex, planParty, songBeatMap, type BeatMap, type LibrarySong, type PartyClip } from "../../../../../shared/songParty";
+import { MIX_CHOICE, beatAt, clipTime, danceForMix, parseSongIndex, planParty, songBeatMap, type BeatMap, type LibrarySong } from "../../../../../shared/songParty";
+import { SAMBA, type GameDance } from "./gameDances";
+import type { BeatSource } from "./mixamo";
 
-/** The Samba, counted: eight beats in its 4.4 s loop (109.09 bpm). `group: "dance"` so the tempo rule may pick it. */
-export const GAME_DANCES: readonly PartyClip[] = [{ id: "dance", bpm: 109.09, beats: 8, group: "dance", label: "Samba" }];
+/** The built-in Samba, as a list (kept for the tests that count it). The party's own list comes from the host. */
+export const GAME_DANCES: readonly GameDance[] = [SAMBA];
 /** Seconds into the Samba clip where the hips are lowest on average: the weight drops here, and this is what lands on the song's beat. */
-export const SAMBA_HIT_S = 0.21;
+export const SAMBA_HIT_S = SAMBA.hit;
 /** The party ends by itself after this long (a few loops of a song). */
 export const GAME_PARTY_SECONDS = 150;
 /** How loud the song is against the game's other sound (its own music is ducked to nothing while the party plays). */
@@ -29,8 +32,14 @@ const START_DELAY_S = 0.12;
 export interface GamePartyHost {
   /** The game's audio context (created and resumed by a tap), or null before there is one. */
   ctx(): AudioContext | null;
-  /** Start the character's dance, reading its clip time from `time()` every frame. False when it cannot dance (reduced motion, no rig): the party is then music only. */
-  startDance(time: () => number): boolean;
+  /** Read the list of dances once (the index). Optional: a host with only the Samba needs nothing. */
+  prepare?(): Promise<void>;
+  /** Every dance the character knows now, loaded or not (the Samba is always loaded). */
+  dances(): readonly GameDance[];
+  /** Load these dances into the character's bank; resolves the ids that are playable now. A failed one is left out. */
+  ensureDances(ids: readonly string[]): Promise<string[]>;
+  /** Start the character's dance: every frame `source` says which dance and how far into it. False when it cannot dance (reduced motion, no rig): the party is then music only. */
+  startDance(source: BeatSource): boolean;
   stopDance(): void;
   /** Fade the world's own music out (`true`) and back (`false`). */
   duckMusic(on: boolean): void;
@@ -132,8 +141,17 @@ export function createGameParty(host: GamePartyHost): GameParty {
         if (!st.starting) return { ok: false, reason: "stopped before it began" };
         ctx = c;
         const map: BeatMap = songBeatMap(lib, GAME_PARTY_SECONDS + 10);
-        const plan = planParty(lib.bpm, GAME_DANCES);
-        const clip = plan.dance?.clip ?? null;
+        // which dances fit this tempo: plan with every dance the index offers, load those, then plan again with what actually loaded
+        try { await host.prepare?.(); } catch { /* the Samba alone */ }
+        if (!st.starting) return { ok: false, reason: "stopped before it began" };
+        const first = planParty(lib.bpm, host.dances(), 0, MIX_CHOICE);
+        const wanted = first.mix ? first.mix.list.map((x) => x.clip.id) : first.dance ? [first.dance.clip.id] : [];
+        let loadedIds: string[] = [];
+        try { loadedIds = await host.ensureDances(wanted); } catch { /* none loaded: the plan below falls back to what is already there */ }
+        if (!st.starting) return { ok: false, reason: "stopped before it began" };
+        const playable = new Map(host.dances().filter((d) => d.loaded || loadedIds.includes(d.id)).map((d) => [d.id, d]));
+        const plan = planParty(lib.bpm, [...playable.values()], 0, MIX_CHOICE);
+        const list = plan.mix ? plan.mix.list : plan.dance ? [plan.dance] : [];
         const src = c.createBufferSource();
         const g = c.createGain();
         g.gain.value = GAME_PARTY_GAIN;
@@ -149,9 +167,15 @@ export function createGameParty(host: GamePartyHost): GameParty {
         gain = g;
         host.duckMusic(true);
         let dancing = false;
-        if (clip) {
-          const dur = clip.beats * (60 / clip.bpm);
-          dancing = host.startDance(() => (clipTime(map, songTime(), clip) + SAMBA_HIT_S) % dur);
+        if (list.length) {
+          const every = plan.mix?.every ?? 0;
+          dancing = host.startDance(() => {
+            const t = songTime();
+            const pick = plan.mix ? danceForMix(list, beatAt(map, t).position, every) : list[0]!;
+            const dance = playable.get(pick.clip.id);
+            const dur = pick.clip.beats * (60 / pick.clip.bpm);
+            return { name: pick.clip.id, time: (clipTime(map, t, pick.clip) + (dance?.hit ?? 0)) % dur };
+          });
         }
         st.on = true;
         st.starting = false;

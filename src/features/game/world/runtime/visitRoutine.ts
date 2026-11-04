@@ -21,6 +21,8 @@ export interface VisitAdapter {
 export interface Visit {
   /** The x the toy stands at to do it. */
   standX: number;
+  /** Where in depth it stands, when that matters (a puddle in front of a table); absent: wherever it is now. The toy has arrived when it is within ARRIVE_X of both. */
+  standZ?: number;
   /** Which way it faces while it does it. */
   face: 1 | -1;
   /** How long the action takes, in seconds. */
@@ -61,7 +63,7 @@ export function createVisitor(a: VisitAdapter) {
       if (phase !== "idle") return false;
       v = next;
       cue = 0;
-      a.walkTo(next.standX, a.position().z);
+      a.walkTo(next.standX, next.standZ ?? a.position().z);
       go("walking");
       return true;
     },
@@ -79,7 +81,7 @@ export function createVisitor(a: VisitAdapter) {
       if (phase === "walking" && v) {
         const tx = a.targetX();
         if (tx !== null && Math.abs(tx - v.standX) > REDIRECT_X) { a.stopWalk(); v = null; go("idle"); return; }   // the player sent the toy elsewhere
-        if (Math.abs(a.position().x - v.standX) < ARRIVE_X) { a.face(v.face); go("acting"); cue = 0; v.begin(); }
+        if (Math.abs(a.position().x - v.standX) < ARRIVE_X && (v.standZ === undefined || Math.abs(a.position().z - v.standZ) < ARRIVE_X)) { a.face(v.face); go("acting"); cue = 0; v.begin(); }
         else { t += dt; if (t >= WALK_TIMEOUT_S) { a.stopWalk(); v = null; go("idle"); } }
         return;
       }

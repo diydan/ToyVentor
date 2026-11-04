@@ -21,8 +21,8 @@ const run = (d: MixamoDriver, rig: ReturnType<typeof characterRig>["rig"], secon
 const pose = (clip: ClipBank[string], t: number) => { const p = newPose(); sampleClip(clip, t, p); return p; };
 
 describe("the baked clips are well formed", () => {
-  it("has the thirteen actions and each is a real clip in the Mixamo format", () => {
-    expect([...PROCEDURAL_ACTIONS].sort()).toEqual(["belly_pat", "blow", "cheer", "eat", "hug", "kick", "mallet", "pet", "read", "sleep", "sour", "strum", "yawn"]);
+  it("has the sixteen actions and each is a real clip in the Mixamo format", () => {
+    expect([...PROCEDURAL_ACTIONS].sort()).toEqual(["belly_pat", "blow", "cheer", "eat", "hug", "kick", "mallet", "mop", "oops", "pet", "read", "sleep", "sour", "strum", "tidy", "yawn"]);
     for (const [name, c] of Object.entries(PROCEDURAL_CLIPS)) {
       expect(c.name).toBe(name);
       expect(c.frames).toBe(Math.round(c.duration * 30) + 1);
@@ -43,7 +43,7 @@ describe("the baked clips are well formed", () => {
     }
   });
   it("one-shots start and end at rest so they blend in and out cleanly; sleep loops", () => {
-    for (const n of ["eat", "sour", "belly_pat", "yawn", "hug", "kick", "cheer", "read", "strum", "blow", "pet", "mallet"] as const) {
+    for (const n of ["eat", "sour", "belly_pat", "yawn", "hug", "kick", "cheer", "read", "strum", "blow", "pet", "mallet", "oops", "mop", "tidy"] as const) {
       const c = PROCEDURAL_CLIPS[n]!;
       expect(c.loop, n).toBe(false);
       for (const t of [0, c.duration]) {

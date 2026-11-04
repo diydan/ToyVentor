@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { buildManifest, enumeratePrompts, serializeManifest } from "../scripts/lib/scene-prompts-enum";
 import { LEARN_RUNGS, learnRungDef } from "../src/features/game/world/runtime/learnRungs";
+import { MESS_PROMPT_LINES } from "../src/features/game/world/runtime/messLines";
 import { arriveScene, arriveSceneVisit, startSceneCarry, startSceneVisit, tapSceneItem, tapSceneSpot, tapSceneTarget } from "../src/features/game/world/runtime/level2Scene";
 import { householdTextHash } from "../src/lib/householdNames";
 import { SCENE_PROMPTS, isPromptId, promptIdForText, promptText, scenePromptUrl } from "../src/lib/scenePrompts";
@@ -130,7 +131,8 @@ describe("a playthrough with the real scene functions", () => {
       }
     }
     expect([...spoken].filter((t) => !known.has(t))).toEqual([]);
-    expect([...known].filter((t) => !spoken.has(t) && t !== "All done!")).toEqual([]); // "All done!" is only said by a tap after the last spot, which the game does not allow
+    // "All done!" is only said by a tap after the last spot, which the game does not allow; the Toy Room's mess lines (runtime/messLines.ts) are not Carousel scenes: tests/mess.test.ts plays them
+    expect([...known].filter((t) => !spoken.has(t) && t !== "All done!" && !MESS_PROMPT_LINES.includes(t))).toEqual([]);
   });
 });
 

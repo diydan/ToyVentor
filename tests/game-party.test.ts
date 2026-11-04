@@ -4,6 +4,8 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { beforeAll, describe, expect, it } from "vitest";
 import { GAME_DANCES, GAME_PARTY_SECONDS, SAMBA_HIT_S, createGameParty, type GamePartyHost } from "../src/features/game/world/runtime/gameParty";
+import { SAMBA, type GameDance } from "../src/features/game/world/runtime/gameDances";
+import type { BeatSource } from "../src/features/game/world/runtime/mixamo";
 import { MixamoDriver, loadMixamoBank, type ClipBank } from "../src/features/game/world/runtime/mixamo";
 import { stockCol, stockSel } from "../src/features/game/world/runtime/catalog";
 import { buildToy } from "../src/features/game/world/runtime/playerRig";
@@ -123,16 +125,30 @@ describe("MixamoDriver beat dance (follows a song's clock)", () => {
 const SONG_BPM = 106.2917;
 const ENTRY = { id: "my_170010186285057", title: "Stompy Big Buddy", mood: "bouncy", file: "my_170010186285057.mp3", bytes: 1_579_093, dur: 60 * 76 / SONG_BPM, bpm: SONG_BPM, beats: 76, bars: 19, offset: 0.02, loop: true, ai: true };
 
-function fakes(over: Partial<GamePartyHost> & { decode?: () => Promise<unknown>; noCtx?: boolean } = {}) {
+const HIPHOP: GameDance = { id: "dance_hiphop", bpm: 101.41, beats: 8, group: "dance", label: "Hip Hop", hit: 0.279, loaded: false };
+const SILLY: GameDance = { id: "dance_silly", bpm: 125.22, beats: 8, group: "dance", label: "Silly Dance", hit: 0.423, loaded: false };
+const SWING: GameDance = { id: "dance_swing", bpm: 137.8, beats: 48, group: "dance", label: "Swing", hit: 0, loaded: false };
+
+function fakes(over: Partial<GamePartyHost> & { decode?: () => Promise<unknown>; noCtx?: boolean; known?: GameDance[]; failLoad?: string[] } = {}) {
   const log: string[] = [];
+  const asked: string[][] = [];
   const timers: Array<{ fn: () => void; ms: number; id: number }> = [];
   const source = { buffer: null as unknown, loop: false, loopStart: 0, loopEnd: 0, startedAt: -1, stopped: false, connect: () => {}, disconnect: () => {}, start(at: number) { source.startedAt = at; }, stop() { source.stopped = true; } };
   const gain = { gain: { value: 0, setTargetAtTime: () => {} }, connect: () => {}, disconnect: () => {} };
   const ctx = { currentTime: 5, baseLatency: 0, outputLatency: 0, destination: {}, decodeAudioData: over.decode ?? (async () => ({ duration: ENTRY.dur })), createBufferSource: () => source, createGain: () => gain };
-  let times: (() => number) | null = null;
+  const known: GameDance[] = (over.known ?? [SAMBA]).map((d) => ({ ...d }));
+  let src: BeatSource | null = null;
   const host: GamePartyHost = {
     ctx: () => (over.noCtx ? null : (ctx as unknown as AudioContext)),
-    startDance: (time) => { times = time; log.push("startDance"); return true; },
+    prepare: async () => { log.push("prepare"); },
+    dances: () => known,
+    ensureDances: async (ids) => {
+      asked.push([...ids]);
+      const ok = ids.filter((id) => known.some((d) => d.id === id) && !(over.failLoad ?? []).includes(id));
+      for (const d of known) if (ok.includes(d.id)) d.loaded = true;
+      return ok;
+    },
+    startDance: (s) => { src = s; log.push("startDance"); return true; },
     stopDance: () => { log.push("stopDance"); },
     duckMusic: (on) => { log.push(on ? "duck" : "unduck"); },
     setTimeout: (fn, ms) => { timers.push({ fn, ms, id: timers.length + 1 }); return timers.length; },
@@ -140,7 +156,9 @@ function fakes(over: Partial<GamePartyHost> & { decode?: () => Promise<unknown>;
     perfNow: () => 0,
     ...over,
   };
-  return { host, log, timers, source, ctx, time: () => times!() };
+  /** The song clock is the audio clock: set `currentTime` to song time `t` and ask what the dance is told. */
+  const at = (t: number) => { ctx.currentTime = source.startedAt + t; return src!(); };
+  return { host, log, asked, timers, source, ctx, at, time: () => src!()!.time, name: () => src!()!.name };
 }
 const song = (entry: unknown = ENTRY) => ({ entry, wav: new ArrayBuffer(16) });
 
@@ -150,7 +168,7 @@ describe("the game party", () => {
     const party = createGameParty(f.host);
     const r = await party.start(song());
     expect(r).toMatchObject({ ok: true, dancing: true, title: "Stompy Big Buddy" });
-    expect(f.log).toEqual(["duck", "startDance"]);
+    expect(f.log).toEqual(["prepare", "duck", "startDance"]);
     expect(f.source.loop).toBe(true);
     expect(f.source.loopEnd).toBeCloseTo(ENTRY.dur, 6);
     expect(f.source.startedAt).toBeGreaterThan(5);
@@ -183,7 +201,7 @@ describe("the game party", () => {
     const f = fakes();
     const r = await createGameParty(f.host).start(song({ ...ENTRY, bpm: 160, dur: (60 * 76) / 160 }));
     expect(r).toMatchObject({ ok: true, dancing: false });
-    expect(f.log).toEqual(["duck"]);
+    expect(f.log).toEqual(["prepare", "duck"]);
   });
   it("is music only when the character cannot dance (reduced motion, no rig)", async () => {
     const f = fakes({ startDance: () => false });
@@ -222,10 +240,10 @@ describe("the game party", () => {
     await party.start(song());
     party.stop();
     expect(f.source.stopped).toBe(true);
-    expect(f.log).toEqual(["duck", "startDance", "stopDance", "unduck"]);
+    expect(f.log).toEqual(["prepare", "duck", "startDance", "stopDance", "unduck"]);
     expect(party.state()).toMatchObject({ on: false, ended: "stopped", dancing: false });
     party.stop();
-    expect(f.log).toHaveLength(4);
+    expect(f.log).toHaveLength(5);
   });
   it("ends by itself after its time", async () => {
     const f = fakes();
@@ -256,5 +274,85 @@ describe("the game party", () => {
     await party.start(song());
     party.stop();
     expect(await party.start(song())).toMatchObject({ ok: true });
+  });
+});
+
+// ---- dance variety: the mix of every dance that fits the song's tempo -------------------------------------------------------------------------------------
+describe("the dance mix", () => {
+  const ALL = [SAMBA, HIPHOP, SILLY, SWING];
+  it("asks for every dance that fits the tempo, the one nearest its natural speed first, and starts on that one", async () => {
+    const f = fakes({ known: ALL });
+    await createGameParty(f.host).start(song()); // 106.29 bpm: Samba (109) is nearest, then Hip Hop (101) and Silly (125); Swing (138) is 30% fast and does not fit
+    expect(f.asked).toEqual([["dance", "dance_hiphop", "dance_silly"]]);
+    f.at(0.02);
+    expect(f.name()).toBe("dance");
+    expect(f.ctx.currentTime).toBeGreaterThan(5);
+  });
+  it("takes turns every 16 beats, on the bar line: Samba, Hip Hop, Silly, then round again; never one dance twice in a row", async () => {
+    const f = fakes({ known: ALL });
+    await createGameParty(f.host).start(song());
+    const iv = 60 / SONG_BPM;
+    const nameAt = (beat: number) => f.at(ENTRY.offset + (beat + 0.01) * iv)!.name;
+    const seq = [0, 8, 15.9, 16, 24, 31.9, 32, 40, 47.9, 48, 64].map(nameAt);
+    expect(seq).toEqual(["dance", "dance", "dance", "dance_hiphop", "dance_hiphop", "dance_hiphop", "dance_silly", "dance_silly", "dance_silly", "dance", "dance_hiphop"]);
+  });
+  it("shifts each dance by where ITS weight lands, and locks it to the song's beats at its own authored tempo", async () => {
+    const f = fakes({ known: ALL });
+    await createGameParty(f.host).start(song());
+    const iv = 60 / SONG_BPM;
+    // 16 beats in: Hip Hop, 8 beats to its loop, authored at 101.41 bpm
+    const e = 0.001;                                           // just past the bar line (a float is not exactly on it)
+    const x = f.at(ENTRY.offset + (16 + e) * iv)!;
+    expect(x.name).toBe("dance_hiphop");
+    expect(x.time).toBeCloseTo(0.279 + e * (60 / HIPHOP.bpm), 3); // beat 0 of the dance: its hit offset
+    const y = f.at(ENTRY.offset + (19 + e) * iv)!;            // three beats later
+    expect(y.time).toBeCloseTo((0.279 + (3 + e) * (60 / HIPHOP.bpm)) % (8 * (60 / HIPHOP.bpm)), 3);
+    const z = f.at(ENTRY.offset + (32 + e) * iv)!;            // Silly
+    expect(z.name).toBe("dance_silly");
+    expect(z.time).toBeCloseTo(0.423 + e * (60 / SILLY.bpm), 3);
+  });
+  it("a dance that fails to load is left out of the mix, and the party goes on with the rest", async () => {
+    const f = fakes({ known: ALL, failLoad: ["dance_hiphop"] });
+    await createGameParty(f.host).start(song());
+    const iv = 60 / SONG_BPM;
+    const names = [0, 16, 32, 48].map((b) => f.at(ENTRY.offset + (b + 0.01) * iv)!.name);
+    expect(names).toEqual(["dance", "dance_silly", "dance", "dance_silly"]);
+  });
+  it("with none of the others loadable the Samba dances alone, and nothing is mixed", async () => {
+    const f = fakes({ known: ALL, failLoad: ["dance_hiphop", "dance_silly"] });
+    const r = await createGameParty(f.host).start(song());
+    expect(r).toMatchObject({ ok: true, dancing: true });
+    const iv = 60 / SONG_BPM;
+    expect([0, 16, 32].map((b) => f.at(ENTRY.offset + (b + 0.01) * iv)!.name)).toEqual(["dance", "dance", "dance"]);
+  });
+  it("a faster song picks the dances that fit IT: at 130 bpm Hip Hop is out (28% fast), and the nearest natural speed leads: Silly, then Swing, then the Samba", async () => {
+    const f = fakes({ known: ALL });
+    await createGameParty(f.host).start(song({ ...ENTRY, bpm: 130, dur: (60 * 76) / 130 }));
+    expect(f.asked[0]).toEqual(["dance_silly", "dance_swing", "dance"]); // 125, 138, 109 against 130
+    expect(f.at(0.02)!.name).toBe("dance_silly");
+  });
+  it("a tempo only one dance fits is that one dance, with no mix", async () => {
+    const f = fakes({ known: ALL });
+    await createGameParty(f.host).start(song({ ...ENTRY, bpm: 160, dur: (60 * 76) / 160 }));
+    expect(f.asked[0]).toEqual(["dance_swing"]); // 160 / 137.8 = 1.16: only Swing is within a quarter
+    const iv = 60 / 160;
+    expect([0, 16, 32].map((b) => f.at(ENTRY.offset + (b + 0.01) * iv)!.name)).toEqual(["dance_swing", "dance_swing", "dance_swing"]);
+  });
+  it("the index failing to load, or loading nothing, leaves the Samba: a party never depends on the extras", async () => {
+    const f = fakes({ known: [SAMBA], prepare: async () => { throw new Error("offline"); } });
+    expect(await createGameParty(f.host).start(song())).toMatchObject({ ok: true, dancing: true });
+    expect(f.at(0.02)!.name).toBe("dance");
+  });
+  it("a party stopped while its dances load starts nothing", async () => {
+    let release: () => void = () => {};
+    const gate = new Promise<void>((r) => { release = r; });
+    const f = fakes({ known: ALL, prepare: async () => { await gate; } });
+    const party = createGameParty(f.host);
+    const started = party.start(song());
+    party.stop("stopped");
+    release();
+    expect(await started).toMatchObject({ ok: false });
+    expect(f.log).not.toContain("startDance");
+    expect(f.source.startedAt).toBe(-1);
   });
 });
