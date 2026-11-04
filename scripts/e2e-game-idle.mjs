@@ -4,7 +4,7 @@
 //   the title: Kip dances on the turntable (a dance, then another), with his elbows and knees bending, and stops when Play is pressed.
 //   idle: after a spell of standing still Kip may wave, clap or (after a longer one) dance, facing the camera; never a dance in the first two ticks; walking or a tap ends it at once and he turns back;
 //         the party's dance is never stopped by it; reduced motion switches it off.
-// The idle tick is forced (the world waits 6.5 s of standing still for each; the test sets its timer to just under that) so the run is short.
+// The idle tick is forced (the world waits 30 to 60 s of standing still for the first and 45 to 120 s for each after it; the test sets its timer far past that) so the run is short.
 // Run: E2E_GPU=metal node scripts/e2e-game-idle.mjs    Overrides: E2E_CHROME, E2E_PORT, E2E_DEBUG_PORT, E2E_PROFILE, E2E_SHOTS
 import { spawn } from "node:child_process";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
@@ -55,7 +55,7 @@ async function load(cdp, url, { reduce = false } = {}) {
 /** Wait for the gesture clips to be in the character's bank (they load in the background after the character does). */
 const clipsIn = (cdp, ids) => waitFor(() => cdp.ev(`(${JSON.stringify(ids)}).every((id) => ${MIX}.hasClip(id))`), { label: `clips ${ids}`, timeoutMs: 60000 });
 /** Make the idle timer fire on the next frame, with the stated number of ticks already behind the character in this spell of standing still. */
-const forceTick = (cdp, n) => cdp.ev(`(() => { const P = ${W}.P; P.idleN = ${n}; P.idleT = 6.6; })()`);
+const forceTick = (cdp, n) => cdp.ev(`(() => { const P = ${W}.P; P.idleN = ${n}; P.idleT = 1e6; })()`);
 
 async function main() {
   rmSync(PROFILE, { recursive: true, force: true });

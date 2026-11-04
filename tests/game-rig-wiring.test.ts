@@ -63,7 +63,10 @@ describe("the world's idle behaviours", () => {
   it("the idle tick asks for a wave, a clap or a dance first, counts the ticks of one spell of standing still, and the count starts again when he moves", () => {
     const w = world();
     expect(w).toContain('function idleAct(){P.idleN=(P.idleN||0)+1;if(S.type==="character"&&IDLEB.tryStart(P.idleN-1))return;');
-    expect(w).toContain("else{P.idleT=0;P.idleN=0}");
+    expect(w).toContain("else{P.idleT=0;P.idleN=0;P.idleGap=0}");
+    // the wait is drawn per tick (30 to 60 s for the first, 45 to 120 s after), not the old fixed 6.5 s
+    expect(w).toContain("if(P.idleT>(P.idleGap||(P.idleGap=idleGapSeconds(Math.random,P.idleN||0)))){P.idleT=0;P.idleGap=0;");
+    expect(w).not.toContain("P.idleT>6.5");
   });
   it("it runs every frame, a tap cancels it, Play stops the title's show, and the clips and the show start once the driver exists", () => {
     const w = world();
