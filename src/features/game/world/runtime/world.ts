@@ -1355,8 +1355,8 @@ P.title=true;P.showcase=true;P.pos.set(FX,0,0);cam.x=FX;facA=-.55;hostEl.classLi
 function startPlay(build: boolean){if(!P.title)return;P.title=false;IDLEB.stopShow();S.started=true;save();hostEl.classList.remove("titled");ctx();musInit();MUS.on=true;musGain(sound?.7:0,1.2);
  if(build){P.pos.set(2,0,0);P.showcase=false;openSheet();return}
  camera.clearViewOffset();P.showcase=false;P.pos.set(2,0,0);P.face=P.tface=0;cam.x=3;flash();setTimeout(function(){showIntro(S.world)},250)}
-/* Back to the main menu: the title state the boot line above sets, entered again (Home in the drawer). The Build sheet is closed first; it refuses (false) while something is mid-way (the editor, a driven mission, a sleep or an act), and the caller says so. The title music is silence, as at boot; Play turns it back on. */
-function goTitle(): boolean{if(disposed)return false;if(P.title)return true;if(ED.on||P.mDrive||P.busy||SLEEPH.busy||ACTS.busy)return false;if(P.showcase)closeSheet();P.title=true;P.showcase=true;P.target=null;P.hop=0;P.pos.set(FX,0,0);cam.x=FX;facA=-.55;hostEl.classList.add("titled");if(MUS.on){musGain(0,.5);MUS.on=false}if(!reduce)IDLEB.startShow();notify();return true}
+/* Back to the main menu: the title state the boot line above sets, entered again (Home in the drawer). The Build sheet is closed first; it refuses (false) while something is mid-way (the editor, a driven mission, a sleep or an act) and says why in a toast, so the button is never silent. The title music is silence, as at boot; Play turns it back on. */
+function goTitle(): boolean{if(disposed)return false;if(P.title)return true;if(ED.on||P.mDrive||P.busy||SLEEPH.busy||ACTS.busy){toast("Finish this first, then Home");return false}if(P.showcase)closeSheet();P.title=true;P.showcase=true;P.target=null;P.hop=0;P.pos.set(FX,0,0);cam.x=FX;facA=-.55;hostEl.classList.add("titled");if(MUS.on){musGain(0,.5);MUS.on=false}if(!reduce)IDLEB.startShow();notify();return true}
 setTimeout(function(){var ld=$("#load");if(ld)ld.classList.add("gone")},150);
 rafId=requestAnimationFrame(frame);
 
