@@ -38,55 +38,59 @@ export function SongSettingsPanel({ proof }: { proof: string }) {
     if (r.ok) { setSettings(r.settings); setWeek(r.week); } else setNote(NOTE[r.reason] ?? NOTE.offline!);
   };
 
+  // A closed group like the others in the sheet: the summary says where it stands (maker on or off, songs a week), one tap opens the two controls.
   return (
-    <div className="tv-parent-ledger" data-testid="song-settings">
-      <div className="tv-parent-row-head" style={{ marginBottom: 0 }}>
-        <div>
-          <span className="kicker-label" style={{ margin: 0, display: "block" }}>
-            Music
-          </span>
-          <b>Songs</b>
-        </div>
-        <button
-          type="button"
-          className="tv-ctl"
-          aria-pressed={settings?.makerOn ?? true}
-          disabled={!settings || busy}
-          onClick={() => settings && void change({ makerOn: !settings.makerOn })}
-        >
-          {settings ? (settings.makerOn ? "Song maker: On" : "Song maker: Off") : "…"}
-        </button>
-      </div>
-      <p className="tv-moves" style={{ margin: 0, fontSize: 12 }}>
-        Children can make a song from a build, a finished level or an idea. Each song is written and sung by AI (the words are checked first) and takes about a minute. Off
-        stops new songs; the songs already made stay.
-      </p>
-      <div className="tv-parent-row-head" style={{ marginBottom: 0 }}>
-        <div>
-          <b>New songs a week</b>
-        </div>
-        <div className="tv-chips" role="group" aria-label="New songs a week">
-          <button type="button" className="tv-sc" aria-label="Fewer songs a week" disabled={!settings || busy || settings.limit <= 0} onClick={() => settings && void change({ limit: settings.limit - 1 })}>
-            −
-          </button>
-          <span data-testid="song-limit" aria-live="polite" style={{ minWidth: 24, textAlign: "center", fontWeight: 800 }}>
-            {settings ? settings.limit : "…"}
-          </span>
-          <button type="button" className="tv-sc" aria-label="More songs a week" disabled={!settings || busy || settings.limit >= 5} onClick={() => settings && void change({ limit: settings.limit + 1 })}>
-            +
+    <details className="tv-disclosure" data-testid="song-settings">
+      <summary>
+        <span>Songs</span>
+        <span className="tv-disclosure-meta">{settings ? `${settings.makerOn ? "Maker on" : "Maker off"} · ${settings.limit} a week` : "…"}</span>
+      </summary>
+      <div className="tv-parent-adv">
+        <div className="tv-parent-row-head" style={{ marginBottom: 0 }}>
+          <div>
+            <b>Song maker</b>
+          </div>
+          <button
+            type="button"
+            className="tv-ctl"
+            aria-pressed={settings?.makerOn ?? true}
+            disabled={!settings || busy}
+            onClick={() => settings && void change({ makerOn: !settings.makerOn })}
+          >
+            {settings ? (settings.makerOn ? "Song maker: On" : "Song maker: Off") : "…"}
           </button>
         </div>
-      </div>
-      {week ? (
         <p className="tv-moves" style={{ margin: 0, fontSize: 12 }}>
-          This week: {week.used} made, {week.left} left. New songs come back on Monday ({week.resetsOn}).
+          Children can make a song from a build, a finished level or an idea. Each song is written and sung by AI (the words are checked first) and takes about a minute. Off
+          stops new songs; the songs already made stay.
         </p>
-      ) : null}
-      {note ? (
-        <p className="tv-moves" role="status" style={{ margin: 0, fontSize: 12 }}>
-          {note}
-        </p>
-      ) : null}
-    </div>
+        <div className="tv-parent-row-head" style={{ marginBottom: 0 }}>
+          <div>
+            <b>New songs a week</b>
+          </div>
+          <div className="tv-chips" role="group" aria-label="New songs a week">
+            <button type="button" className="tv-sc" aria-label="Fewer songs a week" disabled={!settings || busy || settings.limit <= 0} onClick={() => settings && void change({ limit: settings.limit - 1 })}>
+              −
+            </button>
+            <span data-testid="song-limit" aria-live="polite" style={{ minWidth: 24, textAlign: "center", fontWeight: 800 }}>
+              {settings ? settings.limit : "…"}
+            </span>
+            <button type="button" className="tv-sc" aria-label="More songs a week" disabled={!settings || busy || settings.limit >= 5} onClick={() => settings && void change({ limit: settings.limit + 1 })}>
+              +
+            </button>
+          </div>
+        </div>
+        {week ? (
+          <p className="tv-moves" style={{ margin: 0, fontSize: 12 }}>
+            This week: {week.used} made, {week.left} left. New songs come back on Monday ({week.resetsOn}).
+          </p>
+        ) : null}
+        {note ? (
+          <p className="tv-moves" role="status" style={{ margin: 0, fontSize: 12 }}>
+            {note}
+          </p>
+        ) : null}
+      </div>
+    </details>
   );
 }
