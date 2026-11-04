@@ -51,7 +51,6 @@
     "parts:optimize": "tsx scripts/bridge-partspec.ts --verify-preprint",
     "bridge": "tsx scripts/bridge-partspec.ts",
     "preflight": "tsx scripts/preflight-deploy.ts",
-    "spec:review": "tsx scripts/export-spec.ts",
     "db:migrate:local": "wrangler d1 migrations apply toyventor --local",
     "db:migrate:remote": "wrangler d1 migrations apply toyventor --remote"
   },

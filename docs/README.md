@@ -30,7 +30,6 @@ without a decision; **reference** = a third-party surface or a lookup table.
 | File | Status | What it is |
 | --- | --- | --- |
 | [spec.md](product/spec.md) | canonical | Canonical behavior, demo proof, safety, and delivery scope. |
-| [spec-for-review.md](product/spec-for-review.md) | generated | Review copy of `spec.md`. Do not hand-edit; run `npm run spec:review`. |
 | [vision.md](product/vision.md) | live | Internal long-term direction and the tight external story for the submission. |
 | [plan.md](product/plan.md) | live | The landed-status tracker: what shipped on which day, and what is still open. |
 | [journal.md](product/journal.md) | live | The dated log, Day 1 to Day 10, and the "Later" entries for post-hackathon work. |
@@ -74,6 +73,7 @@ without a decision; **reference** = a third-party surface or a lookup table.
 | --- | --- | --- |
 | [parent-time-gate.md](specs/parent-time-gate.md) | **implemented** | Parent caps and earned STEM time. |
 | [parent-controls-off-spec.md](specs/parent-controls-off-spec.md) | **built** | The showcase switch that turns the grown-up checks and play-time limits off. Photo-upload gates stay on. |
+| [accounts-and-new-user-spec.md](specs/accounts-and-new-user-spec.md) | **draft 1; phase 0 onboarding built 2026-11-04, accounts unbuilt** | The parent-led on-device onboarding and the post-freeze plan for real grown-up accounts. |
 | [coppa-readiness-spec.md](specs/coppa-readiness-spec.md) | **draft; nothing built** | What children's data the build holds, the posture decision, phases P0 to P5, and the wording the entry may use. All deferred until after the hackathon; the condition is that the deployed build stays an adult-operated demo. |
 | [workshop-print-gate-spec.md](specs/workshop-print-gate-spec.md) | **draft 2; phases 1-3 built, switched off** | The grown-up question in front of the Workshop's exports and the selfie sticker. Phase 4 and the per-gate switchboard are deferred. |
 
@@ -146,7 +146,7 @@ authority.
 | [0001](decisions/0001-react-spa.md) | React SPA as the app shape. |
 | [0002](decisions/0002-blockml-machineblocks.md) | BlockML and MachineBlocks are not used. |
 | [0003](decisions/0003-blockml-spike.md) | The BlockML spike. |
-| [0004](decisions/0004-license-email-draft.md) | The licence email draft. |
+| [0004](archive/0004-license-email-draft.md) | The licence email draft (retired, never sent; archived). |
 | [0005](decisions/0005-partspec-lattice-merge.md) | The PartSpec and TU lattice merge. The geometry authority. |
 | [0006](decisions/0006-sam-mask-decoding.md) | SAM mask decoding. |
 | [0007](decisions/0007-sam-provider-retention.md) | SAM provider retention. |
@@ -163,7 +163,6 @@ the backdrops is [parallax-backdrops-spec.md](specs/parallax-backdrops-spec.md).
 
 | File | Regenerate with |
 | --- | --- |
-| [product/spec-for-review.md](product/spec-for-review.md) | `npm run spec:review` |
 | [parts/partspec/specs/01_interface_standard.md](parts/partspec/specs/01_interface_standard.md), [05_catalog.md](parts/partspec/specs/05_catalog.md), [06_agent_instructions.md](parts/partspec/specs/06_agent_instructions.md) | the PartSpec generator, then `make_specs.py` |
 | [parts/partspec/specs/10_design_log.md](parts/partspec/specs/10_design_log.md) | `parts/partspec/DESIGN_LOG.md` is the source; `make_specs.py` copies it |
 | [review/spoken-names.md](review/spoken-names.md) | `npx tsx scripts/spoken-names-sheet.ts` |

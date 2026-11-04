@@ -14,7 +14,6 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { buildReviewCopy } from "./export-spec";
 
 const root = process.cwd();
 let failures = 0;
@@ -177,26 +176,7 @@ try {
     );
 }
 
-// 8. The review copy of the spec has not drifted: rebuild it with the date
-// already embedded in the existing file and require byte equality. That
-// catches body drift without churning the date on every run.
-{
-  const reviewPath = join(root, "docs/product/spec-for-review.md");
-  const specPath = join(root, "docs/product/spec.md");
-  if (!existsSync(reviewPath)) fail("docs/product/spec-for-review.md missing");
-  else {
-    const existing = readFileSync(reviewPath, "utf8");
-    const date = existing.match(/generated (\d{4}-\d{2}-\d{2})/)?.[1];
-    if (!date) fail("docs/product/spec-for-review.md has no generation date to rebuild with");
-    else {
-      const rebuilt = buildReviewCopy(readFileSync(specPath, "utf8"), date);
-      if (rebuilt === existing) ok("review copy of the spec is current");
-      else fail("docs/product/spec-for-review.md drifted from docs/product/spec.md: run `npm run spec:review`");
-    }
-  }
-}
-
-// 9. The service worker cannot serve a stale build: assert the Phase 2
+// 8. The service worker cannot serve a stale build: assert the Phase 2
 // strategy is still intact as simple concept checks, not brittle regexes.
 // (If these ever disagree with the file, fix the check, not the file.)
 {
