@@ -139,3 +139,10 @@ describe("the build starts in a workshop with a blueprint", () => {
     expect(world).toContain("var show=function(){ONBW=false;if(ONBK){disposeWorkshop(ONBK);ONBK=null}if(W.root)W.root.visible=true;");
   });
 });
+
+describe("the avatar", () => {
+  it("gets no picture while Kip is held hidden for the build (it would be an empty scene, kept under a colour signature), so the avatar's poll waits and takes it when he is built", () => {
+    expect(world).toContain("portraitSig:function(){return P.rigReady&&!ONBW?String(P.rigSig):null},");
+  });
+});
+
