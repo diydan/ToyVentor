@@ -8,7 +8,7 @@ This file owns the **what and in what order**. The how-to-test detail stays in [
 
 ---
 
-## Progress (updated 2026-11-04, after the deploy of `0e35110`; a reconcile of two checkouts)
+## Progress (updated 2026-11-04 15:45 CET, after the deploy of `bb62983`)
 
 DONE = built, committed, deployed and checked by request or a clean export (not by a person). PARTIAL = built, but a step that needs a person, a phone or a secret is open. NOT STARTED. Evidence: `git log`, `curl` of the live site, `smoke-live`, the robot gates in [qa.md](qa.md) part 10 (run on `0e35110` by the other checkout), and the real-photo check below.
 
@@ -23,17 +23,17 @@ DONE = built, committed, deployed and checked by request or a clean export (not 
 | Features | 11 Custom model | **PARTIAL, running in another session** | Five evaluated runs; `tuned-p5` passes the decision rule under goal safety and fails goal speed; nothing tuned is in use (row 11). |
 | Features | "Unlock a related part" | **Removed** (Dan) | |
 | Features | Finish it (F6), added as a stretch goal | **NOT STARTED (by design)** | Spec and open question 9 only. |
-| Gate | Commit what ships | **DONE** | The camera, cleaning/cooking, title menu, song player, PWA and outdoor lanes are committed. Still uncommitted in the shared tree: the map card strip, the tuning results, the karaoke file. |
-| Gate | Service-worker cache bumped | **DONE** | Live serves `toyventor-v8` (`0e35110`). The next `/kip/` change needs v9. |
-| Gate | Clean export builds and loads | **DONE on `0e35110`** | Six benches ready, 975 requests, none failed ([qa.md](qa.md) 1.4). |
-| Gate | Deploy | **DONE** (`0e35110`, 2026-11-04) | **Not live:** the landscape game (`58d6b75`), the four lighting presets (`8a80f1f`), and anything after `94f7343`. Their deploy is Dan's decision. |
+| Gate | Commit what ships | **DONE** | The camera, cleaning/cooking, title menu, song player, PWA and outdoor lanes are committed. Still uncommitted in the shared tree: the tuning results. |
+| Gate | Service-worker cache bumped | **DONE, live** | `toyventor-v9` (`bb62983`; the Kip song card changed `/kip/`). The next `/kip/` change needs v10. |
+| Gate | Clean export builds and loads | **DONE on `bb62983`** | Six benches ready, 975 requests, none failed, from a clean export of the branch ([qa.md](qa.md) 1.4). |
+| Gate | Deploy | **DONE** (`bb62983`, Worker version `24ab6ad8`, 15:39 CET) | Live now has the landscape game (hard rotate gate), the drawer, the lighting presets, the one-screen Map with card pictures, the Kip song card and the hiding spots. Front-end only: the Worker, `shared/`, migrations and `wrangler.jsonc` were identical to `0e35110`. Also checked: the live game chunk `index-B8Ry92ic.js` is byte-identical to a local build of the branch and carries the rotate-gate text; `/api/health` all true. Before the deploy: `npm run build` exit 0, 11 targeted test files (235 tests), the pick-up chain at 844 x 390 (17 of 17). Also checked on the branch: the six-bench clean-export load (every bench ready, 0 requests not 200) and the full unit suite (5307 passed, 1 skipped, 0 failed; `tsc` clean). |
 | Gate | Worker settings | **PARTIAL** | Transcribe, voice signing and songs report on. **Not checked:** the maker answering a wish, `MODEL_BACKEND` is not `self`, the Cloudflare rate-limit rules. |
-| Gate | `smoke-live` against the deployed commit | **DONE** | 19 of 19 on `0e35110`, cache `toyventor-v8` ([qa.md](qa.md) part 10). It checks `public/kip` and the cache name, not the Worker code. |
-| Gate | Robot gates 1.1 | **DONE** | validate ok, typecheck clean, 5233 tests passed on `0e35110` ([qa.md](qa.md) part 10). |
+| Gate | `smoke-live` against the deployed commit | **DONE** | 19 of 19 on `bb62983` at 15:41 CET (146 `public/kip` files byte-identical, cache `toyventor-v9`, game and the Kip, Truck and Yard benches ready, nothing threw). It checks `public/kip` and the cache name, not the Worker code. |
+| Gate | Robot gates 1.1 | **DONE** | validate ok (5 set files), typecheck clean, 5307 tests passed on `bb62983`; on `0e35110` 5233 ([qa.md](qa.md) part 10). |
 | Gate | A returning browser takes the new cache (4.5), phone checks, the other part 10 rows | **NOT STARTED** | Need a person and a phone; run them before recording. |
 | Demo | Demo script | **PARTIAL** | Draft written ([demo-script.md](demo-script.md)); not rehearsed or timed. |
 | Demo | Rehearsal with a stopwatch, video length, where to record (decision 3), pre-made spoon and guitar songs, voice prewarm | **NOT STARTED** | All Dan's or need a person. |
-| Submission | Video, write-up check, live-deploy verification filed, Official Rules and Meta terms read | **NOT STARTED** | The hash to file is `0e35110` (live and smoke-tested), unless Dan deploys the landscape and lighting work first. |
+| Submission | Video, write-up check, live-deploy verification filed, Official Rules and Meta terms read | **NOT STARTED** | The hash to file is `bb62983` (live, smoke-tested). Anything committed after it is not live. |
 | After | Section 6 (self-hosted model for children, children's privacy, native word-list read) | **NOT STARTED (by design)** | Not today. |
 
 ---

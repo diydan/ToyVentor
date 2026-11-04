@@ -2,7 +2,7 @@
 // The whole chain, in the REAL game: Workshop button, the Kip bench inside the overlay, Tools > Pick it up, the camera view, the cut-out, and then the GAME's Kip holding it after the
 // overlay closes. scripts/e2e-kip-pickup.mjs checks the bench alone and scripts/e2e-game-pickup.mjs checks the game side with an event dispatched from the page; this is the one that proves
 // the two meet (the bench's event reaching the game's listener across the Workshop shell).
-// Run: npx tsx scripts/e2e-game-pickup-chain.mjs     Needs the machine's GPU. Overrides: E2E_PORT (default 5463), E2E_NO_SERVER=1 (use a `vite dev` already on that port), E2E_SHOTS.
+// Run: npx tsx scripts/e2e-game-pickup-chain.mjs     Needs the machine's GPU. The screen is 844 x 390 (sideways, as the game is played); E2E_W / E2E_H change it. Overrides: E2E_PORT (default 5463), E2E_NO_SERVER=1 (use a `vite dev` already on that port), E2E_SHOTS.
 //
 // What is real: the game (its own `vite dev`), the Workshop shell and the Kip bench inside it, the camera view, the print panel and its bundled flow, getUserMedia, the household library.
 // What is stood in: /api/scan only (the page's fetch answers it: the outline of the real steel spoon, and a name), and the camera, which shows the drawn spoon at the size the outline was
@@ -91,7 +91,7 @@ try {
     await sleep(500);
   }
   chrome = await launchChrome();
-  t = await chrome.open("about:blank", { width: 390, height: 844, mobile: true });
+  t = await chrome.open("about:blank", { width: Number(process.env.E2E_W ?? 844), height: Number(process.env.E2E_H ?? 390), mobile: true }); // the game is landscape (a hard rotate gate covers it upright)
   await t.send("Page.addScriptToEvaluateOnNewDocument", { source: INIT });
   await t.send("Network.enable");
   await t.send("Page.navigate", { url: `${BASE}/?title=0` });
