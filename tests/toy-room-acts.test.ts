@@ -127,7 +127,7 @@ function game(opts: { eater?: "character" | "robot" | "vehicle"; allowed?: boole
 
 describe("which props do something", () => {
   it("the teddy is hugged, the ball kicked, the cushions jumped on, a book read, the guitar played, the bubbles blown and the dog petted; nothing else starts an act", () => {
-    expect(ACT_FOR_PROP).toEqual({ teddy: "hug", ball: "kick", cushions: "jump", books: "read", guitar: "play", bubbles: "blow", dog: "pet", xylophone: "mallet" });
+    expect(ACT_FOR_PROP).toEqual({ teddy: "hug", ball: "kick", cushions: "jump", books: "read", guitar: "play", bubbles: "blow", dog: "pet", xylophone: "mallet", cup: "spill", toybox: "dump" });
     const g = game();
     for (const type of ["lamp", "blocks", "chair", "plant", "bed", "tree", "unknown"]) expect(g.acts.tap(inst(type, 20)), type).toBe(false);
     expect(g.log).toEqual([]);

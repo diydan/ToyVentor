@@ -20,6 +20,7 @@ import { sfx, sound, tone } from "./audio";
 export const PROP_TYPES = [
   "lantern", "windmill", "cottage", "tree", "bushes", "cloud", "island", "tire", "drum", "shed", "cranebg", "palm", "umbrella",
   "sandcastle", "pine", "snowman", "igloo", "lamp", "blocks", "books", "chair", "plant", "teddy", "ball", "cushions", "bed", "guitar", "bubbles", "dog", "xylophone",
+  "cup", "toybox",
 ] as const;
 export type PropType = (typeof PROP_TYPES)[number];
 
@@ -72,6 +73,9 @@ export const PROP_SPECS: Record<PropType, PropSpec> = {
   bubbles: { noun: "bubbles", color: "blue", idle: "none", poke: "wiggle", use: "pop" },
   dog: { noun: "dog", color: "brown", idle: "none", poke: "hop", use: "bark" },
   xylophone: { noun: "xylophone", color: "colorful", idle: "none", poke: "wiggle", use: "chime" },
+  // The Toy Room's mess mini-interactions (runtime/mess.ts): a tap names the prop and sends Kip over to knock the cup over / tip the toy box out. The prop itself does not move on a poke (the mess does).
+  cup: { noun: "cup", color: "orange", idle: "none", poke: "none", use: "none" },
+  toybox: { noun: "toybox", color: "blue", idle: "none", poke: "none", use: "none" },
 };
 
 /** A prop type with no spec (something added later, or generated): it still reacts and is still named, in English. */

@@ -105,6 +105,17 @@ export const MALLET_EVERY_S = 0.3;
 export const MALLET_COUNT = 14;
 /** The strokes of the `pet` clip (seconds): the hand lands on the dog's back on each. */
 export const PET_STROKES_S: readonly number[] = [0.7, 1.1, 1.5, 1.9];
+/** The mess clips (runtime/mess.ts). `oops`: Kip reaches for the cup or the toy box and, at OOPS_TIP_S, it tips over; the gasp, hands up, comes just after. 2.2 s. */
+export const OOPS_TIP_S = 0.4;
+export const OOPS_S = 2.2;
+/** `mop`: the first stroke starts at MOP_CLIP_START_S and there are MOP_CLIP_STROKES of them, one every MOP_CLIP_EVERY_S (messModel.ts MOP_START_S / MOP_STROKES / MOP_EVERY_S say the same; a test checks). */
+export const MOP_CLIP_START_S = 0.55;
+export const MOP_CLIP_STROKES = 6;
+export const MOP_CLIP_EVERY_S = 0.6;
+/** `tidy`: a sweeping wave towards the box, one for each toy that goes home (TIDY_CLIP_START_S, then one every TIDY_CLIP_EVERY_S, up to TIDY_CLIP_MAX). 7 s at most. */
+export const TIDY_CLIP_START_S = 0.5;
+export const TIDY_CLIP_EVERY_S = 0.55;
+export const TIDY_CLIP_MAX = 6;
 
 /** Read a book held in both hands: the head down on the page, and at each of READ_PAGES_S the right hand flicks a page over and the head lifts for a moment. 6.6 s. */
 const readKeys: Key[] = [
@@ -134,6 +145,37 @@ for (let i = 0; i < MALLET_COUNT; i++) {
   malletKeys.push({ t, armL: left ? [0.25, -0.8, 0.55] : [0.25, -0.35, 0.9], armR: left ? [-0.25, -0.35, 0.9] : [-0.25, -0.8, 0.55], body: [0.1, 0, left ? 0.05 : -0.05], head: [left ? 0.2 : 0.12, 0, 0] });
 }
 malletKeys.push({ t: MALLET_START_S + MALLET_COUNT * MALLET_EVERY_S + 0.3, armL: REST.armL, armR: REST.armR, body: [0, 0, 0], head: [0, 0, 0] });
+
+/** Oops: the right hand reaches for the cup, it tips, and both hands fly up to the face with a gasp (the head back, a little hop), a shake of the shoulders, then they come slowly down. 2.2 s. */
+const oopsKeys: Key[] = [
+  { t: 0 },
+  { t: OOPS_TIP_S - 0.1, armR: [-0.2, 0.0, 0.98], body: [0.1, 0, 0], head: [0.12, 0, 0] },
+  { t: OOPS_TIP_S + 0.1, armR: [-0.25, 0.15, 0.95] },
+  { t: 0.75, armL: [0.3, 0.6, 0.72], armR: [-0.3, 0.6, 0.72], head: [-0.22, 0, 0], body: [-0.1, 0, 0], hips: [0, 0.07, 0] },
+  { t: 0.95, hips: [0, 0.02, 0] },
+  { t: 1.15, body: [-0.1, 0, 0.07] }, { t: 1.35, body: [-0.1, 0, -0.07] }, { t: 1.55, body: [-0.1, 0, 0.05] },
+  { t: 1.75, armL: [0.35, 0.3, 0.6], armR: [-0.35, 0.3, 0.6], head: [-0.1, 0, 0] },
+  { t: OOPS_S, armL: REST.armL, armR: REST.armR, head: [0, 0, 0], body: [0, 0, 0], hips: [0, 0, 0] },
+];
+
+/** Mop: both hands on the handle out in front and low, the body leaning in, and a sweep from side to side with each stroke (the body rolls and rocks, the arms swing), then back to rest. */
+const mopKeys: Key[] = [
+  { t: 0 },
+  { t: MOP_CLIP_START_S - 0.2, armL: [0.2, -0.55, 0.8], armR: [-0.2, -0.55, 0.8], body: [0.16, 0, 0], head: [0.15, 0, 0] },
+];
+for (let i = 0; i < MOP_CLIP_STROKES; i++) {
+  const t = MOP_CLIP_START_S + (i + 1) * MOP_CLIP_EVERY_S, right = i % 2 === 0;
+  mopKeys.push({ t, armL: right ? [0.35, -0.5, 0.78] : [0.05, -0.5, 0.86], armR: right ? [-0.05, -0.5, 0.86] : [-0.35, -0.5, 0.78], body: [0.16, 0, right ? -0.1 : 0.1], head: [0.15, 0, right ? 0.05 : -0.05], hips: [right ? -0.03 : 0.03, 0, 0] });
+}
+mopKeys.push({ t: MOP_CLIP_START_S + MOP_CLIP_STROKES * MOP_CLIP_EVERY_S + 0.3, armL: REST.armL, armR: REST.armR, body: [0, 0, 0], head: [0, 0, 0], hips: [0, 0, 0] });
+
+/** Tidy: a sweeping wave of both arms towards the box, once for each toy going home (the left arm and the right in turn), the head nodding along. */
+const tidyKeys: Key[] = [{ t: 0 }, { t: TIDY_CLIP_START_S - 0.15, armL: [0.3, -0.5, 0.8], armR: [-0.3, -0.5, 0.8], body: [0.06, 0, 0] }];
+for (let i = 0; i < TIDY_CLIP_MAX; i++) {
+  const t = TIDY_CLIP_START_S + i * TIDY_CLIP_EVERY_S, left = i % 2 === 0;
+  tidyKeys.push({ t, armL: left ? [0.2, 0.2, 0.95] : [0.3, -0.55, 0.78], armR: left ? [-0.3, -0.55, 0.78] : [-0.2, 0.2, 0.95], body: [0.06, 0, left ? 0.05 : -0.05], head: [left ? 0.1 : 0.05, 0, 0] });
+}
+tidyKeys.push({ t: TIDY_CLIP_START_S + TIDY_CLIP_MAX * TIDY_CLIP_EVERY_S + 0.2, armL: REST.armL, armR: REST.armR, body: [0, 0, 0], head: [0, 0, 0] });
 
 /** Authored in real angles. Each is the whole motion, ending back at rest so it can blend out cleanly. */
 export const PROCEDURAL_CLIPS: ClipBank = {
@@ -218,6 +260,10 @@ export const PROCEDURAL_CLIPS: ClipBank = {
   ]),
   // Play a xylophone, one mallet stroke at a time. 5.0 s.
   mallet: bake("mallet", MALLET_START_S + MALLET_COUNT * MALLET_EVERY_S + 0.3, false, malletKeys),
+  // The Toy Room's mess (runtime/mess.ts): reach for it and gasp when it tips, mop it up, wave the toys back into the box.
+  oops: bake("oops", OOPS_S, false, oopsKeys),
+  mop: bake("mop", MOP_CLIP_START_S + MOP_CLIP_STROKES * MOP_CLIP_EVERY_S + 0.3, false, mopKeys),
+  tidy: bake("tidy", TIDY_CLIP_START_S + TIDY_CLIP_MAX * TIDY_CLIP_EVERY_S + 0.2, false, tidyKeys),
   // Asleep on its back, held until released: a true 90 degrees (after the driver's body gain), arms and legs along the body, head on the pillow,
   // a slow breath (the chest rises) and a slight head roll. The hips lift the body clear of the surface it lies on. 4 s, loops.
   sleep: bake("sleep", 4, true, [
@@ -228,4 +274,4 @@ export const PROCEDURAL_CLIPS: ClipBank = {
 };
 
 /** The names, for the driver's action type and for tests. */
-export const PROCEDURAL_ACTIONS = Object.keys(PROCEDURAL_CLIPS) as Array<"eat" | "sour" | "belly_pat" | "yawn" | "sleep" | "hug" | "kick" | "cheer" | "read" | "strum" | "blow" | "pet" | "mallet">;
+export const PROCEDURAL_ACTIONS = Object.keys(PROCEDURAL_CLIPS) as Array<"eat" | "sour" | "belly_pat" | "yawn" | "sleep" | "hug" | "kick" | "cheer" | "read" | "strum" | "blow" | "pet" | "mallet" | "oops" | "mop" | "tidy">;
