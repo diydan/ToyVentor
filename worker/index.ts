@@ -32,6 +32,7 @@ import { handleOwnership, type OwnershipEnv } from "./ownership";
 import { handleParent, type ParentEnv } from "./parent";
 import { handleRoomScan } from "./roomScan";
 import { handleSelfieCartoon, handleSelfieFaceParts, selfieCloudEnabled, type SelfieEnv } from "./selfie";
+import { spendLimited, type SpendLimitEnv } from "./spendLimit";
 import { handleVoice, voiceConfigured, type VoiceEnv } from "./voice";
 
 export interface Env
@@ -40,6 +41,7 @@ export interface Env
     OwnershipEnv,
     ParentEnv,
     SelfieEnv,
+    SpendLimitEnv,
     ForgeOptimizerEnv,
     ThemeSongEnv,
     VoiceEnv {
@@ -230,6 +232,10 @@ async function handleSkinPost(request: Request, env: Env): Promise<Response> {
 export default {
   async fetch(request: Request, env: Env, ctx?: { waitUntil(p: Promise<unknown>): void }): Promise<Response> {
     const url = new URL(request.url);
+
+    // Cost backstop for every route that calls a model (worker/spendLimit.ts): a 429 when this address has used the route's budget, otherwise null.
+    const limited = await spendLimited(request, env, url.pathname);
+    if (limited) return limited;
 
     if (url.pathname === "/world/ToyVentor-World.html") {
       // Legacy share links: browsers preserve the #toy= fragment across 302.
