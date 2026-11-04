@@ -270,6 +270,8 @@ export interface WorldRuntimeHandle {
   };
   face?: (a: number) => void;
   start?: (build: boolean) => void;
+  /** Back to the main menu (the title state); false when something is mid-way and it cannot. */
+  goTitle?: () => boolean;
   composer?: () => boolean;
   P?: any;
   spots?: any[];
@@ -561,7 +563,6 @@ function lookTick(dt: number){lookAcc+=dt;if(lookAcc<1)return;lookAcc=0;var m=lo
 const VIEW_W=5.2,DANCE_PUSH=.8;
 /* The camera never comes closer than 10 units on a portrait phone; on a wide (landscape) screen it may come in to 7.6 so Kip and the toys keep the finger-sized targets they have upright (the xylophone's bars are 38 px apart there, not 30) while about 10.7 units of the lane still show (6.3 upright). */
 const LAND_DD=7.6;
-/* Kip walks a lane about 2.4 units deep (z -1.2 to 1.2, clampPathZ). Nothing may stand in it: a prop placed nearer than this is set back behind the lane when the world is built (Dan, 2026-11-04: "items off the main walking rail"); the hiding spots stay on it, they are what Kip walks up to. */
 /* Kip walks a lane about 2.4 units deep (z -1.2 to 1.2, clampPathZ). Nothing may stand in it: a prop placed nearer than this is set back behind the lane when the world is built (Dan, 2026-11-04: "items off the main walking rail"); the hiding spots stay on it, they are what Kip walks up to. */
 const CLEAR_Z=-2.8;
 function clearLane(z: number){return z>CLEAR_Z?CLEAR_Z:z}
@@ -1353,10 +1354,12 @@ P.title=true;P.showcase=true;P.pos.set(FX,0,0);cam.x=FX;facA=-.55;hostEl.classLi
 function startPlay(build: boolean){if(!P.title)return;P.title=false;IDLEB.stopShow();S.started=true;save();hostEl.classList.remove("titled");ctx();musInit();MUS.on=true;musGain(sound?.7:0,1.2);
  if(build){P.pos.set(2,0,0);P.showcase=false;openSheet();return}
  camera.clearViewOffset();P.showcase=false;P.pos.set(2,0,0);P.face=P.tface=0;cam.x=3;flash();setTimeout(function(){showIntro(S.world)},250)}
+/* Back to the main menu: the title state the boot line above sets, entered again (Home in the drawer). The Build sheet is closed first; it refuses (false) while something is mid-way (the editor, a driven mission, a sleep or an act), and the caller says so. The title music is silence, as at boot; Play turns it back on. */
+function goTitle(): boolean{if(disposed)return false;if(P.title)return true;if(ED.on||P.mDrive||P.busy||SLEEPH.busy||ACTS.busy)return false;if(P.showcase)closeSheet();P.title=true;P.showcase=true;P.target=null;P.hop=0;P.pos.set(FX,0,0);cam.x=FX;facA=-.55;hostEl.classList.add("titled");if(MUS.on){musGain(0,.5);MUS.on=false}if(!reduce)IDLEB.startShow();notify();return true}
 setTimeout(function(){var ld=$("#load");if(ld)ld.classList.add("gone")},150);
 rafId=requestAnimationFrame(frame);
 
-const handle: WorldRuntimeHandle = { MT:MT,Wm:function(){return W.missions},cr:{enter:crEnter,make:crMake,exit:crExit,R:function(){return ED.R},CR:CR},ed:{ED:ED,enter:edEnter,play:edPlay,back:edBack,exit:edExit,checks:function(){return edChecks(ED.R)},scr:function(x,y){var v=new T.Vector3(x,y,0).project(camera),r=canvas.getBoundingClientRect();return [(v.x+1)/2*r.width+r.left,(1-v.y)/2*r.height+r.top]}},face:function(a){facA=a},start:startPlay,composer:function(){return !!composer},P:P,spots:spots,bolts:bolts,ability:ability,S:S,unbolt:unbolt,go:function(w){switchWorld(w)},buildSummary:buildSummary,setLoanKeys:setLoanKeys,portraitSig:function(){return P.rigReady?String(P.rigSig):null},capturePortrait:toyPortrait,playSeed:playSeed,worldName:function(id: string){var wd=WORLDS[id];return wd?wd.n:id},open:openSheet,close:closeSheet,
+const handle: WorldRuntimeHandle = { MT:MT,Wm:function(){return W.missions},cr:{enter:crEnter,make:crMake,exit:crExit,R:function(){return ED.R},CR:CR},ed:{ED:ED,enter:edEnter,play:edPlay,back:edBack,exit:edExit,checks:function(){return edChecks(ED.R)},scr:function(x,y){var v=new T.Vector3(x,y,0).project(camera),r=canvas.getBoundingClientRect();return [(v.x+1)/2*r.width+r.left,(1-v.y)/2*r.height+r.top]}},face:function(a){facA=a},start:startPlay,goTitle:goTitle,composer:function(){return !!composer},P:P,spots:spots,bolts:bolts,ability:ability,S:S,unbolt:unbolt,go:function(w){switchWorld(w)},buildSummary:buildSummary,setLoanKeys:setLoanKeys,portraitSig:function(){return P.rigReady?String(P.rigSig):null},capturePortrait:toyPortrait,playSeed:playSeed,worldName:function(id: string){var wd=WORLDS[id];return wd?wd.n:id},open:openSheet,close:closeSheet,
 setToy:function(contract){ if(!contract){ S.type="character"; S.sel=stockSel(); S.col=stockCol(); S.toyId=null; buildPlayer(null); moves(); notify(); return; } var c=toyApply(JSON.parse(JSON.stringify(contract))); if(c){ buildPlayer(null); moves(); notify(); } },
 seedDemo:function(){ mInit(); S.scrap=Math.max(S.scrap||0,12); S.bp.beam=1; S.bp.brace=1; S.bp.sgear=1; S.bp.bgear=1; S.bp.gearpair=1; S.bin.beam=Math.max(S.bin.beam||0,2); S.bin.brace=Math.max(S.bin.brace||0,2); S.bin.sgear=Math.max(S.bin.sgear||0,2); S.bin.bgear=Math.max(S.bin.bgear||0,2); delete S.mdone["garden.bridge"]; delete S.ms["garden.bridge"]; mpOpen=false; S.world="garden"; buildWorld("garden"); P.pos.set(6.5,0,0); P.target=null; P.elev=0; cam.x=7.5; save(); toast("Demo save ready in Garden."); notify(); },
 getWorld:function(){return S.world},

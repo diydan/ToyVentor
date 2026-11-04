@@ -885,6 +885,8 @@ export interface EngineHandle {
   editorIoAction: (action: EditorIoAction) => void;
   /** Leave the title screen and start playing. */
   start: () => void;
+  /** Back to the main menu from the world. False when something is mid-way (the editor, a driven mission, a sleep) and the world stays where it is. */
+  goTitle: () => boolean;
   /** True while the world is still on its title (the main menu is up): boot waits there when `createEngine` was given `title: true`. */
   isTitle: () => boolean;
   /** Quiet the engine's background music when the calm Sleep Curtain fades in. */
@@ -940,6 +942,7 @@ interface LegacyHooks {
   capturePortrait?: (size: number) => ToyPortrait | null;
   worldName?: (id: string) => string;
   start?: (build: boolean) => void;
+  goTitle?: () => boolean;
   open?: () => void;
   close?: () => void;
   seedDemo?: () => void;
@@ -1554,6 +1557,7 @@ export function createEngine(
     start: () => {
       hooks()?.start?.(false);
     },
+    goTitle: () => !disposed && hooks()?.goTitle?.() === true,
     isTitle: () => !disposed && Boolean(hooks()?.P?.title),
     muteSound: () => {
       hooks()?.mute?.();

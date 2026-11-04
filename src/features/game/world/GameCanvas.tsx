@@ -130,6 +130,7 @@ import { SleepCurtain } from "./SleepCurtain";
 import { WorkshopLauncher } from "./WorkshopLauncher";
 import { ROTATE_GATE_QUERY, rotateGateShowing } from "./rotateGate";
 import "../../../game-hud.css";
+import { NavStrip } from "./NavStrip";
 import { ToyCustomizer } from "./ToyCustomizer";
 import { ToyMiniIcon } from "./ToyMiniIcon";
 import { TitleMenu } from "./TitleMenu";
@@ -796,6 +797,17 @@ export function GameCanvas({
     [closeEngineSheets, closeReactOverlays],
   );
 
+  // Home: back to the main menu from wherever the child is (the drawer's Home). Whatever is open closes first, a Learn run ends (as "Free world" does) and a song
+  // party stops. The world says no (and stays put) only while something is mid-way: the editor's play-test, a driven mission.
+  const goHome = useCallback(() => {
+    songRef.current?.party.stop("stopped");
+    setSongsOpen(false);
+    if (state.learn) engine()?.stopLearnRun();
+    closeEngineSheets();
+    closeReactOverlays();
+    if (engine()?.goTitle()) setTitleOpen(true);
+  }, [closeEngineSheets, closeReactOverlays, state.learn]);
+
   const cancelGearHold = useCallback(() => {
     gearHoldingRef.current = false;
     if (gearHoldRafRef.current !== null) {
@@ -1198,6 +1210,17 @@ export function GameCanvas({
           </span>
         </button>
 
+        <NavStrip
+          disabled={sleepActive}
+          onHome={goHome}
+          onMap={() => {
+            closeEngineSheets();
+            closeReactOverlays();
+            openMap();
+          }}
+          onSettings={() => openGrownUps(false)}
+        />
+
         <div className="tv-dock-right">
           <button
             type="button"
@@ -1319,21 +1342,6 @@ export function GameCanvas({
                     </span>
                   </button>
                 )}
-
-                <button
-                  type="button"
-                  role="menuitem"
-                  className="tv-menu-item"
-                  disabled={sleepActive}
-                  onClick={() => {
-                    closeEngineSheets();
-                    closeReactOverlays();
-                    openMap();
-                  }}
-                >
-                  <span>Map</span>
-                  <span className="tv-menu-meta">Play</span>
-                </button>
 
                 <button
                   type="button"
