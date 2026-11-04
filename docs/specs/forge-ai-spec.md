@@ -65,6 +65,39 @@ F3 is not a screen. It is the engine F1, F2, F4, and F5 run on.
   + no-connector-remains + volume/bbox bounds), export game mesh + print STL.
   Modes: display vs wearable (keeps snap footprint). On failure show the brick
   build with a short reason. Source build is kept, so Finish is undoable.
+- **F6 brief (Dan, 2026-11-04; stretch, nothing built):** turn a **prototyped brick
+  toy into a smooth, polished one**, with **fewer constraints and more about how it
+  works and how it looks**, for **both the game and 3D printing**. The brick build
+  stays the prototype and the source of truth; Finish makes the "real toy" version
+  from it. Read it as three rules:
+  1. **Relaxed, because the result is not a kit:** the things that exist only so
+     bricks can come apart and go together again (studs and sockets where nothing
+     attaches, the 12.5 mm snap grid, one body per slot, seams between neighbouring
+     parts, kit-tray packing). **Decided (Dan, 2026-11-04): optimise for printing,
+     and build the toy as a single piece, or as few pieces as it needs.** So Finish
+     tries one body first; if that does not fit the plate
+     ([kip-print-workflow-spec.md](kip-print-workflow-spec.md): 220 x 220 standard)
+     or cannot be printed cleanly in one orientation, it splits at the fewest cuts
+     that do, and each piece is gated on its own. A split piece joins its
+     neighbour with a verified pin or key, placed where the join does not show.
+     Which gates relax beyond piece count (supports allowed or not, a larger plate)
+     is still **open question 9**; until it is answered every printability gate
+     still applies to every piece.
+  2. **Kept, because it is what the toy does:** anything that moves keeps its
+     clearance and its own body (wheels on axles, steering, a lifting arm, a
+     hinge); Finish may smooth around it and may never fuse it. The keep-list
+     is derived from the build's joints and run through the same interference
+     checks as the brick build, not guessed by the model.
+  3. **Gained, because that is the point:** fillets and blended joins, one
+     consistent finish, and a small closed list of looks the model may pick from
+     (for example glossy toy plastic, matte, pastel, metallic; the exact list is a
+     product call). The model chooses a look and a keep-list suggestion as bounded JSON; the geometry is
+     made and checked by code, exactly as in F1 to F5.
+  Two outputs from one result, so the game and the printer show the same toy:
+  a **game mesh** (merged, smooth normals, the chosen look) and a **print STL**
+  (print orientation chosen for the smooth surface, with a short sanding or
+  painting note, since a smooth finish is partly a post-print step). On any failed
+  gate the child keeps the brick build and sees one calm sentence.
 
 ## Assists (Worker-only)
 
@@ -731,6 +764,10 @@ Parked behind Nov 4; same contract (model proposes JSON, code verifies):
 7. Printed-strip photo to per-printer fit compensation.
 8. Ephemeral masks for tidy/scavenger quests + robot priors.
 9. Own models (G1–G6, larger base G7, sculptor) per above.
+10. **Finish it (F6): a prototyped brick toy becomes a smooth, polished one**, with fewer
+    constraints and more about function and looks, for the game and for printing,
+    optimised for printing and built as one piece or as few as needed (the brief is
+    under the F6 pipeline above; phase 2d; spike on 3 builds first).
 
 ## Not doing
 
@@ -752,6 +789,12 @@ Parked behind Nov 4; same contract (model proposes JSON, code verifies):
 7. Sculptor stability check: solver approach, Snap subset expressive enough,
    do kids want it?
 8. Sampler diversity ceiling; caption quality/cost and training-use terms.
+9. Finish it (F6). **Answered in part (Dan, 2026-11-04):** print first, one piece or as
+   few as needed. Still open: whether supports are allowed on a finished piece
+   (the kit is built support-free; the Orca profile we measured with adds none up to 50 degrees from vertical and some from 60), whether the plate may be
+   larger than 220 x 220, how the fewest cuts are found, and how the joints that must
+   keep moving are told apart from the ones that can fuse. Measure on the 3-build
+   spike before any gate is loosened: a loosened gate needs its own regression test.
 9. Taste-loop judge (silhouette overlap vs vision-score, calibrated + held out).
 10. Concept-image path needs generation access, safety/brand filters, richer
     ops. Photo privacy for release (parent gate, people-in-frame).
