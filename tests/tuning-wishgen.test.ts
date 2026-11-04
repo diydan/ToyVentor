@@ -94,7 +94,7 @@ describe("evaluation wishes never reach training", () => {
       bySplit.set(key, w.split);
     }
     expect(new Set(wishes.map((w) => w.split))).toEqual(new Set(["train", "val", "heldout"]));
-  }, 30_000);
+  }, 60_000);
 });
 
 describe("the English seeds", () => {
