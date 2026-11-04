@@ -292,7 +292,7 @@ export default {
     if (url.pathname === "/api/describe") return handleDescribe(request, env);
 
     // A name and a sung theme song for what a child just made: text model writes it, the gate checks it, Mureka sings it (worker/themeSong.ts). Off unless THEME_SONG=on.
-    if (url.pathname === "/api/theme-song" || url.pathname.startsWith("/api/theme-song/")) return handleThemeSong(request, env);
+    if (url.pathname === "/api/theme-song" || url.pathname.startsWith("/api/theme-song/")) return handleThemeSong(request, env, ctx);
 
     // A few seconds of a child's voice to words for Describe & build's microphone: only our own speech model answers (worker/transcribe.ts); Meta's never does.
     if (url.pathname === "/api/transcribe") return handleTranscribe(request, env);

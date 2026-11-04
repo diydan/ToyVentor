@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { quotaLine } from "../src/features/game/world/SongStudioSheet";
+import { quotaLine, sheetMode } from "../src/features/game/world/SongStudioSheet";
 
 // src/lib/songSettings.ts reads the device id from localStorage; give it one.
 beforeEach(() => {
@@ -93,6 +93,24 @@ describe("what the Songs sheet says about the week", () => {
   it("says nothing about a quota it does not know", () => {
     expect(quotaLine(null).blocked).toBe(false);
     expect(quotaLine(undefined).text).toMatch(/made by AI/);
+  });
+});
+
+describe("what the Songs sheet says while it waits, and when songs are really off", () => {
+  const Q = { limit: 5, used: 0, left: 5, resetsOn: "2026-11-09", makerOn: true };
+  it("says 'checking' until the route has answered: it never claims songs are resting before anyone has said so", () => {
+    expect(sheetMode(null, null)).toMatchObject({ mode: "checking", text: expect.stringMatching(/Checking/) });
+    expect(sheetMode(null, Q).text).not.toMatch(/resting/);
+  });
+  it("says 'resting' only when the route says songs are off or cannot be reached", () => {
+    expect(sheetMode(false, null)).toMatchObject({ mode: "resting", text: expect.stringMatching(/resting/) });
+    expect(sheetMode(false, Q).mode).toBe("resting");
+  });
+  it("is open when songs are on with a song left (or no quota to speak of), and blocked, with its own words, when the week is used or a grown-up switched songs off", () => {
+    expect(sheetMode(true, Q).mode).toBe("open");
+    expect(sheetMode(true, null).mode).toBe("open");
+    expect(sheetMode(true, { ...Q, used: 5, left: 0 })).toMatchObject({ mode: "blocked", text: expect.stringMatching(/until Monday/) });
+    expect(sheetMode(true, { ...Q, makerOn: false })).toMatchObject({ mode: "blocked", text: expect.stringMatching(/switched off by a grown-up/) });
   });
 });
 

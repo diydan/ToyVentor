@@ -361,3 +361,41 @@ describe("songs left this week", () => {
     for (const x of s.seen.filter((y) => y.url.includes("?id="))) expect(x.headers["x-device-id"]).toBe("dev-1234567890");
   });
 });
+
+describe("waking our own model", () => {
+  function warmSetup(over: { enabled?: boolean; warmThrows?: boolean } = {}) {
+    const seen: Array<{ url: string; method: string; headers: Record<string, string> }> = [];
+    let t = 1000;
+    const fetchImpl = (async (input: string, init?: RequestInit) => {
+      const url = String(input);
+      seen.push({ url, method: init?.method ?? "GET", headers: (init?.headers ?? {}) as Record<string, string> });
+      if (url.endsWith("/warm")) { if (over.warmThrows) throw new Error("offline"); return new Response(JSON.stringify({ ok: true }), { status: 202 }); }
+      return new Response(JSON.stringify({ ok: true, enabled: over.enabled !== false }), { status: over.enabled === false ? 503 : 200 });
+    }) as unknown as typeof fetch;
+    const flow = createThemeSongFlow({ fetchImpl, pollMs: 60_000, setTimeout: () => 1, clearTimeout: () => {}, now: () => t, headers: () => ({ "x-device-id": "dev-1234567890" }),
+      decode: async () => ({ channels: [], sampleRate: 1 }), startParty: async () => ({ ok: true }), onState: () => {} });
+    return { flow, seen, advance: (ms: number) => { t += ms; }, warms: () => seen.filter((x) => x.url.endsWith("/warm")) };
+  }
+  it("posts to /warm with the device, once the route is known to be on", async () => {
+    const s = warmSetup();
+    await s.flow.warm();
+    expect(s.warms()).toHaveLength(1);
+    expect(s.warms()[0]).toMatchObject({ url: "/api/theme-song/warm", method: "POST", headers: { "x-device-id": "dev-1234567890" } });
+  });
+  it("asks at most once every three minutes, and again after that", async () => {
+    const s = warmSetup();
+    await s.flow.warm(); await s.flow.warm(); await s.flow.warm();
+    expect(s.warms()).toHaveLength(1);
+    s.advance(2 * 60_000); await s.flow.warm();
+    expect(s.warms()).toHaveLength(1);
+    s.advance(61_000); await s.flow.warm();
+    expect(s.warms()).toHaveLength(2);
+  });
+  it("does nothing at all when the route is off, and never throws when the warm-up itself fails", async () => {
+    const off = warmSetup({ enabled: false });
+    await off.flow.warm();
+    expect(off.warms()).toHaveLength(0);
+    const bad = warmSetup({ warmThrows: true });
+    await expect(bad.flow.warm()).resolves.toBeUndefined();
+  });
+});

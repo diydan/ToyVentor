@@ -51,7 +51,7 @@ const SILENT_B64 = (() => { const n = 2400, bytes = n * 2, b = Buffer.alloc(44 +
 const TASK = "170010186285777";
 const NAMED = { contract: 1, name: "Brave Bridge Builder", mood: "bouncy", tempo: "medium", instruments: ["drums"], ai: true, task: TASK,
   verse: ["Planks go down one by one", "Over the river we run", "Hammer tap and bolt turn", "Look at the bridge we built"], chorus: ["Brave Bridge Builder, hooray", "We built it all today", "Brave Bridge Builder, hooray", "Cross it and play"] };
-const route = { enabled: true, ready: false, probes: 0, posts: [], statusPolls: 0, audioFetches: 0, quota: null, devices: new Set(), settingsReads: 0, settingsPosts: 0, settings: { makerOn: true, limit: 5 } };
+const route = { enabled: true, ready: false, probes: 0, posts: [], statusPolls: 0, audioFetches: 0, quota: null, warms: 0, probeDelayMs: 0, devices: new Set(), settingsReads: 0, settingsPosts: 0, settings: { makerOn: true, limit: 5 } };
 
 class Cdp {
   constructor(url) { this.url = url; this.id = 1; this.pending = new Map(); this.exceptions = []; }
@@ -74,6 +74,7 @@ class Cdp {
           const json = (status, body) => this.send("Fetch.fulfillRequest", { requestId, responseCode: status, responseHeaders: [{ name: "content-type", value: "application/json" }], body: Buffer.from(JSON.stringify(body)).toString("base64") }).catch(() => {});
           if (u.pathname.startsWith("/api/parent/")) json(503, { error: "blocked in this test: the game uses its local fallback" });
           else if (u.pathname === "/api/voice") this.send("Fetch.fulfillRequest", { requestId, responseCode: 200, responseHeaders: [{ name: "content-type", value: "audio/wav" }], body: SILENT_B64 }).catch(() => {});
+          else if (u.pathname === "/api/theme-song/warm") { route.warms++; json(202, { ok: true, status: "accepted" }); }
           else if (u.pathname === "/api/theme-song/settings") {
             if (request.method === "GET") { route.settingsReads++; json(200, { settings: route.settings, quota: { limit: route.settings.limit, used: 0, left: route.settings.limit, resetsOn: "2026-11-09", makerOn: route.settings.makerOn } }); }
             else { route.settingsPosts++; json(401, { status: "gate-required" }); }
@@ -86,7 +87,7 @@ class Cdp {
               else if (sent.kind === "prompt") json(200, { ...NAMED, name: "Sleepy Cat Lullaby", chorus: ["Sleepy Cat Lullaby, hush", "Purr and curl up small", "Sleepy Cat Lullaby, hush", "Dream of one and all"], task: String(BigInt(TASK) + BigInt(route.posts.length)) });
               else json(200, NAMED);
             }
-            else if (!u.searchParams.has("id")) { route.probes++; route.enabled ? json(200, { ok: true, enabled: true, ...(route.quota ? { quota: route.quota } : {}) }) : json(503, { error: "off" }); }
+            else if (!u.searchParams.has("id")) { route.probes++; const answer = () => (route.enabled ? json(200, { ok: true, enabled: true, ...(route.quota ? { quota: route.quota } : {}) }) : json(503, { error: "off" })); if (route.probeDelayMs) setTimeout(answer, route.probeDelayMs); else answer(); }
             else if (u.searchParams.get("audio") === "1") { route.audioFetches++; this.send("Fetch.fulfillRequest", { requestId, responseCode: 200, responseHeaders: [{ name: "content-type", value: "audio/wav" }], body: SONG_B64 }).catch(() => {}); }
             else { route.statusPolls++; json(200, route.ready ? { status: "ready", url: "https://cdn.mureka.ai/a.mp3", durationMs: 50000 } : { status: "making" }); }
           } else this.send("Fetch.continueRequest", { requestId }).catch(() => {});
@@ -158,6 +159,7 @@ async function main() {
     check("a solved mission offers 'Make a song about it'", offered === true, `${await phase(cdp)} | toast=${await cdp.ev(`document.querySelector(".tv-xp-toast")?.textContent ?? null`)} | exceptions=${cdp.exceptions.slice(0, 2).join(" ; ")} | lastWin=${await world(cdp, `JSON.stringify(w.handle.S.lastWin)`)} | probes=${route.probes}`);
     const btn = await centreOf(cdp, ".tv-song-make");
     check("the button is a real touch target (at least 56 px high) and on the screen", btn && btn.h >= 56 && btn.x > 0 && btn.x < 390 && btn.y > 0 && btn.y < 844, JSON.stringify(btn));
+    check("the offer woke our own song model while the child decides (a free no-op unless the model is ours): one warm-up, with the device id", await waitFor(async () => (route.warms === 1 ? true : null), { timeoutMs: 5000, label: "the warm-up" }).catch(() => false), `warms=${route.warms}`);
     check("it asked the route once, with a free probe (nothing posted yet)", route.probes === 1 && route.posts.length === 0, `${route.probes} ${route.posts.length}`);
     await shot(cdp, "1-offer");
 
@@ -330,8 +332,12 @@ async function main() {
     await sleep(1200);
     await shot(cdp, "7c-after-map-tap");
     if (!(await cdp.ev(`!!document.querySelector(".tv-map-songs")`))) throw new Error(`Map did not show Songs: buttons=${await cdp.ev(`[...document.querySelectorAll("button")].map((b) => (b.getAttribute("aria-label") || b.textContent || "").trim().slice(0, 24)).join(" | ")`)}`);
+    route.probeDelayMs = 1800; // the route is slow to answer: what does the sheet say while it waits?
     await tap(cdp, ".tv-map-songs");
-    await sleep(900);
+    await sleep(500);
+    check("while the route has not answered the sheet says it is checking, never that songs are resting", (await cdp.ev(`document.querySelector(".tv-songs-lead")?.getAttribute("data-mode")`)) === "checking" && !/resting/.test(await cdp.ev(`document.querySelector("[data-testid=songs-sheet]")?.innerText ?? ""`)), await cdp.ev(`document.querySelector("[data-testid=songs-sheet]")?.innerText ?? ""`));
+    await sleep(2200);
+    route.probeDelayMs = 0;
     check("the Songs sheet says there are no new songs until Monday and offers no Make button", /until Monday/.test(await cdp.ev(`document.querySelector(".tv-songs-lead")?.textContent ?? ""`)) && (await cdp.ev(`!document.querySelector(".tv-songs-make")`)));
     check("the songs already made are still listed to dance to", (await cdp.ev(`document.querySelectorAll(".tv-songs-item").length`)) >= 1);
     route.quota = { limit: 5, used: 2, left: 3, resetsOn: "2026-11-09", makerOn: true };
@@ -351,12 +357,13 @@ async function main() {
 
     // ---- 8. the route is OFF: no offer, nothing posted ----
     console.log("\n[8] the route is off");
-    route.enabled = false; route.posts.length = 0; route.probes = 0;
+    route.enabled = false; route.posts.length = 0; route.probes = 0; const warmsBeforeOff = route.warms;
     await loadApp(cdp);
     await win(cdp);
     await sleep(3000);
     check("a win offers nothing when theme songs are off", (await phase(cdp)) === "none", await phase(cdp));
     check("it asked once (the free probe) and posted nothing", route.probes === 1 && route.posts.length === 0, `${route.probes} ${route.posts.length}`);
+    check("and with theme songs off nothing was woken either", route.warms === warmsBeforeOff, `${warmsBeforeOff} -> ${route.warms}`);
     const mapOff = await centreOf(cdp, ".tv-map-fab");
     await cdp.tapAt(mapOff.x, mapOff.y);
     await sleep(900);

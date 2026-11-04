@@ -314,6 +314,7 @@ export function mountDescribe({
     isOpen = true; panel.hidden = false; toggle.setAttribute('aria-expanded', 'true');
     if (view) { view.group.visible = true; if (view.plan) view.frame(camera, controls, { pile: !reduced() }); }
     setCharacterVisible(false);
+    theme?.warm().catch(() => { /* waking the song model is best effort */ });   // a build is likely coming, and so is its song: wake our own model now
     ready().catch((e) => say(`Could not load the part list: ${e.message}`));
     voice?.probe().catch(() => { /* no microphone button: the box still works */ });   // one free GET; the button shows only if the route says it can listen
     text.focus();

@@ -68,6 +68,8 @@ const POLL_MS = 4000;
 const MAX_WAIT_MS = 6 * 60 * 1000;
 const MAX_POLL_FAILS = 6;
 const MAX_DESCRIPTION = 300;
+/** The route pings the model at most every four minutes anyway; asking more often than every three is pointless. */
+const WARM_CLIENT_MS = 3 * 60_000;
 
 /** What a child did, in words the song writer can use, by the kind of mission they finished (src/lib/progression.ts MissionType). */
 const LEVEL_WORDS: Readonly<Record<string, string>> = {
@@ -131,6 +133,8 @@ export interface ThemeSongFlow {
   isOn(): Promise<boolean>;
   /** The same free GET, with what this device has left this week. `fresh` asks again (the quota changes with every song). Never throws. */
   probe(fresh?: boolean): Promise<{ enabled: boolean; quota: SongQuota | null }>;
+  /** Wake our own song-writing model before a song is asked for (it scales to zero when idle). Fire and forget; at most once every three minutes; only when the route is on; never throws. */
+  warm(): Promise<void>;
   /** Is a song worth OFFERING now: the route is on, a grown-up has not switched songs off, and a song is left this week. Asks fresh. */
   canMake(): Promise<boolean>;
   /** Name the adventure and start its song. Resolves true once the NAME is in (not the song). Never throws. */
@@ -184,6 +188,16 @@ export function createThemeSongFlow(deps: FlowDeps): ThemeSongFlow {
     return { enabled: available, quota: lastQuota };
   }
   async function isOn(): Promise<boolean> { return (await probe()).enabled; }
+  let lastWarm = -Infinity;
+  async function warm(): Promise<void> {
+    try {
+      if (!(await probe()).enabled) return;
+      const t = now();
+      if (t - lastWarm < WARM_CLIENT_MS) return;
+      lastWarm = t;
+      await deps.fetchImpl(`${url}/warm`, { method: "POST", headers: hdr() });
+    } catch { /* a warm-up that fails changes nothing: the song still works, it may just wait */ }
+  }
   async function canMake(): Promise<boolean> {
     const p = await probe(true);
     return p.enabled && p.quota?.makerOn !== false && (p.quota?.left ?? 1) > 0;
@@ -258,6 +272,7 @@ export function createThemeSongFlow(deps: FlowDeps): ThemeSongFlow {
   return {
     isOn,
     probe,
+    warm,
     canMake,
     async start(description, kind = "level") {
       const mine = ++run;

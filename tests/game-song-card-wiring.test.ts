@@ -97,3 +97,23 @@ describe("the Map's Songs sheet", () => {
     expect(sheet).not.toMatch(/mureka|api\.meta|fetch\(/i);
   });
 });
+
+describe("our own song-writing model is woken before a song is asked for", () => {
+  const read2 = (rel: string) => readFileSync(join(root, rel), "utf8");
+  it("the game wakes it when the Songs sheet opens and when the end-of-level offer goes up", () => {
+    const canvas = read2("src/features/game/world/GameCanvas.tsx");
+    expect(canvas).toMatch(/probe\(true\)\.then\(\(p\) => \{ setSongsAvailable\(p\.enabled\); setSongsQuota\(p\.quota\); \}\);\s*void getSong\(\)\.flow\.warm\(\);/);
+    expect(canvas).toMatch(/if \(!on\) return;\s*void s\.flow\.warm\(\);/);
+  });
+  it("the Describe tab wakes it when the panel opens, and a failure there never stops the panel", () => {
+    const tab = read2("parts/kip/viewer/kip-describe-tab.js");
+    expect(tab).toMatch(/setCharacterVisible\(false\);\s*theme\?\.warm\(\)\.catch\(\(\) => \{/);
+    expect(read2("parts/kip/viewer/kip-theme-song.js")).toContain("await fetchImpl(`${url}/warm`, { method: 'POST', headers: themeHeaders(storage) });");
+    for (const f of ["kip-theme-song.js", "kip-describe-tab.js"]) expect(readFileSync(join(root, "public/kip", f)), f).toEqual(readFileSync(join(root, "parts/kip/viewer", f)));
+  });
+  it("the Worker's warm-up is a POST to /api/theme-song/warm that answers 202 and is handed the runtime's context", () => {
+    const worker = read2("worker/themeSong.ts");
+    expect(worker).toContain('if (sub === "/warm")');
+    expect(read2("worker/index.ts")).toContain("return handleThemeSong(request, env, ctx);");
+  });
+});

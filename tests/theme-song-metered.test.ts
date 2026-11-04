@@ -26,7 +26,7 @@ function world(over: Record<string, unknown> = {}): World {
   const db = sqliteD1({ migrations: ["migrations/0002_parent_time.sql", "migrations/0003_songs.sql"] });
   const r2 = new FakeR2();
   const w: World = { db, r2, text: { calls: 0, replies: [GOOD] }, orders: [], audio: [], tasks: new Map(), mureka: { orderStatus: 200 },
-    env: { DB: db, SONGS: r2, PARENT_GATE_SECRET: "gate-secret-for-tests", MODEL_API_KEY: "text-key", META_MODEL_API_URL: "https://meta.example/v1", MUREKA_API_KEY: "mureka-secret", MUREKA_API_URL: "https://mureka.example", MUREKA_AUDIO_HOST: "cdn.mureka.example", THEME_SONG: "on", SONG_MONTHLY_BUDGET: "100", ...over } };
+    env: { DB: db, UPLOADS: r2, PARENT_GATE_SECRET: "gate-secret-for-tests", MODEL_API_KEY: "text-key", META_MODEL_API_URL: "https://meta.example/v1", MUREKA_API_KEY: "mureka-secret", MUREKA_API_URL: "https://mureka.example", MUREKA_AUDIO_HOST: "cdn.mureka.example", THEME_SONG: "on", SONG_MONTHLY_BUDGET: "100", ...over } };
   let n = 0;
   vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
     if (url.startsWith("https://meta.example")) {
@@ -222,7 +222,7 @@ describe("our own copy of the song (R2)", () => {
     expect(w.r2.gets.filter((k) => k.includes(OTHER))).toHaveLength(0);
   });
   it("works without a bucket: the provider's link is used, as before, and nothing is claimed as stored", async () => {
-    const w = world({ SONGS: undefined });
+    const w = world({ UPLOADS: undefined });
     const { task } = await json(await post(w));
     ready(w, task);
     expect((await json(await get(w, `?id=${task}`))).status).toBe("ready");
@@ -304,5 +304,76 @@ describe("what the route never does", () => {
   it("answers an unknown sub-path with 404 and keeps the rate limit on the settings route", async () => {
     const w = world();
     expect((await worker.fetch(req("/api/theme-song/other"), w.env as never)).status).toBe(404);
+  });
+});
+
+// ---- waking our own model ------------------------------------------------------------------------------------------------------------------------------
+describe("the warm-up: wake our own model before a song is asked for", () => {
+  const SELF = { MODEL_API_KEY: undefined, TEXT_BACKEND: "self", SELF_TEXT_URL: "https://glimmer.example/v1", SELF_TEXT_MODEL: "muse-glimmer-30B", SELF_TEXT_API: "chat", SELF_TEXT_KEY: "self-secret" };
+  const warm = (w: World, device: string | null = DEV, ctx?: { waitUntil(p: Promise<unknown>): void }) =>
+    worker.fetch(req("/api/theme-song/warm", { method: "POST" }, device), w.env as never, ctx as never);
+  const healthCalls = () => (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.filter((c) => String(c[0]).startsWith("https://glimmer.example"));
+  function selfWorld(over: Record<string, unknown> = {}) {
+    const w = world({ ...SELF, ...over });
+    const inner = globalThis.fetch as unknown as (u: string, i?: RequestInit) => Promise<Response>;
+    vi.stubGlobal("fetch", vi.fn(async (u: string, i?: RequestInit) => (String(u).startsWith("https://glimmer.example") ? new Response("ok", { status: 200 }) : inner(u, i))));
+    return w;
+  }
+
+  it("with the HOSTED model there is nothing to wake: it answers 202, pings nothing, and says nothing about the model", async () => {
+    const w = world();
+    const r = await warm(w);
+    expect(r.status).toBe(202);
+    expect(await json(r)).toEqual({ ok: true, status: "accepted" });
+    expect(w.text.calls).toBe(0);
+    expect(w.audio).toHaveLength(0);
+  });
+  it("with our own model it pings that model's /health once (no key, no model call), hands the ping to the runtime so it finishes after the answer, and returns the same plain 202", async () => {
+    const w = selfWorld();
+    const pending: Promise<unknown>[] = [];
+    const r = await warm(w, DEV, { waitUntil: (p) => { pending.push(p); } });
+    expect(r.status).toBe(202);
+    expect(await json(r)).toEqual({ ok: true, status: "accepted" });
+    await Promise.all(pending);
+    const calls = healthCalls();
+    expect(calls).toHaveLength(1);
+    expect(String(calls[0]![0])).toBe("https://glimmer.example/health");
+    expect(JSON.stringify(calls[0]![1] ?? {})).not.toContain("self-secret");
+    expect(pending).toHaveLength(1);
+  });
+  it("pings at most once every four minutes however many children open the sheet, and again after that", async () => {
+    const w = selfWorld();
+    for (let i = 0; i < 5; i++) expect((await warm(w, DEV)).status).toBe(202);
+    expect(healthCalls()).toHaveLength(1);
+    const now = Date.now();
+    vi.spyOn(Date, "now").mockReturnValue(now + 4 * 60_000 + 1000);
+    await warm(w, DEV);
+    expect(healthCalls()).toHaveLength(2);
+    vi.restoreAllMocks();
+  });
+  it("never leaks the model's address or key, even when the ping fails", async () => {
+    const w = world({ ...SELF });
+    const inner = globalThis.fetch as unknown as (u: string, i?: RequestInit) => Promise<Response>;
+    vi.stubGlobal("fetch", vi.fn(async (u: string, i?: RequestInit) => { if (String(u).startsWith("https://glimmer.example")) throw new Error("connect refused to glimmer.example"); return inner(u, i); }));
+    const r = await warm(w);
+    expect(r.status).toBe(202);
+    const body = JSON.stringify(await json(r));
+    expect(body).not.toMatch(/glimmer|self-secret|refused/);
+  });
+  it("needs a device id when metered, takes only POST, and is off when songs are off", async () => {
+    const w = selfWorld();
+    expect((await warm(w, null)).status).toBe(401);
+    expect((await worker.fetch(req("/api/theme-song/warm", {}, DEV), w.env as never)).status).toBe(405);
+    expect((await warm({ ...w, env: { ...w.env, THEME_SONG: "off" } } as World)).status).toBe(503);
+    expect(healthCalls()).toHaveLength(0);
+  });
+  it("shares the poll rate limit, so it cannot be used to hammer the model", async () => {
+    const w = selfWorld();
+    const same = { "CF-Connecting-IP": "10.7.7.7" };
+    const call = () => worker.fetch(new Request("https://toyventor.com/api/theme-song/warm", { method: "POST", headers: { ...same, "x-device-id": DEV } }), w.env as never);
+    let limited = 0;
+    for (let i = 0; i < 60; i++) if ((await call()).status === 429) limited++;
+    expect(limited).toBeGreaterThan(0);
+    expect(healthCalls().length).toBeLessThanOrEqual(1);
   });
 });

@@ -32,6 +32,7 @@ const json = (res, status, body) => { res.writeHead(status, { "content-type": "a
 
 const web = http.createServer((req, res) => {
   const u = new URL(req.url, "http://x");
+  if (u.pathname === "/api/theme-song/warm") { theme.warms = (theme.warms ?? 0) + 1; theme.warmDevice = req.headers["x-device-id"]; return json(res, 202, { ok: true, status: "accepted" }); }
   if (u.pathname === "/api/theme-song") {
     let raw = "";
     req.on("data", (c) => { raw += c; });
@@ -83,6 +84,10 @@ try {
   check("the page and the tab load", await page.waitFor("window.__describeReady === true", 120000));
   check("the card exists inside the panel and is hidden", (await ev("!!document.querySelector('.kdb-panel .kts-card')")) && (await hidden()));
   check("the card says the song is made by AI", (await card(".kts-ai")) === "Made by AI");
+  check("opening the panel woke our own song model once (a free no-op unless the model is ours), with this device's id", await page.waitFor("true", 1000) && await new Promise((r) => setTimeout(r, 700)).then(() => theme.warms === 1 && /^[\w-]{8,}$/.test(theme.warmDevice ?? "")), `warms=${theme.warms} device=${theme.warmDevice}`);
+  await ev("window.__describe.close(); window.__describe.open(); 0");
+  await new Promise((r) => setTimeout(r, 500));
+  check("closing and reopening within three minutes does not ask again", theme.warms === 1, `warms=${theme.warms}`);
 
   console.log("\n[2] a song starts: the name and the words show at once, then the song arrives");
   reset();
@@ -121,6 +126,7 @@ try {
 
   console.log("\n[4] when the route is off, the card stays hidden and nothing is asked twice");
   reset();
+  theme.enabled = false;   // off BEFORE the page opens: opening the panel itself makes the first (free) probe, to decide whether to wake the song model
   // a fresh page: the "is it on" answer is remembered for the life of a tab
   const off = await chrome.open(`${base}/kip/tools/describe-harness.html?stepMs=300&theme=/api/theme-song&themePoll=250`);
   await off.waitFor("window.__describeReady === true", 120000);

@@ -18,13 +18,25 @@ export const MAX_IDEA_CHARS = 60;
 export interface SongStudioSheetProps {
   /** Songs kept in this browser, newest first. */
   songs: readonly KeptSong[];
-  /** False when the song route is off: the sheet says so kindly and offers nothing to make. */
-  available: boolean;
+  /** `null` while the route has not answered yet, `false` when it is off or cannot be reached (the sheet says so kindly and offers nothing to make). */
+  available: boolean | null;
   /** What this device has left this week, once the route has said (null: unknown, or the route is not metered). */
   quota?: SongQuota | null;
   onMake(idea: string): void;
   onDance(song: KeptSong): void;
   onClose(): void;
+}
+
+/**
+ * What the sheet shows above the songs: `checking` while the route has not answered yet (it must NOT say "resting" then: nobody has said songs are off), `resting` when the route
+ * says they are off (or cannot be reached), `blocked` when it is on but a grown-up switched songs off or the week is used up, and `open` when a song can be made.
+ */
+export type SheetMode = "checking" | "resting" | "blocked" | "open";
+export function sheetMode(available: boolean | null, quota: SongQuota | null | undefined): { mode: SheetMode; text: string } {
+  if (available === null) return { mode: "checking", text: "Checking the song studio…" };
+  if (!available) return { mode: "resting", text: "Song making is resting right now. The songs you already made can still dance!" };
+  const q = quotaLine(quota);
+  return { mode: q.blocked ? "blocked" : "open", text: q.text };
 }
 
 /** The sentence about the week: how many songs are left, when they come back, or that a grown-up switched songs off. */
@@ -38,7 +50,7 @@ export function quotaLine(q: SongQuota | null | undefined): { text: string; bloc
 export function SongStudioSheet({ songs, available, quota, onMake, onDance, onClose }: SongStudioSheetProps) {
   const [idea, setIdea] = useState("");
   const text = idea.trim();
-  const line = quotaLine(quota);
+  const view = sheetMode(available, quota);
   return (
     <section className="tv-sheet tv-sheet-songs" role="region" aria-label="Songs" data-testid="songs-sheet">
       <div className="tv-sh-top">
@@ -51,7 +63,7 @@ export function SongStudioSheet({ songs, available, quota, onMake, onDance, onCl
         </button>
       </div>
 
-      {available && !line.blocked ? (
+      {view.mode === "open" ? (
         <>
           <p className="tv-songs-lead">What is your song about?</p>
           <div className="tv-songs-ideas" role="group" aria-label="Ideas">
@@ -86,11 +98,11 @@ export function SongStudioSheet({ songs, available, quota, onMake, onDance, onCl
           <button type="button" className="tv-songs-make" disabled={!text} onClick={() => text && onMake(text)}>
             🎵 Make my song
           </button>
-          <p className="tv-songs-note">{line.text}</p>
+          <p className="tv-songs-note">{view.text}</p>
         </>
       ) : (
-        <p className="tv-songs-lead" role="status">
-          {available ? line.text : "Song making is resting right now. The songs you already made can still dance!"}
+        <p className="tv-songs-lead" role="status" data-mode={view.mode}>
+          {view.text}
         </p>
       )}
 
