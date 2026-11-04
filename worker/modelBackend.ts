@@ -215,8 +215,22 @@ export type AskResult = { ok: true; text: string } | { ok: false; status: number
  * inside one time budget. WHERE it goes is the backend's decision (resolveBackend), never this function's. `model` is honoured for the hosted API only (Create
  * mode lets the game ask for a Spark version); our own model's name always comes from the backend. `status` is the upstream HTTP status, or null when there was
  * no answer (off, timeout, network, an unreadable body). Nothing is logged here: callers log their own event names.
+ *
+ * ONE RETRY, our own model only (2026-11-04). Modal's web proxy in front of llama-server dropped its connection to the server on 3 of 37 calls in the first 40-wish run
+ * (`ServerDisconnectedError`, a 500 inside 0.3 to 1.1 s, before any token was generated; the server's own log shows no error). Such a call did no work, so asking again costs
+ * nothing and is safe. It is retried once, after a short pause, only for HTTP 500, 502, 503 or 504 or a network error that arrived while at least RETRY_MIN_LEFT_MS of the budget
+ * is left. A timeout, a 4xx, an unreadable reply and every hosted call are never retried.
+ *
+ * RETRY_MIN_LEFT_MS is small because the failure it covers is FAST: the proxy drops the connection in about a second, so the budget is barely touched and the call is worth
+ * asking again as long as a few seconds are left. What the retried call needs is a budget that fits a whole answer, and that is the route's job: the routes that talk to
+ * Glimmer give askText 45 s, because a measured Glimmer answer took 11 to 46 s (median about 20 s) and a retry with 13 s of budget would have turned a 500 into a timeout.
  */
-export async function askText(backend: Backend, prompt: string, opts: { timeoutMs: number; model?: string }): Promise<AskResult> {
+const RETRYABLE_STATUS = new Set([500, 502, 503, 504]);
+export const RETRY_MIN_LEFT_MS = 3_000;
+export const RETRY_PAUSE_MS = 400;
+
+/** `onRetry` is called once if our own model is asked a second time, so a route can put "retried" in its log line (the result's shape is deliberately unchanged). */
+export async function askText(backend: Backend, prompt: string, opts: { timeoutMs: number; model?: string; onRetry?: () => void }): Promise<AskResult> {
   if (backend.mode === "off" || !backend.baseUrl) return { ok: false, status: null };
   const model = backend.mode === "hosted" && opts.model ? opts.model : backend.model;
   if (!model) return { ok: false, status: null };
@@ -237,14 +251,33 @@ export async function askText(backend: Backend, prompt: string, opts: { timeoutM
       ),
       signal: AbortSignal.timeout(Math.max(1, remaining())),
     });
-  try {
-    let res = await attempt(true);
-    if (res.status === 400 && !self && remaining() > 0) res = await attempt(false); // older hosted models do not know the reasoning parameter
-    if (!res.ok) return { ok: false, status: res.status };
-    const body = (await res.json()) as unknown;
-    return { ok: true, text: chat ? chatTextOf(body) : outputTextOf(body) };
-  } catch {
-    return { ok: false, status: null };
+  const canRetry = () => self && remaining() >= RETRY_MIN_LEFT_MS;
+  let retried = false;
+  for (;;) {
+    try {
+      let res = await attempt(true);
+      if (res.status === 400 && !self && remaining() > 0) res = await attempt(false); // older hosted models do not know the reasoning parameter
+      if (!res.ok) {
+        if (!retried && RETRYABLE_STATUS.has(res.status) && canRetry()) {
+          retried = true;
+          opts.onRetry?.();
+          await new Promise((r) => setTimeout(r, RETRY_PAUSE_MS));
+          continue;
+        }
+        return { ok: false, status: res.status };
+      }
+      const body = (await res.json()) as unknown;
+      return { ok: true, text: chat ? chatTextOf(body) : outputTextOf(body) };
+    } catch (err) {
+      const timedOut = err instanceof DOMException && (err.name === "TimeoutError" || err.name === "AbortError");
+      if (!retried && !timedOut && canRetry()) {
+        retried = true;
+        opts.onRetry?.();
+        await new Promise((r) => setTimeout(r, RETRY_PAUSE_MS));
+        continue;
+      }
+      return { ok: false, status: null };
+    }
   }
 }
 

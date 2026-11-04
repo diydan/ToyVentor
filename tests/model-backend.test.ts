@@ -4,8 +4,8 @@
  */
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
-import { CAPABILITIES, DEFAULT_MODE, chatTextOf, describeBackends, parseSelfUrl, requestedMode, resolveBackend, type BackendEnv } from "../worker/modelBackend";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { CAPABILITIES, DEFAULT_MODE, RETRY_MIN_LEFT_MS, askText, chatTextOf, describeBackends, parseSelfUrl, requestedMode, resolveBackend, type BackendEnv } from "../worker/modelBackend";
 
 const HOSTED: BackendEnv = { MODEL_API_KEY: "meta-key" };
 const SELF_TEXT: BackendEnv = { SELF_TEXT_URL: "https://glimmer.example.test/v1/", SELF_TEXT_MODEL: "muse-glimmer-30b", SELF_TEXT_KEY: "own-key" };
@@ -146,3 +146,92 @@ describe("no file calls Meta's API around the switch", () => {
     }
   });
 });
+
+describe("askText retries once, for our own model only", () => {
+  const SELF_ENV: BackendEnv = { MODEL_BACKEND: "self", SELF_TEXT_URL: "https://glimmer.example.test/v1", SELF_TEXT_MODEL: "muse-glimmer-30b", SELF_TEXT_API: "chat" };
+  const self = resolveBackend(SELF_ENV, "text");
+  const hosted = resolveBackend({ MODEL_API_KEY: "meta-key" }, "text");
+  const good = () => new Response(JSON.stringify({ choices: [{ message: { content: "hello" } }] }), { status: 200 });
+  const hostedGood = () => new Response(JSON.stringify({ output_text: "hello" }), { status: 200 });
+  const stub = (...answers: Array<() => Response | Promise<Response>>) => {
+    const f = vi.fn(async () => {
+      const next = answers.shift();
+      if (!next) throw new Error("unexpected extra call");
+      return next();
+    });
+    vi.stubGlobal("fetch", f);
+    return f;
+  };
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("a 500 from our own model (the proxy dropping its connection before any token) is asked again once, and the second answer is used", async () => {
+    const f = stub(() => new Response("{}", { status: 500 }), good);
+    expect(await askText(self, "hi", { timeoutMs: 55_000 })).toEqual({ ok: true, text: "hello" });
+    expect(f).toHaveBeenCalledTimes(2);
+  });
+
+  it("502, 503 and 504 count too, and a network error that is not a timeout", async () => {
+    for (const first of [() => new Response("{}", { status: 502 }), () => new Response("{}", { status: 503 }), () => new Response("{}", { status: 504 }), () => Promise.reject(new TypeError("Server disconnected"))]) {
+      const f = stub(first, good);
+      expect((await askText(self, "hi", { timeoutMs: 55_000 })).ok).toBe(true);
+      expect(f).toHaveBeenCalledTimes(2);
+    }
+  });
+
+  it("a 500 that arrives in a second is asked again even when the budget is small: the floor is 3 s, not 15 s", async () => {
+    const f = stub(() => new Response("{}", { status: 500 }), good);
+    expect(await askText(self, "hi", { timeoutMs: 5_000 })).toEqual({ ok: true, text: "hello" });
+    expect(f).toHaveBeenCalledTimes(2);
+  });
+
+  it("never more than one retry: two failures in a row end as a failure with the last status, after exactly two calls", async () => {
+    const f = stub(() => new Response("{}", { status: 500 }), () => new Response("{}", { status: 503 }));
+    expect(await askText(self, "hi", { timeoutMs: 55_000 })).toEqual({ ok: false, status: 503 });
+    expect(f).toHaveBeenCalledTimes(2);
+  });
+
+  it("is not retried: a 400 or 401 or 429, a timeout, or a call that has little time left", async () => {
+    for (const status of [400, 401, 429]) {
+      const f = stub(() => new Response("{}", { status }));
+      expect(await askText(self, "hi", { timeoutMs: 55_000 })).toEqual({ ok: false, status });
+      expect(f).toHaveBeenCalledTimes(1);
+    }
+    const t = stub(() => Promise.reject(new DOMException("timed out", "TimeoutError")));
+    expect(await askText(self, "hi", { timeoutMs: 55_000 })).toEqual({ ok: false, status: null });
+    expect(t).toHaveBeenCalledTimes(1);
+    const short = stub(() => new Response("{}", { status: 500 }));
+    expect(await askText(self, "hi", { timeoutMs: RETRY_MIN_LEFT_MS - 1_000 })).toEqual({ ok: false, status: 500 });
+    expect(short).toHaveBeenCalledTimes(1);
+  });
+
+  it("the hosted API is never retried on a 500 (a failed hosted call may still have been billed), and keeps its own 400 retry without the reasoning parameter", async () => {
+    const f = stub(() => new Response("{}", { status: 500 }));
+    expect(await askText(hosted, "hi", { timeoutMs: 55_000 })).toEqual({ ok: false, status: 500 });
+    expect(f).toHaveBeenCalledTimes(1);
+    const g = stub(() => new Response("{}", { status: 400 }), hostedGood);
+    expect(await askText(hosted, "hi", { timeoutMs: 55_000 })).toEqual({ ok: true, text: "hello" });
+    expect(g).toHaveBeenCalledTimes(2);
+  });
+
+  it("tells the caller when it retried (onRetry, once), and not when it did not", async () => {
+    const calls: number[] = [];
+    stub(() => new Response("{}", { status: 500 }), good);
+    await askText(self, "hi", { timeoutMs: 55_000, onRetry: () => calls.push(1) });
+    expect(calls).toEqual([1]);
+    stub(good);
+    await askText(self, "hi", { timeoutMs: 55_000, onRetry: () => calls.push(2) });
+    stub(() => new Response("{}", { status: 500 }));
+    await askText(hosted, "hi", { timeoutMs: 55_000, onRetry: () => calls.push(3) });
+    expect(calls).toEqual([1]); // not for a first-time success, not for hosted
+  });
+
+  it("both attempts carry the same request: same URL, same body, same key", async () => {
+    const f = stub(() => new Response("{}", { status: 500 }), good);
+    await askText({ ...self, key: "own-key" }, "the prompt", { timeoutMs: 55_000 });
+    const [a, b] = f.mock.calls as unknown as Array<[string, RequestInit]>;
+    expect(a![0]).toBe(b![0]);
+    expect(a![1].body).toBe(b![1].body);
+    expect(new Headers(b![1].headers).get("authorization")).toBe("Bearer own-key");
+  });
+});
+

@@ -62,6 +62,9 @@ APP_NAME = "toyventor-glimmer"
 PORT = 8080
 SERVED_NAME = "muse-glimmer-30B"  # what the Worker sends as SELF_TEXT_MODEL
 MODEL_REPO = "meta-models/Muse-Glimmer-30B-GGUF"  # official, Apache 2.0, not gated
+# The exact commit of that repository the files were taken from (read from the Hugging Face API 2026-11-04, last modified 2026-10-20). Without it a download would follow the
+# repository's newest files, and community copies of Glimmer ("abliterated", "uncensored") exist: only this official repository and this revision may be served.
+MODEL_REVISION = "b44f1072cf75e918a1b82a3a17b45c4389b076e7"
 MODEL_FILE = "Muse-Glimmer-30B-KQuant-17GB-Q4_K_M.gguf"  # 16.8 GB, "start here", fits 24 GB
 DRAFT_FILE = "dflash-Muse-Glimmer-30B-Q4_K_M.gguf"  # 1.6 GB DFlash drafter: speculative decoding, same outputs, faster
 MODELS_DIR = "/models"
@@ -84,7 +87,7 @@ def download() -> None:
     from huggingface_hub import hf_hub_download
 
     for name in (MODEL_FILE, DRAFT_FILE):
-        path = hf_hub_download(repo_id=MODEL_REPO, filename=name, local_dir=MODELS_DIR)
+        path = hf_hub_download(repo_id=MODEL_REPO, filename=name, revision=MODEL_REVISION, local_dir=MODELS_DIR)
         print(f"{name}: {os.path.getsize(path) / 1e9:.2f} GB at {path}")
     models_vol.commit()
 
