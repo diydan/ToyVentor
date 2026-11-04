@@ -76,6 +76,9 @@ describe("evaluation wishes never reach training", () => {
     expect(rejected.unsafe).toBe(1);
   });
 
+  // 600 seeds, and every wish checked four ways, is the slowest test in the suite:
+  // 2.8 s on an idle machine, about 5.7 s when the box is busy. Vitest's 5 s default
+  // is too tight for it, so it gets its own budget instead of slowing every test down.
   it("a generated set of 600 seeds has no eval wish in it, none the intake refuses, and no wish in two splits", () => {
     const { wishes } = finalizeWishes(seedWishes(600));
     expect(wishes.length).toBeGreaterThan(250);
@@ -91,7 +94,7 @@ describe("evaluation wishes never reach training", () => {
       bySplit.set(key, w.split);
     }
     expect(new Set(wishes.map((w) => w.split))).toEqual(new Set(["train", "val", "heldout"]));
-  });
+  }, 30_000);
 });
 
 describe("the English seeds", () => {
