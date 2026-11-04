@@ -10,10 +10,20 @@
 import * as THREE from "three";
 import { duskGrade, duskLightScale } from "./dusk";
 import {
-  renderer, scene, hemi, sun, rim, hero, bloom, grade,
+  renderer, scene, hemi, sun, rim, hero, bloom, grade, quality,
   setEnvironment, setEnvScale, DEFAULT_ENV, type EnvPalette,
 } from "./worldScene";
 
+// THE REUSABLE SETTING (Dan, 2026-11-04: "bloom and light sometimes a bit too reflective, do a review on lighting; ideally this is a reusable setting for all scenes and levels, with an
+// indoor and outdoor, night and day"). Four named presets, `LIGHT_PRESETS["outdoor-day" | "outdoor-night" | "indoor-day" | "indoor-night"]`, are the whole vocabulary: any world, level or generated
+// level says WHERE it is (`place`: indoor or outdoor; the Toy Room is indoor, everything else outdoor) and WHEN (`mood`: day or night; dusk keeps its own sunset rig), and gets that preset's lights, fog,
+// reflections, bloom and grade. The themed rigs below (Garden, Sky Meadow...) are the same presets with a world's own character on top (its colour grade, its key colour).
+//
+// WHAT THE REVIEW FOUND (screenshots of every world by day and night, and a frame-cost benchmark): (1) almost every material had a full clearcoat and a strong reflection of the studio
+// environment, so floors, palm leaves and toy parts shone like mirrors and their highlights went over the bloom threshold: glare; (2) the day worlds (Sky Meadow, Snow Peak) were near white-outs
+// (key 1.7 plus a bright white sky reflection plus the fill, then tone mapping): no shape left on the ground and the hero hard to see; (3) the night worlds bloomed at 0.9 to 1.0, so every
+// highlight glowed, and the twilight Snow Peak was barely darker than its day; (4) bloom ran at full price in the day worlds where its threshold (2.0+) made it do nothing.
+// So: materials are matte-satin (worldScene.ts), day rigs are lower and cooler, night bloom is rarer and softer, and a bloom pass that cannot show is not run (`bloomWanted`).
 export interface LightRig {
   /** Tone-mapping exposure. */
   exposure: number;
@@ -30,123 +40,158 @@ export interface LightRig {
 }
 
 const NIGHT_ENV: EnvPalette = DEFAULT_ENV;
-const DAY_ENV: EnvPalette = { bg: 0x6f9be0, top: 0xfff6e0, topK: 1.5, left: 0xbcd8ff, right: 0xffe9c8, front: 0xe6f0ff };
+const DAY_ENV: EnvPalette = { bg: 0x6f9be0, top: 0xfff6e0, topK: 1.1, left: 0xbcd8ff, right: 0xffe9c8, front: 0xe6f0ff };
+const ROOM_DAY_ENV: EnvPalette = { bg: 0x8a8fa8, top: 0xfff4e4, topK: 1.1, left: 0xf2e6d4, right: 0xffe9cc, front: 0xefe6da };
 const SUNSET_ENV: EnvPalette = { bg: 0x2a2450, top: 0xffb884, topK: 1.5, left: 0x9a86e8, right: 0xffa070, front: 0xffd2b0 };
 const SNOW_ENV: EnvPalette = { bg: 0x1a2a5c, top: 0xdbe8ff, topK: 1.6, left: 0x9fd8ff, right: 0xcfe4ff, front: 0xe4eeff };
 const ROOM_ENV: EnvPalette = { bg: 0x2c2058, top: 0xffe2b8, topK: 1.5, left: 0xc9a8ff, right: 0xffc990, front: 0xffe6c8 };
 
+export type Place = "indoor" | "outdoor";
+export type LightTime = "day" | "night";
+export type PresetId = `${Place}-${LightTime}`;
+
+/** Moonlit open air: a cool key from the back-left for an edge on every shape, warm hero fill, reflections low so nothing glares. */
+const OUTDOOR_NIGHT: LightRig = {
+  exposure: 1.0,
+  hemi: { sky: 0x8fa0ff, ground: 0x1f6a78, i: 0.85 },
+  key: { color: 0xcdd9ff, i: 1.85, pos: [-9, 17, 7], radius: 3 },
+  rim: { color: 0x9ab4ff, i: 1.2, pos: [-6, 9, -12] },
+  hero: { color: 0xffd9a8, i: 1.1 },
+  env: { scale: 0.6, palette: NIGHT_ENV },
+  fog: { color: 0x1d2470, near: 46, far: 150 },
+  bloom: { strength: 0.3, radius: 0.5, threshold: 1.25 },
+  grade: { sat: 1.12, vig: 0.26, tint: [0.97, 1.0, 1.07] },
+};
+/** Open air by day: a warm sun, an airy fill, and nothing above the bloom threshold (so no bloom pass at all). Lower and cooler than before: it used to white out. */
+const OUTDOOR_DAY: LightRig = {
+  exposure: 0.9,
+  hemi: { sky: 0xffffff, ground: 0xa9bfd8, i: 0.62 },
+  key: { color: 0xfff1d4, i: 1.4, pos: [-9, 17, 10], radius: 3 },
+  rim: { color: 0xd8ecff, i: 0.4, pos: [-6, 9, -12] },
+  hero: { color: 0xffffff, i: 0 },
+  env: { scale: 0.55, palette: DAY_ENV },
+  fog: { color: 0xcfe4f6, near: 50, far: 140 },
+  bloom: { strength: 0.12, radius: 0.5, threshold: 2.4 },
+  grade: { sat: 1.1, vig: 0.2, tint: [1.03, 1.02, 0.98] },
+};
+/** A room in the evening (the Toy Room): a warm lamp key, a soft violet fill from the night window, a little glow round the lamp only. */
+const INDOOR_NIGHT: LightRig = {
+  exposure: 0.95,
+  hemi: { sky: 0xffd7b0, ground: 0x3a2a60, i: 0.55 },
+  key: { color: 0xffe0b8, i: 1.55, pos: [-5, 14, 10], radius: 3 },
+  rim: { color: 0xffb27a, i: 0.7, pos: [-6, 8, -12] },
+  hero: { color: 0xffd6a0, i: 0.7 },
+  env: { scale: 0.6, palette: ROOM_ENV },
+  fog: { color: 0x2a2058, near: 46, far: 140 },
+  bloom: { strength: 0.28, radius: 0.5, threshold: 1.3 },
+  grade: { sat: 1.12, vig: 0.28, tint: [1.07, 0.99, 0.94] },
+};
+/** A room by day: window light, a soft warm fill, a pale warm wall colour in the fog, no bloom. */
+const INDOOR_DAY: LightRig = {
+  exposure: 0.93,
+  hemi: { sky: 0xfff4e0, ground: 0xcdb89a, i: 0.75 },
+  key: { color: 0xfff0d8, i: 1.25, pos: [-5, 14, 10], radius: 3 },
+  rim: { color: 0xffe8cc, i: 0.3, pos: [-6, 8, -12] },
+  hero: { color: 0xffffff, i: 0 },
+  env: { scale: 0.5, palette: ROOM_DAY_ENV },
+  fog: { color: 0xe6dccb, near: 46, far: 140 },
+  bloom: { strength: 0.1, radius: 0.5, threshold: 2.4 },
+  grade: { sat: 1.08, vig: 0.18, tint: [1.04, 1.0, 0.96] },
+};
+
+/** The four settings: where a scene is and when. Pick one for any scene, level or generated level (`presetFor`), or name `place` and `mood` on the world and `rigFor` does it. */
+export const LIGHT_PRESETS: Readonly<Record<PresetId, LightRig>> = {
+  "outdoor-day": OUTDOOR_DAY,
+  "outdoor-night": OUTDOOR_NIGHT,
+  "indoor-day": INDOOR_DAY,
+  "indoor-night": INDOOR_NIGHT,
+};
+export const presetFor = (place: Place, time: LightTime): LightRig => LIGHT_PRESETS[`${place}-${time}` as PresetId];
+
+/** The worlds' own rigs: a preset with the world's character on top (the beach's warmer sand fill, the junkyard's sunset, the twilight snow). */
 export const LIGHT_RIGS: Record<string, LightRig> = {
-  // Moonlit garden: cool key from the back-left so shapes get an edge, warm lantern pools and a warm hero fill.
-  garden: {
-    exposure: 1.0,
-    hemi: { sky: 0x8fa0ff, ground: 0x1f6a78, i: 0.95 },
-    key: { color: 0xcdd9ff, i: 2.1, pos: [-9, 15, 7], radius: 3 },
-    rim: { color: 0x9ab4ff, i: 1.5, pos: [-6, 9, -12] },
-    hero: { color: 0xffd9a8, i: 1.1 },
-    env: { scale: 0.9, palette: NIGHT_ENV },
-    fog: { color: 0x1d2470, near: 46, far: 150 },
-    bloom: { strength: 0.42, radius: 0.5, threshold: 0.9 },
-    grade: { sat: 1.12, vig: 0.26, tint: [0.97, 1.0, 1.07] },
-  },
-  // Bright morning sky: warm sun, airy blue fill, restrained bloom so clouds stay shapely.
-  sky: {
-    exposure: 0.95,
-    hemi: { sky: 0xffffff, ground: 0x9fbfe8, i: 0.8 },
-    key: { color: 0xfff1d4, i: 1.7, pos: [-9, 18, 10], radius: 3 },
-    rim: { color: 0xcfe4ff, i: 0.6, pos: [-6, 9, -12] },
-    hero: { color: 0xffffff, i: 0 },
-    env: { scale: 0.85, palette: DAY_ENV },
-    fog: { color: 0xbcd8f8, near: 55, far: 150 },
-    bloom: { strength: 0.2, radius: 0.5, threshold: 2.0 },
-    grade: { sat: 1.1, vig: 0.2, tint: [1.03, 1.02, 0.98] },
-  },
-  // Junkyard at sunset: low orange key for long shadows, magenta rim, glossy puddles pick up the warm sky.
+  garden: OUTDOOR_NIGHT,
+  sky: OUTDOOR_DAY,
+  // Junkyard at sunset: low orange key for long shadows, magenta rim, the warm sky in the puddles.
   junk: {
-    exposure: 1.1,
-    hemi: { sky: 0xb8a8ff, ground: 0x3a3f7a, i: 0.95 },
-    key: { color: 0xffc9a0, i: 1.9, pos: [-14, 8, 7], radius: 3.5 },
-    rim: { color: 0xff7aa8, i: 1.1, pos: [-6, 8, -12] },
+    exposure: 1.05,
+    hemi: { sky: 0xb8a8ff, ground: 0x3a3f7a, i: 0.85 },
+    key: { color: 0xffc9a0, i: 1.7, pos: [-14, 8, 7], radius: 3.5 },
+    rim: { color: 0xff7aa8, i: 1.0, pos: [-6, 8, -12] },
     hero: { color: 0xffc799, i: 0.9 },
-    env: { scale: 0.9, palette: SUNSET_ENV },
+    env: { scale: 0.6, palette: SUNSET_ENV },
     fog: { color: 0x3d2f5c, near: 44, far: 140 },
-    bloom: { strength: 0.45, radius: 0.5, threshold: 0.95 },
+    bloom: { strength: 0.32, radius: 0.5, threshold: 1.3 },
     grade: { sat: 1.14, vig: 0.28, tint: [1.07, 0.98, 0.94] },
   },
-  // Beach noon: warm key, cream sand held below clipping.
+  // Beach noon: a warm key and a sand-coloured fill, held below clipping.
   beach: {
-    exposure: 0.92,
-    hemi: { sky: 0xffffff, ground: 0xe0c08a, i: 0.7 },
-    key: { color: 0xfff0d0, i: 1.55, pos: [-9, 17, 10], radius: 3 },
-    rim: { color: 0xd8ecff, i: 0.5, pos: [-6, 9, -12] },
-    hero: { color: 0xffffff, i: 0 },
-    env: { scale: 0.7, palette: DAY_ENV },
+    ...OUTDOOR_DAY,
+    exposure: 0.88,
+    hemi: { sky: 0xffffff, ground: 0xe0c08a, i: 0.6 },
+    key: { color: 0xfff0d0, i: 1.3, pos: [-9, 17, 10], radius: 3 },
+    rim: { color: 0xd8ecff, i: 0.35, pos: [-6, 9, -12] },
+    env: { scale: 0.5, palette: DAY_ENV },
     fog: { color: 0xcfeaf6, near: 50, far: 140 },
-    bloom: { strength: 0.22, radius: 0.5, threshold: 2.2 },
     grade: { sat: 1.1, vig: 0.2, tint: [1.04, 1.02, 0.95] },
   },
-  // Snow Peak twilight: cool moon key, snow kept from clipping, icy rim, aurora does the bloom work.
+  // Snow Peak twilight: a cool moon key, snow kept from clipping and from glowing like day, an icy rim; the aurora does the bloom work.
   snow: {
-    exposure: 0.88,
-    hemi: { sky: 0xbcd0ff, ground: 0x3a4f8a, i: 0.65 },
-    key: { color: 0xd6e2ff, i: 1.6, pos: [-9, 15, 8], radius: 3 },
-    rim: { color: 0x9fe0ff, i: 1.0, pos: [-6, 9, -12] },
+    exposure: 0.84,
+    hemi: { sky: 0xbcd0ff, ground: 0x3a4f8a, i: 0.5 },
+    key: { color: 0xd6e2ff, i: 1.3, pos: [-9, 15, 8], radius: 3 },
+    rim: { color: 0x9fe0ff, i: 0.9, pos: [-6, 9, -12] },
     hero: { color: 0xe6efff, i: 0.6 },
-    env: { scale: 0.75, palette: SNOW_ENV },
+    env: { scale: 0.55, palette: SNOW_ENV },
     fog: { color: 0x1c2f66, near: 46, far: 150 },
-    bloom: { strength: 0.34, radius: 0.5, threshold: 1.3 },
+    bloom: { strength: 0.24, radius: 0.5, threshold: 1.5 },
     grade: { sat: 1.1, vig: 0.26, tint: [0.95, 1.0, 1.08] },
   },
-  // Toy Room evening: warm lamp key, wood floor stays glossy, soft violet fill from the night window.
-  room: {
-    exposure: 0.95,
-    hemi: { sky: 0xffd7b0, ground: 0x3a2a60, i: 0.6 },
-    key: { color: 0xffe0b8, i: 1.7, pos: [-5, 14, 10], radius: 3 },
-    rim: { color: 0xffb27a, i: 0.8, pos: [-6, 8, -12] },
-    hero: { color: 0xffd6a0, i: 0.7 },
-    env: { scale: 0.9, palette: ROOM_ENV },
-    fog: { color: 0x2a2058, near: 46, far: 140 },
-    bloom: { strength: 0.4, radius: 0.5, threshold: 1.0 },
-    grade: { sat: 1.12, vig: 0.28, tint: [1.07, 0.99, 0.94] },
-  },
+  room: INDOOR_NIGHT,
 };
 
 interface RigSource {
   theme?: string;
   mood?: string;
   night?: boolean;
+  /** Where the scene is. Absent: indoor for the Toy Room, outdoor for everything else. */
+  place?: Place;
   light?: Partial<LightRig>;
   fog?: number;
 }
 
+/** The lights that carry a mood (everything but the grade, which stays the world's own). */
+const lightsOf = (r: LightRig): Pick<LightRig, "exposure" | "hemi" | "key" | "rim" | "hero" | "env" | "fog" | "bloom"> =>
+  ({ exposure: r.exposure, hemi: r.hemi, key: r.key, rim: r.rim, hero: r.hero, env: r.env, fog: r.fog, bloom: r.bloom });
+
 /**
  * Time-of-day variants of any theme rig. Only the lights that carry the mood change (key colour and height, fill,
- * rim, exposure, fog); the theme keeps its own bloom, grade and environment character.
+ * rim, exposure, fog, bloom); the theme keeps its own grade. `place` picks the indoor or the outdoor version (a room has a lamp and a window, not a sun and a moon).
  */
-export function moodRig(base: LightRig, mood: string): LightRig {
-  if (mood === "day") {
-    return { ...base, exposure: 0.93, hemi: { sky: 0xffffff, ground: 0xa9bfd8, i: 0.78 }, key: { color: 0xfff1d4, i: 1.65, pos: [-9, 17, 10], radius: 3 },
-      rim: { color: 0xd8ecff, i: 0.5, pos: [-6, 9, -12] }, hero: { color: 0xffffff, i: 0 }, env: { scale: 0.8, palette: DAY_ENV },
-      fog: { color: 0xcfe4f6, near: 50, far: 140 }, bloom: { strength: 0.22, radius: 0.5, threshold: 2.1 } };
-  }
+export function moodRig(base: LightRig, mood: string, place: Place = "outdoor"): LightRig {
+  if (mood === "day") return { ...base, ...lightsOf(presetFor(place, "day")) };
+  if (mood === "night") return { ...base, ...lightsOf(presetFor(place, "night")) };
   if (mood === "dusk") {
-    return { ...base, exposure: 1.08, hemi: { sky: 0xb8a8ff, ground: 0x3a3f7a, i: 0.9 }, key: { color: 0xffc29a, i: 1.9, pos: [-14, 8, 7], radius: 3.5 },
-      rim: { color: 0xff7aa8, i: 1.0, pos: [-6, 8, -12] }, hero: { color: 0xffc799, i: 0.9 }, env: { scale: 0.9, palette: SUNSET_ENV },
-      fog: { color: 0x4a2f66, near: 44, far: 140 }, bloom: { strength: 0.45, radius: 0.5, threshold: 0.95 } };
-  }
-  if (mood === "night") {
-    const g = LIGHT_RIGS.garden!;
-    return { ...base, exposure: 1.0, hemi: g.hemi, key: g.key, rim: g.rim, hero: g.hero, env: { scale: 0.9, palette: NIGHT_ENV },
-      fog: g.fog, bloom: g.bloom };
+    return { ...base, exposure: 1.06, hemi: { sky: 0xb8a8ff, ground: 0x3a3f7a, i: 0.85 }, key: { color: 0xffc29a, i: 1.75, pos: [-14, 8, 7], radius: 3.5 },
+      rim: { color: 0xff7aa8, i: 1.0, pos: [-6, 8, -12] }, hero: { color: 0xffc799, i: 0.9 }, env: { scale: 0.6, palette: SUNSET_ENV },
+      fog: { color: 0x4a2f66, near: 44, far: 140 }, bloom: { strength: 0.32, radius: 0.5, threshold: 1.3 } };
   }
   return base;
 }
 
-/** Resolve the rig for a world: an explicit `light` override, then the theme preset, then a day or night default. */
+/** Resolve the rig for a world: an explicit `light` override, then the mood and place, then the theme preset, then a day or night default. */
 export function rigFor(R: RigSource, id: string): LightRig {
-  const themed = LIGHT_RIGS[R.theme || id] ?? (R.night ? LIGHT_RIGS.garden! : LIGHT_RIGS.sky!);
-  const base = R.mood ? moodRig(themed, R.mood) : themed;
-  const rig: LightRig = { ...base, ...(R.light || {}) } as LightRig;
-  if (!LIGHT_RIGS[R.theme || id] && typeof R.fog === "number") rig.fog = { ...rig.fog, color: R.fog };
+  const theme = R.theme || id;
+  const themed = LIGHT_RIGS[theme];
+  const natural: Place = theme === "room" ? "indoor" : "outdoor";
+  const place: Place = R.place ?? natural;
+  const time: LightTime = R.mood === "night" || (!R.mood && R.night) ? "night" : "day";
+  // an unknown theme falls back to the preset for its place and time; a world that names the OTHER kind of place than its theme's takes that place's preset with the theme's grade
+  let base: LightRig = themed ?? presetFor(place, time);
+  if (themed && place !== natural) base = { ...presetFor(place, time), grade: themed.grade };
+  const themedBase = R.mood ? moodRig(base, R.mood, place) : base;
+  const rig: LightRig = { ...themedBase, ...(R.light || {}) } as LightRig;
+  if (!LIGHT_RIGS[theme] && typeof R.fog === "number") rig.fog = { ...rig.fog, color: R.fog };
   return rig;
 }
 
@@ -174,6 +219,11 @@ export function applyLightRig(R: RigSource, id: string): LightRig {
   return rig;
 }
 
+/** Can this bloom setting show at all? Above a threshold of 2 nothing in these scenes is bright enough, and a strength of about 0 is off. */
+export function bloomWanted(b: { strength: number; threshold: number }): boolean {
+  return b.strength > 0.02 && b.threshold < 2.0;
+}
+
 /** Push the current rig's bloom and grade values onto the post chain (it may be created after the first world). */
 export function syncPost(): void {
   const rig = current;
@@ -181,6 +231,9 @@ export function syncPost(): void {
     bloom.strength = rig.bloom.strength;
     bloom.radius = rig.bloom.radius;
     bloom.threshold = rig.bloom.threshold;
+    // A bloom pass is ten full-screen passes. In a day or indoor-day rig its threshold is above anything the scene can reach, so it would cost the frame and show nothing: skip it.
+    // (Once the adaptive quality has turned bloom off, a new world must not turn it back on.)
+    if (!quality.low) bloom.enabled = bloomWanted(rig.bloom);
   }
   if (grade && grade.uniforms) {
     const u = grade.uniforms as Record<string, { value: any }>;

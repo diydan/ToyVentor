@@ -17,6 +17,17 @@ const T = { ...THREE, EffectComposer, RenderPass, ShaderPass, UnrealBloomPass, O
 
 const QP: string = "auto";
 
+/**
+ * Cost knobs (Dan, 2026-11-04: "performance is a bit slow, any obvious wins for animated scenes"). Measured on the garden with the headless Metal GPU, one setting at a time
+ * (scripts in the session scratchpad; absolute numbers are a desktop GPU's, the ORDER is what carries over to a phone): the clearcoat on nearly every material was the biggest single
+ * cost, then the 2048 shadow map, then the pixel ratio. A phone's DPR 3 was capped at 2 (four times the pixels of 1); 1.5 is 2.25 times, and the FXAA pass keeps edges clean.
+ */
+export const MAX_PIXEL_RATIO = 1.5;
+/** The sun's shadow map (the frustum is only 28 units across, so 1024 texels is still about 36 per unit). */
+export const SHADOW_MAP = 1024;
+/** Set once the adaptive quality has turned a post effect off: the light rig must then leave bloom off (lighting.ts `syncPost`). */
+export const quality = { low: false };
+
 let renderer!: THREE.WebGLRenderer;
 let scene!: THREE.Scene;
 let camera!: THREE.PerspectiveCamera;
@@ -32,7 +43,7 @@ let blob!: THREE.Mesh;
 
 const MC: Record<string, THREE.Material> = {};
 const GT: Record<string, THREE.Texture> = {};
-const perf = { n: 0, sum: 0, done: false };
+const perf = { n: 0, sum: 0, done: false, taken: 0, hold: 0 };
 
 let composer: EffectComposer | null = null;
 let bloom: UnrealBloomPass | null = null;
@@ -46,7 +57,7 @@ export function initScene(canvas: HTMLCanvasElement): boolean {
   } catch (e) {
     return false;
   }
-  renderer.setPixelRatio(Math.min(QP === "low" ? 1 : 2, window.devicePixelRatio || 1));
+  renderer.setPixelRatio(Math.min(QP === "low" ? 1 : MAX_PIXEL_RATIO, window.devicePixelRatio || 1));
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = T.PCFShadowMap;
   renderer.outputColorSpace = T.SRGBColorSpace;
@@ -58,7 +69,7 @@ export function initScene(canvas: HTMLCanvasElement): boolean {
   scene.add(hemi);
   sun = new T.DirectionalLight(0xe4e9ff, 0.85);
   sun.castShadow = true;
-  sun.shadow.mapSize.set(2048, 2048);
+  sun.shadow.mapSize.set(SHADOW_MAP, SHADOW_MAP);
   sun.shadow.radius = 3; // PCF filter radius in texels: soft penumbra without a second pass
   sun.shadow.bias = -0.0006;
   sun.shadow.normalBias = 0.035;
@@ -81,7 +92,7 @@ export function initScene(canvas: HTMLCanvasElement): boolean {
   setEnvironment(DEFAULT_ENV);
   var bmat=new T.MeshBasicMaterial({map:canv(128,128,function(g){var gr=g.createRadialGradient(64,64,0,64,64,64);gr.addColorStop(0,"rgba(0,0,0,0.55)");gr.addColorStop(1,"rgba(0,0,0,0)");g.fillStyle=gr;g.fillRect(0,0,128,128)}),transparent:true,depthWrite:false});bmat.polygonOffset=true;bmat.polygonOffsetFactor=-2;bmat.polygonOffsetUnits=-2;blob=new T.Mesh(new T.PlaneGeometry(1,1),bmat);blob.rotation.x=-Math.PI/2;blob.renderOrder=1;scene.add(blob);
   composer = null; bloom = null; grade = null; fxaa = null;
-  perf.n = 0; perf.sum = 0; perf.done = QP !== "auto";
+  perf.n = 0; perf.sum = 0; perf.taken = 0; perf.hold = 0; perf.done = QP !== "auto"; quality.low = false;
   if (import.meta.env?.DEV) {
     // Dev-only lighting bench: tune lights/bloom/exposure live from the console.
     (window as unknown as Record<string, unknown>).__tvDebug = {
@@ -157,11 +168,11 @@ function glowTex(col: string): THREE.Texture {if(!GT[col])GT[col]=canv(128,128,f
 function glowSprite(col: string, size: number, op?: number, normal?: unknown): THREE.Sprite {var s=new T.Sprite(new T.SpriteMaterial({map:glowTex(col),transparent:true,depthWrite:false,blending:normal?T.NormalBlending:T.AdditiveBlending,opacity:op==null?1:op,fog:false}));s.scale.set(size,size,1);return s}
 
 /* ---------- materials ---------- */
-function plastic(c: string, o?: Record<string, unknown>): THREE.MeshPhysicalMaterial {var k="p"+c+JSON.stringify(o||{});if(!MC[k])MC[k]=new T.MeshPhysicalMaterial(Object.assign({color:c,roughness:.34,metalness:0,clearcoat:.85,clearcoatRoughness:.16,envMapIntensity:.75},o||{}));return MC[k] as THREE.MeshPhysicalMaterial}
+function plastic(c: string, o?: Record<string, unknown>): THREE.MeshPhysicalMaterial {var k="p"+c+JSON.stringify(o||{});if(!MC[k])MC[k]=new T.MeshPhysicalMaterial(Object.assign({color:c,roughness:.42,metalness:0,clearcoat:.3,clearcoatRoughness:.32,envMapIntensity:.55},o||{}));return MC[k] as THREE.MeshPhysicalMaterial}
 function matte(c: string, flat?: unknown): THREE.MeshStandardMaterial {var k="m"+c+flat;if(!MC[k])MC[k]=new T.MeshStandardMaterial({color:c,roughness:.85,metalness:0,flatShading:!!flat,envMapIntensity:.1});return MC[k] as THREE.MeshStandardMaterial}
-function metal(c: string): THREE.MeshStandardMaterial {var k="x"+c;if(!MC[k])MC[k]=new T.MeshStandardMaterial({color:c,roughness:.3,metalness:.65,envMapIntensity:1.3});return MC[k] as THREE.MeshStandardMaterial}
+function metal(c: string): THREE.MeshStandardMaterial {var k="x"+c;if(!MC[k])MC[k]=new T.MeshStandardMaterial({color:c,roughness:.36,metalness:.65,envMapIntensity:1.0});return MC[k] as THREE.MeshStandardMaterial}
 function glowMat(c: string, i?: number): THREE.MeshStandardMaterial {var k="g"+c+i;if(!MC[k])MC[k]=new T.MeshStandardMaterial({color:c,emissive:c,emissiveIntensity:i||1.5,roughness:.4,envMapIntensity:.2});return MC[k] as THREE.MeshStandardMaterial}
-function paintMat(c: string): THREE.MeshPhysicalMaterial {var k="pm"+c;if(!MC[k])MC[k]=new T.MeshPhysicalMaterial({color:c,metalness:.28,roughness:.3,clearcoat:1,clearcoatRoughness:.08,envMapIntensity:1});return MC[k] as THREE.MeshPhysicalMaterial}
+function paintMat(c: string): THREE.MeshPhysicalMaterial {var k="pm"+c;if(!MC[k])MC[k]=new T.MeshPhysicalMaterial({color:c,metalness:.08,roughness:.42,clearcoat:.3,clearcoatRoughness:.3,envMapIntensity:.6});return MC[k] as THREE.MeshPhysicalMaterial}
 const GLASS = new T.MeshPhysicalMaterial({color:0x9fdcff,roughness:.05,clearcoat:1,transparent:true,opacity:.85});
 const BUBBLE = new T.MeshPhysicalMaterial({color:0xcfeaff,roughness:.05,clearcoat:1,transparent:true,opacity:.35,side:T.DoubleSide,depthWrite:false});
 
@@ -177,19 +188,45 @@ function starGeo(): THREE.ExtrudeGeometry {var s=new T.Shape();for(var i=0;i<8;i
 const STARGEO = starGeo();
 function linearize(root: THREE.Object3D): void {bindEnv(root);root.traverse(function(o){var l=o as THREE.Light;if(l.isLight&&!o.userData.lin){o.userData.lin=1;l.intensity*=(l as unknown as { isPointLight?: unknown }).isPointLight?5.5:2.6}})}
 
+/* ---------- adaptive quality ---------- */
+/**
+ * When to give up some look for speed. The first version checked ONCE, 2.5 s after start, and only below about 29 fps (34 ms): a phone running at 35 or 40 fps never improved, and a
+ * party or a bigger world later in the session was never looked at. Now every window of frames is checked, a slow one takes a step (a very slow one two), and a step is followed by a
+ * short settle so the new state is judged on its own frames. Steps are never undone (a phone that was slow once is slow); at most two exist (bloom off + 1.25 ratio, then no post + 1.0 + a small shadow map).
+ */
+export const QUALITY = { window: 120, slowS: 0.030, verySlowS: 0.045, maxSteps: 2, warmupS: 2.5, settleS: 2.0 } as const;
+/** How many steps to take for a window whose frames averaged `avgDt` seconds, with `taken` already taken: 0, 1 or 2, never beyond the last step. */
+export function stepsFor(avgDt: number, taken: number): number {
+  if (!(avgDt > 0) || taken >= QUALITY.maxSteps) return 0;
+  const want = avgDt > QUALITY.verySlowS ? 2 : avgDt > QUALITY.slowS ? 1 : 0;
+  return Math.min(want, QUALITY.maxSteps - taken);
+}
+/** Call once per frame with the frame time and the engine clock (seconds). */
+function qualityTick(dt: number, t: number, onResize: () => void): void {
+  if (perf.done || t < QUALITY.warmupS || t < perf.hold) return;
+  perf.n++; perf.sum += dt;
+  if (perf.n < QUALITY.window) return;
+  const avg = perf.sum / perf.n;
+  perf.n = 0; perf.sum = 0;
+  const k = stepsFor(avg, perf.taken);
+  for (let i = 0; i < k; i++) { stepDown(onResize); perf.taken++; }
+  if (k) perf.hold = t + QUALITY.settleS;
+  if (perf.taken >= QUALITY.maxSteps) perf.done = true;
+}
+
 /* ---------- color grade + post chain ---------- */
 const GRADE = {uniforms:{tDiffuse:{value:null},uTint:{value:new T.Vector3(1,1,1.04)},uVig:{value:.34},uSat:{value:1.14}},vertexShader:"varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}",fragmentShader:"varying vec2 vUv;uniform sampler2D tDiffuse;uniform vec3 uTint;uniform float uVig;uniform float uSat;void main(){vec4 c=texture2D(tDiffuse,vUv);float l=dot(c.rgb,vec3(.2126,.7152,.0722));c.rgb=mix(vec3(l),c.rgb,uSat)*uTint;float v=smoothstep(.95,.3,length(vUv-.5)*1.3);c.rgb*=mix(1.-uVig,1.,v);gl_FragColor=c;}"};
 const TINT: Record<string, [number, number, number]> = {garden:[.97,1.0,1.07],sky:[1.03,1.02,.98],junk:[1.09,.98,.93],beach:[1.04,1.02,.95],snow:[.95,1.0,1.08],room:[1.07,.99,.94]};
 
 function setupPost(w: number, h: number): void {if(QP==="low"||!T.EffectComposer||!T.UnrealBloomPass)return;try{var pr0=renderer.getPixelRatio(),rt=renderer.capabilities.isWebGL2?new T.WebGLRenderTarget(w*pr0,h*pr0,{minFilter:T.LinearFilter,magFilter:T.LinearFilter,format:T.RGBAFormat,type:T.HalfFloatType}):undefined;composer=new T.EffectComposer(renderer,rt);composer.addPass(new T.RenderPass(scene,camera));bloom=new T.UnrealBloomPass(new T.Vector2(256,256),.38,.42,1.0);composer.addPass(bloom);grade=new T.ShaderPass(GRADE);composer.addPass(grade);composer.addPass(new T.OutputPass());fxaa=new T.ShaderPass(T.FXAAShader);composer.addPass(fxaa)}catch(e){console.error(e);composer=null}}
-function stepDown(onResize: () => void): void {if(bloom&&bloom.enabled){bloom.enabled=false;renderer.setPixelRatio(Math.min(1.25,window.devicePixelRatio||1));onResize();return}if(composer){composer=null;renderer.setPixelRatio(1);sun.shadow.mapSize.set(512,512);if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null}onResize()}}
+function stepDown(onResize: () => void): void {if(bloom&&bloom.enabled){quality.low=true;bloom.enabled=false;renderer.setPixelRatio(Math.min(1.25,window.devicePixelRatio||1));onResize();return}if(composer){composer=null;renderer.setPixelRatio(1);sun.shadow.mapSize.set(512,512);if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null}onResize()}}
 
 export {
   T,
   renderer, scene, camera, hemi, sun, rim, hero, blob, perf,
   composer, bloom, grade, fxaa,
   MC, GT, GLASS, BUBBLE, STARGEO, GRADE, TINT,
-  setupPost, stepDown,
+  setupPost, stepDown, qualityTick,
   canv, glowTex, glowSprite,
   plastic, matte, metal, glowMat, paintMat,
   rbox, M, G, at, capsule, gear, hemiSphere, starGeo, linearize,

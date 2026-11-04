@@ -17,6 +17,28 @@ hackathon** (Dan, 2026-11-03).
 - **The day version is the one a child plays first.**
 - **Build the map's day and night now.**
 
+## Lighting presets and the cost knobs (2026-11-04)
+
+Dan: "bloom and light sometimes a bit too reflective, do a review on lighting; ideally a reusable setting for all scenes and levels, with an indoor and outdoor, night and day", and "performance is a
+bit slow, any obvious wins for animated scenes". **Built** (`runtime/lighting.ts`, `runtime/worldScene.ts`; `tests/lighting-presets.test.ts`, 21 tests).
+
+- **The setting.** Four presets, `LIGHT_PRESETS["outdoor-day" | "outdoor-night" | "indoor-day" | "indoor-night"]` and `presetFor(place, time)`. A world, a level or a generated level says where it is
+  (`place`: indoor or outdoor; absent = the Toy Room indoors, everything else outdoors) and when (`mood`: day, dusk or night) and `rigFor` gives it that preset's lights, fog, reflections, bloom and grade. The
+  themed rigs (Garden, Sky Meadow, Junkyard, Beach, Snow Peak, the Toy Room) are the presets with a world's own character. A level may carry `"place": "indoor"` next to `"mood"`. The Toy Room stays the
+  evening by default (the "indoor looks the same at any hour" decision stands); `indoor-day` exists for a level that wants a daylight room (a kitchen, say) and is used when a world asks for it.
+- **What the review found** (screenshots of every world by day and by night, and a frame-cost benchmark on the headless Metal GPU, one setting at a time):
+  1. Nearly every material had a full clearcoat and a strong reflection of the studio environment (`plastic` clearcoat .85, toy paint clearcoat 1.0 with metalness .28): floors, palm leaves and toy parts
+     shone like mirrors and their highlights went over the bloom threshold. Now satin: plastic clearcoat .3, toy paint clearcoat .3 and metalness .08, reflection 0.55 to 0.6, chrome a little less. A caller can
+     still ask for gloss (the Kip's skin and the glass do).
+  2. The day worlds white-washed: Sky Meadow was 69 % pixels brighter than 200 of 255, Snow Peak 25 %. Day is now lower and cooler (key 1.4, fill .62, exposure .9, reflections .55): 20 % and 12 %.
+  3. The night worlds bloomed at 0.9 to 1.0 with strength .4 to .45, so every highlight glowed. Now threshold 1.25 to 1.5, strength .24 to .32; the twilight Snow Peak is darker.
+  4. Bloom ran at full price in the day worlds where its threshold (2.0 and up) made it do nothing. A bloom pass that cannot show is not run (`bloomWanted`: strength above .02 and threshold below 2).
+- **Cost.** Measured on the garden at phone size, the previous commit against this one, alternating runs: about 4.3 ms a frame down to about 2.9 (median 4.5 to 2.5). Largest single items, in order: the
+  clearcoat, the 2048 shadow map (now 1024), the pixel ratio (a phone's 3 was capped at 2, now 1.5), bloom. The adaptive step-down used to look ONCE, 2.5 s after start, and only below 29 fps; it now judges
+  every 120-frame window (a step below 33 fps, two below 22), settles for 2 s after a step, never undoes one, and a new world no longer turns bloom back on after it was lowered.
+- **Not done (next, in order of size):** the Kip's own STL parts are about 126 000 of the garden's 321 000 triangles (a decimated copy for the game); 279 foliage spheres are another 105 000 (merge or instance
+  them); 97 % of all meshes cast a shadow (small and far decor need not); the renderer's multisampling is paid for a full-screen pass the FXAA already smooths. Not judged on a real phone.
+
 ## One clock
 
 `src/lib/timeOfDay.ts` (built): `timeOfDayFor(nowMs, timezone, mode)` gives

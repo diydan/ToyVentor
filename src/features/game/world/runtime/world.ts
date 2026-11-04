@@ -226,6 +226,7 @@ initScene,
 setupPost,
 disposeEnvironment,
 stepDown,
+qualityTick,
 } from "./worldScene";
 import type { Mission, FxItem } from "./missions";
 import type { ToyContract } from "../../../../../shared/toycontract";
@@ -854,7 +855,7 @@ if(!P.showcase&&!P.busy&&!P.mDrive){tidySpots.forEach(function(ts){if(ts.done)re
  if(!reduce&&P.shake>0){camera.position.x+=(Math.random()-.5)*P.shake;camera.position.y+=(Math.random()-.5)*P.shake*.7}P.shake=Math.max(0,(P.shake||0)-dt*1.6);
  var fovT=36+(reduce?0:(P.kick||0)*6);P.kick=Math.max(0,(P.kick||0)-dt*2.4);if(Math.abs(camera.fov-fovT)>.02){camera.fov+=(fovT-camera.fov)*Math.min(1,dt*12);camera.updateProjectionMatrix()}
  followHero(P.pos.x,P.pos.z);
- if(!perf.done&&t>2.5){perf.n++;perf.sum+=dt;if(perf.n>=90){perf.done=true;var avg=perf.sum/perf.n;if(avg>.034)stepDown(resize);if(avg>.045)stepDown(resize)}}
+ qualityTick(dt,t,resize);
  if(ED.on){camera.position.set(ED.cx,3+ED.d*.12,ED.d);camera.lookAt(ED.cx,2.4,0)}PICK.tick();if(W.backdrop)W.backdrop.update(camera);placeHint();if(composer)composer.render(dt);else renderer.render(scene,camera);if(!disposed)rafId=requestAnimationFrame(frame)}
 /* ===== asset quality v2: procedural textures, sculpted toys, detailed props ===== */
 function rng(seed: number){var s=(seed>>>0)||1;return function(){s=(Math.imul(s,1664525)+1013904223)>>>0;return s/4294967296}}

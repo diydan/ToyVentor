@@ -237,6 +237,8 @@ export interface LevelDef {
   theme: string;
   /** Optional time of day. Re-skins the sky, fog and lighting rig of the theme; absent = the theme's own look. */
   mood?: "day" | "dusk" | "night";
+  /** Optional: indoors or outdoors. With the mood's day or night it picks one of the four lighting presets (lighting.ts LIGHT_PRESETS); absent = the theme's own (the Toy Room is indoor, everything else outdoor). */
+  place?: "indoor" | "outdoor";
   /** Optional seed code when the level was composed by levelKit.ts, so it can be shared and replayed. */
   seed?: string;
   props: LevelPropRef[];
@@ -292,8 +294,9 @@ export var MOOD_DEF: Record<string, { night: boolean; sky: [string, string, stri
  dusk:{night:true,sky:["#1d1b5c","#a24f84","#ffb27a"],fog:0x4a2f66},
  night:{night:true,sky:["#060d2c","#16226a","#463f9e"],fog:0x1d2470}
 };
-export function levelWorld(L: { theme: string; mood?: string; name?: string; props?: LevelPropRef[]; spots?: LevelSpotRef[]; missions?: LevelMissionRef[] }): WorldDef {var b=THEME_DEF[L.theme]||THEME_DEF.garden,w: Record<string, any>={};for(var k in b)w[k]=b[k];w.n=L.name||"My world";w.theme=L.theme;
+export function levelWorld(L: { theme: string; mood?: string; place?: string; name?: string; props?: LevelPropRef[]; spots?: LevelSpotRef[]; missions?: LevelMissionRef[] }): WorldDef {var b=THEME_DEF[L.theme]||THEME_DEF.garden,w: Record<string, any>={};for(var k in b)w[k]=b[k];w.n=L.name||"My world";w.theme=L.theme;
  var md=L.mood?MOOD_DEF[L.mood]:undefined;if(md){w.mood=L.mood;w.night=md.night;w.sky=md.sky.slice();w.fog=md.fog}
+ if(L.place==="indoor"||L.place==="outdoor")w.place=L.place;
  w.props=(L.props||[]).filter(function(p){return PROPS[p.type]}).map(function(p){var d=PROPS[p.type] as PropDef,a: [string, number, number, (number | string)?]=[p.type,p.x,p.z!=null?p.z:d.z];if(p.y!=null||d.y!=null)a.push(p.y!=null?p.y:(d.y as number));else if(p.type==="lantern"&&L.theme==="junk")a.push("#ff9d5c");return a});
  w.spots=(L.spots||[]).filter(function(s){return HIDE[s.hide]}).map(function(s){var h=HIDE[s.hide] as HideDef,o: WorldSpotDef={k:s.part,t:h.t,x:s.x,z:s.z!=null?s.z:h.z};if(h.t==="junk")o.obj=s.hide;else o.cover=s.hide;if(h.y)o.y=h.y;return o});w.missions=(L.missions||[]).slice();return w as WorldDef}
 LEVELS.push({"format":"toyventor.level/1","id":"lab1","name":"Lab 1: Bridges","theme":"garden","props":[{"type":"lantern","x":3},{"type":"tree","x":-4},{"type":"lantern","x":17},{"type":"lantern","x":30},{"type":"bushes","x":44}],"spots":[],"missions":[{"type":"bridge","x":10,"free":true},{"type":"measure","x":23,"free":true},{"type":"balance","x":36,"free":true}]},
