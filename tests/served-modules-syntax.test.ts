@@ -5,7 +5,7 @@
 import { execFile } from "node:child_process";
 import { mkdtempSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { join, resolve, sep } from "node:path";
 import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
 
@@ -23,7 +23,8 @@ async function syntaxErrors(files: string[]): Promise<string[]> {
         await run(process.execPath, ["--check", f]);
       } catch (e: any) {
         const lines = String(e.stderr ?? e.message).split("\n").filter(Boolean);
-        bad.push(`${f.slice(root.length + 1)}: ${lines.find((l) => /Error/.test(l)) ?? lines[0]}`);
+        const shown = f.startsWith(root + sep) ? f.slice(root.length + 1) : f; // a file outside the repo (the control one, in the temp folder) keeps its whole path
+        bad.push(`${shown}: ${lines.find((l) => /Error/.test(l)) ?? lines[0]}`);
       }
     }
   };
