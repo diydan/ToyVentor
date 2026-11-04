@@ -176,6 +176,20 @@ Setup: hold the gear 1.2 s, PIN, set Age to the child's band (2 to 3 for Little 
 - [ ] Real light and clutter: how many of the props came out right, and in order? ____ of ____
 - [ ] Time from shutter to editor: ____ s (fail above about 15 s).
 
+**Pick it up (the camera, in the browser and as an installed web app)** (`scripts/e2e-kip-pickup.mjs` and `scripts/e2e-game-pickup-chain.mjs` cover everything except a real camera, a real phone, the real SAM and the real naming model). Needs https, so use the live site, or `localhost` on the Mac; over plain `http://<Mac IP>` the phone says "This browser cannot open the camera here" and offers a photo, which is expected. Do it twice: once in the Safari or Chrome tab, once from the icon after "Add to Home Screen".
+- [ ] Kip bench, menu, Tools, **Pick it up**: the browser asks for the camera once, and the live view fills the screen with no scrolling, clear of the notch and home bar.
+- [ ] The rear camera is used (the 🔄 button appears only when there is more than one camera and switches them).
+- [ ] Tap **spoon**, point at a real spoon, press the big button: the picture freezes, the camera light goes out, "Looking for the spoon…" shows, the spoon lifts off the picture and flies into Kip's hand. Time from shutter to Kip holding it: ____ s (the stood-in run is instant; the real SAM takes seconds).
+- [ ] Tap **guitar**, point at a real guitar (or a toy one): Kip takes the bench's guitar and strums.
+- [ ] Tap **frying pan**: Kip takes the pan and cooks.
+- [ ] A word SAM cannot find (point at a wall, say "zebra"): one calm sentence and **Try again**, and the camera restarts.
+- [ ] Deny the camera when asked: the view says the camera is turned off and the **Photo** button still works. Then turn it back on in the browser settings.
+- [ ] Locked screen or switching apps mid-view, then back: the view is still usable (press Try again or close it); no camera light stays on after closing.
+- [ ] **In the game:** open the game, Workshop, Kip tab, Tools, Pick it up, take a spoon, then **Close** the Workshop: the game's Kip is holding the spoon as a flat card, a chip says "Put the wooden spoon away", and tapping Kip or the chip puts it away. A guitar gives the game's own guitar. Walk around, open the Map and come back: it is still in his hand. (Checked in a real browser with a stood-in scan by `scripts/e2e-game-pickup-chain.mjs`; the phone is not checked.)
+- [ ] **No word:** press the big button with nothing chosen and point at an object: the view says "It looks like a ...!" with a plausible name (the real naming model on real objects is unchecked: say what it called a spoon, a cup, a toy car: ____), or one calm sentence if it cannot tell.
+- [ ] **A thing Kip has nothing for** (a toy dinosaur, a remote): its cut-out goes in Kip's hand as a flat card on a handle, and in the game as a card.
+- [ ] If `THEME_SONG` is on: **Make a song about the guitar** appears after the pick-up, the words arrive in a few seconds, the song in about a minute, and Kip can dance to it from the Party's Song picker. Say whether the song sounds like a guitar and a happy mood: ____ (Spark or Glimmer choosing the mood from the sentence is untested).
+
 **Other phone checks**
 - [ ] Explorer trail map branches and scroll feel on a real phone (the spec says to revisit them there).
 - [ ] The Toy Room toys (xylophone, guitar, books, bubbles, dog, tower of blocks) react to taps.
