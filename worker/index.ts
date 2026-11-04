@@ -23,7 +23,7 @@ import {
   handleForgePreview,
   type ForgeOptimizerEnv,
 } from "./forgeOptimizer";
-import { handleForgeMake, handleForgeMakeJobStatus } from "./forgeMake";
+import { handleForgeMake, handleForgeMakeJobStatus, handleForgeWarm } from "./forgeMake";
 import { handleDescribe } from "./describe";
 import { handleThemeSong, type ThemeSongEnv } from "./themeSong";
 import { handleMuseSpark, museConfigured, type MuseEnv } from "./muse";
@@ -254,6 +254,8 @@ export default {
     if (url.pathname === "/api/forge/make") {
       return handleForgeMake(request, env);
     }
+    // Wake our own model when a child opens the panel (worker/forgeMake.ts handleForgeWarm): a no-op unless the text backend is "self".
+    if (url.pathname === "/api/forge/warm") return handleForgeWarm(request, env, ctx);
     if (url.pathname.startsWith("/api/forge/make/jobs/")) {
       return handleForgeMakeJobStatus(request, env, url.pathname.slice("/api/forge/make/jobs/".length));
     }

@@ -14,6 +14,7 @@ import type { ForgeRecipeV1 } from "./forgeOptimizer";
 export type Fetch = (url: string, init?: RequestInit) => Promise<Response>;
 
 export const MAKE_ROUTE = "/api/forge/make";
+export const WARM_ROUTE = "/api/forge/warm";
 /** The text-to-part job route: no grown-up proof (Dan, 2026-11-03); the file route below keeps it. */
 export const JOB_ROUTE = "/api/forge/make/jobs/";
 export const ARTIFACT_ROUTE = "/api/forge/artifacts/";
@@ -102,6 +103,18 @@ export { nearestReadyMade, type ReadyMade } from "./forgeFallback";
 export { DEFAULT_FORGE_COLOR, FORGE_COLORS, forgeColorHex, isForgeColorKey, type ForgeColorKey } from "./forgeColors";
 
 export const artifactUrl = (name: string): string => `${ARTIFACT_ROUTE}${name}`;
+
+/**
+ * Tell the maker a child has opened the panel, so a model that sleeps when idle can wake while they type (worker/forgeMake.ts handleForgeWarm). Fire and forget: it sends no wish and no
+ * words, waits for nothing, and never throws or shows anything; a refusal, an error or no network is simply ignored.
+ */
+export function warmMaker(args: { gate: { headers(): Record<string, string> }; fetch: Fetch }): void {
+  try {
+    Promise.resolve(args.fetch(WARM_ROUTE, { method: "POST", headers: { "content-type": "application/json", ...args.gate.headers() }, body: "{}" })).catch(() => undefined);
+  } catch {
+    // nothing to warm
+  }
+}
 
 /**
  * The address that makes /api/voice say a name the Worker signed (worker/forgeNames.ts): `lang`, the word, its gender, the plural flag and the
