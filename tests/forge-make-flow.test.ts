@@ -4,7 +4,7 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MAKE_MAX_CALLS } from "../shared/forgeMakePrompt";
-import { makeFromText, voiceUrl, type MakeArgs, type MakeProgress } from "../shared/forgeMakeFlow";
+import { WARM_ROUTE, makeFromText, voiceUrl, warmMaker, type MakeArgs, type MakeProgress } from "../shared/forgeMakeFlow";
 import type { ForgeMakeEnv } from "../worker/forgeMake";
 import { resetForgeRateLimit } from "../worker/forgeOptimizer";
 import { verifySpeech } from "../worker/forgeNames";
@@ -269,3 +269,27 @@ describe("makeFromText", () => {
     expect(r).toMatchObject({ ok: true, printable: false, glbBase64: "GLB1" });
   });
 });
+
+describe("warmMaker: tell the maker a child opened the panel", () => {
+  const gate = { headers: () => ({ "x-device-id": "12345678-1234-1234-1234-123456789abc" }) };
+
+  it("posts once to the warm route with the device id and an empty body: no wish, no words", () => {
+    const f = vi.fn(async () => new Response("{}", { status: 202 }));
+    warmMaker({ gate, fetch: f });
+    expect(f).toHaveBeenCalledTimes(1);
+    const [url, init] = f.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe(WARM_ROUTE);
+    expect(init.method).toBe("POST");
+    expect(init.body).toBe("{}");
+    expect((init.headers as Record<string, string>)["x-device-id"]).toBe("12345678-1234-1234-1234-123456789abc");
+  });
+
+  it("never throws and never waits: a rejected fetch, a fetch that throws at once, a refusal and a fetch that never answers are all ignored", async () => {
+    expect(() => warmMaker({ gate, fetch: async () => { throw new Error("offline"); } })).not.toThrow();
+    expect(() => warmMaker({ gate, fetch: () => { throw new Error("sync"); } })).not.toThrow();
+    expect(() => warmMaker({ gate, fetch: async () => new Response("{}", { status: 429 }) })).not.toThrow();
+    expect(() => warmMaker({ gate, fetch: () => new Promise(() => undefined) })).not.toThrow();
+    await new Promise((r) => setTimeout(r, 10)); // a rejection nobody handled would fail the run here
+  });
+});
+

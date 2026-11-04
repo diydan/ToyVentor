@@ -113,6 +113,7 @@ export function createForgeMake({ root, fetch: fetchFn, deviceId = defaultDevice
   let urls = [];
   let gateWaiter = null; // { resolve } while the grown-up question is on screen
   let gateBack = 'done';
+  let lastWarm = 0; // when the panel last asked the maker to wake up
   let audio = null;
   let disposed = false;
 
@@ -445,11 +446,17 @@ export function createForgeMake({ root, fetch: fetchFn, deviceId = defaultDevice
     /** Show the panel. */
     open() {
       if (disposed) return;
+      const wasOpen = Boolean(built && built.back.classList.contains('open'));
       const $ = build();
       if (state.step === 'gate' || (!state.busy && !state.result)) show('ask');
       else show(state.step);
       $.back.classList.add('open');
       $.back.focus();
+      // a child is about to type a wish: wake a model that sleeps when idle (no words are sent; ignored if it fails). Not while a part is being made, and at most every 4 minutes.
+      if (!wasOpen && !state.busy && Date.now() - lastWarm > 4 * 60_000) {
+        lastWarm = Date.now();
+        flow.warmMaker({ gate, fetch: doFetch });
+      }
     },
     /** Hide it. A part being made carries on; what was made stays until "Make another" or dispose(). */
     close() {

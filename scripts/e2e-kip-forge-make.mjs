@@ -121,6 +121,12 @@ try {
 
   // [1] the panel opens on the question, and says what to do when there are no words
   await mount();
+  await sleep(300);
+  const warmCalls = () => apiCalls().filter((c) => c.path === "/api/forge/warm");
+  check("opening the panel asked the maker to wake up, once, with the device id and no words", warmCalls().length === 1 && warmCalls()[0].headers["x-device-id"] === DEVICE && warmCalls()[0].method === "POST" && warmCalls()[0].body === "{}", JSON.stringify(warmCalls()[0] ?? null));
+  await ev("window.__kfm.close(); window.__kfm.open(); true");
+  await sleep(300);
+  check("closing and opening again within four minutes does not ask again", warmCalls().length === 1);
   check("it opens on the ask step with the idea chips and the three choices", (await step()) === "ask" && (await ev("document.querySelectorAll('.kfm-chips button').length")) === 6 && (await ev("document.querySelectorAll('.kfm-slot input').length")) === 3);
   await press("Make it");
   check("no words: a calm sentence, nothing sent", (await text(".kfm-status")).includes("Say what you would like") && model.calls === 0 && daemon.previews === 0);
