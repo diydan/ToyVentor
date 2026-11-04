@@ -72,7 +72,7 @@ describe("what the product refuses is refused in every language", () => {
     de: ["ein Messer", "eine Pistole", "ein Bier", "der Krieg", "Blut", "ein Albtraum"],
     it: ["un coltello", "una pistola", "una birra", "la guerra", "il sangue", "un incubo"],
     pt: ["uma faca", "uma pistola", "uma cerveja", "a guerra", "sangue", "um pesadelo"],
-    tr: ["bir bıçak", "bir silah", "bira", "savaş", "bir kabus", "ÖLDÜR"],
+    tr: ["bir bıçak", "bir silah", "bira", "savaş", "bir kabus", "ÖLDÜR", "kanlı bir şapka", "kan"],
   };
   for (const [lang, list] of Object.entries(age)) {
     it(`${lang}: age-fit words`, () => {
