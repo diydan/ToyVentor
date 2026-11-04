@@ -35,7 +35,9 @@ const web = http.createServer((req, res) => {
     req.on('data', (c) => chunks.push(c));
     req.on('end', () => {
       const body = Buffer.concat(chunks);
-      transcribe.posts.push({ type: req.headers['content-type'], bytes: body.length, head: [...body.subarray(0, 4)] });
+      // for a WAV also keep the format the page made (mono / rate / bits from the fmt chunk) and its length, so the check can say it is the format every speech model behind the route takes
+      const wav = body.length > 44 && body.subarray(0, 4).toString() === 'RIFF' ? { channels: body.readUInt16LE(22), rate: body.readUInt32LE(24), bits: body.readUInt16LE(34), seconds: +(body.readUInt32LE(40) / body.readUInt32LE(28)).toFixed(2) } : null;
+      transcribe.posts.push({ type: req.headers['content-type'], bytes: body.length, head: [...body.subarray(0, 4)], wav });
       res.writeHead(transcribe.status, { 'content-type': 'application/json' });
       res.end(JSON.stringify(transcribe.body));
     });
@@ -473,7 +475,7 @@ try {
   await mic.click(r0.x, r0.y);
   check('the second tap sends exactly one recording', await settled(1) && transcribe.posts.length === 1, JSON.stringify(transcribe.posts));
   const clip = transcribe.posts[0];
-  check('it is a real recording of the right kind: audio/webm, with real bytes and the file\'s own first bytes (1A 45 DF A3)', /^audio\/webm/.test(clip.type) && clip.bytes > 1500 && clip.head.join() === '26,69,223,163', JSON.stringify(clip));
+  check('it is a real recording sent as a WAV: audio/wav, the file\'s own first bytes (RIFF), mono 16-bit PCM at 16 kHz (what Meta\'s endpoint and our own model both take), made in the page from Chrome\'s recording', clip.type === 'audio/wav' && clip.bytes > 1500 && clip.head.join() === '82,73,70,70' && clip.wav && clip.wav.channels === 1 && clip.wav.rate === 16000 && clip.wav.bits === 16 && clip.wav.seconds > 0.3 && clip.wav.seconds <= 10, JSON.stringify(clip));
   check('the words are in the text box for the child to see and change', (await boxText()) === 'a pink skateboard', await boxText());
   check('and the status says what it heard and tells the child to press Build it', /I heard: "a pink skateboard"/.test(await micStatus()) && /Build it/.test(await micStatus()), await micStatus());
   check('it did NOT build: no request to /api/describe was made, and the box has focus for editing', describeCalls() === buildsBefore && (await mev("document.activeElement && document.activeElement.id")) === 'kdb-text');

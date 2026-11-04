@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 // @ts-expect-error a plain browser module (no types)
-import { HOLD_MS, MAX_MS, MIN_MS, SAY, baseType, createVoiceInput, pickMime } from "../parts/kip/viewer/kip-describe-voice.js";
+import { HOLD_MS, MAX_MS, MIN_MS, SAY, WAV_RATE, baseType, createVoiceInput, encodeWav, mixToMono, pickMime, recordingToWav, resample } from "../parts/kip/viewer/kip-describe-voice.js";
 
 // The microphone button's controller, with the browser's pieces stood in (a fake button, a fake MediaRecorder, a fake microphone, a manual clock). The same behaviour is checked in a
 // real browser with Chrome's fake microphone by parts/kip/viewer/tools/e2e_describe.mjs section [7]; this file holds the state machine and the wiring.
@@ -38,7 +38,7 @@ class FakeRecorder {
   }
 }
 
-function setup(opts: { enabled?: boolean | "throws"; reply?: { status: number; body?: unknown } | "throws"; mic?: "ok" | "denied" | "none" | "other"; text?: () => string; withRecorder?: boolean } = {}) {
+function setup(opts: { enabled?: boolean | "throws"; reply?: { status: number; body?: unknown } | "throws"; mic?: "ok" | "denied" | "none" | "other"; text?: () => string; withRecorder?: boolean; toWav?: (b: Blob) => Promise<Blob> } = {}) {
   FakeRecorder.made = [];
   FakeRecorder.supported = new Set(["audio/webm;codecs=opus", "audio/webm"]);
   const t = { now: 1000, timers: [] as Array<{ fn: () => void; ms: number; id: number; live: boolean }> };
@@ -68,7 +68,7 @@ function setup(opts: { enabled?: boolean | "throws"; reply?: { status: number; b
   };
   const voice = createVoiceInput({
     doc: fakeDoc, fetchImpl, url: "/api/transcribe", getUserMedia, MediaRecorderClass: opts.withRecorder === false ? undefined : FakeRecorder,
-    now: () => t.now,
+    now: () => t.now, ...(opts.toWav ? { toWav: opts.toWav } : {}),
     setTimeout: (fn: () => void, ms: number) => { const id = t.timers.length + 1; t.timers.push({ fn, ms, id, live: true }); return id; },
     clearTimeout: (id: number) => { const x = t.timers.find((q) => q.id === id); if (x) x.live = false; },
     onText: (w: string) => words.push(w), onStatus: (s: string) => status.push(s), onState: (s: string) => states.push(s), currentText: opts.text ?? (() => ""),
@@ -380,5 +380,109 @@ describe("the module and its wiring", () => {
   it("has the buttons a small hand can press: 48 px round, labelled, and pulsing only when motion is allowed", () => {
     expect(tab).toMatch(/\.kdb-panel button\.kdb-mic \{[^}]*width: 48px; height: 48px;/);
     expect(tab).toMatch(/@media \(prefers-reduced-motion: reduce\) \{ \.kdb-panel button\.kdb-mic-on \{ animation: none; \} \}/);
+  });
+});
+
+// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// The recording is converted in the page to a 16 kHz mono 16-bit WAV: the one format the route's speech models take, and one a Worker cannot make from webm or mp4.
+// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+const wavHeader = async (b: Blob) => {
+  const bytes = new Uint8Array(await b.arrayBuffer());
+  const v = new DataView(bytes.buffer);
+  const tag = (at: number) => String.fromCharCode(...bytes.slice(at, at + 4));
+  return { riff: tag(0), wave: tag(8), fmt: tag(12), format: v.getUint16(20, true), channels: v.getUint16(22, true), rate: v.getUint32(24, true), bits: v.getUint16(34, true), data: tag(36), dataBytes: v.getUint32(40, true), size: bytes.length, v };
+};
+
+describe("the WAV pieces", () => {
+  it("encodeWav writes a RIFF/WAVE header for ONE channel of 16-bit integer PCM at 16 kHz, and the samples scaled and clipped", async () => {
+    const wav = encodeWav(new Float32Array([0, 0.5, -0.5, 1, -1, 2, -2]));
+    const h = await wavHeader(new Blob([wav]));
+    expect(h).toMatchObject({ riff: "RIFF", wave: "WAVE", fmt: "fmt ", format: 1, channels: 1, rate: WAV_RATE, bits: 16, data: "data", dataBytes: 14, size: 44 + 14 });
+    expect(WAV_RATE).toBe(16000);
+    const at = (i: number) => h.v.getInt16(44 + i * 2, true);
+    expect([at(0), at(1), at(2), at(3), at(4), at(5), at(6)]).toEqual([0, 16384, -16384, 32767, -32768, 32767, -32768]); // 2 and -2 are clipped, not wrapped
+    expect(h.v.getUint32(4, true)).toBe(36 + 14);   // the RIFF size
+    expect(h.v.getUint32(28, true)).toBe(WAV_RATE * 2); // byte rate
+  });
+  it("mixToMono averages channels and leaves a mono one alone", () => {
+    const mono = new Float32Array([0.1, 0.2]);
+    expect(mixToMono([mono])).toBe(mono);
+    expect(Array.from(mixToMono([new Float32Array([1, 0]), new Float32Array([0, 1])]))).toEqual([0.5, 0.5]);
+  });
+  it("resample keeps the length in proportion, the ends, and does nothing at the same rate", () => {
+    const ramp = Float32Array.from({ length: 480 }, (_, i) => i / 479);
+    expect(resample(ramp, 16000, 16000)).toBe(ramp);
+    const down = resample(ramp, 48000, 16000);
+    expect(down.length).toBe(160);
+    expect(down[0]).toBeCloseTo(0, 6);
+    expect(down[159]!).toBeGreaterThan(0.98);
+    for (let i = 1; i < down.length; i++) expect(down[i]!).toBeGreaterThanOrEqual(down[i - 1]!); // still a ramp: no ringing
+  });
+});
+
+describe("recordingToWav (the decoder is the browser's, stood in here)", () => {
+  /** An OfflineAudioContext that "decodes" whatever it is given into a stereo 48 kHz buffer of `seconds`. */
+  const decoder = (seconds: number, rate = 48000, answer: "promise" | "callback" = "promise") =>
+    class {
+      static made: Array<[number, number, number]> = [];
+      constructor(channels: number, length: number, sampleRate: number) { (this.constructor as any).made.push([channels, length, sampleRate]); }
+      decodeAudioData(_data: ArrayBuffer, ok?: (b: unknown) => void) {
+        const n = Math.round(seconds * rate);
+        const buf = { numberOfChannels: 2, sampleRate: rate, getChannelData: (c: number) => Float32Array.from({ length: n }, (_, i) => (c === 0 ? 0.5 : -0.5) * Math.sin(i / 50)) };
+        if (answer === "callback") { ok?.(buf); return undefined; }
+        return Promise.resolve(buf);
+      }
+    };
+  it("turns a decoded stereo 48 kHz recording into a 16 kHz mono WAV Blob of the same length", async () => {
+    const Ctx = decoder(2);
+    const wav = await recordingToWav(new Blob([new Uint8Array(50)], { type: "audio/webm" }), { OfflineAudioContextClass: Ctx as any });
+    expect(wav.type).toBe("audio/wav");
+    const h = await wavHeader(wav);
+    expect(h).toMatchObject({ riff: "RIFF", channels: 1, rate: 16000, bits: 16, format: 1, dataBytes: 2 * 16000 * 2 });
+    expect(Ctx.made).toEqual([[1, 1, 16000]]); // asks the decoder for 16 kHz, so a browser that obeys never needs resampling
+  });
+  it("works with a browser that answers by callback only (older Safari)", async () => {
+    const wav = await recordingToWav(new Blob([new Uint8Array(50)]), { OfflineAudioContextClass: decoder(1, 16000, "callback") as any });
+    expect((await wavHeader(wav)).dataBytes).toBe(16000 * 2);
+  });
+  it("cuts a long recording at 10 seconds (the route refuses more)", async () => {
+    const wav = await recordingToWav(new Blob([new Uint8Array(50)]), { OfflineAudioContextClass: decoder(15) as any });
+    expect((await wavHeader(wav)).dataBytes).toBe(10 * 16000 * 2);
+  });
+  it("throws when there is no decoder or it cannot read the recording, so the caller can send the original", async () => {
+    await expect(recordingToWav(new Blob([new Uint8Array(5)]), { OfflineAudioContextClass: undefined as any })).rejects.toThrow(/decoder/);
+    const Broken = class { constructor() {} decodeAudioData() { return Promise.reject(new Error("EncodingError")); } };
+    await expect(recordingToWav(new Blob([new Uint8Array(5)]), { OfflineAudioContextClass: Broken as any })).rejects.toThrow(/Encoding/);
+  });
+});
+
+describe("the upload uses the converted WAV", () => {
+  const speak = async (s: ReturnType<typeof setup>) => { await s.voice.probe(); press(s); await s.tick(); s.t.now += 2000; press(s); await s.tick(); };
+  it("sends the WAV, typed audio/wav, instead of the recording, once", async () => {
+    const wav = new Blob([new Uint8Array(32044)], { type: "audio/wav" });
+    const s = setup({ toWav: async () => wav });
+    await speak(s);
+    expect(posts(s)).toHaveLength(1);
+    expect(posts(s)[0]).toMatchObject({ type: "audio/wav" });
+    expect(posts(s)[0]!.body).toBe(wav);
+    expect(s.words).toEqual(["a pink skateboard"]);
+  });
+  it("sends what was recorded, with its own type, when the browser cannot convert it", async () => {
+    const s = setup({ toWav: async () => { throw new Error("no audio decoder"); } });
+    await speak(s);
+    expect(posts(s)[0]).toMatchObject({ type: "audio/webm" });
+    expect(posts(s)[0]!.body!.size).toBe(4000);
+    expect(s.words).toEqual(["a pink skateboard"]);
+  });
+  it("sends nothing when the child cancels while it is being converted, and still frees the microphone", async () => {
+    let finish: (b: Blob) => void = () => undefined;
+    const s = setup({ toWav: () => new Promise<Blob>((r) => { finish = r; }) });
+    await s.voice.probe(); press(s); await s.tick(); s.t.now += 2000; press(s); await s.tick();
+    expect(s.voice.state).toBe("thinking");
+    s.voice.cancel();
+    finish(new Blob([new Uint8Array(100)], { type: "audio/wav" }));
+    await s.tick();
+    expect(posts(s)).toHaveLength(0);
+    expect(s.streams.every((x) => x.tracks.every((t) => t.stopped))).toBe(true);
   });
 });

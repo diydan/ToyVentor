@@ -1,6 +1,6 @@
 """
-Whisper large-v3-turbo served on Modal: the speech model behind the microphone button in Describe & build. A child's voice goes ONLY here, never to Meta
-(docs/decisions/0008-meta-models-and-under-18-users.md; the Worker route is worker/transcribe.ts and it refuses to run on anything but a self-hosted address).
+Whisper large-v3-turbo served on Modal: the speech model behind the microphone button in Describe & build. The home for a child's voice (Meta's hosted speech model is a demo-only exception, chosen with TRANSCRIBE_BACKEND=hosted: worker/transcribe.ts)
+(docs/decisions/0008-meta-models-and-under-18-users.md; the Worker route is worker/transcribe.ts: it runs on a self-hosted address, or on Meta's only when TRANSCRIBE_BACKEND=hosted was written out on purpose).
 
 STATUS: WRITTEN 2026-11-04. NOT DEPLOYED, NOT RUN: it has been syntax-checked and nothing more. The Modal API it uses (@app.cls, @modal.enter, @modal.concurrent,
 @modal.asgi_app, Volume, Secret) is the same set the Glimmer file (scripts/modal/glimmer_server.py) uses, which was deployed on the Modal 1.2.6 client and worked; the
@@ -26,7 +26,7 @@ Setup (once, by you; nothing below prints a secret). It is the Glimmer setup wit
      then the Worker settings (.dev.vars locally; wrangler secrets / vars when deployed). `modal deploy` prints the address (it is fixed by the label below):
        TRANSCRIBE_BACKEND=self
        SELF_TRANSCRIBE_URL=<the address modal deploy printed, with or without a trailing /v1>
-     (SELF_TRANSCRIBE_KEY was written in step 2. Hosted never answers for voice: with TRANSCRIBE_BACKEND unset or hosted the route stays off.)
+     (SELF_TRANSCRIBE_KEY was written in step 2. Meta's hosted model answers only when TRANSCRIBE_BACKEND is exactly `hosted`: with it unset the route stays off.)
   5. Check it: curl <address>/health (no key needed), then a real clip through the Worker:  curl -s -X POST localhost:5173/api/transcribe -H 'content-type: audio/wav'
      --data-binary @clip.wav  (the Describe tab shows its microphone only once GET /api/transcribe says enabled).
 

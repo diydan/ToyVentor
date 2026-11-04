@@ -122,6 +122,8 @@ policy. The Model API terms above are about the hosted API, not downloaded weigh
   serving base Glimmer becomes the critical path and tuning becomes optional; the waiver is
   moot for production. See "Self-hosted Glimmer replaces Spark" in `docs/specs/forge-ai-spec.md`.
 
+- 2026-11-04, Dan: **use Meta's hosted speech model (`muse-voice-transcribe-1.0`) for the demo and self-host in the future; review after the hackathon.** This is an exception to the line above ("do not build on the Meta API") and to the note in `worker/transcribe.ts`. Built so it cannot happen by accident: the microphone's hosted mode is on ONLY when `TRANSCRIBE_BACKEND` is exactly `hosted` (not by the unset default, not by `MODEL_BACKEND=hosted`) and the Meta key is set, so deploying the code switches nothing on. Meta's file endpoint takes WAV only (mono integer PCM, 16 or 24 kHz, 10 minutes, 32 MB; `POST /v1/asr/transcribe`, read from dev.meta.ai on 2026-11-04), so the page converts the recording to a 16 kHz mono WAV before it is sent (a Worker cannot decode webm or mp4). The words go through the same scrub, cap and kid-safety check as with our own model. Verified with a synthetic voice, never a child's: Chrome's real recording to WAV to the Worker to Meta's live API returned the right words. What this does NOT settle: the 10.1 question above (adult end users only) still applies to a child's voice sent to Meta, so this stays a demo-only, adults-operating step, and ending it is one setting (unset `TRANSCRIBE_BACKEND`, or set it to `self` or `off`).
+
 ## Inventory: every Meta Model API use (found 2026-11-03, from the Worker code)
 
 The terms cover every Meta model on the API, not only Spark. The key lists `muse-spark-1.1/1.2/1.3`,
@@ -133,7 +135,7 @@ The terms cover every Meta model on the API, not only Spark. The key lists `muse
 | `sam-3.1` | `/api/scan` (toy scan, room scan, photo to toy), `/api/selfie/face-parts` | photos of toys, rooms, faces | scan live when the key is set; face-parts off unless `SELFIE_CLOUD=on`; no replacement chosen |
 | `muse-image-1.0` | `/api/skin` (repaint a toy photo), `/api/selfie/cartoon` (redraw a child's selfie as a cartoon) | photos, including a child's face | `/api/skin` live when the key is set. **The selfie routes are OFF unless `SELFIE_CLOUD=on`** (corrected 2026-11-03; I first called them live), and then need consent and the grown-up check, one picture sent; the team already kept it off in production until a COPPA review |
 | `muse-image-1.0`, build time | scripts (backdrops, Kip face sets) | no child input | lower exposure (not an Integrated Product); still the owner's call |
-| `muse-voice-transcribe-1.0` | none: planned in specs only | would carry a child's voice | **do not build on the Meta API** |
+| `muse-voice-transcribe-1.0` | `/api/transcribe`, hosted mode only (worker/transcribe.ts) | a child's voice: a few seconds, as a 16 kHz mono WAV, in memory, never stored or logged | **DEMO EXCEPTION, built 2026-11-04** (Dan: "use meta for demo and we will self host in the future"; review after the hackathon). On only when `TRANSCRIBE_BACKEND=hosted` is set explicitly and the key is set: an unset switch or `MODEL_BACKEND=hosted` leave it off. Self-hosted Whisper stays the plan for children. |
 | `muse-wonder-1.0` | none in the Worker | | |
 
 Glimmer reads images but writes text only, so it replaces Spark but not SAM or the image model. Every route above
