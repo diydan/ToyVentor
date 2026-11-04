@@ -1679,7 +1679,7 @@ export function GameCanvas({
 
       <div className="tv-stage">
         <div ref={stageHostRef} className="tv-stage-canvas-host" />
-        {titleOpen && <TitleMenu toyName={label} ready={state.ready} onChoose={chooseTitle} onNewPlayer={openOnboarding} />}
+        {titleOpen && <TitleMenu toyName={label} ready={state.ready} onChoose={chooseTitle} onNewPlayer={openOnboarding} songKey={songFlow?.phase} musicHold={onboardOpen || songFlow?.phase === "dancing"} />}
         {onboardOpen && <OnboardingSheet onClose={() => setOnboardOpen(false)} onStage={onboardStage} onHold={onboardHold} onPickUp={onboardPickUp} onIntroStart={onboardIntroStart} onSong={onboardSong} song={songFlow} />}
         {!sleepActive &&
           (demoMode ? (

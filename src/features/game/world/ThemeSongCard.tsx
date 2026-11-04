@@ -62,7 +62,7 @@ function SongWait({ seconds, done }: { seconds: number; done: boolean }) {
  * The mini karaoke: the line being sung, its words lighting up as they are sung, and (in the big form) the line before and the line coming. The times are the song's own, moved onto
  * the loop the party plays (shared/songKaraoke.ts). Redraws only when the lit word or the line changes, not on every look. Decoration beside "The words": aria-hidden.
  */
-function Karaoke({ lines, loop, playhead, big }: { lines: FlowState["karaoke"]; loop: number; playhead: () => number; big: boolean }) {
+export function Karaoke({ lines, loop, playhead, big }: { lines: FlowState["karaoke"]; loop: number; playhead: () => number; big: boolean }) {
   const [view, setView] = useState<KaraokeView>(() => karaokeAt(lines, playhead(), loop));
   const seen = useRef("");
   useEffect(() => {

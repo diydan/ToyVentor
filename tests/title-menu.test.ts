@@ -114,7 +114,7 @@ describe("the wiring", () => {
     const page = read("src/features/game/world/GameCanvas.tsx");
     expect(page).toContain("{ contract: contractRef.current, title: wantTitleRef.current }");
     expect(page).toContain("shouldShowTitle(typeof window === \"undefined\" ? \"\" : window.location.search)");
-    expect(page).toMatch(/\{titleOpen && <TitleMenu toyName=\{label\} ready=\{state\.ready\} onChoose=\{chooseTitle\} onNewPlayer=\{openOnboarding\} \/>\}/); // the small new-player link (tests/onboarding-wiring.test.ts)
+    expect(page).toMatch(/\{titleOpen && <TitleMenu toyName=\{label\} ready=\{state\.ready\} onChoose=\{chooseTitle\} onNewPlayer=\{openOnboarding\} songKey=\{songFlow\?\.phase\} musicHold=\{onboardOpen \|\| songFlow\?\.phase === "dancing"\} \/>\}/); // the small new-player link (tests/onboarding-wiring.test.ts), and the title's music (it waits for the setup and for a dance party, and re-reads the kept songs when one lands: tests/title-music.test.ts)
     expect(page.indexOf('<div ref={stageHostRef} className="tv-stage-canvas-host" />')).toBeLessThan(page.indexOf("<TitleMenu"));
     expect(page).toContain('titleOpen ? " tv-host--titled" : ""');
     const choose = page.slice(page.indexOf("const chooseTitle = useCallback("), page.indexOf("[closeReactOverlays, openBuildSheet]"));

@@ -117,6 +117,8 @@ export interface KeptSong {
   madeAt: string;
   /** The provider's timed lines, kept so a song played again later still has its karaoke (the Kip bench ignores the field). */
   lines?: LyricLine[];
+  /** What the song was made for: "prompt" is the new player's own theme song (the title page plays it), "level" and "build" are the end-of-level and Build songs. Songs kept before this have none. */
+  kind?: FlowKind;
 }
 /** Keep a finished song in this browser's list (newest first, at most 20). Never throws: blocked storage means the song plays this visit only. */
 export function keepSong(storage: FlowDeps["storage"], song: KeptSong): void {
@@ -139,7 +141,7 @@ export function readKeptSongs(storage: FlowDeps["storage"]): KeptSong[] {
       .filter((s) => s && typeof s.name === "string" && typeof s.url === "string" && typeof s.task === "string" && /^\d{6,24}$/.test(s.task))
       .map((s) => {
         const lines = cleanLines(s.lines);
-        return { ...s, verse: Array.isArray(s.verse) ? s.verse.map(String) : [], chorus: Array.isArray(s.chorus) ? s.chorus.map(String) : [], mood: typeof s.mood === "string" ? s.mood : "", ...(lines.length ? { lines } : { lines: undefined }) };
+        return { ...s, ...(s.kind === "prompt" || s.kind === "level" || s.kind === "build" ? {} : { kind: undefined }), verse: Array.isArray(s.verse) ? s.verse.map(String) : [], chorus: Array.isArray(s.chorus) ? s.chorus.map(String) : [], mood: typeof s.mood === "string" ? s.mood : "", ...(lines.length ? { lines } : { lines: undefined }) };
       })
       .slice(0, MAX_KEPT);
   } catch { return []; }
@@ -252,7 +254,7 @@ export function createThemeSongFlow(deps: FlowDeps): ThemeSongFlow {
       return;
     }
     if (mine !== run) return;
-    if (keep) keepSong(deps.storage, { name: st.name, verse: st.verse, chorus: st.chorus, mood: moodOf, url: link, task, madeAt: new Date(now()).toISOString(), ...(timed.length ? { lines: timed } : {}) });
+    if (keep) keepSong(deps.storage, { name: st.name, verse: st.verse, chorus: st.chorus, mood: moodOf, url: link, task, madeAt: new Date(now()).toISOString(), ...(timed.length ? { lines: timed } : {}), ...(lastAsk ? { kind: lastAsk.kind } : {}) });
     let planned: ReturnType<typeof analyseTheme>;
     let decoded: { channels: ArrayLike<number>[]; sampleRate: number };
     try {

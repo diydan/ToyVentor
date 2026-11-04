@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import "../../../onboarding.css";
 import { TITLE_ENTRIES, TITLE_TAGLINE, type TitleChoice } from "./titleEntries";
+import { TitleMusic } from "./TitleMusic";
 
 interface TitleMenuProps {
   /** The name of the toy on the turntable, shown under the logo. */
@@ -10,6 +11,10 @@ interface TitleMenuProps {
   onChoose: (choice: TitleChoice) => void;
   /** Opens the new-player setup. A small link under the three entries, not a fourth entry (the entries stay Play, Build, Create). */
   onNewPlayer?: () => void;
+  /** Changes when a song has just landed, so the title's music can switch to the player's own theme song. */
+  songKey?: string;
+  /** True while the new-player setup or a dance party has the sound: the title's music waits. */
+  musicHold?: boolean;
 }
 
 /**
@@ -17,7 +22,7 @@ interface TitleMenuProps {
  * stage, the gears turn under it (both are the world's own showcase scene), the name and the three entries sit above and below. The overlay lets touches through
  * everywhere except the buttons.
  */
-export function TitleMenu({ toyName, ready, onChoose, onNewPlayer }: TitleMenuProps) {
+export function TitleMenu({ toyName, ready, onChoose, onNewPlayer, songKey, musicHold }: TitleMenuProps) {
   const playRef = useRef<HTMLButtonElement>(null);
   // the Play button takes focus as soon as it can be pressed, so a keyboard or a switch device is one key from the world
   useEffect(() => {
@@ -31,6 +36,8 @@ export function TitleMenu({ toyName, ready, onChoose, onNewPlayer }: TitleMenuPr
         <p className="tv-title-tag">{TITLE_TAGLINE}</p>
         {toyName ? <p className="tv-title-toy">{toyName}</p> : null}
       </header>
+      {/* not inside the header: its entrance animation would make the header the box the speaker button is positioned against */}
+      <TitleMusic songKey={songKey} hold={musicHold} />
       <div className="tv-title-btns" role="group" aria-label="Choose what to do">
         {TITLE_ENTRIES.map((e) => (
           <button
