@@ -7,13 +7,13 @@
 import { buildPrintGroup } from './kip-menu.js?v=10.0'; // the same specifier the benches use, so the browser loads ONE copy of the menu
 
 /**
- * The decided ladder (Dan, 2026-11-02; docs/specs/motion-stage-options-spec.md section 3.0): Snap -> Motion -> Pro. The ids are the viewer's stage
+ * The decided ladder (Dan, 2026-11-02; docs/specs/parts-engineering-spec.md section 1): Snap -> Motion -> Pro. The ids are the viewer's stage
  * ids (`?stage=` values, the probes) and never change; the labels follow the ladder (tests/truck-stage-ladder.test.ts).
  */
 export const TRUCK_STAGES = Object.freeze([
   Object.freeze({ id: 'snap', label: '1 · Snap (3+)' }),
   Object.freeze({ id: 'band', label: '2a · Motion (8+) Pull-Back Band' }),
-  Object.freeze({ id: 'jet', label: '2b · Motion (8+) Balloon Jet (proposal)', title: 'Proposal: balloon upright on top of mom_jet_valve_body, no dump tub (docs/specs/motion-stage-options-spec.md)' }),
+  Object.freeze({ id: 'jet', label: '2b · Motion (8+) Balloon Jet (proposal)', title: 'Proposal: balloon upright on top of mom_jet_valve_body, no dump tub (docs/specs/parts-engineering-spec.md)' }),
   Object.freeze({ id: 'pro', label: '3 · Pro (8+) Rack Steer' }),
   Object.freeze({ id: 'mech', label: '3+ · Pro Powered Add-On (10+) Smart RC X-Ray' }),
 ]);

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Kip demo selfie face: headless-Chrome checks for Phase 3 (L1 + L2 sticker) of docs/specs/kip-demo-implementation.md,
+// Kip demo selfie face: headless-Chrome checks for Phase 3 (L1 + L2 sticker) of docs/specs/parts-engineering-spec.md section 10.2,
 // plus the rounded face plate window, the background cut-out and the 2D face art staying on the plate.
 // Run: npm run e2e:kip-selfie     Exits nonzero on any failing check.
 // Uses Chrome's fake camera (--use-fake-device-for-media-stream) and a generated cartoon portrait only: no real faces.

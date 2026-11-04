@@ -1,6 +1,6 @@
 # Carousel + Little ones — real-phone / real-child run sheet
 
-Companion to [carousel-modes-ladders-spec.md](carousel-modes-ladders-spec.md) §13.3 (real-phone gate) and §13.4 (child targets), which hold the rules. Targets are copied from [play-design-spec.md](play-design-spec.md) "Quality bar and playtest measures". This sheet is values only: what the robot measured, what to set up, blanks for what people measure. Nothing in a blank has been run. Written 2026-11-03; C4 does not start until this is filled in. Dan runs the pass himself (Q6), so the bands and the number of children are his call.
+Companion to [carousel-modes-ladders-spec.md](../../specs/carousel-modes-ladders-spec.md) §13.3 (real-phone gate) and §13.4 (child targets), which hold the rules. Targets are copied from [play-design-spec.md](../../specs/play-design-spec.md) "Quality bar and playtest measures". This sheet is values only: what the robot measured, what to set up, blanks for what people measure. Nothing in a blank has been run. Written 2026-11-03; C4 does not start until this is filled in. Dan runs the pass himself (Q6), so the bands and the number of children are his call.
 
 ## Robot baseline (measured 2026-11-03)
 

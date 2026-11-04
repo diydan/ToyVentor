@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-// The decided ladder (Dan, 2026-11-02; docs/specs/motion-stage-options-spec.md section 3.0): Snap -> Motion -> Pro.
+// The decided ladder (Dan, 2026-11-02; docs/specs/parts-engineering-spec.md section 1): Snap -> Motion -> Pro.
 // Motion has two alternative cores (pull-back band, balloon jet); Pro has an optional powered add-on (Card F, the old "Mech").
 // The viewer's stage ids (`?stage=` values, the probes) never change: only the button order and the labels follow the ladder.
 // Since Workshop stage 4c the stage buttons are the Truck's declaration for the one menu (truck-menu.js), no longer markup in the bench.
