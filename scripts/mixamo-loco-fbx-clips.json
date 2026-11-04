@@ -1,0 +1,20 @@
+[
+  {
+    "id": "loco_walk_fbx",
+    "file": "Walking.fbx",
+    "label": "Walk (Mixamo, downloaded)",
+    "group": "loco",
+    "loop": true,
+    "closeLoop": 0.12,
+    "plant": false
+  },
+  {
+    "id": "loco_run_fbx",
+    "file": "Running.fbx",
+    "label": "Run (Mixamo, downloaded)",
+    "group": "loco",
+    "loop": true,
+    "closeLoop": 0.12,
+    "plant": false
+  }
+]

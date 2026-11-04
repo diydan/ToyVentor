@@ -49,6 +49,14 @@ Checked in the browser, every world, Kip beside the spot: the hint chip still ap
 
 The old big Map button (`.tv-map-fab`, 96 px at ages 2 to 4 on the first stage, hidden since the drawer's strip carries the Map) is removed: its markup in `GameCanvas.tsx`, its rules in `index.css` and its hide rule here. `tests/game-hud.test.ts` pins that the canvas no longer contains it.
 
+## 4c. Touch targets, measured (2026-11-04)
+
+The camera comes closer in landscape and the props now stand 2.8 units further back, so I measured what a fingertip has to hit in the real game (every prop's invisible tap box projected to the screen, in all six worlds, at 844 x 390 and 640 x 360):
+
+- **Props are fine.** The smallest side of any tap box is 89 px (the Toy Room cushions), the basket and the stove 106 px, the median about 160 px. (Widths of props far off to the side read larger because of perspective; the heights are the trustworthy numbers.)
+- **Controls:** the abilities are 52 x 67 px, the Kip button 54, the tool belt 58 and its tools 66, the drawer items 46 px (42 px on a phone under 480 px tall, 40 px under 400, and 36 px in Demo Mode under 400: a deliberate trade to fit the drawer on a 360 px phone, below the usual 44 px, for the grown-ups' items).
+- **Fruit were too small.** A hanging apple is 30 px across and a bush berry 20 px, and a press had to land on the sphere itself. A fruit now counts as 56 px across (`FRUIT_TOUCH_PX`, `touchRadius` in `propReactions.ts`): when no fruit is under the press, `pickFruit` takes the one the press passes within that reach, the nearest if several, hanging or fallen. It only applies where there is a real viewport to size it by, so the unit tests' bare canvases behave as before. In the real game a tap 22 px beside a 19 px berry plucks it and a tap 45 px away does not. `tests/fruit-touch.test.ts` pins it (mutation-checked, six ways).
+
 ## 5. The all-screens sweep (2026-11-04)
 
 Every screen was opened at 844 x 390 (and the drawer, Create, Pack and the PIN keypad again at 812 x 375, 667 x 375, 640 x 360 and 932 x 430) and looked at. Fine as left cards without a change: Build, Workshop (full screen by design), Worlds, Story Moods & Mic, Words & Language, Character Card, Garage, the grown-ups' hold step, the song offer, the found-part and mission-complete cards, the Map. Found and fixed, all in `src/game-hud.css`, pinned by `tests/game-hud-sweep.test.ts`:
@@ -67,5 +75,5 @@ Not looked at: the rung sheet (it opens only from the Map's ladder nodes and bel
 ## 6. Not done
 
 - The e2e scripts (all assume 390 x 844 and the old dock); `?rotate=0` and a landscape size are what they need, and the dock's buttons are now in the drawer. `scripts/e2e-game-party.mjs` still taps `.tv-map-fab` at five places; that button is gone from the markup (it was hidden since the HUD and is removed now), so it should open the drawer and tap `.tv-navstrip-btn[data-nav=map]`. (`scripts/capture-map-cards.mjs` was moved to the strip's Map button; the Map lane has fixed `scripts/e2e-trail.mjs` in its own working copy.)
-- The floating island hangs at head height over the lane: standing right under it, its cone overlaps Kip's head. It floats, so it was left in place (Dash hops Kip up to it at z 0); lifting it a little would fix it.
+- The Sky island's cone hangs down to about Kip's head. Looked at again: it floats directly above Kip, who is simply in front of it (a depth overlap, not the lane), its top is already about 21 px under the top edge of the landscape frame so lifting it would cut it off, and a cone short enough to clear his head would be a flat disc. Left as it is.
 - No real-phone pass yet: the rotate gate, thumb reach and the toy-tap tolerance need a real device.
