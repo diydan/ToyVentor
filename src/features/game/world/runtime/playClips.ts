@@ -1,7 +1,7 @@
 // Hand-authored clips for the outdoor things to do (docs/specs/playful-interactions-spec.md section 6): a snow angel, pouring from a watering can, picking and smelling flowers, offering a carrot,
 // eating a sandwich sitting down, and sitting on a swing. Authored exactly like proceduralClips.ts (keyframes baked into the Mixamo clip format) and added to the same driver bank, so they blend like any
 // other clip. Limbs are body-local unit vectors (rest is straight down), body and head Euler angles in radians (see proceduralClips.ts for the frame); a lying pose is authored at `gainFor`(real angle).
-import { ELBOW_AT_MOUTH, HAND_AT_MOUTH, bake, gainFor, type Key } from "./proceduralClips";
+import { ELBOW_AT_MOUTH, HAND_AT_MOUTH, REACH, bake, gainFor, leftArm, rightArm, type Key } from "./proceduralClips";
 import type { BakedClip, ClipBank } from "./mixamo";
 
 type V3 = readonly [number, number, number];
@@ -79,18 +79,18 @@ export const PLAY_CLIPS: ClipBank = {
   // Pour from a watering can held in the right hand: the arm comes up and out, the body leans in, a small tremble while it pours, then the arm comes down. 3 s.
   pour: bake("pour", POUR_S, false, [
     { t: 0 },
-    { t: POUR_START_S, armR: [-0.12, 0.1, 0.99], armL: [0.3, -0.7, 0.4], body: [0.14, 0, 0], head: [0.14, 0, 0] },
-    { t: 1.1, armR: [-0.14, 0.02, 0.99] }, { t: 1.5, armR: [-0.1, 0.1, 0.99] }, { t: 1.9, armR: [-0.14, 0.02, 0.99] },
-    { t: POUR_END_S, armR: [-0.12, 0.08, 0.99] },
-    { t: POUR_S, armR: REST_ARM, armL: REST_ARM, body: [0, 0, 0], head: [0, 0, 0] },
+    { t: POUR_START_S, ...rightArm(REACH.POUR_A), ...leftArm(REACH.KNEE_REST), body: [0.14, 0, 0], head: [0.14, 0, 0] },
+    { t: 1.1, ...rightArm(REACH.POUR_B) }, { t: 1.5, ...rightArm(REACH.POUR_A) }, { t: 1.9, ...rightArm(REACH.POUR_B) },
+    { t: POUR_END_S, ...rightArm(REACH.POUR_A) },
+    { t: POUR_S, armR: REST_ARM, armL: REST_ARM, elbowL: 0, elbowR: 0, body: [0, 0, 0], head: [0, 0, 0] },
   ]),
   // Bend down and pick flowers: lean forward, the right hand reaches down and closes on the stems at PICK_GRAB_S, then straighten up with them. 1.7 s.
   pick: bake("pick", PICK_S, false, [
     { t: 0 },
-    { t: 0.45, body: [0.5, 0, 0], head: [0.15, 0, 0], armR: [-0.2, -0.45, 0.85], armL: [0.3, -0.7, 0.5], hips: [0, -0.06, 0.12] },
-    { t: PICK_GRAB_S, armR: [-0.18, -0.4, 0.88] },
-    { t: 1.2, body: [0.15, 0, 0], head: [0, 0, 0], armR: [-0.2, 0.0, 0.98], armL: REST_ARM, hips: [0, 0, 0] },
-    { t: PICK_S, body: [0, 0, 0], armR: [-0.3, 0.2, 0.9] },
+    { t: 0.45, body: [0.5, 0, 0], head: [0.15, 0, 0], ...rightArm(REACH.PICK_REACH), ...leftArm(REACH.KNEE_REST), hips: [0, -0.06, 0.12] },
+    { t: PICK_GRAB_S, ...rightArm(REACH.PICK_GRAB) },
+    { t: 1.2, body: [0.15, 0, 0], head: [0, 0, 0], ...rightArm(REACH.PICK_UP), armL: REST_ARM, elbowL: 0, hips: [0, 0, 0] },
+    { t: PICK_S, body: [0, 0, 0], ...rightArm(REACH.PICK_END) },
   ]),
   // Smell the bouquet: it comes up to the face, the head tips down into it, a deep sniff (the chest rises), then a happy sway. 2.3 s.
   smell: bake("smell", SMELL_S, false, [
@@ -104,11 +104,11 @@ export const PLAY_CLIPS: ClipBank = {
   // Offer a carrot: crouch and lean forward, the right hand out low in front (the bunny takes it at OFFER_TAKE_S), the head following the bunny, then a pleased wiggle and up again. 2.7 s.
   offer: bake("offer", OFFER_S, false, [
     { t: 0 },
-    { t: 0.55, armR: [-0.12, -0.55, 0.83], armL: [0.3, -0.75, 0.45], body: [0.32, 0, 0], head: [0.25, 0, 0], hips: [0, -0.12, 0.1] },
-    { t: OFFER_TAKE_S, armR: [-0.12, -0.5, 0.86] },
-    { t: 1.5, armR: [-0.2, -0.65, 0.73], head: [0.22, 0, 0.06], hips: [0, -0.1, 0.1] },
+    { t: 0.55, ...rightArm(REACH.OFFER_OUT), ...leftArm(REACH.KNEE_REST), body: [0.32, 0, 0], head: [0.25, 0, 0], hips: [0, -0.12, 0.1] },
+    { t: OFFER_TAKE_S, ...rightArm(REACH.OFFER_OUT) },
+    { t: 1.5, ...rightArm(REACH.OFFER_WIGGLE), head: [0.22, 0, 0.06], hips: [0, -0.1, 0.1] },
     { t: 1.9, head: [0.25, 0, -0.06], body: [0.3, 0, 0] },
-    { t: OFFER_S, armR: REST_ARM, armL: REST_ARM, body: [0, 0, 0], head: [0, 0, 0], hips: [0, 0, 0] },
+    { t: OFFER_S, armR: REST_ARM, armL: REST_ARM, elbowL: 0, elbowR: 0, body: [0, 0, 0], head: [0, 0, 0], hips: [0, 0, 0] },
   ]),
   // Sit on the blanket with the legs out in front and eat a sandwich (a bite at each of BITES_S: the hand to the mouth, three chews, the hand down). 4.7 s.
   sit_eat: bake("sit_eat", SIT_EAT_S, false, [

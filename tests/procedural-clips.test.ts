@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { describe, expect, it } from "vitest";
 import { stockCol, stockSel } from "../src/features/game/world/runtime/catalog";
 import { DEFAULT_TUNING, MixamoDriver, mixPose, sampleClip, newPose, type ClipBank } from "../src/features/game/world/runtime/mixamo";
-import { BLOW_PUFFS_S, HUG_SQUEEZE_S, KICK_CONTACT_S, MALLET_COUNT, MALLET_EVERY_S, MALLET_START_S, PET_STROKES_S, PROCEDURAL_ACTIONS, PROCEDURAL_CLIPS, READ_PAGES_S, STRUM_COUNT, STRUM_EVERY_S, bake, gainFor } from "../src/features/game/world/runtime/proceduralClips";
+import { BLOW_PUFFS_S, HUG_SQUEEZE_S, KICK_CONTACT_S, MALLET_COUNT, MALLET_EVERY_S, MALLET_START_S, PET_STROKES_S, PROCEDURAL_ACTIONS, PROCEDURAL_CLIPS, READ_PAGES_S, REACH, STRUM_COUNT, STRUM_EVERY_S, bake, fistOf, gainFor } from "../src/features/game/world/runtime/proceduralClips";
 import { buildToy } from "../src/features/game/world/runtime/playerRig";
 
 // Hand-authored clips (eat, sour, belly_pat, yawn, sleep) baked into the Mixamo clip format and played by the real MixamoDriver.
@@ -19,6 +19,12 @@ function characterRig() {
 }
 const run = (d: MixamoDriver, rig: ReturnType<typeof characterRig>["rig"], seconds: number, speed = 0) => { for (let i = 0; i < Math.round(seconds * 60); i++) d.update(rig, 1 / 60, speed); };
 const pose = (clip: ClipBank[string], t: number) => { const p = newPose(); sampleClip(clip, t, p); return p; };
+/** Where a fist is at a pose, from its shoulder, by the driver's own model of the arm (`fistOf`): how far OUT from the body (each arm's own side), how far DOWN from the shoulder and how far FORWARD. */
+const fist = (p: ReturnType<typeof pose>, side: "L" | "R") => {
+  const a = side === "R" ? p.armR : p.armL, bend = side === "R" ? p.bend.elbowR : p.bend.elbowL;
+  const f = fistOf([side === "R" ? a.x : -a.x, a.y, a.z], bend);   // the model is the right arm's: outward is -x
+  return { out: -f[0], down: -f[1], fwd: f[2], reach: Math.hypot(f[0], f[1], f[2]) };
+};
 
 describe("the baked clips are well formed", () => {
   it("has the sixteen actions and each is a real clip in the Mixamo format", () => {
@@ -114,14 +120,18 @@ describe("hug: both arms reach forward and close in", () => {
   it("the arms open forward, then squeeze closer together at HUG_SQUEEZE_S, both pointing forward and inward", () => {
     const open = pose(c, 0.35), squeeze = pose(c, HUG_SQUEEZE_S);
     for (const p of [open, squeeze]) {
-      expect(p.armL.z).toBeGreaterThan(0.7);                    // forward (+z)
-      expect(p.armR.z).toBeGreaterThan(0.7);
-      expect(p.armL.x).toBeGreaterThan(0);                      // each on its own side: the figure's left is +x
-      expect(p.armR.x).toBeLessThan(0);
+      for (const side of ["L", "R"] as const) {
+        expect(fist(p, side).fwd, side).toBeGreaterThan(0.4);   // the fists are out in front (+z)
+        expect(fist(p, side).out, side).toBeGreaterThan(0.05);  // each on its own side: the figure's left is +x
+        expect(fist(p, side).reach, `${side} within the arm's reach`).toBeLessThan(0.85);
+      }
+      expect(p.bend.elbowL, "the elbows are folded, not stiff").toBeGreaterThan(0.8);
+      expect(p.bend.elbowR).toBeGreaterThan(0.8);
     }
-    expect(squeeze.armL.x).toBeLessThan(open.armL.x);           // closer in
-    expect(-squeeze.armR.x).toBeLessThan(-open.armR.x);
-    expect(squeeze.armL.x).toBeCloseTo(-squeeze.armR.x, 6);     // symmetric: a hug, not a one-armed wave
+    expect(fist(squeeze, "L").out).toBeLessThan(fist(open, "L").out);     // closer in
+    expect(fist(squeeze, "R").out).toBeLessThan(fist(open, "R").out);
+    expect(squeeze.armL.x).toBeCloseTo(-squeeze.armR.x, 6);               // symmetric: a hug, not a one-armed wave
+    expect(squeeze.bend.elbowL).toBeCloseTo(squeeze.bend.elbowR, 6);
   });
   it("the body leans in and the head tips down at the squeeze, and squeezes twice (the arms come in, ease off, come in again)", () => {
     expect(pose(c, HUG_SQUEEZE_S).body.angleTo(new THREE.Quaternion())).toBeGreaterThan(0.12);
@@ -181,35 +191,35 @@ describe("read: a book held in both hands, a page turned at each of READ_PAGES_S
   const c = PROCEDURAL_CLIPS.read!;
   it("holds the book forward at the chest with the head down on the page", () => {
     const p = pose(c, 2);
-    expect(p.armL.z).toBeGreaterThan(0.7);
-    expect(p.armR.z).toBeGreaterThan(0.7);
-    expect(p.armL.y).toBeLessThan(-0.3);
+    for (const side of ["L", "R"] as const) { expect(fist(p, side).fwd, side).toBeGreaterThan(0.5); expect(fist(p, side).down, side).toBeGreaterThan(0.3); }
+    expect(p.bend.elbowL, "the book is held with the elbows folded").toBeGreaterThan(0.8);
+    expect(p.bend.elbowR).toBeGreaterThan(0.8);
     expect(2 * Math.asin(Math.abs(p.head.x))).toBeGreaterThan(0.2);          // head tipped down
   });
   it("at each page the right hand flicks up and the head lifts, and between pages the hand is back on the book", () => {
     for (const t of READ_PAGES_S) {
       const p = pose(c, t);
-      expect(p.armR.y, `page at ${t}`).toBeGreaterThan(-0.2);
+      expect(fist(p, "R").down, `page at ${t}`).toBeLessThan(0.2);                    // the fist is up level with the shoulder's own height or higher
       expect(2 * Math.asin(Math.abs(p.head.x)), `head at ${t}`).toBeLessThan(0.15);
       const between = pose(c, t + 0.6);
-      expect(between.armR.y, `between after ${t}`).toBeLessThan(-0.4);
+      expect(fist(between, "R").down, `between after ${t}`).toBeGreaterThan(0.4);
     }
     expect(READ_PAGES_S).toHaveLength(3);
   });
   it("the left hand never leaves the book", () => {
-    for (let t = 0.6; t <= 6.0; t += 0.2) expect(pose(c, t).armL.z, `at ${t}`).toBeGreaterThan(0.7);
+    for (let t = 0.6; t <= 6.0; t += 0.2) expect(fist(pose(c, t), "L").fwd, `at ${t}`).toBeGreaterThan(0.5);
   });
 });
 
 describe("strum: the left hand on the neck, the right hand strumming in time", () => {
   const c = PROCEDURAL_CLIPS.strum!;
   it("the left hand is out front on the neck the whole time", () => {
-    for (let t = 0.3; t <= 4.0; t += 0.2) expect(pose(c, t).armL.z, `at ${t}`).toBeGreaterThan(0.9);
+    for (let t = 0.3; t <= 4.0; t += 0.2) expect(fist(pose(c, t), "L").fwd, `at ${t}`).toBeGreaterThan(0.7);
   });
   it("the right hand alternates down and up on every strum, STRUM_COUNT times", () => {
     const ys: number[] = [];
-    for (let i = 0; i < STRUM_COUNT; i++) ys.push(pose(c, 0.2 + (i + 1) * STRUM_EVERY_S).armR.y);
-    for (let i = 0; i < ys.length; i++) expect(ys[i]!, `strum ${i}`).toBeCloseTo(i % 2 === 0 ? -0.72 / Math.hypot(0.3, 0.72, 0.62) : -0.35 / Math.hypot(0.3, 0.35, 0.9), 1);                // (30 fps frames: a strum time between two frames is a hair off its key)
+    for (let i = 0; i < STRUM_COUNT; i++) ys.push(fist(pose(c, 0.2 + (i + 1) * STRUM_EVERY_S), "R").down);
+    for (let i = 0; i < ys.length; i++) expect(ys[i]!, `strum ${i}`).toBeCloseTo(-(i % 2 === 0 ? REACH.STRUM_DOWN.fist[1] : REACH.STRUM_UP.fist[1]), 1);                // (30 fps frames: a strum time between two frames is a hair off its key)
     expect(STRUM_COUNT * STRUM_EVERY_S + 0.2).toBeLessThan(c.duration);
   });
   it("the body sways side to side with the strumming and the hips bob", () => {
@@ -223,11 +233,12 @@ describe("blow: the wand at the mouth, four puffs", () => {
   const c = PROCEDURAL_CLIPS.blow!;
   it("the right hand comes up to the mouth and stays there through the puffs", () => {
     for (const t of BLOW_PUFFS_S) {
-      const p = pose(c, t);
-      expect(p.armR.y, `at ${t}`).toBeGreaterThan(0.3);
-      expect(p.armR.z, `at ${t}`).toBeGreaterThan(0.7);
+      const f = fist(pose(c, t), "R");
+      expect(f.down, `at ${t}`).toBeLessThan(-0.25);                          // the fist is up above the shoulder, at the mouth's height
+      expect(f.fwd, `at ${t}`).toBeGreaterThan(0.5);
+      expect(pose(c, t).bend.elbowR, `elbow at ${t}`).toBeGreaterThan(0.8);
     }
-    expect(pose(c, 0.1).armR.y).toBeLessThan(0);                              // still on its way up at the very start
+    expect(fist(pose(c, 0.1), "R").down).toBeGreaterThan(0);                  // still on its way up at the very start
   });
   it("leans in before each puff and back on it, four times", () => {
     for (const t of BLOW_PUFFS_S) {
@@ -244,13 +255,14 @@ describe("pet: a crouch with the right hand stroking", () => {
     const p = pose(c, 1.0);
     expect(2 * Math.asin(p.body.x)).toBeGreaterThan(0.25);
     expect(p.hips.y).toBeLessThan(-0.05);
-    expect(p.armR.z).toBeGreaterThan(0.6);
-    expect(p.armR.y).toBeLessThan(-0.4);
-    expect(p.armR.y).toBeGreaterThan(-0.9);
-    expect(pose(c, 0.45).armR.y).toBeLessThan(-0.4);           // already reaching down when the crouch is complete
+    expect(fist(p, "R").fwd).toBeGreaterThan(0.45);
+    expect(fist(p, "R").down).toBeGreaterThan(0.3);
+    expect(fist(p, "R").down).toBeLessThan(0.8);
+    expect(fist(pose(c, 0.45), "R").down).toBeGreaterThan(0.3);   // already reaching down when the crouch is complete
+    expect(pose(c, 1.0).bend.elbowR, "the stroking arm is bent").toBeGreaterThan(0.3);
   });
   it("strokes four times: the hand goes down and back up, once for each of PET_STROKES_S", () => {
-    const ys = Array.from({ length: 61 }, (_, i) => pose(c, 0.5 + (i / 60) * 1.6).armR.y);
+    const ys = Array.from({ length: 61 }, (_, i) => -fist(pose(c, 0.5 + (i / 60) * 1.6), "R").down);
     let peaks = 0;
     for (let i = 1; i < ys.length - 1; i++) if (ys[i]! > ys[i - 1]! && ys[i]! >= ys[i + 1]!) peaks++;
     expect(peaks).toBeGreaterThanOrEqual(3);
@@ -263,11 +275,14 @@ describe("mallet: both hands strike in turn", () => {
   it("the arms are out in front, and on every stroke one comes down hard while the other waits up: left on the even strokes, right on the odd", () => {
     for (let i = 0; i < MALLET_COUNT; i++) {
       const p = pose(c, MALLET_START_S + i * MALLET_EVERY_S);
-      const [down, up] = i % 2 === 0 ? [p.armL, p.armR] : [p.armR, p.armL];
-      expect(down.y, `stroke ${i} down`).toBeLessThan(-0.7);
-      expect(up.y, `stroke ${i} up`).toBeGreaterThan(-0.5);
-      expect(down.z, `stroke ${i} forward`).toBeGreaterThan(0.4);
-      expect(up.z).toBeGreaterThan(0.8);
+      const [down, up] = i % 2 === 0 ? [fist(p, "L"), fist(p, "R")] : [fist(p, "R"), fist(p, "L")];
+      expect(down.down, `stroke ${i} down`).toBeGreaterThan(0.55);
+      expect(up.down, `stroke ${i} up`).toBeLessThan(0.35);
+      expect(down.fwd, `stroke ${i} forward`).toBeGreaterThan(0.35);
+      expect(up.fwd).toBeGreaterThan(0.6);
+      const [bd, bu] = i % 2 === 0 ? [p.bend.elbowL, p.bend.elbowR] : [p.bend.elbowR, p.bend.elbowL];
+      expect(bd, `stroke ${i}: the striking arm is nearly straight`).toBeLessThan(0.8);
+      expect(bu, `stroke ${i}: the waiting arm is folded`).toBeGreaterThan(0.8);
     }
   });
   it("the body sways with the beat, side to side, and the clip is longer than its last stroke", () => {
@@ -361,11 +376,11 @@ describe("wiring", () => {
 
 describe("elbow, knee and ankle bends in hand-built clips (Dan: \"for the ankles and elbows do this\")", () => {
   it("a clip with no bends has none, so every clip that was not given any plays exactly as it did", () => {
-    for (const name of ["hug", "kick", "cheer", "yawn", "sour", "read", "strum", "mop", "tidy", "oops"]) {
+    for (const name of ["kick", "cheer", "yawn", "sour", "tidy", "oops", "sleep"]) {
       const c = PROCEDURAL_CLIPS[name];
       if (c) expect(c.bends, name).toBeUndefined();
     }
-    const p = pose(PROCEDURAL_CLIPS.hug!, 0.8);
+    const p = pose(PROCEDURAL_CLIPS.cheer!, 0.8);
     expect(Object.values(p.bend)).toEqual([0, 0, 0, 0, 0, 0]);
   });
   it("bake() resolves a bend like a direction: an omitted one carries the previous key's value, it eases between keys, and only the joint asked for bends", () => {
@@ -384,7 +399,7 @@ describe("elbow, knee and ankle bends in hand-built clips (Dan: \"for the ankles
   });
   it("the bends blend with the clip they are mixed with (a clip without bends fades them out)", () => {
     const c = bake("t", 1, false, [{ t: 0 }, { t: 0.2, elbowR: 2 }, { t: 1, elbowR: 2 }]);
-    const a = pose(c, 0.6), b = pose(PROCEDURAL_CLIPS.hug!, 0.6);
+    const a = pose(c, 0.6), b = pose(PROCEDURAL_CLIPS.cheer!, 0.6);
     const mixed = newPose(); mixed.bend.elbowR = a.bend.elbowR;
     mixPose(mixed, b, 0.25);
     expect(mixed.bend.elbowR).toBeCloseTo(2 * 0.75, 6);
