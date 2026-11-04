@@ -154,6 +154,14 @@ interface Faller { mesh: THREE.Mesh; vx: number; vy: number; vz: number; ground:
 export interface FruitRef { mesh: THREE.Object3D; kind: FruitKind }
 /** How much bigger a carried fruit is drawn, so it reads under a finger. */
 export const CARRY_SCALE = 1.25;
+/** A fruit counts as at least this many CSS px across when a finger lands near it (measured on a 390 px tall phone held sideways: a hanging apple is 30 px across and a bush berry 20 px, a fingertip is 44 and up). */
+export const FRUIT_TOUCH_PX = 56;
+/** The radius (world units) a fruit counts as having: its real one, or the one that makes it `px` across on the screen at `distance` from the camera, whichever is bigger. A bad number gives back the real radius. */
+export function touchRadius(radius: number, distance: number, fovDeg: number, viewHeightPx: number, px = FRUIT_TOUCH_PX): number {
+  if (!(distance > 0) || !(fovDeg > 0) || !(viewHeightPx > 0) || !(radius > 0)) return radius;
+  const unitsPerPx = (2 * Math.tan((fovDeg * Math.PI) / 360) * distance) / viewHeightPx;
+  return Math.max(radius, (px / 2) * unitsPerPx);
+}
 
 export interface PropFxDeps {
   /** The world root: loose things (fruit, rain) live here so they do not sway with the prop they fell from. */
@@ -602,7 +610,38 @@ export function createPropFx(deps: PropFxDeps) {
       const k = fruitKindOf(h.object);
       if (k && h.object.visible) return { mesh: h.object, kind: k };
     }
-    return null;
+    return nearestFruit(ray);
+  }
+  /**
+   * No fruit under the ray exactly: the one whose bigger "fingertip" radius (`touchRadius`) the ray passes through, the nearest to the ray when several. Only when there is a real viewport to size it by
+   * (a perspective camera and a canvas with a height), so anything without one behaves exactly as before.
+   */
+  const _c = new THREE.Vector3();
+  const _ws = new THREE.Vector3();
+  function nearestFruit(ray: THREE.Raycaster): FruitRef | null {
+    const cam = deps.camera() as THREE.PerspectiveCamera;
+    const viewH = (deps.canvas as { clientHeight?: number }).clientHeight ?? 0;
+    if (!cam || !cam.isPerspectiveCamera || !(viewH > 0)) return null;
+    let best: FruitRef | null = null;
+    let bestMiss = Infinity;
+    const consider = (mesh: THREE.Object3D | null) => {
+      if (!mesh || !mesh.visible) return;
+      const kind = fruitKindOf(mesh);
+      if (!kind) return;
+      const geo = (mesh as THREE.Mesh).geometry;
+      if (!geo) return;
+      if (!geo.boundingSphere) geo.computeBoundingSphere();
+      mesh.getWorldPosition(_c);
+      mesh.getWorldScale(_ws);
+      const radius = (geo.boundingSphere?.radius ?? 0) * Math.max(_ws.x, _ws.y, _ws.z);        // (a fruit is a sphere about its own origin, a pear stretched)
+      const along = _c.clone().sub(ray.ray.origin).dot(ray.ray.direction);
+      if (!(along > 0)) return;                                   // behind the finger's ray
+      const miss = ray.ray.distanceToPoint(_c);
+      if (miss <= touchRadius(radius, along, cam.fov, viewH) && miss < bestMiss) { best = { mesh, kind }; bestMiss = miss; }
+    };
+    for (const i of insts) for (const sl of i.slots) consider(sl.mesh);
+    for (const f of fallers) if (f.state < 3) consider(f.mesh);
+    return best;
   }
   const fallerOf = (ref: FruitRef) => fallers.find((f) => f.mesh === ref.mesh);
   /**
