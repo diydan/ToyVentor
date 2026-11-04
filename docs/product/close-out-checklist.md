@@ -172,7 +172,7 @@ Dan: browser and installed web app only, no store app. What is in place (2026-11
 | A song and a dance | live site | starter songs (no spend) | the party plays the starter songs | [ ] |
 | One line on the custom model | no demo | the training ladder above | say only what the ladder allows | [ ] |
 
-**Say once, out loud** (from [demo-script.md](demo-script.md) and the Forge lane's checklist): this demo uses Meta's hosted model with adults operating it; for children the same features run on a self-hosted model. Smart face and the photo scan send one photo to the hosted model: use an adult's face and a toy, not a child.
+**Say once, out loud** (from [demo-script.md](demo-script.md) and the Forge lane's checklist): this demo is meant to be operated by an adult and is not for children's use. Making a part from words runs on our own self-hosted models (the tuned Muse Glimmer first, our own base second); the photo scan and outline, generated art and skins, voice input, songs and some text features still call Meta's hosted model, whose terms are for adults 18+ (decision 0008, option B, for the demo window only). Smart face and the photo scan send one photo to the hosted model: use an adult's face and a toy, not a child. Child-facing production moves those to our own models first.
 
 **Do not say:** that Glimmer is in production or the default; that anything is trained; that the app complies with children's privacy law; that parts are safe because they are AI-made (the gates check printability); "tracked AR" or "real-time detection" for the camera flow. If you record from the Mac, [qa.md](qa.md) 4.6 is the setup list.
 

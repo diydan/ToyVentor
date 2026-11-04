@@ -6,6 +6,14 @@ toy in AR and a mini game. Started as an entry to the Meta Global AI
 Developer Hackathon (indie track), November 2026; now open source under
 Apache-2.0.
 
+> **Demo posture.** This build is meant to be operated by an adult and is not for
+> children's use. Making a part from words runs on our own self-hosted,
+> fine-tuned Muse Glimmer by default. Photo scan and outline, generated art and
+> skins, voice input, songs and some text features still call Meta's hosted Model
+> API, whose terms are for adults 18+ only ([decision 0008](docs/decisions/0008-meta-models-and-under-18-users.md),
+> option B, for the demo window only). Child-facing production moves those to our
+> own models first (option C). Nothing here is a claim of child safety.
+
 Docs: [index](docs/README.md) · [vision](docs/product/vision.md) ·
 [spec](docs/product/spec.md) · [plan](docs/product/plan.md) ·
 [wireframe (archived)](docs/archive/wireframe.md) · [Snap](docs/parts/snap.md) · [Pro](docs/parts/pro.md) ·
