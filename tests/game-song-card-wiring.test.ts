@@ -16,14 +16,16 @@ describe("GameCanvas offers the song when a mission is solved", () => {
   });
   it("is quiet unless the route says it is on, and does not offer over a song or a party already on", () => {
     expect(canvas).toMatch(/phase === "writing" \|\| phase === "making" \|\| phase === "ready" \|\| phase === "dancing"/);
-    expect(canvas).toMatch(/void s\.flow\.isOn\(\)\.then\(\(on\) => \{\s*if \(!on\) return;/);
+    expect(canvas).toMatch(/void s\.flow\.canMake\(\)\.then\(\(on\) => \{[^\n]*\n\s*if \(!on\) return;/);
   });
   it("counts the tap on the offer as the gesture that lets the song play later", () => {
     expect(canvas).toMatch(/const makeSong = useCallback\(\(\) => \{\s*noteGesture\(\);/);
   });
   it("hands the party the game's own audio context and the engine's dance hooks", () => {
     expect(canvas).toContain("ctx: () => gameAudioCtx()");
-    expect(canvas).toContain("engineRef.current?.partyDanceStart(time)");
+    expect(canvas).toContain("engineRef.current?.partyDanceStart(source)");
+    expect(canvas).toContain("engineRef.current?.partyAddClips(clips)");
+    expect(canvas).toContain("createDanceLibrary(");
     expect(canvas).toContain("engineRef.current?.partyDanceStop()");
     expect(canvas).toContain("engineRef.current?.partyMusicDuck(on)");
   });
@@ -36,15 +38,17 @@ describe("GameCanvas offers the song when a mission is solved", () => {
 });
 
 describe("the engine and the world carry the dance hooks", () => {
-  it("the world handle starts a beat dance on the driver, turns the character to the camera like a celebration, and fades its own music", () => {
+  it("the world handle starts a beat dance from a source, turns the character to the camera like a celebration, loads dances into the bank, and fades its own music", () => {
     const world = read("src/features/game/world/runtime/world.ts");
-    expect(world).toMatch(/partyDanceStart:function\(time: \(\)=>number\)\{if\(!\(mix&&!reduce&&P\.rig&&mix\.canDrive\(P\.rig\)&&mix\.startBeatDance\("dance",time\)\)\)return false;if\(P\.danceBack==null\)\{P\.danceBack=P\.tface;P\.tface=-Math\.PI\/2\}return true\}/);
+    expect(world).toMatch(/partyDanceStart:function\(source: BeatSource\)\{if\(!\(mix&&!reduce&&P\.rig&&mix\.canDrive\(P\.rig\)&&mix\.startBeatSource\(source\)\)\)return false;if\(P\.danceBack==null\)\{P\.danceBack=P\.tface;P\.tface=-Math\.PI\/2\}return true\}/);
+    expect(world).toContain("partyAddClips:function(clips: Record<string,BakedClip>){if(mix)mix.addClips(clips)}");
     expect(world).toContain("partyDanceStop:function(){if(mix)mix.stopBeatDance()}");
     expect(world).toMatch(/partyMusicDuck:function\(on: boolean\)\{if\(MUS\.on\)musGain\(on\?0:\(paused\?0:\(sound\?\.7:0\)\),\.4\)\}/);
   });
   it("the engine exposes them and they are safe after dispose", () => {
     const engine = read("src/features/game/world/engine.ts");
-    expect(engine).toContain("partyDanceStart: (time) => (disposed ? false : (hooks()?.partyDanceStart?.(time) ?? false))");
+    expect(engine).toContain("partyDanceStart: (source) => (disposed ? false : (hooks()?.partyDanceStart?.(source) ?? false))");
+    expect(engine).toMatch(/partyAddClips: \(clips\) => \{\s*if \(!disposed\) hooks\(\)\?\.partyAddClips\?\.\(clips\);/);
     expect(engine).toMatch(/partyDanceStop: \(\) => \{\s*if \(!disposed\) hooks\(\)\?\.partyDanceStop\?\.\(\);/);
     expect(engine).toMatch(/partyMusicDuck: \(on\) => \{\s*if \(!disposed\) hooks\(\)\?\.partyMusicDuck\?\.\(on\);/);
   });
@@ -56,8 +60,8 @@ describe("the card asks only the app's own route and offers nothing to a child i
     expect(flow).toContain('deps.url ?? "/api/theme-song"');
     expect(flow).not.toMatch(/mureka\.ai|api\.meta|authorization|MODEL_API_KEY/i);
   });
-  it("sends only the level sentence and the kind", () => {
-    expect(flow).toContain("JSON.stringify({ description: text, kind })");
+  it("sends only the sentence, the kind and one key per tap", () => {
+    expect(flow).toContain("JSON.stringify({ description: text, kind, key: newKey() })");
   });
   it("the card has labelled controls and 56 px buttons", () => {
     const css = read("src/index.css");

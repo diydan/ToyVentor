@@ -273,7 +273,7 @@ export function mixPose(into: Pose, other: Pose, w: number): void {
 /* ---------- driving the rig ---------- */
 
 /** The baked Mixamo gestures, then the hand-authored ones (runtime/proceduralClips.ts: eat, sour, belly_pat, yawn, and sleep, which is a HELD pose). */
-export type MixAction = "dance" | "nod" | "no" | "sneak" | "sad" | "eat" | "sour" | "belly_pat" | "yawn" | "sleep" | "hug" | "kick" | "cheer" | "read" | "strum" | "blow" | "pet" | "mallet";
+export type MixAction = "dance" | "nod" | "no" | "sneak" | "sad" | "eat" | "sour" | "belly_pat" | "yawn" | "sleep" | "hug" | "kick" | "cheer" | "read" | "strum" | "blow" | "pet" | "mallet" | "oops" | "mop" | "tidy";
 
 interface Joints {
   g: THREE.Object3D;
@@ -306,6 +306,11 @@ const ACTION_FADE = 0.28;
 /** The in-game dance party: the dance eases in over half a second and out over 0.4 s. */
 const BEAT_FADE_IN = 0.5;
 const BEAT_FADE_OUT = 0.4;
+/** Changing from one dance to the next at a bar line: the old pose is held and melts into the new dance over this long. */
+const BEAT_CROSSFADE = 0.3;
+
+/** What a beat dance asks for each frame: which clip (by bank name) and how far into it, in seconds. `null` holds the last pose (nothing to say yet). */
+export type BeatSource = () => { name: string; time: number } | null;
 /** A held pose (sleep) eases in slowly and wakes a little faster. */
 const HOLD_FADE_IN = 0.8;
 const HOLD_FADE_OUT = 0.6;
@@ -344,9 +349,10 @@ export class MixamoDriver {
   /** A pose that stays until releaseHold(): w eases 0 to 1 while it is held and back to 0 while it is leaving. */
   private held: { clip: BakedClip; t: number; w: number; leaving: boolean } | null = null;
   /** A dance locked to a SONG clock (the dance party): sampled at whatever time `time()` answers each frame, not at a clock of its own, so it cannot drift from the sound. */
-  private beat: { clip: BakedClip; time: () => number; w: number; leaving: boolean } | null = null;
+  private beat: { source: BeatSource; w: number; leaving: boolean; cur: BakedClip | null; curTime: number; prev: { clip: BakedClip; time: number; xf: number } | null } | null = null;
   private readonly p = newPose();
   private readonly a = newPose();
+  private readonly b = newPose();
   private readonly q = new THREE.Quaternion();
   private readonly q2 = new THREE.Quaternion();
   private readonly qe = new THREE.Quaternion();
@@ -367,24 +373,36 @@ export class MixamoDriver {
     return true;
   }
 
-  /** The name of the gesture or beat dance in progress. A beat dance reports itself as its clip (`dance`), so the camera push and the face-the-camera turn that a celebration gets apply to a party too. */
-  get busyAction(): string | null { return this.beat && !this.beat.leaving ? this.beat.clip.name : this.action ? this.action.clip.name : null; }
+  /** The name of the gesture or beat dance in progress. A beat dance reports itself as `dance` whichever clip it is on, so the camera push and the face-the-camera turn that a celebration gets apply to a party too. */
+  get busyAction(): string | null { return this.beat && !this.beat.leaving ? "dance" : this.action ? this.action.clip.name : null; }
+
+  /** Add clips to the bank after the driver was made (the dance party loads its dances on demand). A name already in the bank is replaced. */
+  addClips(clips: Record<string, BakedClip>): void { Object.assign(this.bank, clips); }
+  /** Is this clip in the bank? */
+  hasClip(name: string): boolean { return !!this.bank[name]; }
 
   /**
-   * Start a dance that follows a song's clock: every frame the clip is sampled at `time()` seconds (looped by the clip), eased in over half a second. A one-shot in progress is
-   * replaced. Walking pulls the toy out of it (the song goes on). Returns false if the clip is not in the bank or is a one-frame pose.
+   * Start a dance that follows a song's clock: every frame `source` says which clip and how far into it (in seconds, looped by the clip); a change of clip is a short cross-fade.
+   * It eases in over half a second, replaces a one-shot in progress, and walking pulls the toy out of it (the song goes on). Returns false if the source's first clip is not in the bank or is a one-frame pose.
    */
-  startBeatDance(name: MixAction, time: () => number): boolean {
-    const clip = this.bank[name];
-    if (!clip || clip.pose) return false;
-    this.beat = { clip, time, w: this.beat && !this.beat.leaving ? this.beat.w : 0, leaving: false };
+  startBeatSource(source: BeatSource): boolean {
+    const first = source();
+    const clip = first ? this.bank[first.name] : undefined;
+    if (!first || !clip || clip.pose) return false;
+    this.beat = { source, w: this.beat && !this.beat.leaving ? this.beat.w : 0, leaving: false, cur: clip, curTime: first.time, prev: null };
     this.action = null;
     return true;
+  }
+  /** One clip on a song's clock: `time()` is the seconds into the clip. The same as `startBeatSource` with a source that never changes clip. */
+  startBeatDance(name: MixAction | string, time: () => number): boolean {
+    return this.startBeatSource(() => ({ name, time: time() }));
   }
   /** Ease the beat dance out; the rig is back to idle when it has gone. Safe to call when none is on. */
   stopBeatDance(): void { if (this.beat) this.beat.leaving = true; }
   /** True while a beat dance is on (and not being eased out). */
   get beatDancing(): boolean { return !!this.beat && !this.beat.leaving; }
+  /** The bank name of the clip the beat dance is on now, or null. */
+  get beatClip(): string | null { return this.beat && !this.beat.leaving && this.beat.cur ? this.beat.cur.name : null; }
 
   /**
    * Take a pose and keep it (looping) until releaseHold(): the toy lies down and sleeps until it is woken. Eases in, replaces any one-shot, and (unlike
@@ -451,9 +469,27 @@ export class MixamoDriver {
     const bd = this.beat;
     if (bd) {
       bd.w = Math.max(0, Math.min(1, bd.w + (bd.leaving ? -dt / BEAT_FADE_OUT : dt / BEAT_FADE_IN)));
-      const bt = bd.time();
-      sampleClip(bd.clip, Number.isFinite(bt) ? bt : 0, this.a);
-      mixPose(p, this.a, smooth(0, 1, bd.w) * (1 - smooth(0.4, 1.2, speed)));
+      const want = bd.leaving ? null : bd.source();
+      if (want && Number.isFinite(want.time)) {
+        const clip = bank[want.name];
+        if (clip && !clip.pose) {
+          if (clip !== bd.cur && bd.cur) bd.prev = { clip: bd.cur, time: bd.curTime, xf: 0 }; // a new dance: the old pose melts into it
+          bd.cur = clip;
+          bd.curTime = want.time;
+        }
+      }
+      if (bd.cur) {
+        sampleClip(bd.cur, bd.curTime, this.a);
+        if (bd.prev) {
+          bd.prev.xf = Math.min(1, bd.prev.xf + dt / BEAT_CROSSFADE);
+          sampleClip(bd.prev.clip, bd.prev.time, this.b);
+          mixPose(this.b, this.a, smooth(0, 1, bd.prev.xf)); // from the old pose to the new
+          if (bd.prev.xf >= 1) bd.prev = null;
+          mixPose(p, this.b, smooth(0, 1, bd.w) * (1 - smooth(0.4, 1.2, speed)));
+        } else {
+          mixPose(p, this.a, smooth(0, 1, bd.w) * (1 - smooth(0.4, 1.2, speed)));
+        }
+      }
       if (bd.leaving && bd.w <= 0) this.beat = null;
     }
     this.apply(j, p);
