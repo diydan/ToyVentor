@@ -19,6 +19,7 @@
     "e2e:bench-lifecycle": "node scripts/e2e-bench-lifecycle.mjs",
     "e2e:bench-stage": "node scripts/e2e-bench-stage.mjs",
     "e2e:truck-drive": "node scripts/e2e-truck-drive.mjs",
+    "e2e:yard-bench": "node scripts/e2e-yard-bench.mjs",
     "e2e:truck-band": "node scripts/e2e-truck-band.mjs",
     "e2e:truck-print": "node scripts/e2e-truck-print.mjs",
     "build": "tsc --noEmit && vite build && rm -f dist/toyventor/.dev.vars",
