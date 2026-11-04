@@ -265,6 +265,8 @@ Still open:
 
 > **State of the CAD this sheet tests (2026-11-03):** `verify_band_jet.py` `8/8` PASS, `Gate G1` `13/13`, all `205` parts pass the part gate, and the served copies in `public/kip/partspec/` match their validation reports (`kip-validation-index`: `159` of `159`). Nothing has been printed yet, so every number below marked *predicted* is a model result that the print is allowed to contradict.
 
+> **Fill-in sheet:** [motion-print-test-runsheet.md](motion-print-test-runsheet.md) is the values-only companion to this section (print manifest with sliced weights and times, predictions at the sliced truck mass of about `109 g`, blanks for the measured results). This section holds the procedures and pass rules; the run sheet holds the numbers. Predictions there use `109 g` (`15%` infill); the tables below use `150 g` solid, so the same insert reads `1.9x` there and `1.4x` here.
+
 **Purpose.** Settle what the CAD cannot: (A) does the printed jet seal and move the truck, and how does a real balloon behave on the collar; (B) does the pull-back band core wind, lock, coast and keep its band on the drum; (C) which wheel helps.
 
 ### 10.1 What to print and gather
