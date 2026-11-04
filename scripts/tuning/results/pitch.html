@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Forge tuning — hackathon pitch</title>
+<style>
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:#fff;color:#1a1d21;font:13px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+main{max-width:780px;margin:0 auto;padding:28px 28px 40px}
+h1{font-size:22px;margin:0;letter-spacing:-.01em}
+.sub{color:#444;margin:4px 0 2px;font-size:13px}
+.meta{color:#666;font-size:11.5px;margin:0 0 12px}
+h2{font-size:13px;margin:16px 0 4px;text-transform:none;border-top:1px solid #ddd;padding-top:10px}
+p{margin:5px 0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:640px){.grid2{grid-template-columns:1fr}}
+table{border-collapse:collapse;width:100%;font-size:12px;margin:6px 0}
+th,td{border:1px solid #ccc;padding:4px 6px;text-align:center}
+th{background:#f2f2f2}
+td.row,th.row{text-align:left}
+td.pass{color:#0f6b3d;font-weight:700}
+.figs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0}
+@media(max-width:640px){.figs{grid-template-columns:1fr}}
+figure{margin:0;border:1px solid #ddd;border-radius:8px;padding:8px 10px 6px}
+figcaption{font-size:11.5px;color:#333;margin:0 0 4px}
+figcaption b{display:block;font-size:12px}
+svg{display:block;width:100%;height:auto}
+svg text{font:11px -apple-system,"Segoe UI",Helvetica,Arial,sans-serif;fill:#333}
+svg .m{fill:#777;font-size:10px}
+svg .axis{stroke:#bbb;stroke-width:1}
+svg .tick{stroke:#e3e3e3;stroke-width:1}
+.bar-base{fill:#5d6470}.bar-tuned{fill:#174a8b}.bar-best{fill:#14724a}
+.passline{stroke:#14724a;stroke-width:1.2;stroke-dasharray:4 3}
+.dot{fill:#174a8b}.dot-best{fill:#14724a}
+.range{stroke:#174a8b;stroke-width:3;stroke-linecap:round}
+.small{font-size:11.5px;color:#555}
+ul{margin:4px 0 4px 18px;padding:0}
+li{margin:2px 0}
+code{font-size:11.5px;background:#f2f2f2;padding:0 4px;border-radius:4px}
+@media print{main{padding:0;max-width:none}h2{break-after:avoid}table{break-inside:avoid}}
+</style></head><body><main>
+<h1>Forge: type a wish, wear it, print it</h1>
+<p class="sub">You open Make from words and type what you want to wear, like <i>a pink princess hat</i> or <i>I want to be a frog</i>. It thinks for about 10–15 seconds and shows a little hat or animal head that fits your toy. You preview it, try it on, then print it with a grown-up's OK to snap onto the real toy. A brand, rude word, or phone number just gets a calm no and another try.</p>
+<p class="meta">ToyVentor Forge &middot; hackathon pitch &middot; 16 eval runs (v2 below) &middot; 2026-11-04</p>
+
+<h2>How it works</h2>
+<p>Wish &rarr; Muse Glimmer 30B (self-hosted LoRA) &rarr; one small JSON recipe + 7-language names &rarr; deterministic compiler + print gates &rarr; printable STL. The model never emits mesh; code builds and checks it. Scope now: crown (hat) or head only; vehicle slots and hand still go to the base. One wish = one call; a repair resends the failed recipe with gate feedback, max 4 tries.</p>
+
+<h2>How it was trained</h2>
+<p>QLoRA fine-tune (Unsloth, Modal L40S/H100, 1–2 epochs, LR 2e-4, reasoning strength low) on 910 &rarr; 1,014 &rarr; 1,754 wish&rarr;recipe pairs. Every example passed production intake, print gates, recipe allowlist, and 7-language unsafe + brand filters. No hosted-model output, no child text in training. Judged on the same 243 wishes per run vs the untuned base: latency, printable share, first-call share, name-filter fixes, 70-item red-team. Blind dev (204) + 38-prompt slot probe are pointers.</p>
+
+<h2>Training: learned, not memorised</h2>
+<div class="figs">
+<figure><figcaption><b>Final eval loss per pilot — flat at the bottom</b>Lower is better. No run ends &gt;0.01 above its best: learned, not memorised.</figcaption>
+<svg viewBox="0 0 360 150" role="img" aria-label="Final eval loss: p1 0.128, p2 0.125, p3 0.119, p5 0.118, p6 0.116, p7 0.117, p8 0.118">
+<line class="tick" x1="44" x2="350" y1="30" y2="30"/><text class="m" x="40" y="33" text-anchor="end">0.14</text>
+<line class="tick" x1="44" x2="350" y1="65" y2="65"/><text class="m" x="40" y="68" text-anchor="end">0.13</text>
+<line class="tick" x1="44" x2="350" y1="100" y2="100"/><text class="m" x="40" y="103" text-anchor="end">0.12</text>
+<line class="tick" x1="44" x2="350" y1="135" y2="135"/><text class="m" x="40" y="138" text-anchor="end">0.11</text>
+<text class="m" x="60" y="148" text-anchor="middle">p1</text><text class="m" x="106" y="148" text-anchor="middle">p2</text><text class="m" x="152" y="148" text-anchor="middle">p3</text><text class="m" x="198" y="148" text-anchor="middle">p5</text><text class="m" x="244" y="148" text-anchor="middle">p6</text><text class="m" x="290" y="148" text-anchor="middle">p7</text><text class="m" x="334" y="148" text-anchor="middle">p8</text>
+<circle class="dot" cx="60" cy="78" r="4"/><circle class="dot" cx="106" cy="96" r="4"/><circle class="dot" cx="152" cy="110" r="4"/><circle class="dot" cx="198" cy="113" r="4"/><circle class="dot-best" cx="244" cy="120" r="5"/><circle class="dot" cx="290" cy="116" r="4"/><circle class="dot-best" cx="334" cy="113" r="5"/>
+<text x="60" y="68">0.128</text><text x="236" y="134">0.116</text><text x="322" y="103">0.118</text>
+</svg></figure>
+<figure><figcaption><b>Dials behind the curve — healthy</b>LR 2e-4, peak step 6, linear decay. Grad norm 0.2–1.0, median 0.3; one p8 first-step spike (9.3) recovered. Resumed p6 @450, p8 @300; p4 died, never scored.</figcaption>
+<svg viewBox="0 0 360 150" role="img" aria-label="Learning rate decay and gradient norm band">
+<line class="tick" x1="44" x2="350" y1="20" y2="20"/><line class="tick" x1="44" x2="350" y1="70" y2="70"/><line class="tick" x1="44" x2="350" y1="120" y2="120"/>
+<text class="m" x="40" y="23" text-anchor="end">2e-4</text><text class="m" x="40" y="123" text-anchor="end">0</text>
+<path d="M44,20 L60,20 L350,120" fill="none" stroke="#174a8b" stroke-width="2"/>
+<rect x="44" y="52" width="306" height="26" fill="#e8f0e4"/>
+<text class="m" x="197" y="69" text-anchor="middle">grad norm band 0.2–1.0</text>
+<text class="m" x="44" y="143">step 0</text><text class="m" x="350" y="143" text-anchor="end">step ~500</text>
+</svg></figure>
+</div>
+
+<h2>Headline result (v2) — pilot 8 passes, on the line</h2>
+<div class="figs">
+<figure><figcaption><b>Latency: median (bar) + p90 (tick) — lower wins</b>Dashed line = pass at 70% of base (19.9 s). p8 13.1 / 22.6 s.</figcaption>
+<svg viewBox="0 0 360 150" role="img" aria-label="Median seconds: base 28.4, p6 13.2, p8 13.1; p90 51.7, 24.9, 22.6">
+<line class="tick" x1="60" x2="60" y1="10" y2="120"/><line class="tick" x1="160" x2="160" y1="10" y2="120"/><line class="tick" x1="260" x2="260" y1="10" y2="120"/>
+<text class="m" x="60" y="133" text-anchor="middle">0</text><text class="m" x="160" y="133" text-anchor="middle">20</text><text class="m" x="260" y="133" text-anchor="middle">40</text><text class="m" x="340" y="133" text-anchor="middle">60s</text>
+<line class="passline" x1="169" x2="169" y1="10" y2="122"/><text class="m" x="169" y="8" text-anchor="middle">pass 19.9</text>
+<text class="m" x="6" y="42">base</text><rect class="bar-base" x="60" y="30" width="170" height="14"/><rect x="60" y="30" width="310" height="3" fill="#5d6470"/><text x="236" y="42">28.4 / 51.7</text>
+<text class="m" x="6" y="72">p6</text><rect class="bar-tuned" x="60" y="60" width="79" height="14"/><rect x="60" y="60" width="149" height="3" fill="#174a8b"/><text x="144" y="72">13.2 / 24.9</text>
+<text class="m" x="6" y="102">p8</text><rect class="bar-best" x="60" y="90" width="79" height="14"/><rect x="60" y="90" width="136" height="3" fill="#14724a"/><text x="144" y="102">13.1 / 22.6</text>
+</svg></figure>
+<figure><figcaption><b>Safety: filters fixed (lower wins) + red-team (higher wins)</b>Filter line = half base (6). p8: 6 exactly; red-team 68/70 vs 61.</figcaption>
+<svg viewBox="0 0 360 150" role="img" aria-label="Filter fixes: base 12, p6 7, p8 6. Red-team: base 61, p6 67, p8 68 of 70">
+<text class="m" x="6" y="30">filters</text>
+<rect class="bar-base" x="70" y="18" width="216" height="12"/><text x="290" y="28">12</text>
+<rect class="bar-tuned" x="70" y="34" width="126" height="12"/><text x="200" y="44">7</text>
+<rect class="bar-best" x="70" y="50" width="108" height="12"/><text x="182" y="60">6 ✓</text>
+<line class="passline" x1="178" x2="178" y1="12" y2="66"/>
+<text class="m" x="6" y="96">red-team</text>
+<rect x="70" y="84" width="262" height="12" fill="#ddd"/><rect class="bar-base" x="70" y="84" width="228" height="12"/><text x="304" y="94">61</text>
+<rect x="70" y="100" width="262" height="12" fill="#ddd"/><rect class="bar-tuned" x="70" y="100" width="251" height="12"/><text x="325" y="110">67</text>
+<rect x="70" y="116" width="262" height="12" fill="#ddd"/><rect class="bar-best" x="70" y="116" width="255" height="12"/><text x="329" y="126">68</text>
+<text class="m" x="70" y="140">0</text><text class="m" x="332" y="140" text-anchor="end">70</text>
+</svg></figure>
+</div>
+<p class="small">Quality held: printable 100 &rarr; 98.8 / 98.8; first-call 94.4 &rarr; 96.9 / 96.9. v1: p6 speed 3/3, safety 0/3; prefill control fast (12.1 s) but broken (printable 96.9%, filters 22, red-team 57/70). Full matrix: <code>charts.html</code> &sect;4.</p>
+
+<h2>Noise ≈ the margin — one run can't prove it</h2>
+<div class="figs">
+<figure><figcaption><b>Repeat spread: filter fixes per run</b>Bar = range across runs. p8 6–7: one wish flips the pass.</figcaption>
+<svg viewBox="0 0 360 130" role="img" aria-label="Filter ranges: base 12 to 12, p5 5 to 9, p6 7 to 12, p8 6 to 7">
+<line class="tick" x1="70" x2="70" y1="8" y2="105"/><line class="tick" x1="178" x2="178" y1="8" y2="105"/><line class="tick" x1="286" x2="286" y1="8" y2="105"/>
+<text class="m" x="70" y="116" text-anchor="middle">0</text><text class="m" x="178" y="116" text-anchor="middle">6</text><text class="m" x="286" y="116" text-anchor="middle">12</text>
+<line class="passline" x1="178" x2="178" y1="8" y2="105"/>
+<text class="m" x="8" y="32">base</text><line class="range" x1="286" x2="286" y1="28" y2="28"/>
+<text class="m" x="8" y="54">p5</text><line class="range" x1="160" x2="232" y1="50" y2="50"/><text x="236" y="54">5–9</text>
+<text class="m" x="8" y="76">p6</text><line class="range" x1="196" x2="286" y1="72" y2="72"/><text x="150" y="76">7–12</text>
+<text class="m" x="8" y="98">p8</text><line class="range" x1="178" x2="196" y1="94" y2="94" stroke="#14724a"/><text x="200" y="98">6–7</text>
+</svg></figure>
+<figure><figcaption><b>Repeat spread: median seconds per run</b>Base itself moves 28.4–32.4 s. p8 13.1–14.8.</figcaption>
+<svg viewBox="0 0 360 130" role="img" aria-label="Median ranges: base 28.4 to 32.4, p5 22.3 to 27.1, p6 13.2 to 14.0, p8 13.1 to 14.8">
+<line class="tick" x1="70" x2="70" y1="8" y2="105"/><line class="tick" x1="170" x2="170" y1="8" y2="105"/><line class="tick" x1="270" x2="270" y1="8" y2="105"/>
+<text class="m" x="70" y="116" text-anchor="middle">10</text><text class="m" x="170" y="116" text-anchor="middle">20</text><text class="m" x="270" y="116" text-anchor="middle">30s</text>
+<text class="m" x="8" y="32">base</text><line class="range" x1="254" x2="294" y1="28" y2="28"/>
+<text class="m" x="8" y="54">p5</text><line class="range" x1="193" x2="241" y1="50" y2="50"/>
+<text class="m" x="8" y="76">p6</text><line class="range" x1="102" x2="110" y1="72" y2="72"/>
+<text class="m" x="8" y="98">p8</text><line class="range" x1="101" x2="118" y1="94" y2="94" stroke="#14724a"/>
+</svg></figure>
+</div>
+<ul>
+<li>Blind dev (unseen brands): p8 76.2%, one run — pointer only. Slot probe (38 non-hat prompts): base 38/38, p8 36/38, p6 34/38; ship routes non-hat/head to base.</li>
+<li>Cost ~$68 Modal GPU. A pass = permission to run beside the base, not a child-safety claim.</li>
+</ul>
+
+<h2>Why we tuned it</h2>
+<ul>
+<li><b>Kids can't use the hosted model.</b> Meta API terms bar under-18 end users and kid-targeted products, so the demo runs hosted with adults only and production must be self-hosted Glimmer.</li>
+<li><b>Safety by construction, measured.</b> Trained only on answers that already passed every gate, so it never saw a brand, unsafe, or refused wish — judged against the base on the same red-team.</li>
+<li><b>A smaller job.</b> One narrow recipe writer (~600-char prompt vs ~10k) — less to do, less to red-team.</li>
+<li><b>Speed and cost.</b> ~54% faster median (13.1 vs 28.4 s), tail halved, fewer tokens per call, 4-bit weights on scale-to-zero GPU. Sweep cost ~$68.</li>
+</ul>
+
+<h2>What ships</h2>
+<p>Fast-path router: tuned model first for <b>hat/head first attempts only</b>; base on any failure, repair, or other slot. Off unless <code>FORGE_FAST_MODE</code> + <code>SELF_FAST_URL/MODEL</code> are set. A pass is permission to run beside the base — not a child-safety claim. Next: second p8 run, native-speaker read of 7-language names, match-to-wish score.</p>
+</main></body></html>
