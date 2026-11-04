@@ -115,6 +115,8 @@ export interface ActsWorld extends Omit<VisitAdapter, "onPhase"> {
   fetch?(ball: PropInst): boolean;
   /** Place the toy (during the cushion jump). */
   setPosition(x: number, y: number, z: number): void;
+  /** Roll Kip about his origin, toward +x for a positive angle (radians): the swing ride tilts him with the ropes. Optional: a world without it just keeps him upright. */
+  setRoll?(angle: number): void;
   tone(freq: number, delay: number, dur: number, type: OscillatorType, vol: number, slideTo?: number): void;
   /** The phase changed (the world marks the toy busy while it acts). */
   phase(phase: VisitPhase, previous: VisitPhase): void;

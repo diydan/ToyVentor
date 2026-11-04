@@ -69,7 +69,13 @@ export function kipBodyColors(col: { c1: string; c2: string; skin?: string }): K
 /** Where the demo seats the plate in the head's frame (mm): `holderY` up, `holderZ` forward. kip-vehicles-wardrobe.js `faceplateHolder.position`. */
 export const FACE_STEM_MM = 10.167;
 export const FACEPLATE_SEAT_MM = { raise: 0.7, sink: 1.6 } as const;
-export const FACEPLATE_HOLDER = { y: 17.1875 - 2.5 + FACEPLATE_SEAT_MM.raise, z: FACE_STEM_MM - FACEPLATE_SEAT_MM.sink } as const;
+/**
+ * The kid head's `face_slot` bore height (kip-vehicles-wardrobe.js WARDROBE_HEADS 'kid' `faceY`). The bench seats the plate at `dt.faceY - 2.50 + raise` for the head it is showing (kip-bench.js, every time the head
+ * changes). Until 2026-11-04 (later) this file used the 17.1875 that the wardrobe's builder puts there as its CREATION default, before the head's own number is applied: the plate sat 4.69 mm too high on the
+ * head, its top over the brow, and the lower part of the head's face pocket was left empty (a dark hollow under the eyes).
+ */
+export const KID_FACE_Y = 12.5;
+export const FACEPLATE_HOLDER = { y: KID_FACE_Y - 2.5 + FACEPLATE_SEAT_MM.raise, z: FACE_STEM_MM - FACEPLATE_SEAT_MM.sink } as const;
 /** Where the two orange crown studs sit on the kid head (kip-vehicles-wardrobe.js WARDROBE_HEADS 'kid' `crownY`, the head's top_studs plane; the bench puts `altCrownBuds.position.y` there). */
 export const KID_CROWN_Y = 30.97;
 /** The decal plane the face is drawn on, over the plate (kip-vehicles-wardrobe.js `buildConformalFaceplateDecalGeo` defaults). */

@@ -11,7 +11,7 @@
 // Baking is pure (an Object3D + clips in, typed arrays out) so it runs in vitest without a browser.
 import * as THREE from "three";
 import type { ToyRig } from "./playerRig";
-import { FLEX_ASSEMBLED, followHand, newSnapArmSolution, newSnapLegSolution, releaseHand, resetSnapRig, solveSnapArm, solveSnapLeg, type SnapRigHandles } from "./snapFlex";
+import { hingeHead, FLEX_ASSEMBLED, followHand, newSnapArmSolution, newSnapLegSolution, releaseHand, resetSnapRig, solveSnapArm, solveSnapLeg, type SnapRigHandles } from "./snapFlex";
 
 const FPS = 30;
 const DOWN = new THREE.Vector3(0, -1, 0);
@@ -581,7 +581,7 @@ export class MixamoDriver {
     if (!j) return;
     j.g.position.set(0, 0, 0);
     j.g.quaternion.identity();
-    j.head?.quaternion.identity();
+    if (j.head) { j.head.quaternion.identity(); hingeHead(j.head); }
     j.arms?.forEach((o) => o.quaternion.identity());
     j.hips?.forEach((o) => o.quaternion.identity());
     if (j.snap) resetSnapRig(j.snap);
@@ -607,6 +607,7 @@ export class MixamoDriver {
       j.head.quaternion.identity().slerp(this.q2, 0.85);
       if (this.extras.headYaw !== 0) j.head.quaternion.premultiply(this.qe.setFromAxisAngle(AXIS_Y, this.extras.headYaw));
       if (this.extras.headPitch !== 0) j.head.quaternion.premultiply(this.qe.setFromAxisAngle(AXIS_X, this.extras.headPitch));
+      hingeHead(j.head); // the head turns on the neck, not about its own base
     }
     // Limbs: rest direction is straight down in the holder's own (stage) frame.
     if (j.arms) {
@@ -651,6 +652,7 @@ export class MixamoDriver {
         if (this.extras.headYaw !== 0) this.qw.premultiply(this.qe.setFromAxisAngle(AXIS_Y, this.extras.headYaw));
         if (this.extras.headPitch !== 0) this.qw.premultiply(this.qe.setFromAxisAngle(AXIS_X, this.extras.headPitch));
         j.head.quaternion.slerp(this.qw, jw);
+        hingeHead(j.head);
       }
     }
     // the limbs: elbows, wrists, knees and ankles ease in with the exact pose; at jw 0 these are all identity and the flex is 0, which is the rigid limb at rest

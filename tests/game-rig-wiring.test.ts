@@ -75,6 +75,37 @@ describe("the rig and the driver", () => {
   });
 });
 
+describe("the neck, the fists and the swing's roll are wired through", () => {
+  it("the loader gives the head its neck hinge and each hand a grip anchor; the driver puts the head on its neck whenever it sets the head's turn, and when it lets go", () => {
+    const f = read("src/features/game/world/runtime/stlRigLoader.ts");
+    expect(f).toContain("headPivot.userData.rest = headPivot.position.clone();");
+    expect(f).toContain("headPivot.userData.hinge = new T.Vector3(0, -NECK_FOOT_MM, 0);");
+    expect(f).toContain("ntMesh.position.y = -NECK_FOOT_MM;");                         // the turret hangs from the same point the head turns about
+    expect(f).toContain("grip.userData.grip = true;");
+    expect(f).toContain("rig.grips = grips;");
+    const m = read("src/features/game/world/runtime/mixamo.ts");
+    expect(m.match(/hingeHead\(j\.head\)/g)?.length).toBe(3);                          // the clip-direction path, the joint path, and release()
+    expect(m.indexOf("hingeHead(j.head); // the head turns on the neck")).toBeGreaterThan(m.indexOf("headPitch !== 0"));
+  });
+  it("what Kip holds goes in his fist: the world hands the holders the grips (falling back to the arms), and a tool or the book follows the hands every frame after the driver has posed them", () => {
+    const w = world();
+    expect(w).toContain("function handOf(i: number){return P.rig&&((P.rig.grips&&P.rig.grips[i])||(P.rig.arms&&P.rig.arms[i]))}");
+    expect(w.match(/HELD\.hold\(i(?: as any)?,P\.model,handOf\(1\),handOf\(0\)\)/g)?.length).toBe(3);                // the acts, the mess, the activities
+    expect(w).not.toMatch(/HELD\.hold\([^)]*P\.rig\.arms\[1\]/);
+    const at = w.indexOf("HELD.follow(P.model,rig.grips);");
+    expect(at).toBeGreaterThan(w.indexOf("if(driven&&mix){mix.update("));
+    expect(at).toBeLessThan(w.indexOf("var hvv=("));
+  });
+  it("the swing ride rolls Kip with the ropes: the visit says so, the acts world carries it, and the model turns about z by it", () => {
+    const w = world();
+    expect(w).toContain("setRoll:function(a: number){P.roll=a}");
+    expect(w).toContain("P.model.rotation.set(0,P.spin,P.roll||0);");
+    const t = read("src/features/game/world/runtime/playthings.ts");
+    expect(t).toContain("w.setRoll?.(p.angle);");
+    expect(t).toContain("w.setRoll?.(0);");                                                     // and puts him upright again when the ride ends or is cut short
+  });
+});
+
 describe("the world's idle behaviours", () => {
   it("the idle tick asks for a wave, a clap or a dance first, counts the ticks of one spell of standing still, and the count starts again when he moves", () => {
     const w = world();

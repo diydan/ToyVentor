@@ -154,10 +154,10 @@ describe("the props", () => {
     const s = buildSwing(30, -1.2);
     s.userData.setAngle(0.4);
     expect(s.userData.angle()).toBe(0.4);
-    expect((s.userData.pivot as THREE.Object3D).rotation.z).toBeCloseTo(-0.4, 6);
+    expect((s.userData.pivot as THREE.Object3D).rotation.z).toBeCloseTo(0.4, 6);   // a positive angle swings the seat toward +x (see "the swing hangs where it swings")
     s.userData.riding = true;
     s.userData.tick(5, 0.016);                                                     // while ridden the idle sway does not fight the ride
-    expect((s.userData.pivot as THREE.Object3D).rotation.z).toBeCloseTo(-0.4, 6);
+    expect((s.userData.pivot as THREE.Object3D).rotation.z).toBeCloseTo(0.4, 6);
   });
   it("the crate mesh is a CRATE-sized box", () => {
     const box = new THREE.Box3().setFromObject(buildCrateMesh());
@@ -241,7 +241,7 @@ describe("the paths", () => {
     const seat0 = seatPoint(0);
     const sat = at(HOP_S + 0.0001);
     expect(sat.x).toBeCloseTo(swing.x + seat0.dx, 2);
-    expect(sat.y).toBeCloseTo(seat0.y - SIT_DROP, 2);
+    expect(sat.y).toBeCloseTo(seat0.y - SIT_DROP, 2);                               // (the first moment on the seat: the swing hangs straight)
     expect(sat.z).toBeCloseTo(swing.z, 2);
     let maxAngle = 0, minY = 99;
     for (let t = HOP_S + 0.01; t < RIDE_S - HOP_S - 0.01; t += 0.05) {
@@ -250,8 +250,9 @@ describe("the paths", () => {
       minY = Math.min(minY, p.y);
       expect(p.z).toBeCloseTo(swing.z, 6);
       const s = seatPoint(p.angle);
-      expect(p.x).toBeCloseTo(swing.x + s.dx, 6);
-      expect(p.y).toBeCloseTo(s.y - SIT_DROP, 6);                                   // always on the seat
+      // Kip's origin hangs SIT_DROP below the seat's top along the seat's own down, which tilts with the swing: the seat's top is always where it says
+      expect(p.x + SIT_DROP * -Math.sin(p.angle)).toBeCloseTo(swing.x + s.dx, 6);
+      expect(p.y + SIT_DROP * Math.cos(p.angle)).toBeCloseTo(s.y, 6);              // always on the seat
     }
     expect(maxAngle).toBeGreaterThan(0.3);
     expect(minY).toBeGreaterThan(0.2);                                              // never through the ground
@@ -770,5 +771,79 @@ describe("the lane is clear: props are set back when the world is built", () => 
   it("CLEAR_Z is behind the walkable lane (clampPathZ is +-1.2) with room for a prop's own depth", () => {
     expect(world).toContain("function clampPathZ(z: number){return Math.max(-1.2,Math.min(1.2,z))}");
     expect(-2.8).toBeLessThan(-PATH_Z - 1);
+  });
+});
+
+describe("the swing hangs where it swings (Dan, 2026-11-04: \"swing is not aligned with the actual swing\")", () => {
+  /** The rules, as a function of how the swing is built, so a broken one can be run through them. Returns what is wrong. */
+  function failures(make: (x: number, z: number) => THREE.Group): string[] {
+    const bad = new Set<string>();
+    const at = { x: 30, z: -1.2 };
+    const seatOf = (g: THREE.Group) => (g.userData.pivot as THREE.Object3D).children.filter((c) => (c as THREE.Mesh).isMesh).map((m) => new THREE.Box3().setFromObject(m)).sort((a, b) => (b.max.z - b.min.z) - (a.max.z - a.min.z))[0]!;
+    // 1. the seat is where the ride says it is, for every angle: in the plane the swing moves in (x, y), at the arc's point
+    for (const a of [0, 0.2, 0.62, -0.2, -0.62]) {
+      const g = make(at.x, at.z);
+      g.userData.setAngle(a);
+      g.updateMatrixWorld(true);
+      const seat = seatOf(g);
+      const cx = (seat.min.x + seat.max.x) / 2;
+      // a rotated box's bounding box is wider than the box: the seat's centre line is the middle of its box, exact for the centre
+      const want = seatPoint(a);
+      if (Math.abs(cx - (at.x + want.dx + SEAT_THICK / 2 * Math.sin(a))) > 0.05) bad.add("the seat swings to the side the ride (and Kip) go to");
+      if (Math.abs(((seat.min.z + seat.max.z) / 2) - at.z) > 1e-6) bad.add("it swings in a plane: the seat stays at the swing's depth");
+    }
+    // 2. it hangs from a bar along z, the ropes are side by side in depth, and the seat is long across the swing's path
+    const g0 = make(at.x, at.z); g0.updateMatrixWorld(true);
+    const meshes: Array<{ b: THREE.Box3; size: THREE.Vector3 }> = [];
+    g0.traverse((o) => { if ((o as THREE.Mesh).isMesh) { const b = new THREE.Box3().setFromObject(o); meshes.push({ b, size: b.getSize(new THREE.Vector3()) }); } });
+    const bar = meshes.filter((m) => m.size.z > 2 && m.size.y < 0.4 && m.size.x < 0.4);
+    if (bar.length !== 1) bad.add("one bar, along z (into the scene), at the top");
+    const ropes = meshes.filter((m) => m.size.y > SWING_ROPE * 0.9 && m.size.x < 0.1 && m.size.z < 0.1);
+    if (ropes.length !== 2 || Math.abs(ropes[0]!.b.min.x - ropes[1]!.b.min.x) > 1e-6 || Math.abs(ropes[0]!.b.min.z - ropes[1]!.b.min.z) < 0.5) bad.add("two ropes, side by side in depth, one behind the other along the path");
+    const seat0 = seatOf(g0), seatSize = seat0.getSize(new THREE.Vector3());
+    if (!(seatSize.z > seatSize.x * 1.5)) bad.add("the seat is long in depth and short along the path, so Kip sits facing along it");
+    return [...bad];
+  }
+  it("the seat is where the ride says it is at every angle, the bar and ropes run into the scene, and the seat is long in depth", () => {
+    expect(failures(buildSwing)).toEqual([]);
+  });
+  it("is caught when the swing turns the wrong way, or hangs from a bar along the path (the old one)", () => {
+    const flipped = (x: number, z: number) => { const g = buildSwing(x, z); const orig = g.userData.setAngle as (a: number) => void; g.userData.setAngle = (a: number) => orig(-a); return g; };   // the old sign
+    const quarterTurn = (x: number, z: number) => { const g = buildSwing(x, z); const inner = new THREE.Group(); while (g.children.length) inner.add(g.children[0]!); inner.rotation.y = Math.PI / 2; g.add(inner); return g; };           // a bar along x
+    expect(failures(flipped).length).toBeGreaterThan(0);
+    expect(failures(quarterTurn).length).toBeGreaterThan(0);
+  });
+  it("Kip sits on the seat and rolls with it: his origin hangs below the seat along the ropes' own down, and his roll is the ropes' angle, whatever the angle", () => {
+    const stand = { x: 28.6, z: -1.2 }, swing = { x: 29.9, z: -2.0 };
+    for (const a of [0.5, -0.5, 0.62, -0.3]) {
+      const p = ridePath(HOP_S + 1, stand, swing, () => a);
+      expect(p.angle).toBe(a);                                                                        // the roll is the ropes' angle
+      const g = buildSwing(swing.x, swing.z); g.userData.setAngle(a); g.updateMatrixWorld(true);
+      const seat = (g.userData.pivot as THREE.Object3D).children.find((c) => (c as THREE.Mesh).isMesh && c.position.y < -SWING_ROPE)!;
+      const top = new THREE.Vector3(0, SEAT_THICK / 2, 0); seat.localToWorld(top);                     // the middle of the seat's top, where the prop really is
+      const down = new THREE.Vector3(Math.sin(a), -Math.cos(a), 0).multiplyScalar(SIT_DROP);          // Kip's origin, SIT_DROP below it along the tilted down
+      expect(p.x).toBeCloseTo(top.x + down.x, 6);
+      expect(p.y).toBeCloseTo(top.y + down.y, 6);
+    }
+  });
+  it("the legs pump with the swing: out at the forward end of each swing, tucked at the back end (one pump per swing, not two)", () => {
+    const total = RIDE_S - 2 * HOP_S;
+    const angle = (t: number) => swingAngle(t - HOP_S, total);        // ride time t
+    const c = PLAY_CLIPS.swing!;
+    const legZ = (t: number) => c.legL[Math.round(Math.min(c.duration, Math.max(0, t)) / c.duration * (c.frames - 1)) * 3 + 2]!;
+    const peaks: number[] = [], troughs: number[] = [];
+    for (let t = HOP_S + 0.3; t < RIDE_S - HOP_S - 0.2; t += 0.01) {
+      const a = angle(t), l = angle(t - 0.01), r = angle(t + 0.01);
+      if (a > l && a >= r && a > 0.15) peaks.push(t);
+      if (a < l && a <= r && a < -0.15) troughs.push(t);
+    }
+    expect(peaks.length).toBeGreaterThanOrEqual(2);
+    expect(troughs.length).toBeGreaterThanOrEqual(2);
+    for (const t of peaks) expect(legZ(t), `legs out at the forward end, t=${t.toFixed(2)}`).toBeGreaterThan(0.85);
+    for (const t of troughs) expect(legZ(t), `legs tucked at the back end, t=${t.toFixed(2)}`).toBeLessThan(0.75);
+    // one pump per swing: the legs change from out to tucked no more than once between a peak and the next trough
+    let flips = 0, prev = legZ(HOP_S + 0.9) > 0.8;
+    for (let t = HOP_S + 0.9; t < RIDE_S - HOP_S - 0.3; t += 0.02) { const now = legZ(t) > 0.8; if (now !== prev) flips++; prev = now; }
+    expect(flips).toBeLessThanOrEqual(peaks.length + troughs.length);
   });
 });

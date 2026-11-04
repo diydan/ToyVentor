@@ -5,7 +5,7 @@
 import * as THREE from "three";
 import { describe, expect, it } from "vitest";
 import { CLIP_JOINT_KEYS, KIP_HIP_REST_MM, MixamoDriver, newPose, sampleClip, mixPose, type BakedClip, type ClipJoints } from "../src/features/game/world/runtime/mixamo";
-import { SNAP_ARM_FLEX, SNAP_CUFF_Q, SNAP_LEG_FLEX, followHand, makeFlexLimb, makeHandFollow, newSnapArmSolution, solveSnapArm, type SnapArmHandles, type SnapRigHandles } from "../src/features/game/world/runtime/snapFlex";
+import { NECK_FOOT_MM, SNAP_ARM_FLEX, SNAP_CUFF_Q, SNAP_LEG_FLEX, followHand, hingeHead, makeFlexLimb, makeHandFollow, newSnapArmSolution, solveSnapArm, type SnapArmHandles, type SnapRigHandles } from "../src/features/game/world/runtime/snapFlex";
 import { KIP_HIP_MM } from "../src/features/game/world/runtime/stlRigLoader";
 
 const S = 0.0185;
@@ -18,7 +18,7 @@ function limbBox(): THREE.BufferGeometry {
 }
 
 /** The game's Snap rig, structure for structure (stlRigLoader.ts), with boxes for meshes. */
-function makeRig(opts: { follow?: boolean } = {}) {
+function makeRig(opts: { follow?: boolean; neck?: boolean } = {}) {
   const world = new THREE.Group(); // the model the rig hangs in; its origin is the floor
   const g = new THREE.Group();
   world.add(g);
@@ -26,6 +26,7 @@ function makeRig(opts: { follow?: boolean } = {}) {
   g.add(base);
   const head = new THREE.Group();
   head.position.set(0, 108 * S, 0);
+  if (opts.neck) { head.userData.rest = head.position.clone(); head.userData.hinge = new THREE.Vector3(0, -NECK_FOOT_MM * S, 0); } // as stlRigLoader.ts does (here the head is in world units)
   g.add(head);
   const arms: THREE.Object3D[] = [], feet: THREE.Object3D[] = [];
   const snapArms: SnapRigHandles["arms"] = [] as never, snapLegs: SnapRigHandles["legs"] = [] as never;
@@ -404,5 +405,74 @@ describe("mixing poses that carry joint data", () => {
   });
   it("Kip's hip height is the same number in the loader and in the driver", () => {
     expect(KIP_HIP_REST_MM).toBe(KIP_HIP_MM);
+  });
+});
+
+describe("the head turns on its neck, not about its own base (Dan: \"we also need to add angles wrists and neck to kip\")", () => {
+  const tilted = (deg: number) => new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), THREE.MathUtils.degToRad(deg));
+  /** The rule, as a function of the implementation, so a broken one can be run through it. `head` has a hinge 7.4 mm below its origin, in a frame where 1 unit is 1 mm. */
+  function failures(place: (head: THREE.Object3D) => void): string[] {
+    const bad = new Set<string>();
+    const make = () => { const h = new THREE.Group(); h.position.set(0, 108, 0); h.userData.rest = h.position.clone(); h.userData.hinge = new THREE.Vector3(0, -NECK_FOOT_MM, 0); return h; };
+    const foot = (h: THREE.Object3D) => h.localToWorld(new THREE.Vector3(0, -NECK_FOOT_MM, 0)); // where the foot of the neck is
+    const rest = foot(make());
+    for (const [ax, deg] of [[[0, 0, 1], 35], [[1, 0, 0], -50], [[0, 1, 0], 80], [[1, 1, 0], 25], [[0, 0, 1], -170]] as const) {
+      const h = make();
+      h.quaternion.setFromAxisAngle(new THREE.Vector3(...ax).normalize(), THREE.MathUtils.degToRad(deg));
+      place(h);
+      if (foot(h).distanceTo(rest) > 1e-9) bad.add("the foot of the neck stays where the collar is, whatever the head does");
+      const aboutTheNeck = ax[0] === 0 && ax[2] === 0; // a turn about the neck's own axis (a head turned left or right) moves nothing: the hinge is on that axis
+      if (!aboutTheNeck && h.position.distanceTo(new THREE.Vector3(0, 108, 0)) < 1e-3 && Math.abs(deg) > 10) bad.add("the head swings on the neck: its origin moves when it tilts");
+      for (let i = 0; i < 5; i++) place(h); // placing it again must not move it again
+      if (foot(h).distanceTo(rest) > 1e-9) bad.add("placing the head twice does the same as once");
+    }
+    const h0 = make(); place(h0);
+    if (h0.position.distanceTo(new THREE.Vector3(0, 108, 0)) > 1e-12) bad.add("with no turn the head is exactly at rest");
+    const bare = new THREE.Group(); bare.position.set(1, 2, 3); bare.quaternion.copy(tilted(40)); place(bare);
+    if (bare.position.distanceTo(new THREE.Vector3(1, 2, 3)) > 1e-12) bad.add("a head with no hinge data is left alone");
+    const r = make(); r.quaternion.copy(tilted(40)); place(r);
+    if ((r.userData.rest as THREE.Vector3).distanceTo(new THREE.Vector3(0, 108, 0)) > 1e-12) bad.add("the rest position is never changed");
+    return [...bad];
+  }
+  it("keeps the foot of the neck on the collar for any turn of the head, is the same however often it is placed, and leaves a head with no hinge alone", () => {
+    expect(failures(hingeHead)).toEqual([]);
+  });
+  it("is caught when the head turns about its own base, slides the wrong way, piles up, or treats its own position as the rest", () => {
+    expect(failures(() => {}).length).toBeGreaterThan(0);                                                                              // no hinge: it spins about its base
+    type U = { hinge?: THREE.Vector3; rest?: THREE.Vector3 };
+    expect(failures((h) => { const u = h.userData as U; if (!u.hinge || !u.rest) return; h.position.copy(u.rest).sub(u.hinge).add(u.hinge.clone().applyQuaternion(h.quaternion)); }).length).toBeGreaterThan(0); // the wrong sign
+    expect(failures((h) => { const u = h.userData as U; if (!u.hinge || !u.rest) return; h.position.add(u.hinge).sub(u.hinge.clone().applyQuaternion(h.quaternion)); }).length).toBeGreaterThan(0);      // adds the slide to where it already is each time
+    expect(failures((h) => { const u = h.userData as U; if (!u.hinge || !u.rest) return; u.rest.copy(h.position); hingeHead(h); }).length).toBeGreaterThan(0);                                                // the rest drifts with the head
+  });
+  it("the driver puts the head on its neck for a clip with joint data, and for one without", () => {
+    for (const joints of [true, false]) {
+      const { rig, head, world, g } = makeRig({ neck: true });
+      const rest = head.position.clone();
+      const base = joints ? jointClip("tilt") : neutral("tilt");
+      const d = driver({ tilt: { ...base, head: track(4, [Q(0, 0, 1, 40).x, Q(0, 0, 1, 40).y, Q(0, 0, 1, 40).z, Q(0, 0, 1, 40).w]) } });
+      expect(d.trigger("tilt" as never)).toBe(true);
+      for (let t = 0; t < 0.6; t += 1 / 60) d.update(rig, 1 / 60, 0);
+      world.updateMatrixWorld(true);
+      const turned = 2 * Math.acos(Math.min(1, Math.abs(head.quaternion.w)));
+      expect(turned, `joints ${joints}`).toBeGreaterThan(0.3);                                               // it did turn
+      expect(head.position.distanceTo(rest), `joints ${joints}`).toBeGreaterThan(0.001 * S);                  // so its origin moved on the neck
+      const foot = g.worldToLocal(head.localToWorld(new THREE.Vector3(0, -NECK_FOOT_MM * S, 0))); // in the figure's own frame (a planted clip moves the whole figure to keep its soles on the floor)
+      expect(foot.distanceTo(new THREE.Vector3(0, (108 - NECK_FOOT_MM) * S, 0)), `joints ${joints}`).toBeLessThan(1e-9); // and the foot of the neck did not
+    }
+  });
+  it("a rig whose head has no hinge (the other toys) is driven exactly as before, and release puts the head back exactly", () => {
+    const { rig, head } = makeRig();
+    const rest = head.position.clone();
+    const d = driver({ tilt: { ...neutral("tilt"), head: track(4, [Q(0, 0, 1, 40).x, Q(0, 0, 1, 40).y, Q(0, 0, 1, 40).z, Q(0, 0, 1, 40).w]) } });
+    d.trigger("tilt" as never);
+    for (let t = 0; t < 0.6; t += 1 / 60) d.update(rig, 1 / 60, 0);
+    expect(head.position.distanceTo(rest)).toBe(0);
+    const n = makeRig({ neck: true });
+    const d2 = driver({ tilt: { ...neutral("tilt"), head: track(4, [Q(0, 0, 1, 40).x, Q(0, 0, 1, 40).y, Q(0, 0, 1, 40).z, Q(0, 0, 1, 40).w]) } });
+    d2.trigger("tilt" as never);
+    for (let t = 0; t < 0.6; t += 1 / 60) d2.update(n.rig, 1 / 60, 0);
+    d2.release();
+    expect(n.head.position.distanceTo(new THREE.Vector3(0, 108 * S, 0))).toBeLessThan(1e-12);
+    expect(1 - Math.abs(n.head.quaternion.w)).toBeLessThan(1e-12);
   });
 });

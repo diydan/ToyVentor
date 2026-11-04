@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { describe, expect, it } from "vitest";
-import { HELD, buildBookMesh, createHeld } from "../src/features/game/world/runtime/heldItems";
+import { ARM_FIST, HELD, buildBookMesh, createHeld } from "../src/features/game/world/runtime/heldItems";
 
 const size = (o: THREE.Object3D) => { o.updateMatrixWorld(true); return new THREE.Box3().setFromObject(o).getSize(new THREE.Vector3()); };
 
@@ -119,7 +119,8 @@ describe("createHeld", () => {
     expect(h.meshes).toHaveLength(2);
     expect(h.mesh).toBe(armR.children[0]);
     for (const a of [armR, armL]) {
-      expect(a.children[0]!.position.toArray()).toEqual([...HELD.mallets.position]);
+      // these arms are plain holders, not grips, so the fist is where the arm holder says it is (ARM_FIST); a real rig's grip has `userData.grip` and the item sits at its origin (below)
+      expect(a.children[0]!.position.toArray()).toEqual([HELD.mallets.position[0] + ARM_FIST[0], HELD.mallets.position[1] + ARM_FIST[1], HELD.mallets.position[2] + ARM_FIST[2]]);
       expect(a.children[0]!.rotation.z).toBeCloseTo(Math.PI, 9);
     }
     h.release();
@@ -164,5 +165,89 @@ describe("createHeld", () => {
     h.hold("wand", model, null);
     expect(h.item).toBeNull();
     expect(model.children).toHaveLength(0);
+  });
+});
+
+describe("what Kip holds is in his fist (Dan, 2026-11-04: \"holding props is often in the wrong orientation\")", () => {
+  const rnd = (seed: number) => () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
+  /** A body group at a random pose with two grip anchors (children of arm groups) at random places, as the rig has. */
+  function scene(r: () => number) {
+    const root = new THREE.Group();
+    root.position.set(r() * 20 - 10, r() * 2, r() * 6 - 3);
+    root.rotation.set(0, r() * 6.28, 0);
+    const model = new THREE.Group();
+    model.position.set(r() - 0.5, 0, 0);
+    model.rotation.set(0, 0, r() * 0.4 - 0.2);
+    root.add(model);
+    const arms = [new THREE.Group(), new THREE.Group()];
+    const grips = arms.map((a) => { root.add(a); const g = new THREE.Group(); g.userData.grip = true; a.add(g); return g; });
+    for (const a of arms) { a.position.set(r() * 2 - 1, 1 + r(), r() * 2 - 1); a.rotation.set(r() * 3 - 1.5, r() * 3 - 1.5, r() * 3 - 1.5); }
+    grips.forEach((g) => g.position.set(0.125, -0.85, 0.03));
+    root.updateMatrixWorld(true);
+    return { root, model, arms, grips };
+  }
+  const worldPos = (o: THREE.Object3D) => o.getWorldPosition(new THREE.Vector3());
+
+  it("a tool's handle point is in the hands (midway between the fists) at every frame, whatever the body and the arms do, and its tilt never changes", () => {
+    for (const item of ["mop", "vacuum", "sponge", "spatula"] as const) {
+      const spec = HELD[item];
+      const r = rnd(7);
+      for (let k = 0; k < 20; k++) {
+        const { model, grips } = scene(r);
+        const h = createHeld();
+        expect(h.hold(item, model, grips[1], grips[0])).toBe(true);
+        const mesh = h.mesh!;
+        const tilt = mesh.rotation.clone();
+        h.follow(model, grips);
+        mesh.updateMatrixWorld(true);
+        const handle = mesh.localToWorld(new THREE.Vector3(...spec.hands!.grip));        // the item's grip point, in the world, scale and all
+        const mid = worldPos(grips[0]!).add(worldPos(grips[1]!)).multiplyScalar(0.5);
+        expect(handle.distanceTo(mid), `${item} ${k}`).toBeLessThan(1e-9);
+        expect(mesh.rotation.equals(tilt)).toBe(true);
+      }
+    }
+  });
+  it("the book is between the two hands the same way, and the guitar (no `hands`) is not moved by following", () => {
+    const { model, grips } = scene(rnd(3));
+    const h = createHeld();
+    h.hold("book", model, grips[1], grips[0]);
+    h.follow(model, grips);
+    h.mesh!.updateMatrixWorld(true);
+    expect(h.mesh!.localToWorld(new THREE.Vector3(...HELD.book.hands!.grip)).distanceTo(worldPos(grips[0]!).add(worldPos(grips[1]!)).multiplyScalar(0.5))).toBeLessThan(1e-9);
+    const g = createHeld();
+    g.hold("guitar", model, grips[1], grips[0]);
+    const before = g.mesh!.position.clone();
+    g.follow(model, grips);
+    expect(g.mesh!.position.equals(before)).toBe(true);
+  });
+  it("follows nothing when nothing is held, when the rig has no grips, or when the item is not on this body", () => {
+    const { model, grips } = scene(rnd(5));
+    const h = createHeld();
+    expect(() => h.follow(model, grips)).not.toThrow();                                   // nothing held
+    h.hold("mop", model, grips[1], grips[0]);
+    const before = h.mesh!.position.clone();
+    h.follow(model, null); h.follow(null, grips); h.follow(model, [null, null]);
+    expect(h.mesh!.position.equals(before)).toBe(true);
+    const other = new THREE.Group();
+    h.follow(other, grips);                                                               // not this body's: left alone
+    expect(h.mesh!.position.equals(before)).toBe(true);
+  });
+  it("an item held in a fist has its own grip point in the fist: the can by its handle, the rest by their origin, and a rig with no grips holds from the arm holder's fist", () => {
+    const { model, grips, arms } = scene(rnd(11));
+    for (const item of ["can", "carrot", "bouquet", "sandwich", "wand"] as const) {
+      const spec = HELD[item];
+      const h = createHeld();
+      expect(h.hold(item, model, grips[1], grips[0])).toBe(true);
+      h.mesh!.updateMatrixWorld(true);
+      const at = new THREE.Vector3(...(spec.at ?? [0, 0, 0]));
+      expect(h.mesh!.localToWorld(at).distanceTo(worldPos(grips[1]!)), item).toBeLessThan(1e-9);
+    }
+    expect(HELD.can.at).toBeDefined();
+    const plain = createHeld();
+    plain.hold("sandwich", model, arms[1], arms[0]);                                       // arm holders: the fist is ARM_FIST down the arm
+    expect(plain.mesh!.position.toArray()).toEqual([HELD.sandwich.position[0] + ARM_FIST[0], HELD.sandwich.position[1] + ARM_FIST[1], HELD.sandwich.position[2] + ARM_FIST[2]]);
+  });
+  it("nothing is held 0.4 to 0.5 down the arm any more (the old middle-of-the-sleeve numbers)", () => {
+    for (const item of ["wand", "mallets", "can", "carrot", "bouquet", "sandwich"] as const) expect(Math.abs(HELD[item].position[1]), item).toBeLessThan(0.2);
   });
 });

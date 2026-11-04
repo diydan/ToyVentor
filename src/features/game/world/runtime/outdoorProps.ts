@@ -2,6 +2,7 @@
 // (Snow Peak), a flower bed with a watering can, a bunny, a picnic blanket and a swing (the Garden), and the crate the junkyard crane drops. Each is a chunky toy in the same plastic as the other props
 // (`plastic`, `rbox`) and gives its holder the hooks propReactions.ts and playthings.ts use (`userData.*`), in the way the xylophone and the dog do. What Kip DOES with each is in playthings.ts.
 import { T, M, rbox, plastic, capsule } from "./worldScene";
+import { SWING_MAX, SWING_OMEGA } from "./playClips";
 import type * as THREE from "three";
 
 const lerp = (a: number, b: number, k: number) => a + (b - a) * k;
@@ -271,39 +272,50 @@ export function buildPicnic(x: number, z: number): THREE.Group {
 export const SWING_TOP = 3.2;
 export const SWING_ROPE = 2.35;
 export const SEAT_THICK = 0.1;
-/** Where the seat's top is when the swing is at `angle` (radians from straight down): the pivot at the top bar, along the rope. */
+/**
+ * Where the middle of the seat's top is when the swing is at `angle` (radians from straight down): the pivot at the top bar, a rope's length along the rope (the rope's end IS the seat's top).
+ * (It used to add the seat's thickness along the rope and then back up vertically, which is right only when the swing hangs straight: a few hundredths off at the ends of the swing.)
+ */
 export function seatPoint(angle: number): { dx: number; y: number } {
-  return { dx: Math.sin(angle) * (SWING_ROPE + SEAT_THICK / 2), y: SWING_TOP - Math.cos(angle) * (SWING_ROPE + SEAT_THICK / 2) + SEAT_THICK / 2 };
+  return { dx: Math.sin(angle) * SWING_ROPE, y: SWING_TOP - Math.cos(angle) * SWING_ROPE };
 }
-/** How far the swing is pushed `t` seconds into a ride of `total` seconds: it builds up, holds, and eases off (radians; positive = towards +x). */
-export function swingAngle(t: number, total: number, max = 0.62): number {
+/** How far the swing is pushed `t` seconds into a ride of `total` seconds: it builds up, holds, and eases off (radians; positive = towards +x). Its beat is playClips.ts SWING_OMEGA, which the riding clip's legs pump to. */
+export function swingAngle(t: number, total: number, max = SWING_MAX): number {
   if (!(t > 0) || t >= total) return 0;
   const env = Math.min(1, t / 1.6) * Math.min(1, (total - t) / 1.2);
-  return max * env * Math.sin(t * 3.3);
+  return max * env * Math.sin(t * SWING_OMEGA);
 }
+/**
+ * The swing hangs from a bar that runs along z (into the scene) and swings in the x-y plane the camera looks across, about the bar (z). Dan, 2026-11-04: "swing is not aligned with the actual
+ * swing": it used to hang from a bar along x but swing about z, so its ropes and seat were turned a quarter turn from the plane it moved in, the seat swung the opposite way to Kip, and Kip sat along
+ * the seat's length. Now: the A-frames stand at the two ends of the bar (z = +-SWING_FRAME_Z), the two ropes are side by side in depth, the seat's long side is across the swing's path and Kip sits
+ * facing along it. A positive angle swings the seat towards +x, the way `seatPoint` and the ride's path say.
+ */
+export const SWING_FRAME_Z = 1.3;
+export const SWING_ROPE_Z = 0.42;
 export function buildSwing(x: number, z: number): THREE.Group {
   const g = new T.Group();
   g.position.set(x, 0, z);
   const wood = plastic("#ff9d5c", { roughness: 0.6 }), steel = plastic("#4a5a8a", { roughness: 0.4 });
   const leg = (sx: number, sz: number) => {
     const len = Math.hypot(0.8, SWING_TOP);
-    const m = M(new T.CylinderGeometry(0.07, 0.08, len, 10), wood, sx * 1.6, SWING_TOP / 2, sz * 0.4);
-    m.rotation.x = -sz * Math.atan2(0.8, SWING_TOP);
+    const m = M(new T.CylinderGeometry(0.07, 0.08, len, 10), wood, sx * 0.4, SWING_TOP / 2, sz * SWING_FRAME_Z);   // the apex at the bar (x = 0), the foot 0.8 out in x
+    m.rotation.z = sx * Math.atan2(0.8, SWING_TOP);
     g.add(m);
   };
   for (const sx of [-1, 1]) for (const sz of [-1, 1]) leg(sx, sz);
-  g.add(M(new T.CylinderGeometry(0.09, 0.09, 3.5, 12), wood, 0, SWING_TOP, 0).rotateZ(Math.PI / 2));
+  g.add(M(new T.CylinderGeometry(0.09, 0.09, 2 * SWING_FRAME_Z + 0.4, 12), wood, 0, SWING_TOP, 0).rotateX(Math.PI / 2));   // the bar, along z
   const pivot = new T.Group();
   pivot.position.set(0, SWING_TOP, 0);
-  [-0.42, 0.42].forEach((rx) => pivot.add(M(new T.CylinderGeometry(0.018, 0.018, SWING_ROPE, 6), steel, rx, -SWING_ROPE / 2, 0)));
-  pivot.add(M(rbox(1.15, SEAT_THICK, 0.5, 0.04), plastic("#ff5a8a", { roughness: 0.5 }), 0, -SWING_ROPE - SEAT_THICK / 2, 0));
+  [-SWING_ROPE_Z, SWING_ROPE_Z].forEach((rz) => pivot.add(M(new T.CylinderGeometry(0.018, 0.018, SWING_ROPE, 6), steel, 0, -SWING_ROPE / 2, rz)));
+  pivot.add(M(rbox(0.5, SEAT_THICK, 1.15, 0.04), plastic("#ff5a8a", { roughness: 0.5 }), 0, -SWING_ROPE - SEAT_THICK / 2, 0));
   g.add(pivot);
   let rideAngle = 0;
   g.userData.pivot = pivot;
-  g.userData.setAngle = (a: number) => { rideAngle = a; pivot.rotation.z = -a; };
+  g.userData.setAngle = (a: number) => { rideAngle = a; pivot.rotation.z = a; };
   g.userData.angle = () => rideAngle;
   /** The swing moves a little by itself, so it looks alive; while somebody rides it the ride sets the angle. */
-  g.userData.tick = (t: number, _dt: number) => { if (g.userData.riding) return; pivot.rotation.z = -rideAngle + Math.sin(t * 1.1 + x) * 0.035; };
+  g.userData.tick = (t: number, _dt: number) => { if (g.userData.riding) return; pivot.rotation.z = rideAngle + Math.sin(t * 1.1 + x) * 0.035; };
   g.userData.riding = false;
   return g;
 }

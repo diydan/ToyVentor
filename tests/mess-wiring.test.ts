@@ -14,7 +14,7 @@ describe("wiring in world.ts", () => {
   it("the mess is created with the stage's own element, the reduced-motion flag and the game's voice and toast, and its clips and mop go through the same mixer and held-item code as the other acts", () => {
     expect(world).toContain("var MESS=createMess({root:function(){return W.root},host:function(){return hostEl},reduced:function(){return reduce},say:say,toast:function(s: string){toast(s)},");
     expect(world).toContain('clip:function(a: "oops"|"mop"|"tidy"|"cheer"){return mixGo(a as MixAction)}');
-    expect(world).toContain('hold:function(i: "mop"){HELD.hold(i,P.model,P.rig&&P.rig.arms&&P.rig.arms[1],P.rig&&P.rig.arms&&P.rig.arms[0])}');
+    expect(world).toContain('hold:function(i: "mop"){HELD.hold(i,P.model,handOf(1),handOf(0))}');
     expect(world).toContain("run:function(v: any){return ACTS.run(v)}");
   });
   it("hands the mess to the acts, updates it every frame, and puts it right with the world", () => {

@@ -14,6 +14,7 @@ import * as sdkMod from "../parts/kip/viewer/kip-forge-sdk.js";
 import { SKINS, stockCol, stockSel } from "../src/features/game/world/runtime/catalog";
 import {
   FACEPLATE_HOLDER,
+  KID_FACE_Y,
   FACEPLATE_SEAT_MM,
   FACE_DECAL,
   FACE_STEM_MM,
@@ -34,6 +35,7 @@ import {
 } from "../src/features/game/world/runtime/kipLook";
 import { buildFaceDecalGeometry } from "../src/features/game/world/runtime/kipFacePlate";
 import { buildToy, clearStlRigCache, resolveStlHeroRecipe, upgradeRigWithStl, type RigSel } from "../src/features/game/world/runtime/playerRig";
+import { FIST_IN_HOLDER } from "../src/features/game/world/runtime/stlRigLoader";
 import { paintMat, plastic } from "../src/features/game/world/runtime/worldScene";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -161,9 +163,16 @@ describe("the plate sits where the demo seats it", () => {
     const wardrobe = read("parts/kip/viewer/kip-vehicles-wardrobe.js");
     expect(FACE_STEM_MM).toBe(W.FACE_STEM_MM);
     expect({ ...FACEPLATE_SEAT_MM }).toEqual(S.FACEPLATE_SEAT_MM);
-    // faceplateHolder.position.set(0, 17.1875 - 2.50 + raise, FACE_STEM_MM - sink)
+    // The wardrobe's builder seats the plate at a CREATION default (17.1875), and the bench re-seats it for the head it shows: faceplateHolder.position.set(0, dt.faceY - 2.50 + raise, FACE_STEM_MM - sink),
+    // with the kid head's faceY = 12.5. The game's Kip is the kid head, so it is the second number that is on screen (the first was copied by mistake and put the plate 4.69 mm too high: Dan, 2026-11-04,
+    // "I'm pretty sure the head or face plate are not aligned").
     expect(wardrobe).toContain("faceplateHolder.position.set(0, 17.1875 - 2.50 + FACEPLATE_SEAT_MM.raise, FACE_STEM_MM - FACEPLATE_SEAT_MM.sink)");
-    expect(FACEPLATE_HOLDER.y).toBeCloseTo(17.1875 - 2.5 + S.FACEPLATE_SEAT_MM.raise, 9);
+    const bench = read("parts/kip/viewer/kip-bench.js");
+    expect(bench).toContain("kip.exp.faceplateHolder.position.set(0, dt.faceY - 2.50 + FACEPLATE_SEAT_MM.raise, FACE_STEM_MM - FACEPLATE_SEAT_MM.sink)");
+    const kid = (wardrobeMod as unknown as { WARDROBE_HEADS: Array<{ id: string; faceY: number }> }).WARDROBE_HEADS.find((h) => h.id === "kid")!;
+    expect(KID_FACE_Y).toBe(kid.faceY);
+    expect(FACEPLATE_HOLDER.y).toBeCloseTo(kid.faceY - 2.5 + S.FACEPLATE_SEAT_MM.raise, 9);
+    expect(FACEPLATE_HOLDER.y).toBeCloseTo(10.7, 9);          // not the 15.39 it was
     expect(FACEPLATE_HOLDER.z).toBeCloseTo(W.FACE_STEM_MM - S.FACEPLATE_SEAT_MM.sink, 9);
     // buildConformalFaceplateDecalGeo(insertGeo, width = 23.6, height = 10.1, centerY = 5.25), a 56 x 28 plane, +0.22 above the plate, 2.65 - x^2 * 0.002 where a ray misses
     expect(wardrobe).toContain("function buildConformalFaceplateDecalGeo(insertGeo, width = 23.6, height = 10.1, centerY = 5.25)");
@@ -322,6 +331,33 @@ describe("the rig wears it", () => {
     // no canvas in a unit test: the plate is plain skin (the face is added in a browser)
     expect(typeof document).toBe("undefined");
     expect((holder as unknown as THREE.Object3D).children).toHaveLength(1);
+  });
+
+  it("each hand has a grip anchor at the fist, turned and scaled to the arm holder's own frame, so what Kip holds is in his hand", async () => {
+    const sel = stockSel().character as unknown as RigSel;
+    const col = stockCol();
+    const rig = buildToy("character", sel, col);
+    expect(await upgradeRigWithStl(rig, { type: "character", sel, col, toyId: "seed-kip", fetcher: diskFetcher })).toBe(true);
+    const grips = rig.grips as THREE.Object3D[];
+    expect(grips).toHaveLength(2);
+    rig.g.updateMatrixWorld(true);
+    for (let i = 0; i < 2; i++) {
+      const holder = rig.arms[i]!, grip = grips[i]!;
+      expect(grip.userData.grip).toBe(true);
+      expect(grip.parent, "a child of the hand joint, so it goes wherever the hand does").toBe((rig.snap as { arms: Array<{ hand: THREE.Object3D }> }).arms[i]!.hand);
+      const inHolder = holder.worldToLocal(grip.getWorldPosition(new THREE.Vector3()));
+      expect(inHolder.x).toBeCloseTo(FIST_IN_HOLDER.x, 6);
+      expect(inHolder.y).toBeCloseTo(FIST_IN_HOLDER.y, 6);
+      expect(inHolder.z).toBeCloseTo(i === 0 ? FIST_IN_HOLDER.z : -FIST_IN_HOLDER.z, 6);
+      // at rest the grip's axes are the arm holder's own: y down the arm, +x forward, world units (the frame every held item's numbers are written in)
+      const qh = holder.getWorldQuaternion(new THREE.Quaternion()), qg = grip.getWorldQuaternion(new THREE.Quaternion());
+      expect(1 - Math.abs(qh.dot(qg))).toBeLessThan(1e-9);
+      const sc = grip.getWorldScale(new THREE.Vector3()), sh = holder.getWorldScale(new THREE.Vector3());
+      expect(sc.x / sh.x).toBeCloseTo(1, 6);
+      // and it really is where the hand's fist is: inside the hand mesh's box (the hand spans 0.65 to 1.04 down the arm)
+      expect(inHolder.y).toBeLessThan(-0.65);
+      expect(inHolder.y).toBeGreaterThan(-1.04);
+    }
   });
 
   it("the other heads are unchanged: a creature keeps cream arms and hands", async () => {

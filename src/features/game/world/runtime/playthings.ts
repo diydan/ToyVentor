@@ -5,7 +5,7 @@
 import * as THREE from "three";
 import { BALL_BOUNDS } from "./ballKick";
 import { SHOVE_PLAY_S } from "./gameMoves";
-import { ANGEL_START_S, ANGEL_SWEEPS, ANGEL_SWEEP_S, ANGEL_S, BITES_S, OFFER_S, OFFER_TAKE_S, PICK_GRAB_S, PICK_S, POUR_END_S, POUR_START_S, POUR_S, SIT_EAT_S, SMELL_S, SMELL_SNIFF_S, SWING_S } from "./playClips";
+import { ANGEL_START_S, ANGEL_SWEEPS, ANGEL_SWEEP_S, ANGEL_S, BITES_S, OFFER_S, OFFER_TAKE_S, PICK_GRAB_S, PICK_S, POUR_END_S, POUR_START_S, POUR_S, SIT_EAT_S, SMELL_S, SMELL_SNIFF_S, SWING_HOP_S, SWING_S } from "./playClips";
 import { SANDWICH_COUNT, seatPoint, swingAngle, FLOWER_X } from "./outdoorProps";
 import type { ActsWorld } from "./toyRoomActs";
 import type { PropInst } from "./propReactions";
@@ -33,7 +33,7 @@ export const TIRE_VX = 4.4;
 export const TIRE_S = SHOVE_PLAY_S;
 /** The swing's seat: how far Kip's origin sits below the seat's top when sitting (tuned against screenshots), the hop up and the hop down. */
 export const SIT_DROP = 0.45;
-export const HOP_S = 0.55;
+export const HOP_S = SWING_HOP_S;
 export const RIDE_S = SWING_S;
 /** How long the flowers take to open once the water is falling, and when (seconds into the visit). */
 export const GROW_FROM_S = 1.0;
@@ -64,7 +64,8 @@ const lerp = (a: number, b: number, u: number) => a + (b - a) * u;
 export function growthAt(t: number): number { return ease((t - GROW_FROM_S) / (GROW_TO_S - GROW_FROM_S)); }
 /** Where Kip is on the swing ride `t` seconds in: it hops up onto the seat, rides along the arc, and hops down again. `seat(a)` gives the seat's top for a swing angle. */
 export function ridePath(t: number, stand: { x: number; z: number }, swing: { x: number; z: number }, angleAt: (t: number) => number): { x: number; y: number; z: number; angle: number } {
-  const seatAt = (a: number) => { const s = seatPoint(a); return { x: swing.x + s.dx, y: s.y - SIT_DROP }; };
+  // Kip's origin hangs SIT_DROP below the seat's top along the seat's own "down", which tilts with the swing: (sin a, -cos a)
+  const seatAt = (a: number) => { const s = seatPoint(a); return { x: swing.x + s.dx + SIT_DROP * Math.sin(a), y: s.y - SIT_DROP * Math.cos(a) }; };
   if (!(t > 0)) return { x: stand.x, y: 0, z: stand.z, angle: 0 };
   if (t < HOP_S) {
     const u = t / HOP_S, e = ease(u), s = seatAt(0);
@@ -218,12 +219,13 @@ export function createPlaythings(w: ActsWorld, h: ThingHelpers) {
       tick: (t) => {
         const p = ridePath(t, stand, { x, z }, angleAt);
         w.setPosition(p.x, p.y, p.z);
+        w.setRoll?.(p.angle);                                          // he rolls with the ropes, about the seat
         call(inst, "setAngle", p.angle);
         const side = Math.sign(p.angle);
         if (side !== 0 && side !== lastSide) { lastSide = side; if (Math.abs(p.angle) > 0.12) w.tone(380 + Math.abs(p.angle) * 400, 0, 0.18, "sine", 0.04, 250); }
       },
       cues: [{ at: 3.1, fn: () => { h.note(at(inst, 0.2, 3.1, 0.5), 0.42); h.note(at(inst, -0.4, 3.4, 0.5), 0.36); } }],
-      end: () => { inst.holder.userData.riding = false; call(inst, "setAngle", 0); w.setPosition(stand.x, 0, stand.z); },
+      end: () => { inst.holder.userData.riding = false; call(inst, "setAngle", 0); w.setRoll?.(0); w.setPosition(stand.x, 0, stand.z); },
     };
   }
 

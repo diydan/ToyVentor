@@ -51,7 +51,9 @@ try {
         root.updateWorldMatrix(true, false);
         const P = (o) => { const w = o.getWorldPosition(new THREE.Vector3()); const l = root.worldToLocal(w); return [l.x, l.y, l.z]; };
         resolve({ hips: P(J.Hips), shoulderL: P(J.LeftArm), forearmL: P(J.LeftForeArm), handL: P(J.LeftHand), hipL: P(J.LeftUpLeg), kneeL: P(J.LeftLeg), footL: P(J.LeftFoot),
-                  shoulderR: P(J.RightArm), forearmR: P(J.RightForeArm), handR: P(J.RightHand), hipR: P(J.RightUpLeg), kneeR: P(J.RightLeg), footR: P(J.RightFoot), head: P(J.Head) });
+                  shoulderR: P(J.RightArm), forearmR: P(J.RightForeArm), handR: P(J.RightHand), hipR: P(J.RightUpLeg), kneeR: P(J.RightLeg), footR: P(J.RightFoot), head: P(J.Head),
+                  // the Head joint's rotation in the rig's frame (the game's head turns about the foot of its neck, so where its origin goes depends on it: see neckSlide below)
+                  headQ: (() => { const q = root.getWorldQuaternion(new THREE.Quaternion()).invert().multiply(J.Head.getWorldQuaternion(new THREE.Quaternion())); return [q.x, q.y, q.z, q.w]; })() });
       }));
     })()`);
   };
@@ -96,6 +98,14 @@ try {
   const TOL_OF = (k) => (k === "head" ? Math.max(TOL, 1.6) : TOL);
   const JOINTS = ["shoulderL", "forearmL", "handL", "hipL", "kneeL", "footL", "shoulderR", "forearmR", "handR", "hipR", "kneeR", "footR", "head"];
   const rel = (row, key) => [0, 1, 2].map((i) => row[key][i] - row.hips[i]);
+  // The bench's head turns about its own joint; the game's turns about the foot of its neck (snapFlex.ts \`hingeHead\`, NECK_FOOT_MM = 7.4 mm below it), so the same turn puts the game's head origin
+  // at the bench's plus (I - R) H, H = (0, -7.4, 0): the neck's foot is what stays put. (Dan, 2026-11-04: "we also need to add angles wrists and neck to kip".)
+  const NECK_FOOT_MM = 7.4;
+  const neckSlide = (q) => { const [x, y, z, w] = q; const H = [0, -NECK_FOOT_MM, 0]; // R H by q v q^-1
+    const t = [2 * (y * H[2] - z * H[1]), 2 * (z * H[0] - x * H[2]), 2 * (x * H[1] - y * H[0])];
+    const RH = [H[0] + w * t[0] + (y * t[2] - z * t[1]), H[1] + w * t[1] + (z * t[0] - x * t[2]), H[2] + w * t[2] + (x * t[1] - y * t[0])];
+    return [H[0] - RH[0], H[1] - RH[1], H[2] - RH[2]]; };
+  const expectedRel = (row, key) => (key === "head" ? rel(row, key).map((v, i) => v + neckSlide(row.headQ)[i]) : rel(row, key));
   const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
   // frames of each baked file (30 per second): spread through the clip so every part of the motion is compared
   const CLIPS = [
@@ -117,8 +127,8 @@ try {
       const g = await gameAt(t);
       if (process.env.E2E_TABLE) console.log(`-- ${clip} frame ${t}  hips bench ${b.hips.map((v) => v.toFixed(1))} game ${g.hips.map((v) => v.toFixed(1))}\n` + JOINTS.map((k) => `   ${k.padEnd(10)} bench ${rel(b, k).map((v) => v.toFixed(1).padStart(7))}   game ${rel(g, k).map((v) => v.toFixed(1).padStart(7))}   off ${dist(rel(b, k), rel(g, k)).toFixed(2)}`).join("\n"));
       for (const k of JOINTS) {
-        const d = dist(rel(b, k), rel(g, k));
-        if (d - TOL_OF(k) + TOL > clipWorst) { clipWorst = d - TOL_OF(k) + TOL; clipWorstWhere = `${k} at frame ${t}: bench ${rel(b, k).map((v) => v.toFixed(1))} game ${rel(g, k).map((v) => v.toFixed(1))}`; }
+        const d = dist(expectedRel(b, k), rel(g, k));
+        if (d - TOL_OF(k) + TOL > clipWorst) { clipWorst = d - TOL_OF(k) + TOL; clipWorstWhere = `${k} at frame ${t}: bench ${expectedRel(b, k).map((v) => v.toFixed(1))} game ${rel(g, k).map((v) => v.toFixed(1))}`; }
         worst[k] = Math.max(worst[k] ?? 0, d);
       }
       slide.push(g.soleLow);

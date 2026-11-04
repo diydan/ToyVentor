@@ -15,7 +15,7 @@ import type { RigColors, RigSel, ToyRig } from "./playerRig";
 import { FACEPLATE_HOLDER, KID_CROWN_Y, kipBodyColors } from "./kipLook";
 import { buildFaceDecalGeometry, kipFaceMaterial } from "./kipFacePlate";
 import { lightenShadow } from "./shadowProxy";
-import { SNAP_ARM_FLEX, SNAP_CUFF_Q, SNAP_LEG_FLEX, makeFlexLimb, makeHandFollow, type SnapArmHandles, type SnapLegHandles, type SnapRigHandles } from "./snapFlex";
+import { NECK_FOOT_MM, SNAP_ARM_FLEX, SNAP_CUFF_Q, SNAP_LEG_FLEX, makeFlexLimb, makeHandFollow, type SnapArmHandles, type SnapLegHandles, type SnapRigHandles } from "./snapFlex";
 import {
   GLASS,
   glowMat,
@@ -31,6 +31,8 @@ import {
 export const MAX_STL_CACHE = 48;
 export const KIP_MM_SCALE = 0.0185;
 /** Hip height of the Kip figure in mm: where the legs pivot for skeletal animation. */
+/** Where the fist is, in the arm holder's frame at rest (units; measured on the Snap hand's mesh, 2026-11-04): 0.125 forward of the arm's line, 0.85 down it, and 0.03 toward the body (mirrored for the other hand). */
+export const FIST_IN_HOLDER = { x: 0.125, y: -0.845, z: 0.031 } as const;
 export const KIP_HIP_MM = 61.5;
 export const VEH_MM_SCALE = 0.0235;
 
@@ -699,6 +701,7 @@ function applyCharacterStlRig(
   // Articulated arms in stage-aligned holders so world.ts walk swing (rotation.z) swings forward/back along +X!
   const snapArms: SnapArmHandles[] = [];
   const snapLegs: SnapLegHandles[] = [];
+  const grips: THREE.Object3D[] = [];
   for (const side of [1, -1] as const) {
     const swingHolder = new T.Group();
     swingHolder.position.set(0, 95 * KIP_MM_SCALE, -side * 18.2 * KIP_MM_SCALE);
@@ -736,7 +739,18 @@ function applyCharacterStlRig(
     swingHolder.add(handCounter);
     snapArms.push({ flex: flexArm, fore: foreJoint, hand: handJoint, follow: makeHandFollow(swingHolder, handCounter, handJoint) });
     rig.arms.push(swingHolder);
+    // The grip: where a fist closes on a handle, a child of the hand (so it goes wherever the hand does, bent wrist and all), turned and scaled to match the arm holder's own frame
+    // (y down the arm, +x forward, world units), which is the frame every held item's numbers are written in (heldItems.ts). Dan, 2026-11-04: "holding props is often in the wrong orientation":
+    // the items used to hang off the arm holder 0.4 to 0.5 units down the arm, which is the middle of the sleeve now that the arm is a one-piece Snap sleeve (the fist is 0.85 down).
+    swingHolder.updateMatrixWorld(true);
+    const grip = new T.Group();
+    const handInHolder = new T.Matrix4().copy(swingHolder.matrixWorld).invert().multiply(handJoint.matrixWorld);
+    new T.Matrix4().copy(handInHolder).invert().multiply(new T.Matrix4().makeTranslation(FIST_IN_HOLDER.x, FIST_IN_HOLDER.y, side === 1 ? FIST_IN_HOLDER.z : -FIST_IN_HOLDER.z)).decompose(grip.position, grip.quaternion, grip.scale);
+    grip.userData.grip = true;
+    handJoint.add(grip);
+    grips.push(grip);
   }
+  rig.grips = grips;
 
   // Articulated legs + sneaker boots wired to rig.feet for vertical walk step
   const bootsSlot = rig.slots.boots ?? baseSlot;
@@ -792,10 +806,13 @@ function applyCharacterStlRig(
   headPivot.position.set(0, 108.0, 0);
   kipFrame.add(headPivot);
   rig.head = headPivot;
+  // The head turns about the foot of its neck (snapFlex.ts `hingeHead`), where the neck turret meets the torso's collar, not about its own base.
+  headPivot.userData.rest = headPivot.position.clone();
+  headPivot.userData.hinge = new T.Vector3(0, -NECK_FOOT_MM, 0);
 
   if (geos.neckTurret) {
     const ntMesh = scadMesh(geos.neckTurret, neckMat);
-    ntMesh.position.y = -7.4;
+    ntMesh.position.y = -NECK_FOOT_MM;
     headPivot.add(ntMesh);
   }
 

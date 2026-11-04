@@ -782,7 +782,7 @@ describe("wiring in world.ts", () => {
     expect(world).toContain("bubbles:BUBBLES,held:HELD,fetch:DOGF,");
   });
   it("Kip can hold a book, the guitar, the wand and a pair of mallets: the right arm is arms[1], the left arms[0] and the mouth is found from Kip's own box", () => {
-    expect(world).toContain("hold:function(i: \"book\"|\"guitar\"|\"wand\"|\"mallets\"|\"can\"|\"carrot\"|\"bouquet\"|\"sandwich\"){HELD.hold(i,P.model,P.rig&&P.rig.arms&&P.rig.arms[1],P.rig&&P.rig.arms&&P.rig.arms[0])}");
+    expect(world).toContain("hold:function(i: \"book\"|\"guitar\"|\"wand\"|\"mallets\"|\"can\"|\"carrot\"|\"bouquet\"|\"sandwich\"){HELD.hold(i,P.model,handOf(1),handOf(0))}");
     expect(world).toContain("release:function(){HELD.release()}");
     expect(world).toContain("bubbles:BUBBLES,");
     expect(world).toMatch(/mouth:function\(d: number\)\{var b=new T\.Box3\(\)\.setFromObject\(P\.root\)/);

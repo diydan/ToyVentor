@@ -34,6 +34,24 @@ export const BITES_S: readonly number[] = [1.1, 2.3, 3.5];
 export const SIT_EAT_S = 4.7;
 /** Sitting on a swing, the legs pumping. */
 export const SWING_S = 5.2;
+/**
+ * The swing's own beat, shared by the prop (outdoorProps.ts `swingAngle`: the angle is `max * envelope * sin(SWING_OMEGA * t)`, t seconds after Kip is on the seat) and by the clip, so the legs pump
+ * with the swing and not at a rate of their own (Dan, 2026-11-04: "swing is not aligned with the actual swing"). One swing back and forth takes 2 PI / SWING_OMEGA = 1.9 s; Kip sits down
+ * SWING_HOP_S into the ride (playthings.ts `HOP_S`). The clip's legs go OUT at the forward end of the swing and TUCK at the back end, as a child pumps one.
+ */
+export const SWING_OMEGA = 3.3;
+export const SWING_MAX = 0.62;
+export const SWING_HOP_S = 0.55;
+/** When, in seconds into the ride, the swing is at each end of its arc: the forward end first (the angle is at its positive peak), then the back end, and so on. */
+export function swingEndTimes(rideSeconds: number): Array<{ t: number; forward: boolean }> {
+  const out: Array<{ t: number; forward: boolean }> = [];
+  for (let j = 0; ; j++) {
+    const t = SWING_HOP_S + (PI / 2 + j * PI) / SWING_OMEGA;
+    if (t > rideSeconds - SWING_HOP_S - 0.3) break;                // the last swing runs out before Kip hops down
+    out.push({ t, forward: j % 2 === 0 });
+  }
+  return out;
+}
 
 /** Sitting down with the legs out in front: the hips drop and the legs point forward. Used under the picnic and the swing. */
 const SIT = { hips: [0, -0.4, 0.05] as V3, legL: [0.1, -0.12, 0.99] as V3, legR: [-0.1, -0.12, 0.99] as V3 };
@@ -100,11 +118,11 @@ export const PLAY_CLIPS: ClipBank = {
     { t: 4.2, armR: [-0.3, -0.5, 0.5], head: [0, 0, 0] },
     { t: SIT_EAT_S, armL: REST_ARM, armR: REST_ARM, body: [0, 0, 0], head: [0, 0, 0], hips: [0, 0, 0], legL: REST_ARM, legR: REST_ARM },
   ]),
-  // Ride the swing: sit with the legs out and pump them (back, forward, back...), the hands holding the ropes, the body leaning with each push. 5.2 s.
+  // Ride the swing: sit with the legs out and pump them with the swing itself (out at the forward end of each swing, tucked at the back end: `swingEndTimes`), the hands holding the ropes, the body leaning with each push. 5.2 s.
   swing: bake("swing", SWING_S, false, [
     { t: 0 },
     { t: 0.5, ...SIT, armL: [0.3, 0.45, 0.4], armR: [-0.3, 0.45, 0.4], body: [-0.03, 0, 0] },
-    ...Array.from({ length: 8 }, (_, i): Key => ({ t: 0.9 + i * 0.5, legL: i % 2 ? [0.1, -0.12, 0.99] : [0.1, -0.6, 0.6], legR: i % 2 ? [-0.1, -0.12, 0.99] : [-0.1, -0.6, 0.6], body: [i % 2 ? -0.1 : 0.06, 0, 0], head: [i % 2 ? -0.08 : 0.04, 0, 0] })),
+    ...swingEndTimes(SWING_S).map(({ t, forward }): Key => ({ t, legL: forward ? [0.1, -0.12, 0.99] : [0.1, -0.6, 0.6], legR: forward ? [-0.1, -0.12, 0.99] : [-0.1, -0.6, 0.6], body: [forward ? -0.1 : 0.06, 0, 0], head: [forward ? -0.08 : 0.04, 0, 0] })),
     { t: SWING_S, armL: REST_ARM, armR: REST_ARM, body: [0, 0, 0], head: [0, 0, 0], hips: [0, 0, 0], legL: REST_ARM, legR: REST_ARM },
   ]),
 };

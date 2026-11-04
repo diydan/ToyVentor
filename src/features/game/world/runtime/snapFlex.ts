@@ -239,6 +239,24 @@ export function releaseHand(a: SnapArmHandles): void {
 }
 
 /** Put every Snap limb joint back to its rest: nothing bent, the hands and boots where the rigid limbs held them. */
+// ---- the neck ----------------------------------------------------------------------------------------------------------------------------------
+
+/**
+ * How far below the head's own base the neck turret's foot is, mm (the head's `neck_turret_2x1` hangs from -7.4 up to the head's base; the foot is where it meets the torso's collar).
+ * Dan, 2026-11-04: "we also need to add angles wrists and neck to kip". The head used to turn about its own base with the turret riding on it, so a tilt swung the turret's foot off the collar
+ * and left a gap (the head looked to float over the shoulders). A head that carries `userData.hinge` (this point, in its own frame) and `userData.rest` (its origin at rest) now turns ABOUT the
+ * hinge: the foot of the neck stays on the collar and the head swings on it as one stick, the way a neck does.
+ */
+export const NECK_FOOT_MM = 7.4;
+const _hinge = new THREE.Vector3();
+/** Put a head that has a neck hinge where its current rotation says it should be, so the hinge point does not move. Call it right after setting the head's quaternion. A head without hinge data is left alone. */
+export function hingeHead(head: THREE.Object3D): void {
+  const u = head.userData as { hinge?: THREE.Vector3; rest?: THREE.Vector3 };
+  if (!u.hinge || !u.rest) return;
+  _hinge.copy(u.hinge).applyQuaternion(head.quaternion);        // where the hinge point goes if the head only turned
+  head.position.copy(u.rest).add(u.hinge).sub(_hinge);          // slide the head back by that, so the hinge itself stays put
+}
+
 export function resetSnapRig(sn: SnapRigHandles): void {
   const id = new THREE.Quaternion();
   for (const a of sn.arms) {
