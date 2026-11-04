@@ -12,7 +12,8 @@ import {
   toCreasedNormals,
 } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import type { RigColors, RigSel, ToyRig } from "./playerRig";
-import { FACEPLATE_HOLDER, KID_CROWN_Y, kipBodyColors } from "./kipLook";
+import { FACEPLATE_HOLDER, KID_CROWN_Y, KIP_DEFAULT_HAIR_HEX, kipBodyColors, kipHairUrl, resolveKipTop, type KipTop } from "./kipLook";
+import { coverMesh } from "./kipCover";
 import { buildFaceDecalGeometry, kipFaceMaterial } from "./kipFacePlate";
 import { lightenShadow } from "./shadowProxy";
 import { NECK_FOOT_MM, SNAP_ARM_FLEX, SNAP_CUFF_Q, SNAP_LEG_FLEX, makeFlexLimb, makeHandFollow, type SnapArmHandles, type SnapLegHandles, type SnapRigHandles } from "./snapFlex";
@@ -371,6 +372,11 @@ function resolveCharacterHatUrl(hatId: string): string | null {
   return null;
 }
 
+/** What the top of a human head wears (kipLook.ts `resolveKipTop`): a hat, else hair, else the smooth cover. A hat id the game has no model for counts as no hat, as it always did. */
+function characterTop(sel: RigSel): KipTop {
+  return resolveKipTop({ hat: resolveCharacterHatUrl(sel.hat) ? sel.hat : "none", hair: sel.hair });
+}
+
 function resolveCharacterBackUrl(backId: string): string | null {
   if (!backId || backId === "none" || backId === "cape") return null;
   if (backId === "wings") return "/kip/partspec/toyventor_cloud_wings_S.stl";
@@ -430,9 +436,15 @@ export function resolveStlHeroRecipe(
     const hatUrl = resolveCharacterHatUrl(sel.hat);
     if (hatUrl) {
       parts.push({ key: "hat", url: hatUrl, creaseDeg: 34, required: false });
-    } else if (headSpec.mode === "human") {
-      // The demo's mandatory Spark crown buds (the two orange studs on top of a human head); a hat sits on them instead.
-      parts.push({ key: "crownBuds", url: "/kip/partspec/toyventor_crown_buds_2x1.stl", creaseDeg: 34, required: false });
+    }
+    if (headSpec.mode === "human") {
+      // The top of a human head wears a hat, else hair, else the smooth cover (Dan, 2026-11-04: the bare orange studs looked odd). A hat-ready wig under a hat is kept; a wig on its own gets the
+      // demo's orange stud overlay when it is hat-ready (the wig's own studs are hair-coloured).
+      const top = characterTop(sel);
+      if (top.hair) parts.push({ key: "hair", url: kipHairUrl(top.hair.id), creaseDeg: 34, required: false });
+      if (top.kind === "hair" && top.hair.hatReady) {
+        parts.push({ key: "crownBuds", url: "/kip/partspec/toyventor_crown_buds_2x1.stl", creaseDeg: 34, required: false });
+      }
     }
     if (sel.ears === "horns") {
       parts.push({
@@ -909,8 +921,31 @@ function applyCharacterStlRig(
     headPivot.add(fpHolder);
   }
 
-  // The two orange crown studs of the demo's human head (kip-vehicles-wardrobe.js `altCrownBuds`: spark colour, a hair larger than the head's own studs)
-  if (geos.crownBuds && human) {
+  // What the top of the human head wears (kipLook.ts `resolveKipTop`).
+  const top = human ? characterTop(sel) : null;
+  if (top && top.hair && geos.hair) {
+    // The demo seats a wig with its hem at `seatY` from the head's stud plane (kip-bench.js: hairAnchor.position.y = headCrownY, each wig at its HAIR_OPTIONS seatY).
+    const hairMat = plastic(col.hair || KIP_DEFAULT_HAIR_HEX, { roughness: 0.42, clearcoat: 0.22 });
+    const wig = scadMesh(geos.hair, hairMat);
+    wig.position.y = KID_CROWN_Y + top.hair.seatY;
+    wig.userData.kipHair = true;
+    headPivot.add(wig);
+  }
+  if (top && top.kind === "cover") {
+    // No hat and no hair: the forge's smooth cover in the skin colour, over the head's two studs (kipCover.ts), sunk 0.25 mm into the head's top so no seam shows.
+    const c = coverMesh();
+    const geo = new T.BufferGeometry();
+    geo.setAttribute("position", new T.BufferAttribute(c.positions, 3));
+    geo.setIndex(new T.BufferAttribute(c.indices, 1));
+    geo.computeVertexNormals();
+    const cover = scadMesh(geo, skinMat);
+    cover.position.y = KID_CROWN_Y - 0.25;
+    cover.userData.kipCover = true;
+    headPivot.add(cover);
+  }
+
+  // The two orange crown studs on a hat-ready wig (kip-vehicles-wardrobe.js `hairCrownBuds`: spark colour, a hair larger than the wig's own studs, `topH` above the stud plane)
+  if (geos.crownBuds && human && top && top.kind === "hair" && top.hair.hatReady) {
     // The overlay is only 0.6 % larger than the head's own studs (0.03 mm out), which the game's depth buffer cannot tell apart: the skin studs won and the orange never showed.
     // A polygon offset pulls the overlay toward the camera so the orange wins, the way it does in the demo.
     const budsMat = sparkMat.clone();
@@ -919,7 +954,7 @@ function applyCharacterStlRig(
     budsMat.polygonOffsetUnits = -2;
     const buds = scadMesh(geos.crownBuds, budsMat);
     buds.scale.set(1.006, 1.01, 1.006);
-    buds.position.y = KID_CROWN_Y;   // the head's stud plane (the demo sets altCrownBuds.position.y = headCrownY)
+    buds.position.y = KID_CROWN_Y + top.hair.topH;   // on the wig's studs (the demo sets hairCrownBuds.position.y = topH above the head's stud plane)
     buds.userData.kipBuds = true;
     headPivot.add(buds);
   }
@@ -930,8 +965,11 @@ function applyCharacterStlRig(
   if (geos.hat) {
     const hatCad = new T.Group();
     hatCad.rotation.y = Math.PI / 2;
+    hatCad.userData.hatCad = true;
     hatCad.scale.setScalar(KIP_MM_SCALE);
-    hatCad.position.set(0, (108.0 + crownHeightMm - 9.5) * KIP_MM_SCALE, 0);
+    // on a hat-ready wig the hat stacks on the wig's studs (kip-bench.js: crownAnchor.position.y = headCrownY + topH)
+    const hatLift = top && top.kind === "hat" && top.hair ? top.hair.topH : 0;
+    hatCad.position.set(0, (108.0 + crownHeightMm - 9.5 + hatLift) * KIP_MM_SCALE, 0);
     hatCad.add(scadMesh(geos.hat, sel.hat === "crown" ? metal("#ffd24d") : sparkMat));
     hatSlot.add(hatCad);
     rig.slots.extra = hatSlot;

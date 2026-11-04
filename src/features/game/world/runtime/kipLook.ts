@@ -217,3 +217,77 @@ export function drawKipFace(ctx: FaceCtx, width = 512, height = 256): void {
   ctx.fill();
   ctx.restore();
 }
+
+// ---- hair, and what the top of the head wears ------------------------------------------------------------------------------------------------------------------------
+// Dan, 2026-11-04: "default kip should have hat or hair, we should use the smooth cover if not hair or hat, or hide the studs". The human head has two crown studs. Bare, they showed as two
+// orange knobs on the stock Kip. Now the top of a human head wears, in this order: a hat (as before), else a hairstyle (the stock Kip's is the demo's Swept, chestnut), else the smooth
+// cover (kipCover.ts: the curved, stud-free top that clips onto the studs, shared/forgeCover.ts) in the skin colour. The studs are never left showing.
+
+/** The demo's hair tones (kip-vehicles-wardrobe.js HAIR_COLORS), in its order. */
+export const KIP_HAIR_COLORS: readonly { id: string; label: string; hex: string }[] = [
+  { id: "chestnut", label: "Chestnut", hex: "#6E412A" },
+  { id: "espresso", label: "Espresso", hex: "#2A211E" },
+  { id: "golden_blonde", label: "Golden Blonde", hex: "#F2B83B" },
+  { id: "auburn_ginger", label: "Auburn Ginger", hex: "#D85A2B" },
+  { id: "berry_spark", label: "Berry Spark", hex: "#D9468F" },
+  { id: "cobalt", label: "Cobalt Blue", hex: "#2E6FDB" },
+];
+/** The stock Kip's hair tone (the demo's first). */
+export const KIP_DEFAULT_HAIR_HEX = KIP_HAIR_COLORS[0]!.hex.toLowerCase();
+
+export interface KipHairStyle {
+  id: string;
+  label: string;
+  /** Has its own 2x1 studs on top, so a hat can sit on it (the other eleven are sculpted tops). */
+  hatReady: boolean;
+  /** How far above the head's stud plane the wig's studs sit (WIG_TOP_Z, 4.8 mm for a hat-ready wig). */
+  topH: number;
+  /** Where the wig's lowest point (its hem) is, relative to the head's stud plane (mm). */
+  seatY: number;
+}
+/** The demo's nineteen hairstyles (kip-vehicles-wardrobe.js HAIR_OPTIONS without 'off'). tests/kip-hair.test.ts compares this with the demo's source. */
+export const KIP_HAIRSTYLES: readonly KipHairStyle[] = [
+  { id: "short_swept", label: "Swept", hatReady: true, topH: 4.8, seatY: -16.5 },
+  { id: "bob", label: "Bob", hatReady: true, topH: 4.8, seatY: -19.0 },
+  { id: "swoosh", label: "Swoosh", hatReady: true, topH: 4.8, seatY: -16.5 },
+  { id: "long_layered", label: "Long Flow", hatReady: true, topH: 4.8, seatY: -22.5 },
+  { id: "twin_braids", label: "Twin Braids", hatReady: true, topH: 4.8, seatY: -22.5 },
+  { id: "shag", label: "Shag", hatReady: true, topH: 4.8, seatY: -17.0 },
+  { id: "bowl", label: "Bowl Cut", hatReady: true, topH: 4.8, seatY: -16.0 },
+  { id: "slick", label: "Sleek Part", hatReady: true, topH: 4.8, seatY: -16.0 },
+  { id: "pompadour", label: "Pompadour", hatReady: false, topH: 0, seatY: -16.5 },
+  { id: "top_bun", label: "Top Bun", hatReady: false, topH: 0, seatY: -16.5 },
+  { id: "side_sweep", label: "Side Sweep", hatReady: false, topH: 0, seatY: -19.0 },
+  { id: "spiky", label: "Spiky Tufts", hatReady: false, topH: 0, seatY: -16.5 },
+  { id: "pigtails", label: "Twin Pigtails", hatReady: false, topH: 0, seatY: -17.0 },
+  { id: "ponytail", label: "High Ponytail", hatReady: false, topH: 0, seatY: -16.5 },
+  { id: "curly", label: "Cloud Curls", hatReady: false, topH: 0, seatY: -17.0 },
+  { id: "mohawk", label: "Action Mohawk", hatReady: false, topH: 0, seatY: -16.5 },
+  { id: "pixie", label: "Pixie Tufts", hatReady: false, topH: 0, seatY: -15.0 },
+  { id: "side_pony", label: "Side Ponytail", hatReady: false, topH: 0, seatY: -16.5 },
+  { id: "low_bun", label: "Low Nape Bun", hatReady: false, topH: 0, seatY: -16.5 },
+];
+/** The stock Kip's hairstyle. */
+export const KIP_DEFAULT_HAIR_ID = "short_swept";
+
+export const kipHairStyle = (id: string | undefined | null): KipHairStyle | null => KIP_HAIRSTYLES.find((h) => h.id === id) ?? null;
+/** The wig's STL (public/kip/partspec). */
+export const kipHairUrl = (id: string): string => `/kip/partspec/toyventor_hair_${id}_S.stl`;
+
+/** What a human head wears on top. `hair` is a style id; `none` is its own bare head (the child, or a test, asked for none). */
+export type KipTop =
+  | { kind: "hat"; hair: KipHairStyle | null }   // a hat; on a hat-ready wig it is lifted by the wig's studs, on a sculpted wig the wig stays off
+  | { kind: "hair"; hair: KipHairStyle }
+  | { kind: "cover"; hair: null };
+
+/**
+ * Hat first, else hair, else the smooth cover. A character that never chose hair (no `hair` key: every save made before this) gets the stock Swept style, unless it wears a hat, so a
+ * toy that already had a hat looks exactly as before. `hair: "none"` is a choice and gives the smooth cover. A sculpted-top wig under a hat is dropped (a hat cannot sit on it; the demo
+ * swaps to a hat-ready style, the game just keeps the hat).
+ */
+export function resolveKipTop(sel: { hat?: string; hair?: string }): KipTop {
+  const hasHat = !!sel.hat && sel.hat !== "none";
+  const chosen = sel.hair === undefined ? (hasHat ? null : kipHairStyle(KIP_DEFAULT_HAIR_ID)) : kipHairStyle(sel.hair);
+  if (hasHat) return { kind: "hat", hair: chosen && chosen.hatReady ? chosen : null };
+  return chosen ? { kind: "hair", hair: chosen } : { kind: "cover", hair: null };
+}

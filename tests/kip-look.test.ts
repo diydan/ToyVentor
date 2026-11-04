@@ -321,14 +321,15 @@ describe("the rig wears it", () => {
     });
     expect(holder, "the plate holder is at the demo's seat").not.toBeNull();
     expect((holder as unknown as THREE.Object3D).children[0]!.rotation.y).toBeCloseTo(Math.PI, 9);
-    // the two orange crown studs: in the head, on the stud plane, in the spark colour, and pulled toward the camera so the orange beats the head's own studs
+    // the two orange crown studs: in the head, in the spark colour, and pulled toward the camera so the orange beats the studs under them. The stock Kip wears the Swept wig now, so they sit
+    // on the wig's studs (the demo's hairCrownBuds: `topH` 4.8 mm above the head's stud plane), not on the head's own
     let buds: THREE.Mesh | null = null;
     rig.head!.traverse((o: THREE.Object3D) => { if (o.userData.kipBuds) buds = o as THREE.Mesh; });
     expect(buds, "the crown buds are on the head").not.toBeNull();
     const bm = (buds as unknown as THREE.Mesh).material as THREE.MeshPhysicalMaterial;
     expect(bm.color.getHexString()).toBe(plastic(KIP_BOOT_HEX).color.getHexString());
     expect(bm.polygonOffset).toBe(true);
-    expect((buds as unknown as THREE.Mesh).position.y).toBe(KID_CROWN_Y);
+    expect((buds as unknown as THREE.Mesh).position.y).toBeCloseTo(KID_CROWN_Y + 4.8, 9);
     // no canvas in a unit test: the plate is plain skin (the face is added in a browser)
     expect(typeof document).toBe("undefined");
     expect((holder as unknown as THREE.Object3D).children).toHaveLength(1);

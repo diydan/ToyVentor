@@ -11,7 +11,7 @@
 export const PORTRAIT_PX = 128;
 
 /** Bump when the framing or lighting changes, so old pictures are retaken. */
-export const PORTRAIT_FRAMING_VERSION = 1;
+export const PORTRAIT_FRAMING_VERSION = 2; // 2: the human head wears hair, or the smooth cover, instead of two bare studs
 
 export interface ToyPortrait {
   toyId: string;

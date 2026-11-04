@@ -10,6 +10,8 @@ export interface RigColors {
   c1: string;
   c2: string;
   skin?: string;
+  /** The hair tone of a human head (a hex); the stock chestnut when missing. */
+  hair?: string;
 }
 export interface RigSel {
   wheels: string;
