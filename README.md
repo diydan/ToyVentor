@@ -72,3 +72,8 @@ the live part count. Do not copy either number into a document.
 See [the plan](docs/product/plan.md) for what shipped each day, the
 [journal](docs/product/journal.md) for the deep record, and
 [the spec](docs/product/spec.md) for what the app does.
+
+## License
+
+Apache-2.0. See [LICENSE](LICENSE). Third-party notices live in
+[THIRD_PARTY.md](THIRD_PARTY.md).
