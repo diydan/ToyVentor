@@ -329,6 +329,7 @@ export interface WorldRuntimeHandle {
   cuPart?: (id: string) => void;
   cuZone?: (z: string) => void;
   cuPaint?: (c: string) => void;
+  onbStage?: (op: string, hex?: string) => void;
   cuForgeTool?: (id: string) => void;
   cuPrintTool?: (id: string) => void;
   crSnap?: () => any;
@@ -1123,6 +1124,53 @@ function cuAct(a: string){
 function cuType(t: string){var nt=t==="robot"?"character":t;if(S.type!==nt){S.type=nt;S.toyId=nt==="vehicle"?"seed-car":"seed-kip";save();buildPlayer(null);sfx.snap();burst(new T.Vector3(P.pos.x,1.2,P.pos.z),"rgba(155,212,255,1)",10)}renderSheet()}
 function cuSlot(s: string){B.slot=s;sfx.pop();renderSheet()}
 function cuPart(id: string){var slotId=B.slot||"base",k=slotPartKey(S.type,slotId,id),p=PART[k];if(!p)return;if(!isOpen(k)){toast("Find it in "+WN[p.w]+".");sfx.bump();return}cur()[slotId]=id;save();buildPlayer(slotId);partSound(k);renderSheet()}
+/* The new-player setup's "meet Kip" scene (OnboardingSheet.tsx, docs/specs/accounts-and-new-user-spec.md section 8). Kip lies in a PILE OF HIS REAL PARTS on the Toy Room floor (every mesh of his rig is cloned, sharing the real STL geometry and materials, so the pile is the demo's parts and not stand-ins), and on "build" each part is carried from the pile to its seat, lowest first, the way the Kip demo's Describe and Build carries its parts (parts/kip/viewer/kip-describe-view.js pilePlan and pileFrame): lifted, carried over, set down. The real Kip stays hidden until the last part lands, and then appears with a pop. `pile` also paints the shirt the favourite colour and turns Kip to face the screen (so the seats match where he will stand). Then the HEADPHONES: `phonesShow` floats a pair beside Kip when the song is ready, `phones` carries them to his head (they then follow it), `phonesOff` takes them away when the song is over. Ops: pile, build, abort (put Kip back, keep the headphones), end (everything), phonesShow, phones, phonesOff. */
+var ONBG: THREE.Group | null=null,ONBH: THREE.Group | null=null,ONBT=0;
+function ONBS(op: string,hex?: string){
+ var show=function(){if(ONBG){if(ONBG.parent)ONBG.parent.remove(ONBG);ONBG=null}if(P.model)P.model.visible=true;blob.visible=true};
+ var dropPhones=function(){if(ONBH){if(ONBH.parent)ONBH.parent.remove(ONBH);ONBH=null}};
+ if(op==="abort"){ONBT++;show();return}
+ if(op==="end"){ONBT++;show();dropPhones();return}
+ if(op==="phonesOff"){dropPhones();return}
+ if(S.type!=="character")return;
+ var phones=function(){var h=new T.Group(),band=new T.Mesh(new T.TorusGeometry(.44,.06,10,28,Math.PI),plastic("#ff6b4a"));h.add(band);[-.44,.44].forEach(function(x){var c=new T.Mesh(new T.CylinderGeometry(.2,.2,.18,20),plastic("#2b4c85"));c.rotation.z=Math.PI/2;c.position.set(x,0,0);h.add(c)});h.traverse(function(o: any){o.castShadow=true});linearize(h);return h};
+ if(op==="pile"){
+  ONBT++;var tk=ONBT;show();dropPhones();if(hex){S.col.c1=hex;save();buildPlayer(null)}
+  if(reduce)return;
+  P.face=P.tface=-Math.PI/2; // facing the screen, as he will stand when he is built (and where "free" turns him anyway)
+  var tries=0,lay=function(){
+   if(tk!==ONBT)return;
+   if(!(P.rig&&P.rig.stlMode==="stl")&&tries++<30){setTimeout(lay,250);return} // his real parts are fetched: wait for them (about 7 s at most, then no pile)
+   if(!P.model||!P.rig)return;
+   P.model.updateMatrixWorld(true);
+   var seats: any[]=[];
+   P.rig.g.traverse(function(o: any){if(o.isMesh&&o.visible!==false&&!o.userData.shadowProxy&&o.geometry&&o.geometry.attributes&&o.geometry.attributes.position){var p=new T.Vector3(),q=new T.Quaternion(),sc=new T.Vector3();o.matrixWorld.decompose(p,q,sc);seats.push({o:o,p:p,q:q,s:sc})}});
+   if(seats.length<3)return;
+   seats.sort(function(a,b){return a.p.y-b.p.y});
+   var g=new T.Group(),hx=P.pos.x-2.3,hz=P.pos.z+.3,eu=new T.Euler();
+   ONBG=g;scene.add(g);P.model.visible=false;blob.visible=false;
+   seats.forEach(function(it,i){var m=new T.Mesh(it.o.geometry,it.o.material),a=i*2.399,r=.25+((i*37)%10)/10*.95;
+    m.castShadow=true;m.receiveShadow=true;
+    it.pp=new T.Vector3(hx+Math.cos(a)*r,.12+((i*13)%5)*.07,hz+Math.sin(a)*r*.7);
+    eu.set(((i*53)%7)/7*Math.PI*2,((i*29)%11)/11*Math.PI*2,((i*17)%5)/5*Math.PI*2);it.pq=new T.Quaternion().setFromEuler(eu);
+    m.position.copy(it.pp);m.quaternion.copy(it.pq);m.scale.copy(it.s);g.add(m);it.m=m});
+   g.userData.seats=seats};
+  setTimeout(lay,220);return}
+ if(op==="build"){
+  var gg=ONBG,tk2=ONBT;if(!gg){show();return}
+  var seats2=gg.userData.seats,n=seats2.length,TOT=3.4,DUR=.9,STAG=Math.max(.02,(TOT-DUR)/Math.max(1,n-1));
+  sfx.pop();
+  tween(TOT,function(k: number){var t=k*TOT;for(var i=0;i<n;i++){var it=seats2[i],u=Math.max(0,Math.min(1,(t-i*STAG)/DUR)),e=u*u*(3-2*u);it.m.position.lerpVectors(it.pp,it.p,e);it.m.position.y+=Math.sin(Math.PI*e)*1.4;it.m.quaternion.slerpQuaternions(it.pq,it.q,e)}}).then(function(){if(ONBG!==gg||tk2!==ONBT)return;show();burst(new T.Vector3(P.pos.x,1.3,P.pos.z),"rgba(255,255,255,1)",14);sfx.pop();P.happy=1.4;P.hop=Math.max(P.hop,.5)});
+  return}
+ if(op==="phonesShow"&&!ONBH){var h=phones();ONBH=h;scene.add(h);h.position.set(P.pos.x+1.7,1.3,P.pos.z+.5);sfx.pop();burst(h.position.clone(),"rgba(255,255,255,1)",10);
+  fx.push({t:0,d:600,f:function(_k: number,dt: number){if(ONBH!==h||h.userData.worn)return;h.position.y=1.3+Math.sin(performance.now()/300)*.12;h.rotation.y+=dt*1.2},end:function(){}});return}
+ if(op==="phones"){
+  var hp=ONBH;if(!hp){hp=phones();ONBH=hp;scene.add(hp);hp.position.set(P.pos.x+1.7,1.3,P.pos.z+.5)}
+  var h2=hp,from=h2.position.clone(),head=P.rig&&P.rig.head?P.rig.head:P.model,wp=new T.Vector3();
+  sfx.pop();
+  tween(.7,function(k: number){if(ONBH!==h2)return;head.getWorldPosition(wp);wp.y+=.2;h2.position.lerpVectors(from,wp,Math.min(1,k*1.2));h2.rotation.y+=(P.root.rotation.y+Math.PI/2-h2.rotation.y)*Math.min(1,k)}).then(function(){if(ONBH!==h2)return;h2.userData.worn=true;burst(h2.position.clone(),"rgba(255,255,255,1)",10);
+   fx.push({t:0,d:3600,f:function(){if(ONBH!==h2)return;head.getWorldPosition(wp);h2.position.set(wp.x,wp.y+.2,wp.z);h2.rotation.y=P.root.rotation.y+Math.PI/2},end:function(){}})})}
+}
 function cuZone(z: string){B.z=z;renderSheet()}
 function cuPaint(c: string){S.col[B.z]=c;save();buildPlayer(null);sfx.pop();burst(new T.Vector3(P.pos.x,1.4,P.pos.z),"rgba(255,255,255,1)",8);renderSheet()}
 function cuForgeTool(id: string){var Tt=TOOLS[id];if(!Tt)return;if(!S.bp[id]||(S.scrap||0)<Tt.cost)return;S.scrap-=Tt.cost;S.bin[id]=(S.bin[id]||0)+1;save();sfx.found();toast("Forged: "+Tt.n+".");notify()}
@@ -1415,7 +1463,7 @@ cuType:function(t){cuType(t)},
 cuSlot:function(s){cuSlot(s)},
 cuPart:function(id){cuPart(id)},
 cuZone:function(z){cuZone(z)},
-cuPaint:function(c){cuPaint(c)},
+cuPaint:function(c){cuPaint(c)},onbStage:function(op,hex){ONBS(op,hex)},
 cuForgeTool:function(id){cuForgeTool(id)},
 cuPrintTool:function(id){cuPrintTool(id)},
 crSnap:function(){try{return crSnap()}catch(e){return {open:false}}},

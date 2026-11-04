@@ -21,7 +21,7 @@ const NAMED = { contract: 1, name: "Brave Bridge Builder", mood: "bouncy", tempo
   verse: ["Planks go down one by one", "Over the river we run", "Hammer tap and bolt turn", "Look at the bridge we built"], chorus: ["Brave Bridge Builder, hooray", "We built it all today", "Brave Bridge Builder, hooray", "Cross it and play"] };
 
 interface Setup { calls: Array<{ url: string; method: string; body?: string }>; states: FlowState[]; parties: Array<{ entry: any; wav: ArrayBuffer; title: string }>; stored: Map<string, string>; flow: ReturnType<typeof createThemeSongFlow> }
-function setup(opts: { enabled?: boolean; post?: { status: number; body: unknown }; polls?: unknown[]; audioStatus?: number; decode?: () => Promise<{ channels: ArrayLike<number>[]; sampleRate: number }>; party?: { ok: boolean; dancing?: boolean; reason?: string }; probeThrows?: boolean; pauseParty?: () => boolean; resumeParty?: () => boolean } = {}): Setup {
+function setup(opts: { hold?: () => boolean; enabled?: boolean; post?: { status: number; body: unknown }; polls?: unknown[]; audioStatus?: number; decode?: () => Promise<{ channels: ArrayLike<number>[]; sampleRate: number }>; party?: { ok: boolean; dancing?: boolean; reason?: string }; probeThrows?: boolean; pauseParty?: () => boolean; resumeParty?: () => boolean } = {}): Setup {
   const calls: Setup["calls"] = [], states: FlowState[] = [], parties: Setup["parties"] = [], stored = new Map<string, string>();
   const polls = [...(opts.polls ?? [{ status: "making" }, { status: "ready", url: "https://cdn.mureka.ai/a.mp3", durationMs: 49000 }])];
   const fetchImpl = (async (input: string, init?: RequestInit) => {
@@ -37,7 +37,7 @@ function setup(opts: { enabled?: boolean; post?: { status: number; body: unknown
     fetchImpl, pollMs: 0, setTimeout: (fn) => { queueMicrotask(fn); return 1; }, clearTimeout: () => {}, now: () => 1_000,
     decode: opts.decode ?? (async () => ({ channels: song(), sampleRate: 22050 })),
     startParty: async (s) => { parties.push(s as never); return opts.party ?? { ok: true, dancing: true }; },
-    pauseParty: opts.pauseParty, resumeParty: opts.resumeParty,
+    pauseParty: opts.pauseParty, resumeParty: opts.resumeParty, holdParty: opts.hold,
     onState: (s) => states.push({ ...s }),
     storage: { getItem: (k) => stored.get(k) ?? null, setItem: (k, v) => { stored.set(k, v); } },
   });
@@ -94,6 +94,26 @@ describe("the end-of-level song flow", () => {
     expect(p.entry.dur).toBeLessThanOrEqual(50 - 5 + 0.2);
     expect(Math.abs(p.entry.bpm - 106)).toBeLessThan(1);
     expect(new TextDecoder().decode(new Uint8Array(p.wav.slice(0, 4)))).toBe("RIFF");
+  });
+  it("holdParty: the song is made, measured and cut and then WAITS (phase ready, loop and karaoke set, no party), and again() starts the party", async () => {
+    let hold = true;
+    const s = setup({ hold: () => hold });
+    await s.flow.start("a happy welcome song for Mia", "prompt");
+    await until(() => s.flow.state().phase === "ready" && s.flow.state().loop > 0);
+    await new Promise((r) => setTimeout(r, 30));
+    expect(s.parties).toHaveLength(0);
+    expect(s.flow.state()).toMatchObject({ phase: "ready", note: "Your song is ready!" });
+    expect(s.flow.state().loop).toBeGreaterThan(0);
+    hold = false;
+    expect(await s.flow.again()).toBe(true);
+    expect(s.parties).toHaveLength(1);
+    expect(s.flow.state().phase).toBe("dancing");
+  });
+  it("without a hold nothing changes: the party starts by itself", async () => {
+    const s = setup({ hold: () => false });
+    await s.flow.start("I finished a bridge");
+    await until(() => s.parties.length === 1);
+    expect(s.flow.state().phase).toBe("dancing");
   });
   it("polls only until the song is ready, then stops", async () => {
     const s = setup();

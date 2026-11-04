@@ -301,6 +301,8 @@ export function GameCanvas({
   const [songFlow, setSongFlow] = useState<FlowState | null>(null);
   const songOfferTimerRef = useRef<number | null>(null);
   const songRef = useRef<{ flow: ThemeSongFlow; party: GameParty } | null>(null);
+  /** The new-player setup holds the dance until the player picks up the headphones (themeSongFlow `holdParty`). */
+  const onboardHoldRef = useRef(false);
   const getSong = useCallback(() => {
     if (!songRef.current) {
       // the dances the character knows: the Samba, and the baked Mixamo dances loaded the first time a party needs them
@@ -316,6 +318,7 @@ export function GameCanvas({
         onEnd: (reason) => songRef.current?.flow.partyEnded(reason),
       });
       const flow = createThemeSongFlow({
+        holdParty: () => onboardHoldRef.current,
         fetchImpl: (...args) => fetch(...args),
         // the device and the family's clock go with every song request: the weekly limit is per device and turns on the family's own Monday
         headers: () => ({ "x-device-id": deviceId(), "x-client-timezone": (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"; } catch { return "UTC"; } })() }),
@@ -959,8 +962,21 @@ export function GameCanvas({
   }, [closeReactOverlays]);
   /** The intro begins: leave the title screen so the world, and Kip dancing to his song, show behind it. */
   const onboardIntroStart = useCallback(() => { if (titleOpen) chooseTitle("play"); }, [titleOpen, chooseTitle]);
-  /** The favourite colour becomes Kip's shirt. */
-  const onboardPaint = useCallback((hex: string) => { const e = engineRef.current; e?.setPaintZone("c1"); e?.setPaint(hex); }, []);
+  /** The "meet Kip" scene: `enter` leaves the title screen and goes to the Toy Room; `pile` paints the shirt and lays Kip out as a pile of bricks; `build` carries them to their seats; `end` puts Kip back. */
+  const onboardStage = useCallback((op: "enter" | "pile" | "build" | "abort" | "end" | "phonesShow", hex?: string) => {
+    if (op === "enter") { if (titleOpen) chooseTitle("play"); engineRef.current?.goWorld("room"); return; }
+    engineRef.current?.onbStage(op, hex);
+  }, [titleOpen, chooseTitle]);
+  const onboardHold = useCallback((on: boolean) => { onboardHoldRef.current = on; }, []);
+  /** The player picks up the headphones: Kip puts them on, and the song, held until now, starts the dance. */
+  const onboardPickUp = useCallback(() => {
+    noteGesture(); // this tap is what lets the song play
+    onboardHoldRef.current = false;
+    engineRef.current?.onbStage("phones");
+    void getSong().flow.again();
+  }, [getSong]);
+  // the headphones go when the song is over
+  useEffect(() => { if (songFlow?.phase === "over") engineRef.current?.onbStage("phonesOff"); }, [songFlow?.phase]);
   const onboardSong = useCallback((idea: string) => startFromSheet(() => void getSong().flow.start(idea, "prompt")), [startFromSheet, getSong]);
 
   const handleCloseBuild = useCallback(() => {
@@ -1664,7 +1680,7 @@ export function GameCanvas({
       <div className="tv-stage">
         <div ref={stageHostRef} className="tv-stage-canvas-host" />
         {titleOpen && <TitleMenu toyName={label} ready={state.ready} onChoose={chooseTitle} onNewPlayer={openOnboarding} />}
-        {onboardOpen && <OnboardingSheet onClose={() => setOnboardOpen(false)} onPaint={onboardPaint} onIntroStart={onboardIntroStart} onSong={onboardSong} song={songFlow} />}
+        {onboardOpen && <OnboardingSheet onClose={() => setOnboardOpen(false)} onStage={onboardStage} onHold={onboardHold} onPickUp={onboardPickUp} onIntroStart={onboardIntroStart} onSong={onboardSong} song={songFlow} />}
         {!sleepActive &&
           (demoMode ? (
             <div className="tv-worlds" role="tablist" aria-label="Worlds">
@@ -1852,7 +1868,7 @@ export function GameCanvas({
         {!mapOpen && ( // the card gives way to the Map (a song being made carries on underneath) and comes back when the Map closes
           <ThemeSongCard
             offer={songOffer !== null}
-            flow={songFlow}
+            flow={onboardOpen && songFlow && songFlow.phase !== "dancing" && songFlow.phase !== "over" ? null : songFlow} // the setup shows the song's progress itself; the dock takes over when the dance starts
             onMake={makeSong}
             onDismissOffer={() => setSongOffer(null)}
             onStopParty={stopSongParty}

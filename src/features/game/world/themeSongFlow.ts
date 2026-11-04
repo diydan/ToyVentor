@@ -58,6 +58,11 @@ export interface FlowDeps {
   /** Hold the party where it is / carry on (false when there is no party to hold). */
   pauseParty?(): boolean;
   resumeParty?(): boolean;
+  /**
+   * True while the party must NOT start by itself: the song is made, measured and cut, the phase stays "ready" with the karaoke times and the loop length set, and the party starts when
+   * the page calls `again()` (the new-player setup: Kip dances only once the player picks up the headphones). Asked when the song is ready, so it can change while the song is being made.
+   */
+  holdParty?(): boolean;
   onState(state: FlowState): void;
   storage?: Pick<Storage, "getItem" | "setItem"> | null;
   /** Headers every request carries: the device id and the family's time zone (the week turns on its own Monday). */
@@ -266,6 +271,7 @@ export function createThemeSongFlow(deps: FlowDeps): ThemeSongFlow {
     };
     // the provider's times, moved onto the cut the party loops (nothing guessed: no times, no karaoke)
     set({ karaoke: lyricsForCut(timed, planned.cut.startSec, planned.cut.lengthSec), loop: planned.cut.lengthSec });
+    if (deps.holdParty?.()) { set({ phase: "ready", note: "Your song is ready!" }); return; } // kept in memory: `again()` starts the party
     await startParty(mine);
   }
 

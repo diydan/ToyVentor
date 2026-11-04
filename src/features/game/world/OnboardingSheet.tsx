@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import "../../../onboarding.css";
 import {
-  FAVOURITE_ANIMALS, FAVOURITE_COLOURS, FAVOURITE_FRUITS, NAME_PROBLEM_TEXT, animalOf, buildProfile, cleanName, colourOf, confetti, fruitOf, grownUpQuestion, introSlides, saveProfile, songIdea,
+  FAVOURITE_ANIMALS, FAVOURITE_COLOURS, FAVOURITE_FRUITS, NAME_PROBLEM_TEXT, animalOf, buildProfile, cleanName, colourOf, confetti, fruitOf, grownUpQuestion, introSlides, meetKipSlides, saveProfile, songIdea,
   stepsFor, type Choice, type PlayerProfile, type StepId, type Store,
 } from "../../../lib/newPlayer";
 import type { FlowState } from "./themeSongFlow";
@@ -12,8 +12,12 @@ import type { FlowState } from "./themeSongFlow";
 export interface OnboardingSheetProps {
   /** Leave without finishing (nothing is saved unless the intro was reached). */
   onClose(): void;
-  /** The favourite colour becomes Kip's shirt (the engine's `setPaintZone("c1")` then `setPaint`). */
-  onPaint(hex: string): void;
+  /** The "meet Kip" scene in the game's world: `enter` leaves the title and goes to the Toy Room, `pile` paints the shirt (the favourite colour) and lays Kip out as a pile of his real parts, `build` carries them to their seats, `abort` puts Kip back, `phonesShow` floats the headphones beside Kip. */
+  onStage(op: "enter" | "pile" | "build" | "abort" | "end" | "phonesShow", hex?: string): void;
+  /** True from the grown-up's yes until the headphones are picked up: the song is made but does not dance by itself. */
+  onHold(on: boolean): void;
+  /** The player picked up the headphones: Kip puts them on and the dance starts. Called from a tap. */
+  onPickUp(): void;
   /** The intro begins: leave the title screen, so the world and the dancing Kip show behind it. Called from a tap. */
   onIntroStart(): void;
   /** Ask for the theme song (the game's own song flow, "prompt" kind). Called from a tap, only after a grown-up's yes. */
@@ -26,34 +30,6 @@ export interface OnboardingSheetProps {
 
 const reduced = (): boolean => { try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch { return false; } };
 const todayIso = (): string => new Date().toISOString();
-
-/** One of Kip's blocks. `pile` is where it lies in the heap, `home` where it sits in the finished Kip (px in a 170 by 230 box). */
-interface Brick { id: string; w: number; h: number; colour: string; home: [number, number]; pile: [number, number, number]; z: number; round?: boolean }
-
-function kipBricks(shirt: string): Brick[] {
-  return [
-    { id: "legL", w: 22, h: 50, colour: "#2b4c85", home: [56, 118], pile: [18, 168, -18], z: 1 },
-    { id: "legR", w: 22, h: 50, colour: "#2b4c85", home: [92, 118], pile: [62, 176, 24], z: 1 },
-    { id: "shoeL", w: 30, h: 15, colour: "#ff6b4a", home: [52, 168], pile: [100, 184, 8], z: 2 },
-    { id: "shoeR", w: 30, h: 15, colour: "#ff6b4a", home: [90, 168], pile: [8, 196, -6], z: 2 },
-    { id: "torso", w: 70, h: 62, colour: shirt, home: [50, 56], pile: [44, 150, 12], z: 3, round: true },
-    { id: "armL", w: 18, h: 56, colour: "#f3ba95", home: [28, 60], pile: [92, 150, 70], z: 2 },
-    { id: "armR", w: 18, h: 56, colour: "#f3ba95", home: [124, 60], pile: [28, 150, -64], z: 2 },
-    { id: "head", w: 60, h: 52, colour: "#f3ba95", home: [55, 2], pile: [70, 128, -14], z: 4, round: true },
-    { id: "studL", w: 13, h: 7, colour: "#ff6b4a", home: [68, -4], pile: [4, 130, 30], z: 5 },
-    { id: "studR", w: 13, h: 7, colour: "#ff6b4a", home: [90, -4], pile: [110, 156, -40], z: 5 },
-  ];
-}
-/** Loose bricks in the heap that are not part of Kip: they tumble away when he is built. */
-const SPARE: Array<{ colour: number; pile: [number, number, number]; w: number; h: number; away: [number, number] }> = [
-  { colour: 0, pile: [0, 190, 14], w: 34, h: 20, away: [-70, 30] },
-  { colour: 2, pile: [112, 196, -12], w: 30, h: 20, away: [90, 30] },
-  { colour: 4, pile: [30, 204, 4], w: 36, h: 20, away: [-40, 60] },
-  { colour: 5, pile: [76, 206, -20], w: 32, h: 20, away: [60, 60] },
-  { colour: 1, pile: [138, 176, 34], w: 28, h: 20, away: [110, 10] },
-  { colour: 3, pile: [-6, 168, -30], w: 30, h: 20, away: [-90, 0] },
-  { colour: 6, pile: [56, 190, 0], w: 34, h: 20, away: [0, 70] },
-];
 
 function Tiles({ label, items, value, onPick, colour }: { label: string; items: readonly Choice[]; value: string; onPick(id: string): void; colour?: boolean }) {
   return (
@@ -80,7 +56,7 @@ function Tiles({ label, items, value, onPick, colour }: { label: string; items: 
   );
 }
 
-export function OnboardingSheet({ onClose, onPaint, onIntroStart, onSong, song, storage }: OnboardingSheetProps) {
+export function OnboardingSheet({ onClose, onStage, onHold, onPickUp, onIntroStart, onSong, song, storage }: OnboardingSheetProps) {
   const [under13, setUnder13] = useState<boolean | null>(null);
   const [step, setStep] = useState<StepId>("who");
   const [kid, setKid] = useState("");
@@ -90,7 +66,10 @@ export function OnboardingSheet({ onClose, onPaint, onIntroStart, onSong, song, 
   const [animal, setAnimal] = useState("");
   const [consent, setConsent] = useState<boolean | null>(null);
   const [problem, setProblem] = useState("");
-  const [built, setBuilt] = useState(false);
+  // the "meet Kip" scene: wait (the Toy Room is loading) > pile (Kip is a pile of bricks) > building > built > meet (three prop cards)
+  const [scene, setScene] = useState<"wait" | "pile" | "building" | "built" | "meet">("wait");
+  const [meet, setMeet] = useState(0);
+  const timers = useRef<number[]>([]);
   const [slide, setSlide] = useState(0);
   const [profile, setProfile] = useState<PlayerProfile | null>(null);
   const [answer, setAnswer] = useState("");
@@ -125,20 +104,56 @@ export function OnboardingSheet({ onClose, onPaint, onIntroStart, onSong, song, 
   };
   const checkFavourites = () => { if (!colour || !fruit || !animal) { setProblem("Pick one of each to go on."); return; } next(); };
 
-  const buildKip = () => { setBuilt(true); const c = colourOf(colour); if (c) onPaint(c.hex); };
+  // entering the build step goes to the Toy Room and lays Kip out as a pile; leaving it any other way than forward puts Kip back
+  const laid = useRef(false);
+  useEffect(() => {
+    if (step !== "build") return;
+    onStage("enter");
+    setScene("wait");
+    const t = window.setTimeout(() => { onStage("pile", colourOf(colour)?.hex); laid.current = true; setScene("pile"); }, 1700);
+    timers.current.push(t);
+    return () => { window.clearTimeout(t); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
+  useEffect(() => () => { timers.current.forEach((t) => window.clearTimeout(t)); }, []);
+  // nobody taps to build Kip: he builds himself a moment after the pile is laid (Dan: "we should not opt in to build Kip")
+  useEffect(() => {
+    if (scene !== "pile") return;
+    const t = window.setTimeout(() => buildKip(), 1900);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scene]);
+  // closing the sheet part-way puts Kip back (a built Kip is untouched, and a pair of headphones already on stays on)
+  useEffect(() => () => { if (laid.current) onStage("abort"); }, []);
+  // the headphones: they appear when the song is complete (and Kip is built), and the player picks them up to start the dance
+  const songReady = !!song && song.phase === "ready" && song.loop > 0;
+  const phonesOk = songReady && (step === "intro" || (step === "build" && (scene === "built" || scene === "meet")));
+  const [picked, setPicked] = useState(false);
+  const shown = useRef(false);
+  useEffect(() => { if (phonesOk && !shown.current) { shown.current = true; onStage("phonesShow"); } }, [phonesOk]);
+  const buildKip = () => {
+    setScene("building");
+    onStage("build");
+    timers.current.push(window.setTimeout(() => setScene("built"), 3600));
+  };
+  const backFromBuild = () => { onStage("abort"); laid.current = false; back(); };
 
-  /** The intro: the profile is saved (on this device), the world shows behind, and the song, if a grown-up said yes, is asked for. All from one tap. */
-  const startIntro = () => {
-    const made = buildProfile({ under13: under13 !== false, kidName: kid, parentName: parent, favourites: { colour, fruit, animal }, songConsent: consent === true }, todayIso());
+  /**
+   * The grown-up's answer on the song screen: the profile is complete now, so it is saved (on this device), and on a yes the song is asked for RIGHT HERE, before Kip is built, so it is being
+   * written and sung while he builds and the tour plays. The dance is held until the headphones are picked up (onHold), so nothing plays by itself.
+   */
+  const chooseConsent = (yes: boolean) => {
+    setConsent(yes);
+    const made = buildProfile({ under13: under13 !== false, kidName: kid, parentName: parent, favourites: { colour, fruit, animal }, songConsent: yes }, todayIso());
     if (!made.ok) { setProblem(`Something is missing (${made.problem}). Please go back.`); return; }
     saveProfile(storage === undefined ? safeStorage() : storage, made.profile);
     setProfile(made.profile);
-    onIntroStart();
     const idea = songIdea(made.profile);
-    if (idea) onSong(idea);
-    setSlide(0);
-    go("intro");
+    if (idea) { onHold(true); onSong(idea); }
+    next();
   };
+  /** The tour begins: the world (the Toy Room, Kip built) shows behind it. */
+  const startIntro = () => { onIntroStart(); setSlide(0); go("intro"); };
 
   const slides = useMemo(() => introSlides(profile?.kidName ?? kid ?? ""), [profile, kid]);
   const pieces = useMemo(() => confetti(70), []);
@@ -157,12 +172,11 @@ export function OnboardingSheet({ onClose, onPaint, onIntroStart, onSong, song, 
     </div>
   );
   const name = kid.trim() || "your player";
-  const shirt = colourOf(colour)?.hex ?? "#ff6b4a";
-  const bricks = kipBricks(shirt);
-  const songNote = song?.phase === "ready" || song?.phase === "dancing" ? `🎵 ${song.name || "Your song"} is playing!` : song?.phase === "failed" ? (song.note || "The song maker is resting. You can make a song later from the Map.") : song ? `Making ${profile?.kidName ?? name}'s song… ${song.note || ""}` : "";
+  const meetSlides = useMemo(() => meetKipSlides(), []);
+  const songNote = song?.phase === "dancing" ? `🎵 ${song.name || "Your song"} is playing!` : phonesOk && !picked ? `🎧 ${song?.name || "Your song"} is ready! Pick up the headphones to dance.` : song?.phase === "failed" ? (song.note || "The song maker is resting. You can make a song later from the Map.") : song && song.phase !== "ready" ? `Making ${profile?.kidName ?? name}'s song… ${song.note || ""}` : "";
 
   return (
-    <section ref={rootRef} className={`tv-onb${step === "intro" ? " tv-onb-intro" : ""}`} role="dialog" aria-modal="true" aria-label="New player setup" data-onb-step={step}>
+    <section ref={rootRef} className={`tv-onb${step === "intro" ? " tv-onb-intro" : ""}${step === "build" ? " tv-onb-stage" : ""}`} role="dialog" aria-modal="true" aria-label="New player setup" data-onb-step={step}>
       {step === "intro" && !calm && (
         <div className="tv-onb-confetti" aria-hidden="true">
           {pieces.map((p, i) => (
@@ -223,42 +237,46 @@ export function OnboardingSheet({ onClose, onPaint, onIntroStart, onSong, song, 
             <p className="tv-onb-p">We can make a song just for {name}, using the first name and the favourite colour, fruit and animal. To do that, those words are sent to our song makers: an AI that writes the words and a service that sings them. Nothing else is sent, and the song is kept on this device.</p>
             <p className="tv-onb-p"><b>{under13 === false ? "Is that OK?" : "A grown-up must say yes."}</b></p>
             <div className="tv-onb-big">
-              <button type="button" className="tv-ctl tv-ctl-primary" aria-pressed={consent === true} onClick={() => { setConsent(true); next(); }} data-consent="yes">{under13 === false ? "Yes, make the song" : "I'm the grown-up: yes, make the song"}</button>
-              <button type="button" className="tv-ctl" aria-pressed={consent === false} onClick={() => { setConsent(false); next(); }} data-consent="no">No thanks, skip the song</button>
+              <button type="button" className="tv-ctl tv-ctl-primary" aria-pressed={consent === true} onClick={() => chooseConsent(true)} data-consent="yes">{under13 === false ? "Yes, make the song" : "I'm the grown-up: yes, make the song"}</button>
+              <button type="button" className="tv-ctl" aria-pressed={consent === false} onClick={() => chooseConsent(false)} data-consent="no">No thanks, skip the song</button>
             </div>
             <div className="tv-onb-nav"><button type="button" className="tv-ctl" onClick={back}>Back</button></div>
           </>
         )}
         {step === "build" && (
-          <>
-            {heading(built ? `Meet Kip, ${name}!` : "Let's build your Kip")}
-            <div className="tv-onb-buildrow">
-              <div className={`tv-onb-pile${built ? " is-built" : ""}`} aria-hidden="true" data-built={built}>
-                {SPARE.map((s, i) => (
-                  <i key={`s${i}`} className="tv-onb-brick tv-onb-spare" style={{ width: s.w, height: s.h, background: FAVOURITE_COLOURS[s.colour]!.hex, transform: built ? `translate(${s.pile[0] + s.away[0]}px, ${s.pile[1] + s.away[1] + 60}px) rotate(${s.pile[2] + 90}deg)` : `translate(${s.pile[0]}px, ${s.pile[1]}px) rotate(${s.pile[2]}deg)`, opacity: built ? 0 : 1, transitionDelay: built ? `${i * 60}ms` : "0ms" }} />
-                ))}
-                {bricks.map((b, i) => (
-                  <i key={b.id} className={`tv-onb-brick${b.round ? " is-round" : ""}`} style={{ width: b.w, height: b.h, background: b.colour, zIndex: b.z, transform: built ? `translate(${b.home[0]}px, ${b.home[1]}px) rotate(0deg)` : `translate(${b.pile[0]}px, ${b.pile[1]}px) rotate(${b.pile[2]}deg)`, transitionDelay: built ? `${300 + i * 110}ms` : "0ms" }} />
-                ))}
-                <span className="tv-onb-face" style={{ opacity: built ? 1 : 0, transform: `translate(${55}px, ${2}px)` }}><i /><i /><b /></span>
+          <div className="tv-onb-meet" data-scene={scene}>
+            {scene === "wait" && (<>{heading("Kip's Toy Room")}<p className="tv-onb-p">Getting the Toy Room ready…</p></>)}
+            {scene === "pile" && (
+              <>
+                {heading("Kip is a pile of parts!")}
+                <p className="tv-onb-p" role="status">Watch, {name}: Kip is going to build himself, in your favourite colour.</p>
+                <div className="tv-onb-nav"><button type="button" className="tv-ctl" onClick={backFromBuild}>Back</button></div>
+              </>
+            )}
+            {scene === "building" && (<>{heading("Building…")}<p className="tv-onb-p" role="status">Look! The parts are flying to their places.</p></>)}
+            {scene === "built" && (
+              <>
+                {heading(`Meet Kip, ${name}!`)}
+                <p className="tv-onb-p" role="status">Kip is built, wearing a {colourOf(colour)?.label.toLowerCase()} shirt. Kip loves {fruitOf(fruit)?.label.toLowerCase()} and {animalOf(animal)?.label.toLowerCase()}s too!</p>
+                <div className="tv-onb-nav"><button type="button" className="tv-ctl tv-ctl-primary" onClick={() => { setMeet(0); setScene("meet"); }} data-onb-next>Show me around</button></div>
+              </>
+            )}
+            {scene === "meet" && (
+              <div className="tv-onb-slide" key={meetSlides[meet]?.id} data-meet={meetSlides[meet]?.id}>
+                <span className="tv-onb-icon" aria-hidden="true">{meetSlides[meet]?.icon}</span>
+                <h2 className="tv-onb-h" tabIndex={-1} data-focus>{meetSlides[meet]?.title}</h2>
+                {meetSlides[meet]?.lines.map((l) => <p className="tv-onb-p" key={l}>{l}</p>)}
+                <div className="tv-onb-dots" aria-hidden="true">{meetSlides.map((x, i) => <i key={x.id} className={i === meet ? "on" : ""} />)}</div>
+                <div className="tv-onb-nav">
+                  <button type="button" className="tv-ctl" disabled={meet === 0} onClick={() => setMeet((m) => Math.max(0, m - 1))}>Back</button>
+                  {meet < meetSlides.length - 1
+                    ? <button type="button" className="tv-ctl tv-ctl-primary" onClick={() => setMeet((m) => m + 1)} data-onb-next>Next</button>
+                    : <button type="button" className="tv-ctl tv-ctl-primary" onClick={startIntro} data-onb-next>Meet your song and the app!</button>}
+                </div>
               </div>
-              <div className="tv-onb-buildtext">
-                {built ? (
-                  <>
-                    <p className="tv-onb-p" role="status">Kip is built, wearing a {colourOf(colour)?.label.toLowerCase()} shirt. Kip loves {fruitOf(fruit)?.label.toLowerCase()} and {animalOf(animal)?.label.toLowerCase()}s too!</p>
-                    {nav(startIntro, "Meet your song and the app!", false)}
-                  </>
-                ) : (
-                  <>
-                    <p className="tv-onb-p">A pile of bricks is waiting. Tap to build Kip, in {name}'s favourite colour.</p>
-                    <button type="button" className="tv-ctl tv-ctl-primary tv-onb-buildbtn" onClick={buildKip} data-onb-build>Build my Kip!</button>
-                    <div className="tv-onb-nav"><button type="button" className="tv-ctl" onClick={back}>Back</button></div>
-                  </>
-                )}
-                {problem && <p className="tv-onb-err" role="alert">{problem}</p>}
-              </div>
-            </div>
-          </>
+            )}
+            {problem && <p className="tv-onb-err" role="alert">{problem}</p>}
+          </div>
         )}
         {step === "intro" && (
           <div className="tv-onb-tour" data-slide={slides[slide]?.id}>
@@ -279,6 +297,12 @@ export function OnboardingSheet({ onClose, onPaint, onIntroStart, onSong, song, 
           </div>
         )}
       </div>
+      {phonesOk && !picked && (
+        <button type="button" className="tv-onb-phones" onClick={() => { setPicked(true); onPickUp(); }} data-onb-phones>
+          <span aria-hidden="true">🎧</span>
+          <b>Pick up the headphones!</b>
+        </button>
+      )}
     </section>
   );
 }

@@ -233,6 +233,21 @@ export function introSlides(name: string): readonly IntroSlide[] {
   ];
 }
 
+/**
+ * The "meet Kip" cards, shown in the Toy Room after Kip is built (Dan, 2026-11-04: "introduce Kip and some of the props and how they can use them"). Every line is something the game does today:
+ *   walking: tap the floor and Kip walks there (the world's pointer walk; `P.target`)
+ *   props: runtime/toyRoomActs.ts `ACT_FOR_PROP` (xylophone: mallet, teddy: hug, ball: kick, bubbles: blow, dog: pet) and the Toy Room's prop list in runtime/catalog.ts (the xylophone is the first prop, 1.8 units
+ *          from where Kip starts; the others are farther along)
+ *   jobs: runtime/clean.ts and cook.ts (the cleaning cart and the hob start the cleaning and cooking levels, which have no timer, no score and no failure state)
+ */
+export function meetKipSlides(): readonly IntroSlide[] {
+  return [
+    { id: "walk", icon: "👆", title: "Tap to walk", lines: ["Tap the floor and Kip walks there.", "Walk to the right to explore the whole Toy Room."], source: "world pointer walk (runtime/world.ts)" },
+    { id: "props", icon: "🎹", title: "Tap a prop", lines: ["Tap the xylophone next to Kip and he plays it with a mallet.", "Farther along: a teddy to hug, a ball to kick, bubbles to blow and a dog to pet."], source: "runtime/toyRoomActs.ts ACT_FOR_PROP; runtime/catalog.ts (the Toy Room)" },
+    { id: "jobs", icon: "🧹", title: "Little jobs", lines: ["The cleaning cart and the hob start short games: clean up a mess, or cook pancakes.", "No timer and no losing, just helping."], source: "runtime/clean.ts, runtime/cook.ts" },
+  ];
+}
+
 /** Confetti pieces for the intro: deterministic from a seed so a test can pin it, and cheap (one DOM node each, CSS only). */
 export interface ConfettiPiece { left: number; delay: number; duration: number; size: number; colour: string; spin: number; drift: number }
 export function confetti(count: number, seed = 7): ConfettiPiece[] {

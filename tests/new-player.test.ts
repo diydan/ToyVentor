@@ -1,10 +1,12 @@
 // The new-player setup, phase 0 (src/lib/newPlayer.ts): names, the closed favourite lists, who needs a grown-up, the profile on the device, the song idea, the intro, the confetti.
 import { describe, expect, it } from "vitest";
 import {
-  FAVOURITE_ANIMALS, FAVOURITE_COLOURS, FAVOURITE_FRUITS, NAME_MAX, PROFILE_KEY, buildProfile, cleanName, clearProfile, confetti, grownUpQuestion, introSlides, readProfile, saveProfile,
+  FAVOURITE_ANIMALS, FAVOURITE_COLOURS, FAVOURITE_FRUITS, NAME_MAX, PROFILE_KEY, buildProfile, cleanName, clearProfile, confetti, grownUpQuestion, introSlides, meetKipSlides, readProfile, saveProfile,
   songIdea, stepsFor, type Draft, type Store,
 } from "../src/lib/newPlayer";
 import { PAINTS } from "../src/features/game/world/runtime/catalog";
+import { ACT_FOR_PROP } from "../src/features/game/world/runtime/toyRoomActs";
+import { readFileSync } from "node:fs";
 
 const mem = (): Store & { data: Record<string, string> } => {
   const data: Record<string, string> = {};
@@ -125,3 +127,30 @@ describe("confetti", () => {
     for (const p of confetti(60)) { expect(hexes.has(p.colour)).toBe(true); expect(p.left).toBeGreaterThanOrEqual(0); expect(p.left).toBeLessThanOrEqual(100); expect(p.duration).toBeGreaterThan(2); }
   });
 });
+
+describe("the meet-Kip cards say only what the Toy Room does", () => {
+  const cards = meetKipSlides();
+  const catalog = readFileSync(new URL("../src/features/game/world/runtime/catalog.ts", import.meta.url), "utf8");
+  it("are walk, props and jobs, each with its source", () => {
+    expect(cards.map((c) => c.id)).toEqual(["walk", "props", "jobs"]);
+    for (const c of cards) { expect(c.source.length).toBeGreaterThan(0); expect(c.lines.join(" ").split(/\s+/).length).toBeLessThan(40); }
+  });
+  it("every prop the card names is in the Toy Room and does what the card says when tapped", () => {
+    const text = cards.find((c) => c.id === "props")!.lines.join(" ");
+    const claims: Array<[string, string, RegExp]> = [["xylophone", "mallet", /xylophone.*mallet/], ["teddy", "hug", /teddy to hug/], ["ball", "kick", /ball to kick/], ["bubbles", "blow", /bubbles to blow/], ["dog", "pet", /dog to pet/]];
+    for (const [prop, act, words] of claims) {
+      expect(text, prop).toMatch(words);
+      expect(ACT_FOR_PROP[prop], prop).toBe(act);
+      expect(catalog, prop).toContain(`{"type":"${prop}","x":`); // in the Toy Room's level
+    }
+  });
+  it("the xylophone really is the first prop beside Kip's start (x 3.8, Kip starts at x 2)", () => {
+    expect(catalog).toContain('"props":[{"type":"xylophone","x":3.8}');
+  });
+  it("the jobs card matches the two levels: a cleaning cart and a hob in the room, and no timer or failure in either", () => {
+    expect(catalog).toContain('{"type":"cleancart","x":8}');
+    expect(catalog).toContain('{"type":"hob","x":10}');
+    expect(cards.find((c) => c.id === "jobs")!.lines.join(" ")).toMatch(/clean up a mess, or cook pancakes.*No timer and no losing/s);
+  });
+});
+
