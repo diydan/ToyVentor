@@ -40,9 +40,11 @@ types a hat or a head; the part is checked by the same print gates as the
 catalog, and Kip wears it), the **Describe & Build** book of 35 builds, the
 **Workshop** with its Kip, Truck, and Yard benches, the Toy Room toys, party
 mode with twelve songs and a Dance picker, spoken names for props and
-household objects, and Garage weekends. Make from words needs a maker service
-that for now runs on the author's machine; where the app cannot reach it, it
-offers a ready-made hat or head instead.
+household objects, and Garage weekends. Make from words runs on Cloudflare: the
+model writes a recipe, and a maker in a Cloudflare Container (no public address,
+reached only by our Worker) builds the part and runs the print checks. On the
+live site a wish takes about 20 seconds, almost all of it the model; where the
+maker cannot be reached, the app offers a ready-made hat or head instead.
 
 
 ## The technical spine
