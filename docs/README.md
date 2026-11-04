@@ -14,8 +14,7 @@ without a decision; **reference** = a third-party surface or a lookup table.
 
 | File | What it is |
 | --- | --- |
-| [vision.md](product/vision.md) | Internal long-term direction. |
-| [submission-vision.md](product/submission-vision.md) | External hackathon narrative for November 4. |
+| [vision.md](product/vision.md) | Internal long-term direction and external hackathon narrative. |
 | [spec.md](product/spec.md) | Canonical behavior, demo proof, safety, and delivery scope. |
 | [plan.md](product/plan.md) | What shipped each day of the hackathon, and what is still open. |
 | [demo-script.md](product/demo-script.md) | The 90-second run, stills, and failure replies. |
@@ -32,8 +31,7 @@ without a decision; **reference** = a third-party surface or a lookup table.
 | --- | --- | --- |
 | [spec.md](product/spec.md) | canonical | Canonical behavior, demo proof, safety, and delivery scope. |
 | [spec-for-review.md](product/spec-for-review.md) | generated | Review copy of `spec.md`. Do not hand-edit; run `npm run spec:review`. |
-| [vision.md](product/vision.md) | live | Internal long-term direction. |
-| [submission-vision.md](product/submission-vision.md) | live | The tight external story for the submission. |
+| [vision.md](product/vision.md) | live | Internal long-term direction and the tight external story for the submission. |
 | [plan.md](product/plan.md) | live | The landed-status tracker: what shipped on which day, and what is still open. |
 | [journal.md](product/journal.md) | live | The dated log, Day 1 to Day 10, and the "Later" entries for post-hackathon work. |
 | [demo-script.md](product/demo-script.md) | live | The 90-second run, the stills to take, and the reply to each failure. |

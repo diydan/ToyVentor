@@ -181,7 +181,7 @@ Dan: browser and installed web app only, no store app. What is in place (2026-11
 ## 5. The submission package
 
 - [ ] Video recorded, watched once all the way through, filed.
-- [ ] Write-up: [submission-vision.md](submission-vision.md) (Dan's; about 60 lines were changed by another lane, read it whole). Check every sentence against section 1 of this file. Rows 3 and 4 must say exactly what was built when you stop coding, and no more.
+- [ ] Write-up: [vision.md](vision.md) (Dan's; about 60 lines were changed by another lane, read it whole). Check every sentence against section 1 of this file. Rows 3 and 4 must say exactly what was built when you stop coding, and no more.
 - [ ] Live-deploy verification filed with the video: the commit hash, `smoke-live` output, `/api/health` output, and the [qa.md](qa.md) part 10 results log ([demo-script.md](demo-script.md) "Where this lives").
 - [ ] The commit that was deployed is the commit the repo shows (no uncommitted file in the demo).
 - [ ] Meta Model API terms (10.1) and the hackathon's Official Rules checked by Dan.

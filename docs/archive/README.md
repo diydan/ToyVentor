@@ -56,13 +56,13 @@ the canonical file wins.
 
 A one-page pitch draft ("Pokémon Go, but the things kids catch train real
 robots"). The arc it describes is in [../product/vision.md](../product/vision.md)
-and [../product/submission-vision.md](../product/submission-vision.md); its Max
+and [../product/vision.md](../product/vision.md); its Max
 phase is in the journal's "Later" entries and in
 [../specs/parts-engineering-spec.md](../specs/parts-engineering-spec.md) §7.
 
 | File | What it was | Superseded by |
 | --- | --- | --- |
-| [product/future-vision.md](product/future-vision.md) | The one-line pitch draft and the Snap → Pro → Max arc | [product/vision.md](../product/vision.md) + [product/submission-vision.md](../product/submission-vision.md) |
+| [product/future-vision.md](product/future-vision.md) | The one-line pitch draft and the Snap → Pro → Max arc | [product/vision.md](../product/vision.md) |
 
 ### [review/household-weekends-review.md](review/household-weekends-review.md) — the decision landed elsewhere
 

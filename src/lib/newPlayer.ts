@@ -108,9 +108,9 @@ export function grownUpQuestion(rng: () => number = Math.random): { a: number; b
 /**
  * "Dress your Kip" (Dan, 2026-11-04: "use a similar UI as the onboarding for the initial Kip configure: hair, pants colours, shirt colour, shoes colour, hair/hat, tail"). Every choice is a tile from a closed list, and
  * every list is what the game's rig really draws: the shirt (paint zone c1), the pants (c2) and the skin tone (skin), the demo's nineteen hairstyles and six hair tones (runtime/kipLook.ts), and the hats and tails the
- * character rig has models for (runtime/catalog.ts, runtime/stlRigLoader.ts resolveCharacterHatUrl). SHOES have no colour in the rig (the boots are the demo's orange), so there is no shoe row.
+ * character rig has models for (runtime/catalog.ts, runtime/stlRigLoader.ts resolveCharacterHatUrl). Shoes: the rig paints the boots one colour (`col.boots`, kipBodyColors).
  */
-export interface KipConfig { shirt: string; pants: string; skin: string; hair: string; hairColour: string; hat: string; tail: string }
+export interface KipConfig { shirt: string; pants: string; boots: string; skin: string; hair: string; hairColour: string; hat: string; tail: string }
 
 export const PANTS_COLOURS: readonly ColourChoice[] = [
   { id: "navy", label: "Navy", icon: "🔵", hex: "#2b4c85" },
@@ -120,6 +120,17 @@ export const PANTS_COLOURS: readonly ColourChoice[] = [
   { id: "red", label: "Red", icon: "🔴", hex: "#e4573d" },
   { id: "green", label: "Green", icon: "🟢", hex: "#3fae6a" },
   { id: "purple", label: "Purple", icon: "🟣", hex: "#7a5cc7" },
+];
+/** Shoe colours: the demo's orange first, then plain ones. The rig paints the boots one colour (runtime/kipLook.ts kipBodyColors, `col.boots`). */
+export const SHOE_COLOURS: readonly ColourChoice[] = [
+  { id: "orange", label: "Orange", icon: "🟠", hex: "#ff6b4a" },
+  { id: "red", label: "Red", icon: "🔴", hex: "#e4573d" },
+  { id: "blue", label: "Blue", icon: "🔵", hex: "#3d7be0" },
+  { id: "black", label: "Black", icon: "⚫", hex: "#2a2a33" },
+  { id: "white", label: "White", icon: "⚪", hex: "#f2f2f2" },
+  { id: "green", label: "Green", icon: "🟢", hex: "#3fae6a" },
+  { id: "yellow", label: "Yellow", icon: "🟡", hex: "#ffd24d" },
+  { id: "pink", label: "Pink", icon: "🩷", hex: "#ff8fc7" },
 ];
 export const SKIN_CHOICES: readonly ColourChoice[] = KIP_SKIN_TONES.map((t) => ({ id: t.id, label: t.label, icon: "🙂", hex: t.hex.toLowerCase() }));
 export const HAIR_CHOICES: readonly Choice[] = [{ id: "none", label: "No hair", icon: "🚫" }, ...KIP_HAIRSTYLES.map((h) => ({ id: h.id, label: h.label, icon: "💇" }))];
@@ -135,7 +146,7 @@ export const TAIL_CHOICES: readonly Choice[] = [
 
 /** The Kip a new player starts from: the stock look (the demo's skin, jeans and chestnut Swept hair), with the shirt in `shirtHex` (the favourite colour). */
 export function defaultKipConfig(shirtHex: string = FAVOURITE_COLOURS[0]!.hex): KipConfig {
-  return { shirt: shirtHex.toLowerCase(), pants: "#2b4c85", skin: "#f3ba95", hair: "short_swept", hairColour: "#6e412a", hat: "none", tail: "none" };
+  return { shirt: shirtHex.toLowerCase(), pants: "#2b4c85", boots: "#ff6b4a", skin: "#f3ba95", hair: "short_swept", hairColour: "#6e412a", hat: "none", tail: "none" };
 }
 
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -145,9 +156,9 @@ export function cleanKipConfig(raw: unknown): KipConfig | null {
   if (!c || typeof c !== "object") return null;
   const hex = (v: unknown, from: readonly ColourChoice[]): string | null => (typeof v === "string" && HEX.test(v) && from.some((x) => x.hex.toLowerCase() === v.toLowerCase()) ? v.toLowerCase() : null);
   const id = (v: unknown, from: readonly Choice[]): string | null => (typeof v === "string" && from.some((x) => x.id === v) ? v : null);
-  const shirt = hex(c.shirt, FAVOURITE_COLOURS), pants = hex(c.pants, PANTS_COLOURS), skin = hex(c.skin, SKIN_CHOICES), hairColour = hex(c.hairColour, HAIR_COLOUR_CHOICES);
+  const shirt = hex(c.shirt, FAVOURITE_COLOURS), pants = hex(c.pants, PANTS_COLOURS), boots = hex(c.boots, SHOE_COLOURS), skin = hex(c.skin, SKIN_CHOICES), hairColour = hex(c.hairColour, HAIR_COLOUR_CHOICES);
   const hair = id(c.hair, HAIR_CHOICES), hat = id(c.hat, HAT_CHOICES), tail = id(c.tail, TAIL_CHOICES);
-  return shirt && pants && skin && hairColour && hair && hat && tail ? { shirt, pants, skin, hair, hairColour, hat, tail } : null;
+  return shirt && pants && boots && skin && hairColour && hair && hat && tail ? { shirt, pants, boots, skin, hair, hairColour, hat, tail } : null;
 }
 
 // ---- the profile ---------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -244,7 +255,7 @@ export interface IntroSlide { id: string; icon: string; title: string; lines: re
  *   weekly: docs/specs/garage-weekend-spec.md (a new Garage drop every Friday, Saturday and Sunday, counts toward STEM minutes)
  *   STEM: docs/product/spec.md (11 STEM Concept Badges, Sprout / Tinker / Master, shown to the grown-up; lab missions: bridge, measure, balance, lever, logic, lift, raft, circuit, code, pattern, clean).
  *         There is NO standards mapping (NGSS or any other) anywhere in the repo, so no slide claims one.
- *   real things: docs/product/submission-vision.md (physical toys, kits and printed or ordered upgrades carry the business) and the Kip print workflow (print at home). Monthly kits are Dan's
+ *   real things: docs/product/vision.md (physical toys, kits and printed or ordered upgrades carry the business) and the Kip print workflow (print at home). Monthly kits are Dan's
  *         2026-11-04 idea: nothing is built, priced or decided, so that slide says "coming" and collects nothing.
  */
 export function introSlides(name: string): readonly IntroSlide[] {
@@ -252,7 +263,7 @@ export function introSlides(name: string): readonly IntroSlide[] {
     {
       id: "welcome", icon: "🎉", title: `Welcome, ${name}!`,
       lines: ["ToyVentor is a toy game you build, play and then make real.", "Your Kip is ready, and so is your very own song."],
-      source: "docs/product/submission-vision.md",
+      source: "docs/product/vision.md",
     },
     {
       id: "benefits", icon: "🧠", title: "Play that teaches",
@@ -277,7 +288,7 @@ export function introSlides(name: string): readonly IntroSlide[] {
     {
       id: "real", icon: "🖨️", title: "Then make it real",
       lines: ["Print your toy at home on a 3D printer, DIY.", "Monthly kits are coming soon: ask a grown-up to watch this space."],
-      source: "docs/product/submission-vision.md; kits: not built, not priced (accounts-and-new-user-spec open question)",
+      source: "docs/product/vision.md; kits: not built, not priced (accounts-and-new-user-spec open question)",
     },
   ];
 }

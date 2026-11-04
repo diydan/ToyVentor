@@ -4,7 +4,7 @@
 
 ## 0. Decision: defer it all, on one condition
 
-Nothing here blocks the submission. What controls the risk for Nov 4 is the wording of the entry, and that is already done (`docs/product/submission-vision.md` "Models, children, and what this does not claim"; `docs/product/demo-script.md` "Say once, out loud").
+Nothing here blocks the submission. What controls the risk for Nov 4 is the wording of the entry, and that is already done (`docs/product/vision.md` "Models, children, and what this does not claim"; `docs/product/demo-script.md` "Say once, out loud").
 
 The condition: **deferral holds only while the deployed build is an adult-operated demo.** COPPA does not pause for a hackathon. It applies to the operator of a service directed to children (Snap is 3+, with animated characters and music, which are factors in the FTC's test, FAQ D.1) that collects personal information, and a persistent identifier is personal information (FAQ A.3). So before any real child uses a deployed build, or the address is given to families, **phases P0 to P2 must be done.** Until then: no marketing to families, no school or playgroup pilots.
 

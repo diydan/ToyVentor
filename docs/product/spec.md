@@ -38,7 +38,7 @@ types. A level composed at run time adds `1` to `3` more stations.
 
 - **Canonical behavior:** this file.
 - **Direction:** [vision.md](vision.md).
-- **Submission story:** [submission-vision.md](submission-vision.md).
+- **Submission story:** [vision.md](vision.md).
 - **Run:** [demo-script.md](demo-script.md).
 - **Status:** November 4, 2026; `npm test` and `parts/partspec/catalog.json` carry the live counts.
 - **Geometry:** the 12.5/25 mm TU lattice in
