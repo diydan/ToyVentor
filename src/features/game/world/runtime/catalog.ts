@@ -8,6 +8,8 @@
 // NOTE: this module is type-checked. The tables below rely on inference;
 // only the part registry and helper signatures are annotated.
 
+import { KIP_DEFAULT_CHARACTER, KIP_DEFAULT_COL, KIP_SKIN_TONES } from "./kipLook";
+
 /* ---------- data ---------- */
 export interface StatDef {
   n: string;
@@ -65,10 +67,10 @@ export function key(t: string, s: string, i: string): string {
   return t + "." + s + "." + i;
 }
 ROWS.forEach(function(r){var k=key(r[0],r[1],r[2]);PART[k]={k:k,t:r[0],s:r[1],id:r[2],n:r[3],l:r[4],st:r[5],w:r[6]};(BYSLOT[r[0]+"."+r[1]]=BYSLOT[r[0]+"."+r[1]]||[]).push(k);if(r[6])HIDDEN++});
-export var SKINS=["#ffd9bd","#f2b98c","#d8955e","#a8673f","#6e4027","#c9b8ff"];
+export var SKINS=KIP_SKIN_TONES.map(function(t){return t.hex.toLowerCase()});   // the Kip demo's five skin tones (kipLook.ts)
 export var PAINTS=["#ff5a4d","#ff9d5c","#ffd24d","#5af0b0","#52b7ff","#a78bff"];
-export function stockSel(){return{character:{base:"creature",eyes:"big",ears:"horns",hat:"none",back:"none",tail:"curly",prop:"none",boots:"none"},robot:{head:"box",torso:"box",arms:"claws",legs:"walkers",top:"antenna"},vehicle:{chassis:"car",wheels:"small",shell:"sedan",front:"bumper",rear:"spoiler"}}}
-export function stockCol(){return{c1:"#ffd24d",c2:"#52b7ff",skin:"#f2b98c"}}
+export function stockSel(){return{character:{...KIP_DEFAULT_CHARACTER},robot:{head:"box",torso:"box",arms:"claws",legs:"walkers",top:"antenna"},vehicle:{chassis:"car",wheels:"small",shell:"sedan",front:"bumper",rear:"spoiler"}}}
+export function stockCol(){return{...KIP_DEFAULT_COL}}
 export function slotPartKey(t: string, s: string, v: string): string {
   if (!v || v === "none") {
     return t === "character" && (s === "prop" || s === "boots")

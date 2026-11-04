@@ -167,6 +167,7 @@ import { buildBubbleBottle } from "./bubbleWand";
 import { buildDog } from "./dog";
 import { buildXylophone } from "./xylophone";
 import { createMess } from "./mess";
+import { migrateOldStockKip } from "./kipLook";
 import { buildCleanCart } from "./cleanScene";
 import { buildHobProp } from "./cookScene";
 import { createActivities } from "./activities";
@@ -400,7 +401,7 @@ musTimer=setInterval(function(){var a=AC;if(!a||!MUS.on||!MUS.bus)return;if(MUS.
   MUS.step++;if(MUS.step%16===0)MUS.bar++;MUS.next+=spb}},70);
 function migrateRobotToKip(){if(!S.sel)S.sel=stockSel();if(!S.sel.character||!S.sel.character.base)S.sel.character=stockSel().character;if(!S.sel.character.prop)S.sel.character.prop="none";if(!S.sel.character.boots)S.sel.character.boots="none";if(S.type==="robot"){var r=S.sel.robot||{};if(r.head&&PART["robot.head."+r.head])S.sel.character.base="robot.head."+r.head;if(r.top&&PART["robot.top."+r.top])S.sel.character.hat="robot.top."+r.top;if(r.torso&&PART["robot.torso."+r.torso])S.sel.character.back="robot.torso."+r.torso;if(r.arms&&PART["robot.arms."+r.arms])S.sel.character.prop="robot.arms."+r.arms;if(r.legs&&PART["robot.legs."+r.legs])S.sel.character.boots="robot.legs."+r.legs;S.type="character"}}
 function save(){if(S.world!=="custom"){try{localStorage.setItem("tf25",JSON.stringify(S))}catch(e){}}notify();}
-(function(){try{var d=JSON.parse(localStorage.getItem("tf25")||"null");if(d&&d.sel)Object.assign(S,d)}catch(e){}})();
+(function(){try{var d=JSON.parse(localStorage.getItem("tf25")||"null");if(d&&d.sel){Object.assign(S,d);migrateOldStockKip(S)}}catch(e){}})();
 migrateRobotToKip();if(!S.col.skin||S.col.skin==="#f0c08a")S.col.skin="#f2b98c";function cur(): Record<string, string> {return S.sel[S.type]}
 var loanKeys: Record<string, boolean>={};
 function isOpen(k: string){var p=PART[k];return !p||!p.w||!!S.found[k]||!!loanKeys[k]}
