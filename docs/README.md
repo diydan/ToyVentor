@@ -28,6 +28,7 @@ on geometry conflicts, [parts-tu-spec.md](parts/parts-tu-spec.md) and
 | [spec.md](product/spec.md) | Canonical behavior, demo proof, safety, and delivery scope. |
 | [plan.md](product/plan.md) | Work plan to the November 4 submission. |
 | [demo-script.md](product/demo-script.md) | The 90-second run, stills, and failure replies. |
+| [qa.md](product/qa.md) | The one QA document: pre-deploy gates, live smoke, by-hand live checks, real-phone and real-child passes. |
 | [world-first-spec.md](ux/world-first-spec.md) | Active one-stage UX, dock, sheets, overflow, transitions, and demo path. |
 | [design-guide.html](ux/design-guide.html) | Tokens, components, motion, accessibility, and open design needs. |
 | [parts-tu-spec.md](parts/parts-tu-spec.md) | Active 12.5/25 mm geometry canon, catalog targets, sets, and print loop. |
@@ -53,6 +54,7 @@ on geometry conflicts, [parts-tu-spec.md](parts/parts-tu-spec.md) and
 | [workshop-spec.md](specs/workshop-spec.md) | **Stages 1 to 4 built:** the Workshop shell (`/kip/Workshop.html`) hosts the Kip, Truck and Yard benches with one stage, one menu and one print view, and opens in the game as an overlay (downloads off; the game switch-on is deferred). |
 | [workshop-print-gate-spec.md](specs/workshop-print-gate-spec.md) | **Phases 1 to 3 built, switched off:** the grown-up question in front of the Workshop's exports and the selfie sticker; Dan's decisions, the file exits a child can reach today, and the post-hackathon order. |
 | [parent-controls-off-spec.md](specs/parent-controls-off-spec.md) | **Built:** a showcase switch that turns the grown-up checks and play-time limits off (build flag, or per tab in Demo Mode); photo-upload gates stay on. |
+| [coppa-readiness-spec.md](specs/coppa-readiness-spec.md) | **Draft (2026-11-04), all deferred until after the hackathon:** what children's data the build holds (from the code), the posture decision, phases P0 to P5 (switches, data-map checks, notice and parent delete, consent only if needed, lawyer review), and the wording the entry may use. Condition: adult-operated demo only until P0 to P2 are done. |
 | [progressive-power-system-spec.md](specs/progressive-power-system-spec.md) | Proposed momentum-to-robotics stages. |
 | [scan-to-3d.md](specs/scan-to-3d.md) | Recommended scan-body route and acceptance tests. |
 | [play-design-spec.md](specs/play-design-spec.md) | Play design: level primitives, recipe format, composition kit, generation pipeline, and playtest bar. Owns the level lane and its one ordered Plan. |
