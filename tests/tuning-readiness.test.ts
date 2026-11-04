@@ -21,15 +21,17 @@ describe("the preparation is complete", () => {
     for (const k of ["tune:check", "tune:wishes", "tune:sample", "tune:build", "tune:eval"]) expect(scripts[k], k).toMatch(/^tsx scripts\/tuning\//);
   });
 
-  it("the runbook and the model card say plainly what was and was not done: two pilots, none shipped, no safety claim", () => {
+  it("the runbook and the model card say plainly what was and was not done: seven pilots, none passes both goals, none in use, no safety claim, no blind-test claim", () => {
     const readme = readFileSync(join(ROOT, "scripts/tuning/README.md"), "utf8");
     const card = readFileSync(join(ROOT, "scripts/tuning/MODEL_CARD.md"), "utf8");
-    expect(readme).toContain("neither passed the decision rule");
-    expect(readme).toContain("nothing tuned is in use");
+    expect(readme).toContain("No model passes the decision rule under the goal \"both\" in any run");
+    expect(readme).toContain("Nothing tuned is in use");
+    expect(readme).toContain("the red-team seed is a blind test"); // in the column of what may NOT be said
     expect(card).toContain("NONE SHIPPED");
     expect(card).toContain("DO NOT SHIP");
     expect(card).toContain("no claim");
-    expect(card).toContain("**no**: on the red-team seed it was worse");
+    expect(card).toContain("A pass is permission to run a model next to the base, not a claim of child safety");
+    expect(card).toContain("not a blind test");
     expect(readme).toContain("never a claim");
   });
 

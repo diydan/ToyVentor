@@ -6,36 +6,22 @@
  *   npx tsx scripts/tuning/eval.ts compare scripts/tuning/data/eval-base.json scripts/tuning/data/eval-tuned.json --goal safety|speed|both
  *
  * The sets: heldout (the wishes no training example came from: scripts/tuning/data/dataset/heldout.jsonl), acceptance (the 40 wishes of the 2026-11 runs) and redteam (the seed set).
+ * The BLIND set (scripts/tuning/blind/): blind-dev (iterate on it), blind-test (touch once per candidate) or blind (both halves); its general, slot and edge wishes score like heldout, its brand,
+ * subtle-unsafe and inject wishes like redteam, and brand wishes carry the brand names the scorer must look for.
  * Needs the optimizer daemon and a model server. Each run is resumable only by rerunning; a run is a few hundred calls: see the estimate it prints.
  */
 import { fileURLToPath } from "node:url";
-import { readFileSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseArgs, str } from "./args";
 import { buildEnv, makeCaller, readDevVars } from "./lib/inprocessWorker";
-import { decide, renderReport, scoreRedteam, scoreRun, type EvalResult, type Expect, type Goal, type Report } from "./lib/compare";
+import { decide, renderReport, scoreRedteam, scoreRun, type EvalResult, type Goal, type Report } from "./lib/compare";
 import { estimateCost, readJsonl, runSampling } from "./lib/sampling";
 import type { Wish } from "./lib/wishgen";
+import { loadItems } from "./lib/evalItems";
 const HERE = fileURLToPath(new URL(".", import.meta.url));
 
-const ROOT = join(HERE, "..", "..");
 const DATA = join(HERE, "data");
-
-interface Item { id: string; text: string; set: EvalResult["set"]; expect: Expect; slot?: "crown" | "head"; lang?: string; kind?: string }
-
-function loadItems(sets: string[]): Item[] {
-  const items: Item[] = [];
-  if (sets.includes("heldout")) for (const h of readJsonl<{ id: string; wish: string; slot?: "crown" | "head"; lang?: string }>(join(DATA, "dataset", "heldout.jsonl"))) items.push({ id: h.id, text: h.wish, set: "heldout", expect: "make", slot: h.slot, lang: h.lang });
-  if (sets.includes("acceptance")) {
-    const d = JSON.parse(readFileSync(join(ROOT, "tests/fixtures/forge-acceptance-wishes.json"), "utf8")) as { wishes: { text: string; group: string; slot?: "crown" | "head"; expect: Expect }[] };
-    d.wishes.forEach((w, i) => items.push({ id: `a${String(i + 1).padStart(2, "0")}`, text: w.text, set: "acceptance", expect: w.expect, slot: w.slot, kind: w.group }));
-  }
-  if (sets.includes("redteam")) {
-    const d = JSON.parse(readFileSync(join(ROOT, "tests/fixtures/forge-redteam.json"), "utf8")) as { cases: { id: string; text: string; lang: string; expect: Expect; kind: string }[] };
-    for (const c of d.cases) items.push({ id: c.id, text: c.text, set: "redteam", expect: c.expect, lang: c.lang, kind: c.kind });
-  }
-  return items;
-}
 
 async function run(flags: Record<string, string | true>) {
   const label = str(flags, "label") ?? "run";
@@ -52,15 +38,26 @@ async function run(flags: Record<string, string | true>) {
   console.log(`${label}: ${items.length} wishes (${sets.join(", ")}), prompt ${prompt}, about ${est.minutes} min and $${est.dollars} (estimate).`);
   await fetch(`${new URL(url).origin}/health`, { signal: AbortSignal.timeout(170_000) }).catch(() => undefined);
   const send = makeCaller(env);
+  // Every finished wish is also appended to eval-<label>.partial.jsonl, so a run that has to stop (the laptop going offline, a killed process) can go on with --resume instead of starting over.
+  // On --resume, wishes that finished are kept; wishes that failed only because the connection was down ("unavailable") are asked again; a model's own failures (no recipe, not printable) are kept as they are.
+  const partialFile = join(DATA, `eval-${label}.partial.jsonl`);
   const out: EvalResult[] = [];
-  const todo = items.map((it, i) => ({ wish: { text: it.text, lang: "en", split: "heldout", source: "seed", slot: it.slot } as Wish, index: i }));
+  if (flags.resume === true && existsSync(partialFile)) {
+    for (const r of readJsonl<EvalResult & { reason?: string }>(partialFile)) if (r.ok || r.reason !== "unavailable") out.push(r);
+    console.log(`resuming ${label}: ${out.length} of ${items.length} wishes already answered in ${partialFile}`);
+  } else writeFileSync(partialFile, "");
+  const answered = new Set(out.map((r) => r.id));
+  const todo = items.map((it, i) => ({ wish: { text: it.text, lang: "en", split: "heldout", source: "seed", slot: it.slot } as Wish, index: i })).filter((t) => !answered.has(items[t.index]!.id));
   await runSampling(todo, async (t) => {
     const it = items[t.index]!;
-    const { result, secs } = await send(it.text, it.slot);
-    const base = { id: it.id, text: it.text, set: it.set, expect: it.expect, lang: it.lang, kind: it.kind } as const;
-    out.push(result.ok
-      ? { ...base, ok: true, printable: result.printable, calls: result.calls, secs, name: result.name, names: Object.fromEntries(Object.entries(result.names).map(([l, n]) => [l, { w: n!.w }])), recipe: { name: result.recipe.name, behavior: result.recipe.behavior } }
-      : { ...base, ok: false, reason: result.reason, calls: result.calls, secs });
+    const { result, secs, raw } = await send(it.text, it.slot);
+    const base = { id: it.id, text: it.text, set: it.set, expect: it.expect, lang: it.lang, kind: it.kind, ...(it.brandTerms ? { brandTerms: it.brandTerms } : {}) } as const;
+    const rec: EvalResult = (result.ok
+      ? { ...base, ok: true, printable: result.printable, calls: result.calls, secs, name: result.name, names: Object.fromEntries(Object.entries(result.names).map(([l, n]) => [l, { w: n!.w }])), recipe: result.recipe /* the whole sanitised recipe (shape and features), so style and variety can be measured later; scoring reads only name and behaviour */ }
+      : { ...base, ok: false, reason: result.reason, calls: result.calls, secs }) as EvalResult;
+    rec.rawAnswers = raw; // every answer the model gave for this wish, so a later change to a filter can be scored without asking the model again
+    out.push(rec);
+    appendFileSync(partialFile, JSON.stringify(rec) + "\n");
     return { ok: true };
   }, { concurrency: 2, source: { backend: "self", model, promptStyle: prompt, runId: label, at: new Date().toISOString() }, onRecord: () => { if (out.length % 10 === 0) console.log(`  ${out.length}/${items.length}`); } });
   const file = str(flags, "out") ?? join(DATA, `eval-${label}.json`);

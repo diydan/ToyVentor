@@ -4,6 +4,7 @@
  *
  * The key is read from .dev.vars into memory and passed to the Worker; nothing here prints it, logs it or writes it anywhere.
  */
+import { quoteWish } from "../../../shared/forgeMakePrompt";
 import { fileURLToPath } from "node:url";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -78,21 +79,58 @@ export function buildEnv(o: BackendOptions) {
 
 export type Env = ReturnType<typeof buildEnv>;
 
-/** Sends one wish through the Worker and the client loop. Each call is a new device and a fresh rate limit, as a real child's would be. */
+/**
+ * Sends one wish through the Worker and the client loop. Each call is a new device and a fresh rate limit, as a real child's would be.
+ * `raw` holds every answer the model gave for this wish (a retry or a repair is a second one), as text, so a later change to a filter can be scored on the stored answers
+ * instead of asking the model again. The answer is matched to its wish by the wish text inside the request (at most a few wishes are in flight at once).
+ */
+const rawByWish = new Map<string, string[]>();
+let teeInstalled = false;
+function installModelTee(modelOrigin: string): void {
+  if (teeInstalled) return;
+  teeInstalled = true;
+  const real = globalThis.fetch;
+  globalThis.fetch = (async (input: Parameters<typeof fetch>[0], init?: Parameters<typeof fetch>[1]) => {
+    const res = await real(input, init);
+    try {
+      const url = String(typeof input === "string" ? input : input instanceof URL ? input.href : input.url);
+      if (url.startsWith(modelOrigin) && url.endsWith("/chat/completions") && typeof init?.body === "string") {
+        const asked = (JSON.parse(init.body) as { messages?: { content?: unknown }[] }).messages?.map((m) => String(m.content ?? "")).join("\n") ?? "";
+        const wish = [...rawByWish.keys()].find((w) => asked.includes(quoteWish(w)) || asked.includes(w));
+        if (wish !== undefined) {
+          const j = (await res.clone().json()) as { choices?: { message?: { content?: unknown } }[] };
+          rawByWish.get(wish)?.push(String(j.choices?.[0]?.message?.content ?? ""));
+        }
+      }
+    } catch {
+      // the tee must never break a call
+    }
+    return res;
+  }) as typeof fetch;
+}
+
 export function makeCaller(env: Env) {
   let n = 0;
-  return async (text: string, slot?: MakeSlot): Promise<{ result: MakeResult; secs: number }> => {
+  const base = (env as { SELF_TEXT_URL?: string }).SELF_TEXT_URL;
+  if (base) installModelTee(new URL(base).origin);
+  return async (text: string, slot?: MakeSlot): Promise<{ result: MakeResult; secs: number; raw: string[] }> => {
     const device = `tun-${String(++n % 10000).padStart(4, "0")}-aaaa-bbbb-cccc-dddddddddddd`.slice(0, 36);
+    const raw: string[] = [];
+    rawByWish.set(text, raw);
     const t0 = Date.now();
-    const result = await makeFromText({
-      text,
-      ...(slot ? { slot } : {}),
-      gate: { headers: () => ({ "x-device-id": device }) },
-      fetch: async (url, init) => {
-        resetForgeRateLimit();
-        return forgeWorker.fetch(new Request(`http://local${url}`, init as RequestInit), env as never);
-      },
-    });
-    return { result, secs: Math.round((Date.now() - t0) / 100) / 10 };
+    try {
+      const result = await makeFromText({
+        text,
+        ...(slot ? { slot } : {}),
+        gate: { headers: () => ({ "x-device-id": device }) },
+        fetch: async (url, init) => {
+          resetForgeRateLimit();
+          return forgeWorker.fetch(new Request(`http://local${url}`, init as RequestInit), env as never);
+        },
+      });
+      return { result, secs: Math.round((Date.now() - t0) / 100) / 10, raw };
+    } finally {
+      rawByWish.delete(text);
+    }
   };
 }

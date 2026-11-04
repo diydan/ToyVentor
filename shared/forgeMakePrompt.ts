@@ -11,7 +11,7 @@ import { systemPromptFor, type PromptVersion } from "./forgePrompt";
 
 /** The prompt version the eval harness measured best (tests/forge/golden/prompt-v5.txt). */
 export const MAKE_PROMPT_VERSION: PromptVersion = "v5";
-export { MAKE_MAX_CALLS, MAKE_MAX_TEXT_CHARS, MAKE_SLOTS, type MakeSlot } from "./forgeMakeLimits";
+export { MAKE_CHOICE_SLOTS, MAKE_MAX_CALLS, MAKE_MAX_TEXT_CHARS, MAKE_SLOTS, type MakeSlot } from "./forgeMakeLimits";
 export const NAME_LANGS = ["en", "es", "fr", "de", "it", "pt", "tr"] as const;
 
 /** What a repair tells the model about one failed check (the same shape as FeedbackItem in scripts/lib/forgeEvalCore.ts). */

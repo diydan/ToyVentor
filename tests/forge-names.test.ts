@@ -87,6 +87,36 @@ describe("parseNames keeps only names that are safe to speak", () => {
       expect(r.dropped.map((d) => d.lang)).toEqual(langs);
     }
   });
+  it("a harmless short wish whose English name is just the wish keeps all seven names, with the recipe's own name standing in for English (found 2026-11-04: 'ninja hat' lost every name)", () => {
+    const echoing = { ...GOOD, en: { w: "Ninja Hat", g: "m" }, es: { w: "Sombrero Ninja", g: "m" } };
+    const r = parseNames(echoing, "ninja hat", "Ninja Shadow Hat");
+    expect(r.dropped).toEqual([]);
+    expect(Object.keys(r.names).sort()).toEqual([...langs].sort());
+    expect(r.names.en).toEqual({ w: "Ninja Shadow Hat", g: "m" });
+    expect(r.names.es).toEqual({ w: "Sombrero Ninja", g: "m" }); // the other languages are the model's own
+    // without a recipe name nothing changes: the old behaviour, all or nothing
+    expect(parseNames(echoing, "ninja hat").names).toEqual({});
+  });
+  it("the stand-in never opens a door: a recipe name that echoes too, is unsafe, a brand, not speakable or the placeholder keeps nothing", () => {
+    const echoing = { ...GOOD, en: { w: "poop head", g: "m" } };
+    for (const bad of ["poop head", "Poop Head Hat", "Knife Hat", "Lego Hat", "Hat 2000", "My Creation", "", "a".repeat(41), undefined]) {
+      // "Poop Head Hat" contains the whole wish, so it is the same echo; the rest fail their own check
+      const r = parseNames(echoing, "poop head", bad);
+      expect(r.names, JSON.stringify(bad)).toEqual({});
+      expect(r.dropped).toHaveLength(7);
+    }
+  });
+  it("an English name that has an unsafe word or a brand is never replaced, even by a clean recipe name", () => {
+    for (const en of [{ w: "knife hat", g: "m" }, { w: "Lego Hat", g: "m" }, { w: "a scary knife", g: "m" }]) {
+      expect(parseNames({ ...GOOD, en }, "knife hat", "Fine Shadow Hat").names, JSON.stringify(en)).toEqual({});
+    }
+  });
+  it("the echo stand-in is for English only: another language that echoes the wish is still dropped on its own", () => {
+    const r = parseNames({ ...GOOD, fr: { w: "chapeau de sorcier magique", g: "m" } }, "chapeau de sorcier magique", "Wizard Cap");
+    expect(Object.keys(r.names)).toContain("en");
+    expect(r.names.fr).toBeUndefined();
+    expect(r.dropped).toEqual([{ lang: "fr", reason: "unsafe" }]);
+  });
   it("copes with anything the model might send, and ignores inherited keys", () => {
     for (const raw of [null, undefined, "x", 3, [], [GOOD], { constructor: GOOD }, JSON.parse('{"__proto__":{"w":"x","g":"m"}}')]) {
       const r = parseNames(raw);

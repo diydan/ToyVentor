@@ -14,7 +14,7 @@
 // daemon what failed (never the client), tells the model only `{gate, measured, limit, hint}`, and the client counts its own calls (at most 4, the
 // spec's F1 budget). So nothing here holds a request open for minutes, and a Worker restart loses nothing.
 import { type DaemonJob, buildFeedback } from "../scripts/lib/forgeEvalCore";
-import { MAKE_MAX_CALLS, MAKE_MAX_TEXT_CHARS, MAKE_SLOTS, buildMakePrompt, type MakeSlot } from "../shared/forgeMakePrompt";
+import { MAKE_CHOICE_SLOTS, MAKE_MAX_CALLS, MAKE_MAX_TEXT_CHARS, MAKE_SLOTS, buildMakePrompt, type MakeSlot } from "../shared/forgeMakePrompt";
 import { checkForgeRecipeBrandSafety, type ForgeRecipeV1 } from "../shared/forgeOptimizer";
 import { readCappedJson } from "./body";
 import { issueSpokenNames, parseNames, type SigningEnv } from "./forgeNames";
@@ -229,7 +229,8 @@ export async function handleForgeMake(request: Request, env: ForgeMakeEnv): Prom
   const rawRecipe = isRecord(envelope.recipe) ? envelope.recipe : "shape" in envelope && "slot" in envelope ? envelope : null;
   if (!rawRecipe) return reply(502, { ok: false, status: "no-recipe", attempt });
   const wanted = { ...rawRecipe, ...(slot ? { slot } : {}) };
-  if (!(MAKE_SLOTS as readonly unknown[]).includes(wanted.slot)) return reply(502, { ok: false, status: "no-recipe", attempt });
+  // A slot the child asked for is forced above and was checked on the way in; with none asked for, the model may choose a hat or a head and nothing else.
+  if (!slot && !(MAKE_CHOICE_SLOTS as readonly unknown[]).includes(wanted.slot)) return reply(502, { ok: false, status: "no-recipe", attempt });
 
   const clean = sanitizeRecipe(wanted);
   if (!clean.ok || checkForgeRecipeBrandSafety(clean.recipe)) return reply(502, { ok: false, status: "no-recipe", attempt });
@@ -255,7 +256,7 @@ export async function handleForgeMake(request: Request, env: ForgeMakeEnv): Prom
   }
   if (!up.ok) return up.response;
 
-  const parsedNames = parseNames(envelope.names, text.toLowerCase());
+  const parsedNames = parseNames(envelope.names, text.toLowerCase(), recipe.name); // the filtered recipe name may stand in for an English name that only echoes the wish
   const names = Object.fromEntries(Object.entries(parsedNames.names).filter(([, n]) => !KID_BRAND_RE.test(n.w))) as typeof parsedNames.names;
   if (!names.en) for (const k of Object.keys(names)) delete names[k as keyof typeof names]; // English is every language's fallback: with no good English name nothing is kept
   const signed = await issueSpokenNames(env, names);

@@ -60,20 +60,38 @@ export interface ParsedNames {
   dropped: Array<{ lang: LangCode; reason: "missing" | "shape" | "unsafe" | "brand" }>;
 }
 
+/** The recipe's own name as an English noun, if it is speakable, passes the kid-safety check WITH the echo rule, and is not the generic placeholder; else null. */
+function standIn(recipeName: string | undefined, said: string): Noun | null {
+  if (typeof recipeName !== "string") return null;
+  const w = recipeName.normalize("NFC").replace(/\s+/g, " ").trim();
+  if (!w || w === "My Creation" || !isSpeakableWord(w) || !kidSafeText(w, said)) return null;
+  return { w, g: "m" };
+}
+
 /**
  * Validate what the model returned as `names`. `childSaid` is the child's own words (for the echo rule in kidSafeText, which only blocks long copies, so
  * naming a "spoon" a "spoon" is fine). English is the fallback every other language falls back to, so with no good English name nothing is kept.
+ *
+ * `recipeName` (optional) is the part's own name, already filtered like any model text. It is used ONLY when the English name fails the echo rule and nothing else
+ * (it copies the child's words, as a name for "ninja hat" naturally does) and the recipe name passes every check itself: it then stands in for the English name, so a
+ * harmless two-word wish does not lose all seven names. An English name with an unsafe word or a brand is never replaced, and if the recipe name echoes the wish too
+ * (or is not speakable, or is unsafe) nothing is kept, as before. Every name that is kept has passed the same checks as always. Dan approved this change 2026-11-04.
  */
-export function parseNames(raw: unknown, childSaid = ""): ParsedNames {
+export function parseNames(raw: unknown, childSaid = "", recipeName?: string): ParsedNames {
   const names: SpokenNames = {};
   const dropped: ParsedNames["dropped"] = [];
   const said = childSaid.toLowerCase().replace(/\s+/g, " ").trim();
   for (const lang of LANG_CODES) {
     const entry = isRecord(raw) && Object.hasOwn(raw, lang) ? raw[lang] : undefined;
     if (entry === undefined) { dropped.push({ lang, reason: "missing" }); continue; }
-    const noun = normalizeNoun(lang, entry);
+    let noun = normalizeNoun(lang, entry);
     if (!noun) { dropped.push({ lang, reason: "shape" }); continue; }
-    if (!kidSafeText(noun.w, said)) { dropped.push({ lang, reason: "unsafe" }); continue; }
+    if (!kidSafeText(noun.w, said)) {
+      // English only, and only when the sole fault is the echo (the name is fine without the child's words in view): the recipe's own name may stand in
+      const stand = lang === "en" && kidSafeText(noun.w) ? standIn(recipeName, said) : null;
+      if (!stand) { dropped.push({ lang, reason: "unsafe" }); continue; }
+      noun = stand;
+    }
     if (checkForgeRecipeBrandSafety({ name: noun.w, slot: "crown", shape: { slices: [] } } as unknown as ForgeRecipeV1)) { dropped.push({ lang, reason: "brand" }); continue; }
     names[lang] = noun;
   }

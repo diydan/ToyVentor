@@ -1,6 +1,6 @@
 # Forge tuning runbook (the v2 candidate)
 
-**Status, 2026-11-04: the preparation is built and tested, and two pilot models were trained and evaluated; neither passed the decision rule (DO NOT SHIP), and nothing tuned is in use.** `npm run tune:check` prints what has been run on
+**Status, 2026-11-04 19:45: the preparation is built and tested; seven pilot models were trained and ten tuned evaluation runs made (243 wishes each). No model passes the decision rule under the goal "both" in any run; pilot 6 (`skip`) passes the SPEED goal in both of its runs and fails the SAFETY goal in both; pilot 5 passed safety once and speed once; pilot 8 missed two lines by one wish each. Nothing tuned is in use, and the shipping decision is Dan's (the verdict table is in `docs/product/journal.md`, "Six-hour grind").** `npm run tune:check` prints what has been run on
 this machine (generated data is not committed). No claim anywhere may go beyond the numbers in `eval-compare.md` / `MODEL_CARD.md`, and each is quoted with its n. The first iteration's results and what they showed are in `docs/product/journal.md` (Wed Nov 4 ~09:15).
 
 ## Why tune at all
@@ -77,7 +77,7 @@ Glimmer thinks on a private channel before it answers (`to=self`), then answers 
 
 | State | May say | May not say |
 | --- | --- | --- |
-| Now (2026-11-04) | "The full pipeline is built and was run end to end: two pilots were trained on our own model's answers, converted, served and evaluated by a decision rule, which refused both: they are faster (35% and 55% lower median seconds) but write brands into names more often and fail the first call more often." | that a model is ready, in use, or safer; that the next iteration works |
+| Now (2026-11-04 19:45) | "Seven pilot models were trained on our own model's answers, converted, served and evaluated by a decision rule set in advance; none passes it under 'both'. The fast one (pilot 6) halves the wait (about 14 s against 32 s) and passes the speed goal in both runs, with red-team 65 to 66 of 70 against 61 for the base, but it does not meet the safety goal (name filters 11 to 12 against a limit of 6) and it loses the held prop. Nothing is in use." | that a model is ready, in use, safe for children, or that the red-team seed is a blind test (the brand fix was designed after reading earlier failures) |
 | Dataset built from our model | the counts, the datasheet, "every example passed the production filters" | that a model learned from it |
 | Smoke run done | "an adapter trained for 60 steps: loss went from X to Y" | any quality or safety claim |
 | Pilot and heldout eval done | the table in `eval-compare.md`, verbatim, with its n | "safe for children" |
@@ -93,4 +93,4 @@ Glimmer thinks on a private channel before it answers (`to=self`), then answers 
 ## Known gaps in the preparation
 
 Failure-to-fix (repair) pairs are not generated, so a tuned model sees no repair prompts in training; the first call is what is tuned. There is no JSON Schema for constrained decoding. The red-team set
-is a seed (about 75 cases) where a release needs hundreds reviewed by native speakers. The six translated word lists have had no native read. The training script has run for two pilots (910 examples, 456 steps) that did not pass; a second iteration (full production prompt, brand-wish examples) was prepared and its training was cut short by a compute-provider outage, so it has no results.
+is a seed (about 75 cases) where a release needs hundreds reviewed by native speakers. The six translated word lists have had no native read. The training script has run for four pilots; one passes the rule's safety goal (see the model card for the exact numbers and caveats).

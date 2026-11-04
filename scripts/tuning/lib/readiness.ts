@@ -29,9 +29,10 @@ export const PREP: readonly Item[] = [
   { path: "tests/fixtures/kid-wishes.json", what: "harmless wishes in seven languages that must never be refused" },
   { path: "shared/kidSafeTerms.ts", what: "unsafe terms in seven languages (needs a native read)" },
   { path: "scripts/tuning/README.md", what: "the runbook: stages, commands, costs, risks, what may be claimed" },
+  { path: "scripts/tuning/slot-probe.ts", what: "command: measure a model on the vehicle slots and the held prop through the real Worker, daemon and gates" },
   { path: "scripts/tuning/results.ts", what: "command: write the small committed summary of every evaluated run (results/pilots.md and .json) with the decision rule's verdict" },
   { path: "scripts/tuning/results/LEDGER.md", what: "the GPU spend ledger: a row before each use, reconciled after" },
-  { path: "scripts/tuning/MODEL_CARD.md", what: "model card and risk-assessment draft (status: two pilots trained and evaluated, none shipped)" },
+  { path: "scripts/tuning/MODEL_CARD.md", what: "model card and risk-assessment draft (status: four pilots trained, one passes the safety goal, none in use)" },
   { path: "scripts/tuning/data/example/dataset/manifest.json", what: "a worked example of the dataset's manifest, from canned recipes (stub, not trainable)" },
   { path: "scripts/tuning/data/example/dataset/DATASHEET.md", what: "a worked example of the datasheet" },
   { path: "tests/tuning-prompt.test.ts", what: "tests: prompt, hash pin, serving switch" },
@@ -40,6 +41,12 @@ export const PREP: readonly Item[] = [
   { path: "tests/tuning-compare.test.ts", what: "tests: scoring and the decision rule" },
   { path: "tests/tuning-train.test.ts", what: "tests: trainer settings, converter, tuned server, and their executed plain-Python parts" },
   { path: "tests/tuning-redteam.test.ts", what: "tests: red-team seed against the live filters" },
+  { path: "scripts/tuning/lib/blindSet.ts", what: "the blind evaluation set: groups, brand terms the brand lists do not know, dev and test halves, hash, review sheets" },
+  { path: "scripts/tuning/lib/evalItems.ts", what: "which wishes an evaluation run asks, by set name (heldout, acceptance, redteam, blind-dev, blind-test, blind)" },
+  { path: "scripts/tuning/blind-set.ts", what: "command: write the blind set (hand-written groups rebuilt, model-written wishes reused unless --force-model)" },
+  { path: "scripts/tuning/blind/blind-set.json", what: "the blind evaluation set, about 400 wishes, hashed, split in dev and test halves (unreviewed by any native speaker)" },
+  { path: "scripts/tuning/blind/README.md", what: "the blind set: why it exists, the dev and test rule, what is not done" },
+  { path: "tests/tuning-blindset.test.ts", what: "tests: the blind set's groups, intake, separation from training and evaluation wishes, unknown brands, hash, scorer hook" },
 ];
 
 export type StageState = "done" | "not_run";

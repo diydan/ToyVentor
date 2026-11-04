@@ -312,7 +312,7 @@ describe("POST /api/forge/make", () => {
       [{ text: 42 }, "invalid"],
       [{ text: "a scary knife" }, "not-allowed"],
       [{ text: "a lego car" }, "brand-rejected"],
-      [{ text: "a hat", slot: "hand" }, "invalid"],
+      [{ text: "a hat", slot: "wing" }, "invalid"],
       [{ text: "a hat", attempt: 5 }, "invalid"],
       [{ text: "a hat", attempt: 1.5 }, "invalid"],
     ];
@@ -350,6 +350,19 @@ describe("POST /api/forge/make", () => {
     for (const n of Object.values(out.names) as { sig: string }[]) expect(n.sig).toMatch(/^[A-Za-z0-9_-]{43}$/);
   });
 
+  it("a two-word wish keeps all seven names even when the model's English name is the wish itself (found 2026-11-04: 'robot hat' lost every name, in every model)", async () => {
+    model = modelSays({ recipe: recipeOf({ name: "Robot Dome Hat" }), names: { ...NAMES, en: { w: "robot hat", g: "m" } } });
+    const out = (await (await make({ text: "robot hat" })).json()) as { names: Record<string, { w: string }>; recipe: { name: string } };
+    expect(Object.keys(out.names).sort()).toEqual(["de", "en", "es", "fr", "it", "pt", "tr"]);
+    expect(out.names.en!.w).toBe("Robot Dome Hat"); // the recipe's own name stands in for the echo
+    expect(out.recipe.name).toBe("Robot Dome Hat");
+  });
+  it("but a wish the model merely repeats keeps nothing when the recipe name repeats it too", async () => {
+    model = modelSays({ recipe: recipeOf({ name: "robot hat" }), names: { ...NAMES, en: { w: "robot hat", g: "m" } } });
+    const out = (await (await make({ text: "robot hat" })).json()) as { names: Record<string, unknown>; recipe: { name: string } };
+    expect(out.names).toEqual({});
+    expect(out.recipe.name).toBe("My Creation");
+  });
   it("drops a name that is wrong or unsafe and keeps the rest, and says nothing when no signing key is set", async () => {
     model = modelSays({ recipe: recipeOf(), names: { ...NAMES, es: { w: "sombrero", g: "n" }, fr: { w: "a scary knife", g: "m" }, de: { w: "Zauber123", g: "m" } } });
     const out = (await (await make({ text: "a wizard hat" })).json()) as { names: Record<string, unknown> };
@@ -358,6 +371,21 @@ describe("POST /api/forge/make", () => {
     const unsigned = (await (await make({ text: "a wizard hat" }, headers, { ...env, VOICE_SIGNING_KEY: undefined })).json()) as { names: unknown; recipe: unknown };
     expect(unsigned.names).toEqual({}); // nothing can be spoken without the key, the part still comes back
     expect(unsigned.recipe).toBeTruthy();
+  });
+
+  it("builds the vehicle slots and the held prop when a panel asks for them (added 2026-11-04), and each reaches the daemon as that slot", async () => {
+    for (const slot of ["back", "front", "rollbar", "spoiler", "hood", "roof", "exhaust"] as const) {
+      resetForgeRateLimit();
+      model = modelSays({ recipe: recipeOf({ slot }), names: NAMES });
+      const res = await make({ text: "a shiny part", slot });
+      expect(res.status, slot).toBe(200);
+      expect(seen.daemonPosts.at(-1)!.recipe.slot, slot).toBe(slot);
+    }
+    resetForgeRateLimit();
+    model = modelSays({ recipe: recipeOf({ slot: "hand", shape: { kind: "star2d", points: 5, outer_r_mm: 20, inner_r_mm: 10 } }), names: NAMES });
+    const hand = await make({ text: "a star wand", slot: "hand" });
+    expect(hand.status).toBe(200);
+    expect(seen.daemonPosts.at(-1)!.recipe.slot).toBe("hand");
   });
 
   it("holds the recipe to the slot asked for, and to a hat or a head when none is asked for", async () => {
