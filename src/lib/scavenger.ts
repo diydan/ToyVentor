@@ -23,19 +23,19 @@ export const SCAVENGER_QUESTS: readonly ScavengerQuest[] = [
     id: "scavenge-lever",
     concept: "lever",
     title: "Find a Lever",
-    nouns: ["door handle", "seesaw", "bottle opener", "light switch", "tap", "handle"],
+    nouns: ["door handle", "seesaw", "bottle opener", "light switch", "switch", "tap", "faucet", "handle", "lever", "scissors", "nutcracker"],
   },
   {
     id: "scavenge-gear",
     concept: "gear",
     title: "Find a Gear",
-    nouns: ["gear", "cog", "clock", "bicycle chain"],
+    nouns: ["gear", "cog", "clock", "bicycle chain", "bike chain", "watch", "gearwheel"],
   },
   {
     id: "scavenge-wheel",
     concept: "wheel",
     title: "Find a Wheel",
-    nouns: ["wheel", "bicycle wheel", "toy car", "pram wheel", "office chair wheel"],
+    nouns: ["wheel", "bicycle wheel", "bike wheel", "toy car", "car wheel", "tire", "tyre", "pram wheel", "stroller", "office chair wheel", "skateboard", "scooter"],
   },
 ];
 
@@ -58,3 +58,54 @@ export function scavengerVerdict(
   }
   return { found: false, matchedNoun: null };
 }
+
+/**
+ * The same verdict from the names the helper gave a photo (`/api/scan {nameIt}`: up to three plain lowercase names, best first, already screened by
+ * the Worker). A name counts when it IS one of the quest's words, or contains one as whole words ("old bicycle wheel" has "wheel"). The quest's own
+ * closed list stays the only thing that can verify it: a name outside it, however close, never does. Never throws.
+ */
+export function scavengerVerdictFromNames(
+  quest: ScavengerQuest,
+  names: readonly string[],
+): ScavengerVerdict & { name: string | null } {
+  const clean = (s: string) => String(s ?? "").toLowerCase().replace(/[^a-z ]/g, " ").replace(/\s+/g, " ").trim();
+  const has = (haystack: string, needle: string) => ` ${haystack} `.includes(` ${needle} `);
+  for (const raw of names) {
+    const name = clean(raw);
+    if (!name) continue;
+    for (const noun of quest.nouns) {
+      if (name === noun || has(name, noun)) return { found: true, matchedNoun: noun, name };
+    }
+  }
+  return { found: false, matchedNoun: null, name: null };
+}
+
+/**
+ * A real 3D part to show after a find, so the child can put it in the room with the phone's own AR viewer (model-viewer, through PartPreview).
+ * Only concepts that have a model: there is no lever part yet.
+ */
+export const SCAVENGER_REWARD_GLB: Readonly<Partial<Record<ScavengerConcept, { glb: string; name: string }>>> = {
+  gear: { glb: "gear-spur-z10.glb", name: "gear" },
+  wheel: { glb: "veh-wheel-sport.glb", name: "wheel" },
+};
+
+/** The camera sentence for a quest: what to look for, in a child's words. */
+export function scavengerHint(quest: ScavengerQuest): string {
+  switch (quest.concept) {
+    case "lever":
+      return "A lever helps you lift or push. Try a door handle, a tap or a light switch.";
+    case "gear":
+      return "A gear has teeth that turn together. Try a clock or a bike.";
+    default:
+      return "A wheel goes round and round. Try a toy car, a bike or a chair.";
+  }
+}
+
+/** What the camera says when the photo was of something else. Warm, never "wrong". */
+export function scavengerMissText(quest: ScavengerQuest, seen: string | null): string {
+  const what = seen ? `I can see a ${seen}. ` : "";
+  return `${what}That is not a ${quest.concept} yet. Look around and try something else!`;
+}
+
+/** Is this chore id one of the scavenger quests (it is found with the camera, not ticked by a tap)? */
+export const isScavengerChore = (id: string): boolean => SCAVENGER_QUESTS.some((q) => q.id === id);

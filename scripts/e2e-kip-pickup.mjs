@@ -180,6 +180,12 @@ try {
   check("Kip holds the 3D wooden spoon from the household library, coloured from the photo", await ev("(() => { const p = window.kipPickUp.state.lastPick; return !!p && p.kind === 'library' && /spoon/i.test(p.id) && p.coloured === true; })()") && (await prop()) === "custom", JSON.stringify((await st()).lastPick));
   await sleep(800);
   await kip.shot(path.join(SHOTS, "6-spoon-in-hand.png"));
+  // 3b2. printing what was just picked up: the button, and the panel opens on the shape it already found ----------------------------------------------------------
+  check("a Print it button shows after a pick-up that has an outline (printing is on in this bench)", await ev("(() => { const b = document.querySelector('.kpu-print'); return !!b && !b.hidden && /Print it/.test(b.textContent) && b.getBoundingClientRect().width > 40; })()"));
+  await ev("document.querySelector('.kpu-print').click()");
+  check("pressing it opens the print panel on the shape step, with the scan kept (no second scan)", await kip.waitFor("window.kipPhotoPrint && window.kipPhotoPrint.isOpen() && window.kipPhotoPrint.state.step === 'shape' && window.kipPhotoPrint.state.hasScan", 8000));
+  await kip.shot(path.join(SHOTS, "6b-print-it-panel.png"));
+  await ev("window.kipPhotoPrint.close()");
   await ev("cancelAnimationFrame(window.__spoonRaf)");
 
   // 3c. no word: the helper says what it is, then the scan runs for that name --------------------------------------------------------------
