@@ -5,7 +5,7 @@
 - **Status:** Proposed Engineering Specification — **Revision 2 (Final Print-Finish Review integrated, 2026-11-01)**. No runtime, CAD, or catalog files are modified by this document.
 - **Primary Targets:** `public/parts-glb/` (62 web/AR preview models) and `public/parts-stl/` (63 downloadable 3D-print meshes: 62 catalog parts + `forge-mount-first-print.stl`).
 - **Evidence Labels:** `[code]` = verified directly in the working tree; `[measured]` = empirically benchmarked against current repo payloads using `manifold3d`, `trimesh`, and `preprint_check.py`; `[design]` = proposed architecture and thresholds.
-- **Canonical Alignment:** Preserves the `12.5 mm / 25 mm` TU lattice ([`parts/partspec/interfaces.json`](../../parts/partspec/interfaces.json)), zero-touch bridge contract ([`docs/parts/parts-tu-spec.md`](../parts/parts-tu-spec.md)), `supportFree: true` part schema ([`shared/part.ts`](../../shared/part.ts)), and deterministic gate-first AI pattern ([`docs/specs/forge-ai-spec.md`](forge-ai-spec.md)).
+- **Canonical Alignment:** Preserves the `12.5 mm / 25 mm` TU lattice ([`parts/partspec/interfaces.json`](../../../parts/partspec/interfaces.json)), zero-touch bridge contract ([`docs/parts/parts-tu-spec.md`](../../parts/parts-tu-spec.md)), `supportFree: true` part schema ([`shared/part.ts`](../../../shared/part.ts)), and deterministic gate-first AI pattern ([`docs/specs/forge-ai-spec.md`](../../specs/forge-ai-spec.md)).
 
 ### Executive Target Summary
 
@@ -26,7 +26,7 @@
 
 ### 1.1 Measured Inventory (`public/parts-stl/` & `public/parts-glb/`)
 
-Auditing `sets/*.json` and frontend references ([`PrintDrawer.tsx`](../../src/features/game/world/PrintDrawer.tsx), [`PackOverlay.tsx`](../../src/features/game/world/PackOverlay.tsx), [`MyToySheet.tsx`](../../src/features/game/world/MyToySheet.tsx), [`PartPreview.tsx`](../../src/features/ar/PartPreview.tsx)) confirms **zero orphaned files and zero missing files** `[measured]`:
+Auditing `sets/*.json` and frontend references ([`PrintDrawer.tsx`](../../../src/features/game/world/PrintDrawer.tsx), [`PackOverlay.tsx`](../../../src/features/game/world/PackOverlay.tsx), [`MyToySheet.tsx`](../../../src/features/game/world/MyToySheet.tsx), [`PartPreview.tsx`](../../../src/features/ar/PartPreview.tsx)) confirms **zero orphaned files and zero missing files** `[measured]`:
 - `public/parts-stl/`: **63 binary STLs**, `29.90 MB` raw (`7.83 MB` gzip), `597,936` triangles, `298,860` unique vertex positions (`median = 4,906` tris, `min = 400`, `max = 45,690`).
 - `public/parts-glb/`: **62 binary GLBs**, `41.91 MB` raw (`6.94 MB` gzip), `581,320` triangles (`forge-mount-first-print.stl` is download-only and has no GLB).
 
@@ -47,20 +47,20 @@ Auditing `sets/*.json` and frontend references ([`PrintDrawer.tsx`](../../src/fe
 
 ### 1.2 Four Root Causes Found in Code `[code]`
 
-1. **GLBs are 40% larger than STLs because [`scripts/stl_to_glb.py`](../../scripts/stl_to_glb.py) emits unindexed `float32` soup:**
+1. **GLBs are 40% larger than STLs because [`scripts/stl_to_glb.py`](../../../scripts/stl_to_glb.py) emits unindexed `float32` soup:**
    Every triangle writes 3 unshared vertices × (`12 B` `POSITION` + `12 B` `NORMAL`) = **`72 bytes/triangle`** (vs. binary STL's `50 bytes/triangle`). Across 62 parts, `1,743,960` vertices are written when only `290,552` unique positions exist (`6.0×` vertex bloat), and flat per-face normals make curved low-poly surfaces look faceted in `<model-viewer>`.
 2. **Binary STL cannot shrink from vertex-welding/cleaning alone:**
    Binary STL (`84 + 50 × N_tris` bytes) has **no index buffer**, and `manifold3d` already emits clean watertight meshes with zero NaNs and zero duplicate faces `[measured]`. A "weld/dedupe-only, never simplify" pass on `public/parts-stl/` yields **`0.0%` disk savings (`29.90 MB → 29.90 MB`)**. Reducing `.stl` disk size requires **sub-nozzle, manifold-preserving coplanar & chordal simplification** (`Manifold.simplify`) and/or **radius-adaptive CAD segment counts**.
-3. **Uniform over-tessellation & boolean seam fragmentation in [`parts/partspec/toyventor_parts.py`](../../parts/partspec/toyventor_parts.py):**
-   - [`interfaces.json`](../../parts/partspec/interfaces.json) sets `fit_segments = 96` so a *parked* Snap Large stud (`Ø 13.2 mm`, `R = 6.6 mm`) avoids `32`-gon chord error (`0.032 mm`), but applies `FIT_SEG = 96` uniformly to every Small stud (`Ø 6.6 mm`, `R = 3.3 mm`), where `96` segments yields a **`0.0018 mm` (`1.8 µm`) chord sagitta** — **`28×` finer than a `0.05 mm` FDM stepper/extrusion tolerance** — emitting `~1,536` triangles *per stud*.
-   - [`toyventor_geom.py`](../../parts/partspec/toyventor_geom.py) `rbox()` hulls 4× `Manifold.sphere(r, 32)` corners (`sph()`/`ellipsoid()` use `48` segments; `_mount_body()` uses `128`), and CSG boolean unions split flat decks/walls into thousands of coplanar sliver triangles along seam lines.
+3. **Uniform over-tessellation & boolean seam fragmentation in [`parts/partspec/toyventor_parts.py`](../../../parts/partspec/toyventor_parts.py):**
+   - [`interfaces.json`](../../../parts/partspec/interfaces.json) sets `fit_segments = 96` so a *parked* Snap Large stud (`Ø 13.2 mm`, `R = 6.6 mm`) avoids `32`-gon chord error (`0.032 mm`), but applies `FIT_SEG = 96` uniformly to every Small stud (`Ø 6.6 mm`, `R = 3.3 mm`), where `96` segments yields a **`0.0018 mm` (`1.8 µm`) chord sagitta** — **`28×` finer than a `0.05 mm` FDM stepper/extrusion tolerance** — emitting `~1,536` triangles *per stud*.
+   - [`toyventor_geom.py`](../../../parts/partspec/toyventor_geom.py) `rbox()` hulls 4× `Manifold.sphere(r, 32)` corners (`sph()`/`ellipsoid()` use `48` segments; `_mount_body()` uses `128`), and CSG boolean unions split flat decks/walls into thousands of coplanar sliver triangles along seam lines.
 4. **Frontend waterfall, hardcoded `0.2 mm` print copy & Service Worker cache trap:**
-   - [`PartPreview.tsx`](../../src/features/ar/PartPreview.tsx) waits for `import("@google/model-viewer")` (`~600 KB` JS) to finish *before* mounting `<model-viewer src="/parts-glb/...">`, serializing the JS chunk download and the GLB fetch.
-   - [`PrintDrawer.tsx:415`](../../src/features/game/world/PrintDrawer.tsx) and [`PackOverlay.tsx:785`](../../src/features/game/world/PackOverlay.tsx) hardcode `"0.2 mm PLA"` for every part, omitting toy-grade finish settings (`0.12–0.16 mm` visible layer heights, `20–40 mm/s` slow `3+` outer walls, `outer_first` vs `inner_first` perimeter order, rear `+Y` seam hiding, flat-deck ironing, and brim width).
-   - [`public/sw.js`](../../public/sw.js) (`CACHE = "toyventor-v2"`) serves `/parts-glb/` and `/parts-stl/` via `cacheFirst` on **unhashed URLs**. Replacing mesh bytes without bumping `CACHE` (or adding a version query) will leave returning users stuck on stale multi-megabyte cached files.
+   - [`PartPreview.tsx`](../../../src/features/ar/PartPreview.tsx) waits for `import("@google/model-viewer")` (`~600 KB` JS) to finish *before* mounting `<model-viewer src="/parts-glb/...">`, serializing the JS chunk download and the GLB fetch.
+   - [`PrintDrawer.tsx:415`](../../../src/features/game/world/PrintDrawer.tsx) and [`PackOverlay.tsx:785`](../../../src/features/game/world/PackOverlay.tsx) hardcode `"0.2 mm PLA"` for every part, omitting toy-grade finish settings (`0.12–0.16 mm` visible layer heights, `20–40 mm/s` slow `3+` outer walls, `outer_first` vs `inner_first` perimeter order, rear `+Y` seam hiding, flat-deck ironing, and brim width).
+   - [`public/sw.js`](../../../public/sw.js) (`CACHE = "toyventor-v2"`) serves `/parts-glb/` and `/parts-stl/` via `cacheFirst` on **unhashed URLs**. Replacing mesh bytes without bumping `CACHE` (or adding a version query) will leave returning users stuck on stale multi-megabyte cached files.
 
 > [!NOTE]
-> **Adjacent Follow-On Surface (`public/kip/partspec/` = `101 MB` `[measured]`):** While out of scope for `public/parts-{glb,stl}/`, the live 3D game stage ([`src/features/game/world/runtime/stlRigLoader.ts`](../../src/features/game/world/runtime/stlRigLoader.ts)) fetches raw full-resolution STLs from `/kip/partspec/` and currently skips crease-smoothing above `9,000` vertices to avoid main-thread stalls. Designing `scripts/optimize_assets.py` as a reusable CLI lets `scripts/build-kip.ts` adopt the same optimization pass in a follow-on PR.
+> **Adjacent Follow-On Surface (`public/kip/partspec/` = `101 MB` `[measured]`):** While out of scope for `public/parts-{glb,stl}/`, the live 3D game stage ([`src/features/game/world/runtime/stlRigLoader.ts`](../../../src/features/game/world/runtime/stlRigLoader.ts)) fetches raw full-resolution STLs from `/kip/partspec/` and currently skips crease-smoothing above `9,000` vertices to avoid main-thread stalls. Designing `scripts/optimize_assets.py` as a reusable CLI lets `scripts/build-kip.ts` adopt the same optimization pass in a follow-on PR.
 
 ---
 
@@ -74,10 +74,10 @@ The prompt asks for optimized print assets *"with and without supports (if addin
 1. **Static `.stl` meshes cannot represent tree or soluble supports properly:**
    - Soluble supports (PVA / BVOH / PETG breakaway interface with `0.00 mm` Z-contact gap) and organic tree supports are **multi-extruder / toolpath-level constructs** generated inside Bambu Studio, OrcaSlicer, or PrusaSlicer. Baking single-material support triangles into `.stl` files precludes soluble interfaces, fuses onto `Ø 6.6 mm / Ø 7.0 mm` TU connectors across varying layer heights (`0.12` vs `0.16` vs `0.20 mm`), requires a slicer-scale C++/Python engine, and **doubles `public/parts-stl/` disk usage**.
 2. **All 63 `public/parts-stl/` parts are already support-free — but show faces need stricter overhang rules `[code]` `[measured]`:**
-   - [`shared/part.ts`](../../shared/part.ts) and [`parts/partspec/validation/summary.json`](../../parts/partspec/validation/summary.json) confirm all **206 PartSpec parts** pass `V4_no_steep_overhang` (`≤ 45°`), `V5`, `V6`, and `V10` with `0` failures.
+   - [`shared/part.ts`](../../../shared/part.ts) and [`parts/partspec/validation/summary.json`](../../../parts/partspec/validation/summary.json) confirm all **206 PartSpec parts** pass `V4_no_steep_overhang` (`≤ 45°`), `V5`, `V6`, and `V10` with `0` failures.
    - **Show-Face Priority Rule:** A `42°` downward overhang prints without supports structurally, yet looks noticeably rougher than a smooth-PEI bottom or vertical wall. Therefore:
      - Catalog parts must orient their **best flat face onto the smooth PEI bed (`z = 0`)** or keep primary show curves **vertical** (avoiding `> 30°` downward overhangs on show faces, enforced by new check `V11_show_face_quality`).
-     - Whenever a future, scanned, or character part (e.g., `kip.scad` in [`kip-print-workflow-spec.md`](kip-print-workflow-spec.md)) faces a trade-off between *"support-free `40–45°` scarred show face"* vs *"pristine upward/vertical show face + hidden underside support"*, **show-face quality wins**: orient the show face upward/vertical, specify `support_mode: "tree_slim" | "soluble_interface"` in recipe/`.3mf` metadata, and attach **support-blocker guard volumes** over show faces and precision `TU` sockets/bores (reusing [`public/kip/kip-print.js:284`](../../public/kip/kip-print.js)).
+     - Whenever a future, scanned, or character part (e.g., `kip.scad` in [`kip-print-workflow-spec.md`](kip-print-workflow-spec.md)) faces a trade-off between *"support-free `40–45°` scarred show face"* vs *"pristine upward/vertical show face + hidden underside support"*, **show-face quality wins**: orient the show face upward/vertical, specify `support_mode: "tree_slim" | "soluble_interface"` in recipe/`.3mf` metadata, and attach **support-blocker guard volumes** over show faces and precision `TU` sockets/bores (reusing [`public/kip/kip-print.js:284`](../../../public/kip/kip-print.js)).
 3. **Zero-bloat adhesion metadata (`brim_width_mm`):**
    - Tall, narrow support-free parts (`pin_free`, `shaft_tu*`, `glow_capsule`, `bumper_horns`) need a `3–5 mm` bed brim, already cached in `parts/partspec/validation/*.json` (`10` parts) and surfaced in `PrintDrawer.tsx`.
 
@@ -85,7 +85,7 @@ The prompt asks for optimized print assets *"with and without supports (if addin
 
 ## 3. Two-Tier Deterministic Asset Pipeline
 
-Both asset tiers are generated deterministically from the single PartSpec v2 source during `npm run bridge` ([`scripts/bridge-partspec.ts`](../../scripts/bridge-partspec.ts)):
+Both asset tiers are generated deterministically from the single PartSpec v2 source during `npm run bridge` ([`scripts/bridge-partspec.ts`](../../../scripts/bridge-partspec.ts)):
 
 ```mermaid
 flowchart LR
@@ -120,7 +120,7 @@ flowchart LR
 
 #### Pass P2 — Source-Level Radius-Adaptive Tessellation (`parts/partspec/`)
 To push `public/parts-stl/` down further from `~18.5 MB` to **`~14.0–15.5 MB`** while keeping curved show shells `G2/G3`-smooth (and speeding up Python CSG builds by `~2×`):
-- Add `seg_for_radius(r_mm: float, max_sagitta_mm: float = 0.005, min_seg: int = 24, max_seg: int = 96) -> int` in [`parts/partspec/toyventor_geom.py`](../../parts/partspec/toyventor_geom.py):
+- Add `seg_for_radius(r_mm: float, max_sagitta_mm: float = 0.005, min_seg: int = 24, max_seg: int = 96) -> int` in [`parts/partspec/toyventor_geom.py`](../../../parts/partspec/toyventor_geom.py):
   $$N = \operatorname{clamp}\!\left(8 \cdot \left\lceil \frac{\pi}{8 \arccos(1 - e / r)} \right\rceil,\; \text{min\_seg},\; \text{max\_seg}\right)$$
 - At `max_sagitta_mm = 0.005` (`5 µm`, strictly `< 0.012 mm` slicer arc-fit window and `10×` tighter than the `0.05 mm` fit gap):
   - Small stud / Pro bore (`R = 3.3–3.5 mm`): `N = 64` (down from `96`, cutting per-stud triangles by `−33%` with `≤ 4.0 µm` chord error).
@@ -139,7 +139,7 @@ Every optimized print STL must pass before writing to `public/parts-stl/`:
 
 ### 3.1.5 Toy-Grade Surface Finish & Per-Part Slicer Recipe (`slicer_recipe`)
 
-Mesh bytes alone do not guarantee injection-mold-like toy parts; [`PrintDrawer.tsx`](../../src/features/game/world/PrintDrawer.tsx) and [`PackOverlay.tsx`](../../src/features/game/world/PackOverlay.tsx) currently hardcode `"0.2 mm PLA"`. `optimize_assets.py` + the LLM Advisor compute and store a deterministic **`slicer_recipe`** per part in `asset_optimization_manifest.json` (surfaced in UI print cards and optional `.3mf` profiles), grounded in measured geometry across all 63 parts `[measured]`:
+Mesh bytes alone do not guarantee injection-mold-like toy parts; [`PrintDrawer.tsx`](../../../src/features/game/world/PrintDrawer.tsx) and [`PackOverlay.tsx`](../../../src/features/game/world/PackOverlay.tsx) currently hardcode `"0.2 mm PLA"`. `optimize_assets.py` + the LLM Advisor compute and store a deterministic **`slicer_recipe`** per part in `asset_optimization_manifest.json` (surfaced in UI print cards and optional `.3mf` profiles), grounded in measured geometry across all 63 parts `[measured]`:
 
 | Surface-Finish Principle | Catalog Rule & Measured Distribution Across the 63 STLs `[measured]` |
 | :--- | :--- |
@@ -159,7 +159,7 @@ Mesh bytes alone do not guarantee injection-mold-like toy parts; [`PrintDrawer.t
 
 #### Compression Extension Evaluation Against In-Tree `@google/model-viewer@4.4.0` `[code]`
 
-Inspecting [`node_modules/@google/model-viewer/lib/three-components/CachingGLTFLoader.js`](../../node_modules/@google/model-viewer/lib/three-components/CachingGLTFLoader.js) and `three@0.183.2` settles the glTF compression choice decisively:
+Inspecting [`node_modules/@google/model-viewer/lib/three-components/CachingGLTFLoader.js`](../../../node_modules/@google/model-viewer/lib/three-components/CachingGLTFLoader.js) and `three@0.183.2` settles the glTF compression choice decisively:
 
 | Candidate Extension | Raw Disk (62 GLBs, w/ `0.08 mm` Web LOD) | Gzip / Brotli Wire | Extra Decoder Payload | Offline / PWA (`public/sw.js`) Safe? | Verdict |
 | :--- | ---: | ---: | ---: | :--- | :--- |
@@ -178,8 +178,8 @@ Inspecting [`node_modules/@google/model-viewer/lib/three-components/CachingGLTFL
    - Run `Manifold.simplify(epsilon_web_mm)` before export (`default = 0.08 mm`; range `0.04–0.15 mm` per part from `asset_optimization_manifest.json`).
    - At `PartPreview`'s `220 px` viewport height on a `25–100 mm` part, `1 px ≈ 0.20–0.45 mm`, so `ε_web = 0.08 mm` is **sub-pixel (`< 0.4 px`)** while cutting total triangles across all 62 GLBs from `581,320` → **`146,012` (`−74.9%`)** and capping the heaviest mesh (`kit-keel-base`) at `~8,100` tris `[measured]`.
 2. **Crease-Aware Vertex Welding & Smooth Normals (Pure Python Stdlib Fallback Compatible):**
-   - Transform STL `(x, y, z)_mm * 0.001 → (x, z, -y)_m` (preserving exact coordinate parity with current [`PartPreview.tsx`](../../src/features/ar/PartPreview.tsx) and [`TryOn.tsx`](../../src/features/ar/TryOn.tsx) `cameraOrbit`).
-   - Weld coincident positions (`1e-6 m = 0.001 mm` grid key) and compute area-weighted vertex normals across adjacent faces whose dihedral angle is `≤ crease_deg` (`default = 34°`, matching [`stlRigLoader.ts`](../../src/features/game/world/runtime/stlRigLoader.ts)). Sharp mechanical chamfers and brick edges stay crisp; cylindrical studs, wheels, and domes render smooth without high-poly tessellation.
+   - Transform STL `(x, y, z)_mm * 0.001 → (x, z, -y)_m` (preserving exact coordinate parity with current [`PartPreview.tsx`](../../../src/features/ar/PartPreview.tsx) and [`TryOn.tsx`](../../../src/features/ar/TryOn.tsx) `cameraOrbit`).
+   - Weld coincident positions (`1e-6 m = 0.001 mm` grid key) and compute area-weighted vertex normals across adjacent faces whose dihedral angle is `≤ crease_deg` (`default = 34°`, matching [`stlRigLoader.ts`](../../../src/features/game/world/runtime/stlRigLoader.ts)). Sharp mechanical chamfers and brick edges stay crisp; cylindrical studs, wheels, and domes render smooth without high-poly tessellation.
    - Emit `UNSIGNED_SHORT` (`5123`, 2 bytes/index) index buffer whenever `vertex_count <= 65,535` (100% of Web-LOD parts have `< 12,000` vertices `[measured]`; automatic `UNSIGNED_INT` `5125` fallback if `--no-simplify` ever exceeds `65,535`).
 3. **Quantized Vertex Attributes (`KHR_mesh_quantization`):**
    - Declare `"extensionsUsed": ["KHR_mesh_quantization"]` and `"extensionsRequired": ["KHR_mesh_quantization"]`.
@@ -189,17 +189,17 @@ Inspecting [`node_modules/@google/model-viewer/lib/three-components/CachingGLTFL
    - **Zero-Dependency Guarantee Preserved:** Vertex welding, crease normals, `uint16` indexing, and `KHR_mesh_quantization` packing require **only Python's standard library (`struct`, `math`, `json`)**. Even on environments without `parts/partspec/.venv` (`npm run parts`), `stl_to_glb.py` still shrinks `public/parts-glb/` by **`−80.3%` (`41.91 MB → 8.24 MB`)**; when `.venv` is present (`npm run bridge`), `Manifold.simplify` takes it the rest of the way to **`~2.10 MB` (`−95.0%`)** `[measured]`.
 
 #### Frontend & Service-Worker Fast-Load Upgrades
-1. **Eliminate the JS → GLB Network Waterfall ([`PartPreview.tsx`](../../src/features/ar/PartPreview.tsx), [`PrintDrawer.tsx`](../../src/features/game/world/PrintDrawer.tsx)):**
+1. **Eliminate the JS → GLB Network Waterfall ([`PartPreview.tsx`](../../../src/features/ar/PartPreview.tsx), [`PrintDrawer.tsx`](../../../src/features/game/world/PrintDrawer.tsx)):**
    - Start warming `import("@google/model-viewer")` on `PrintDrawer` open (or idle callback) AND issue a browser preload (`<link rel="preload" as="fetch" href="/parts-glb/${glbFile}" crossOrigin="anonymous">` or `fetch` cache prime) **in parallel** with the dynamic `import()`, rather than waiting for React `ready === true` before starting the GLB download.
    - Reserve exact container height (`220 px` or parent aspect box) with a lightweight CSS shimmer so Cumulative Layout Shift stays `0`.
-2. **Service Worker Cache Busting ([`public/sw.js`](../../public/sw.js)):**
-   - Bump `const CACHE = "toyventor-v3"` in [`public/sw.js`](../../public/sw.js) (passes preflight check #9 `Number(version) >= 2` in [`scripts/preflight-deploy.ts`](../../scripts/preflight-deploy.ts)) whenever `public/parts-{glb,stl}/` optimization lands, OR append a short build/asset digest query string (`?v=<8-hex>`) in `glbFileFor` / `stlFileFor` so immutable `cacheFirst` entries automatically roll forward on future mesh updates.
+2. **Service Worker Cache Busting ([`public/sw.js`](../../../public/sw.js)):**
+   - Bump `const CACHE = "toyventor-v3"` in [`public/sw.js`](../../../public/sw.js) (passes preflight check #9 `Number(version) >= 2` in [`scripts/preflight-deploy.ts`](../../../scripts/preflight-deploy.ts)) whenever `public/parts-{glb,stl}/` optimization lands, OR append a short build/asset digest query string (`?v=<8-hex>`) in `glbFileFor` / `stlFileFor` so immutable `cacheFirst` entries automatically roll forward on future mesh updates.
 
 ---
 
 ## 4. How We Use an LLM to Improve All This
 
-Following ToyVentor's proven AI rule in [`docs/specs/forge-ai-spec.md`](forge-ai-spec.md): **an LLM never emits or edits raw mesh bytes.** Passing `50,000` triangles through token streams is slow, expensive, non-deterministic, and produces non-manifold geometry. Instead, multimodal and coding LLMs act as **offline build-time tuning advisors, source-CAD refactorers, and printability repair engines**, with every output gated by `manifold3d`, `preprint_check.py`, and `fit_report`.
+Following ToyVentor's proven AI rule in [`docs/specs/forge-ai-spec.md`](../../specs/forge-ai-spec.md): **an LLM never emits or edits raw mesh bytes.** Passing `50,000` triangles through token streams is slow, expensive, non-deterministic, and produces non-manifold geometry. Instead, multimodal and coding LLMs act as **offline build-time tuning advisors, source-CAD refactorers, and printability repair engines**, with every output gated by `manifold3d`, `preprint_check.py`, and `fit_report`.
 
 ```mermaid
 flowchart TB
@@ -239,7 +239,7 @@ A single global `epsilon_web_mm` under-optimizes blocky plates (`brick-s-2x2`, `
 - **Deterministic Bounds & Caching:** Code clamps `print_simplify_mm ∈ [0.005, 0.020]` and `web_simplify_mm ∈ [0.030, 0.200]`. Keyed by `source_sha256`, `npm run bridge` reads the committed JSON with **zero API keys or network calls**; `--tune-llm` only evaluates new or modified parts.
 
 ### 4.2 Role 2 — Source-CAD Bloat Refactoring with Exact CSG Equivalence Gates
-Post-process mesh simplification treats the symptom; refactoring procedural builders in [`parts/partspec/toyventor_parts.py`](../../parts/partspec/toyventor_parts.py) fixes triangle bloat at the root (shrinking `parts/partspec/out/`, `public/kip/partspec/` `101 MB`, `public/parts-stl/`, and `public/parts-glb/` simultaneously).
+Post-process mesh simplification treats the symptom; refactoring procedural builders in [`parts/partspec/toyventor_parts.py`](../../../parts/partspec/toyventor_parts.py) fixes triangle bloat at the root (shrinking `parts/partspec/out/`, `public/kip/partspec/` `101 MB`, `public/parts-stl/`, and `public/parts-glb/` simultaneously).
 
 - **Workflow for the Top 15 Heavy Parts (`> 15k` tris):**
   1. Extract the single Python builder AST (e.g., `kit_keel_base`, `mech_brain_lid`, `forge_mount_ring_s`) + per-primitive triangle attribution.
@@ -251,13 +251,13 @@ Post-process mesh simplification treats the symptom; refactoring procedural buil
   4. Only patches passing all three deterministic assertions are surfaced for commit.
 
 ### 4.3 Role 3 — Support-Free Printability Repair Loop (Eliminating the Need for Supports)
-Because we drop support generation (Section 2), any newly authored part (via [`LLM_PART_PROMPT.md`](../../parts/kip/sdk/LLM_PART_PROMPT.md) or `Forge AI` Recipe v1) that triggers `V4_no_steep_overhang`, `V6_bridge_span`, `V8_wall_thickness`, or `V10_no_ledges` receives structured geometric feedback:
+Because we drop support generation (Section 2), any newly authored part (via [`LLM_PART_PROMPT.md`](../../../parts/kip/sdk/LLM_PART_PROMPT.md) or `Forge AI` Recipe v1) that triggers `V4_no_steep_overhang`, `V6_bridge_span`, `V8_wall_thickness`, or `V10_no_ledges` receives structured geometric feedback:
 - Example gate payload sent to Muse Spark (`worker/muse.ts` / `forge-ai-spec.md` F3):
   `{"check": "V4_no_steep_overhang", "steep_area_mm2": 14.6, "z_range_mm": [8.2, 12.0], "hint": "Clamp slice outward growth <= 0.78 * dz (<= 38 deg) or add 45 deg underside chamfer"}`
 - The LLM adjusts the parametric recipe/code until `supportFree: true` and triangle budget (`≤ 15,000` print tris) both pass.
 
 ### 4.4 Role 4 — Cached Toy-Finish Slicer Recipe & Parent Print-Drawer Tips
-At catalog build time, deterministic surface analysis (`max_exterior_overhang_deg`, flat-top deck area, `validation/<id>.json` brim/time/filament) + an offline LLM review pass populate each part's `finish_class`, `slicer_recipe`, and a validated 1-sentence parent tip (replacing hardcoded `"0.2 mm PLA"` in [`PrintDrawer.tsx`](../../src/features/game/world/PrintDrawer.tsx) and [`PackOverlay.tsx`](../../src/features/game/world/PackOverlay.tsx); e.g., *"0.12 mm PLA on smooth PEI · 3 walls @ 30 mm/s (inner-first) · rear seam · no supports"* or *"0.16 mm PLA on smooth PEI · 3 walls @ 30 mm/s (outer-first) · iron top deck · 3 mm brim"*).
+At catalog build time, deterministic surface analysis (`max_exterior_overhang_deg`, flat-top deck area, `validation/<id>.json` brim/time/filament) + an offline LLM review pass populate each part's `finish_class`, `slicer_recipe`, and a validated 1-sentence parent tip (replacing hardcoded `"0.2 mm PLA"` in [`PrintDrawer.tsx`](../../../src/features/game/world/PrintDrawer.tsx) and [`PackOverlay.tsx`](../../../src/features/game/world/PackOverlay.tsx); e.g., *"0.12 mm PLA on smooth PEI · 3 walls @ 30 mm/s (inner-first) · rear seam · no supports"* or *"0.16 mm PLA on smooth PEI · 3 walls @ 30 mm/s (outer-first) · iron top deck · 3 mm brim"*).
 
 ### Rejected LLM & Mesh Patterns (Explicit Non-Goals)
 | Pattern | Why Rejected |
@@ -331,7 +331,7 @@ Tracked in Git (`< 30 KB` for 63 parts). Missing entries fall back cleanly to `d
    - `--legacy-float32` flag preserves unindexed `float32` output for A/B debugging and regression comparison.
    - Reads per-part `web_crease_deg` from `--manifest` when supplied.
 3. **`scripts/bridge-partspec.ts` *(updated asset sync block)*:**
-   - Resolves `parts/partspec/.venv/bin/python3` (same pattern as [`scripts/validate-llm-part.ts`](../../scripts/validate-llm-part.ts)).
+   - Resolves `parts/partspec/.venv/bin/python3` (same pattern as [`scripts/validate-llm-part.ts`](../../../scripts/validate-llm-part.ts)).
    - When `.venv` exists: runs `optimize_assets.py` → `stl_to_glb.py` and prints a concise before/after byte & triangle savings summary.
    - When `.venv` is absent (lightweight CI): copies source STLs and runs stdlib `stl_to_glb.py` (still achieving the `−80%` indexed+quantized GLB win).
    - Preserves `--no-assets` flag unchanged.
@@ -390,17 +390,17 @@ Static catalog builds (`npm run bridge`) can afford a multi-second batch pass; l
 
 ### 8.2 Shipped Interfaces, Security Invariants & Runtime Topology
 
-1. **Authoring / SDK CLI (`npm run kip:validate-part` / [`kip_partspec_sdk.py`](../../parts/kip/sdk/kip_partspec_sdk.py)):**
-   - `validate_and_export(..., optimize=True)` invokes [`optimize_single_part()`](../../scripts/optimize_assets.py) (`verify_preprint=True` by default) from in-memory STL bytes, re-verifies `V1–V10` after simplification (falling back to the bed-snapped unsimplified Manifold if simplification ever tripped a borderline check), and writes `<id>.glb`, the print `.stl`, and `print.slicer_recipe` + `asset_optimization` into `<id>.partspec.json`.
-2. **Warm Persistent Daemon ([`scripts/forge_optimizer_daemon.py`](../../scripts/forge_optimizer_daemon.py), launched via `npm run forge:optimizer`):**
+1. **Authoring / SDK CLI (`npm run kip:validate-part` / [`kip_partspec_sdk.py`](../../../parts/kip/sdk/kip_partspec_sdk.py)):**
+   - `validate_and_export(..., optimize=True)` invokes [`optimize_single_part()`](../../../scripts/optimize_assets.py) (`verify_preprint=True` by default) from in-memory STL bytes, re-verifies `V1–V10` after simplification (falling back to the bed-snapped unsimplified Manifold if simplification ever tripped a borderline check), and writes `<id>.glb`, the print `.stl`, and `print.slicer_recipe` + `asset_optimization` into `<id>.partspec.json`.
+2. **Warm Persistent Daemon ([`scripts/forge_optimizer_daemon.py`](../../../scripts/forge_optimizer_daemon.py), launched via `npm run forge:optimizer`):**
    - Pre-imports `manifold3d`, `trimesh`, `numpy`, `kip_partspec_sdk`, `optimize_assets`, and `stl_to_glb` once at startup (`0 ms` cold start) and writes exclusively into an isolated cache directory (default `.forge-cache/`, explicitly refusing tracked `public/kip/custom/`).
    - **Fail-closed & path-safe:** Rejects `stl_path` over HTTP, ignores any `verify_preprint` or `legalize` overrides (enforcing `verify_preprint=True` and mandatory `[2..16]` slice + `0.78 * dz` slope clamps unconditionally), strips all server filesystem paths from responses (`stl_artifact` / `glb_artifact` opaque keys served via `GET /v1/artifacts/<name>`), enforces timing-safe Bearer auth (`hmac.compare_digest`, mandatory on non-loopback `--host`), and caps both active background jobs (`--max-queue 8` → `429 queue_full`) and concurrent HTTP threads (`--max-connections 16` → `503 busy`).
-3. **Cloudflare Worker Proxy & Production Upgrade Path ([`worker/forgeOptimizer.ts`](../../worker/forgeOptimizer.ts), [`shared/forgeOptimizer.ts`](../../shared/forgeOptimizer.ts)):**
+3. **Cloudflare Worker Proxy & Production Upgrade Path ([`worker/forgeOptimizer.ts`](../../../worker/forgeOptimizer.ts), [`shared/forgeOptimizer.ts`](../../../shared/forgeOptimizer.ts)):**
    - Worker routes `POST /api/forge/preview`, `GET /api/forge/jobs/:id`, and `GET /api/forge/artifacts/:name` require `x-device-id` + live `x-parent-proof` (`verifyParentProofFromRequest`), enforce per-device and per-IP sliding-window rate limits (`5/min/device`, `10/min/IP` on `preview`; 3 and 6 until 2026-11-04), require `FORGE_OPTIMIZER_TOKEN` for non-loopback `FORGE_OPTIMIZER_URL`, rebuild upstream payloads from an explicit field allowlist, and apply `AbortSignal.timeout` (`8 s` / `4 s`) with clean timeout (`504`) vs non-JSON/5xx (`502 unavailable`) mapping.
 
 ### 8.3 Opt-In Minimal-Support Tier for Cosmetic Slots (`support_policy: "minimal"` → `tree_slim`)
 
-Structural bricks, Pro gears/shafts, and vehicle mechanical mounts remain strictly `support_policy: "none"`. Expressive character/cosmetic slots (`crown`, `head`, `back`—e.g. `wide_brim` wizard hats, forward cap visors, drooping ears, flared capes) may opt into `support_policy: "minimal"`, promoting `V4`/`V5`/`V10`-only overhang parts to `print_ready` (`slicer_recipe.support_mode = "tree_slim"`) **iff** all three geometric invariants hold (`_check_minimal_support_eligibility` in [`optimize_assets.py`](../../scripts/optimize_assets.py), `< 15 ms`):
+Structural bricks, Pro gears/shafts, and vehicle mechanical mounts remain strictly `support_policy: "none"`. Expressive character/cosmetic slots (`crown`, `head`, `back`—e.g. `wide_brim` wizard hats, forward cap visors, drooping ears, flared capes) may opt into `support_policy: "minimal"`, promoting `V4`/`V5`/`V10`-only overhang parts to `print_ready` (`slicer_recipe.support_mode = "tree_slim"`) **iff** all three geometric invariants hold (`_check_minimal_support_eligibility` in [`optimize_assets.py`](../../../scripts/optimize_assets.py), `< 15 ms`):
 1. **`M1_socket_keepout` (`0 mm²` inside Snap sockets):** Zero steep sloped overhangs inside the `2×1` (`crown`/`head`) or `2×2` (`back`) `under_sockets` XY pad, zero flat overhangs above the `z = 4.0 mm` internal stud-socket bridge ceiling (`z = 3.6 mm`, already validated by `V6`/`V10`) inside the pad, and all outer overhangs sit at `z ≥ 3.2 mm`.
 2. **`M2_underside_budget` (`≤ 750 mm²` flat `-Z` shelf, `≤ 80 mm²` sloped scar):** Caps support contact to a hidden flat `-Z` rim while rejecting curved belly/front-face overhangs (such as un-oriented `torso.stl` at `425 mm²` sloped scar) to `digital_only`.
 3. **`M3_buildplate_los` (`≤ 1.0 mm²` part-on-part occlusion):** Every outer overhang band has unobstructed `-Z` line-of-sight straight down to `z = 0` (`CrossSection` intersection against lower `Manifold.slice(z)` layers), guaranteeing *"Tree (Slim) — On build plate only"* reaches cleanly without resting on another part of the toy.

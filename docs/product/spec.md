@@ -30,7 +30,9 @@ Verification snapshot: live counts come from `npm test`, the PartSpec
 selftest, and the bridge - not this paragraph. Catalog targets live in
 `parts/partspec/catalog.json`. The demo surface is the five bridged app
 sets (63 entries), six explore worlds connected in a street ring, six lesson
-labs, ten playable vehicles across Maker Ranks 1-6, and 44 missions.
+labs, ten playable vehicles across Maker Ranks 1-6, and the authored mission
+set: `13` mission instances across the `12` authored levels, in `11` mission
+types. A level composed at run time adds `1` to `3` more stations.
 
 
 
@@ -105,9 +107,10 @@ and size entry stays available when scanning fails.
 ## ToyVentor World
 
 The world is the app: six explore worlds joined into a connected street ring
-(`room <-> garden <-> beach <-> junk <-> snow <-> sky`), six lesson labs, 44
-missions, 12 calm Town Sparkle tidy spots, daily three-part packs, six
-parent-started moods, Character Card reveals, and Create/Editor sheets.
+(`room <-> garden <-> beach <-> junk <-> snow <-> sky`), six lesson labs, 13
+mission instances across the 12 authored levels, in 11 mission types, 12 calm
+Town Sparkle tidy spots, daily three-part packs, six parent-started moods,
+Character Card reveals, and Create/Editor sheets.
 Missions support test, forge, or defer actions; only Learn missions count for
 this demo.
 
@@ -122,11 +125,68 @@ this demo.
 - Opening any sheet closes the others first; the stage stays live behind them.
 - Status transitions never lose placed work, and sleep mode preserves the
   parent path while suppressing play entry points.
+- A finished level can end in a song: the app offers "Make a song about it",
+  the route names the build and writes the words, Mureka sings one song, the
+  audio is measured and cut to whole bars, and the character dances on the
+  beat. The finished song is kept in "My songs", so the Kip party can dance to
+  it too. A song with no steady beat is not a dead end: it plays as a plain
+  song. On in production (`THEME_SONG=on`) and metered: five songs a week a
+  device, a monthly budget across everyone.
+- The game opens on a title, not straight into play: a toy on the turntable
+  with the factory's meshing gears, and three ways in - Play, Build, Create a
+  world (`world/titleEntries.ts`; [carousel-modes-ladders-spec.md](../specs/carousel-modes-ladders-spec.md)
+  section 17, item 1). The stage behind it never went away; what came back is
+  the menu to leave it and a boot that waits for it.
+- The dog follows Kip and sits when Kip stops: it stays home until the two have
+  met (it hops, delighted), then it trots after him and stops a couple of
+  units behind, on the side opposite the way he last walked, and when Kip has
+  stood still for a while it sits down facing him. A prop in the way sends it
+  to the other side, then a little further out
+  (`runtime/dogFollow.ts`; [playful-interactions-spec.md](../specs/playful-interactions-spec.md)
+  section 6).
+- Kip does things on his own: a wave, a clap and a dance, played from the
+  Mixamo clips the repo ships, after 30 to 60 s of standing still and then
+  every 45 to 120 s. He turns to face the camera for them and back afterwards,
+  and walking or a tap pulls him out (`runtime/idleBehavior.ts`). A win plays
+  the real Mixamo cheer and fist pump.
+- The outdoor worlds have things to do: a fruit basket, trees named for their
+  fruit, a pumpkin patch whose pumpkins sit in the leaves, a snow angel patch,
+  a bunny, a picnic blanket, a swing, a flower bed, a puff cloud, and a day
+  and a night look. The real Mixamo jump, shove and walk are used
+  (`runtime/outdoorProps.ts`).
+- The Toy Room has a mess and a way out of it: the juice cup spills and the toy
+  box tips into a heap, and a 60 px **Clean** button on the card rights the box,
+  flies the toys home with a count and mops the puddle in six strokes. It is a
+  button a child taps; nothing listens for the spoken word. Two more doors:
+  the cleaning cart (x 8) opens the cleaning level and the hob (x 10) the
+  cooking one, and the Map rungs `daily.clean` and `daily.cook` reach them.
 - Kip's modular 3D rig (`public/kip/Kip-Demo.html`) ships wardrobe and vehicle
   parts, Selfie / Smart Face, `Describe & Build` (10 curated assemblies,
   `fit_matrix` connector validation, and an 8 mm-margin non-overlapping
   exploded-view timeline), colour-grouped `.3mf` Plate Print view with 1:1
   sticker sheets, procedural animation, Mixamo, and GLB export.
+- **Tools > Pick it up** is the camera flow, and the flagship: a full-screen
+  live camera view (a browser feature - `getUserMedia`, inline and muted,
+  clear of the notch and home bar), so it needs https. The child taps or types
+  what the object is, or simply presses the shutter and the Worker names the
+  main thing in the picture (`POST /api/scan {nameIt}`, screened: never a
+  person, a body part or a surface). SAM finds that word through the print
+  panel's own scan, the object is cut out of the frozen frame where it lies,
+  lifts off and flies into Kip's hand. A workshop-prop word (guitar, frying
+  pan, mop...) gives Kip the bench's own prop and its clip, so a captured
+  guitar strums; any other word gives the household 3D item the scan matched,
+  coloured from the photo; with neither, the cut-out itself goes in his hand
+  as a flat card on a handle, so any object works. After the Workshop closes,
+  the game's Kip is holding it (`runtime/pickupHeld.ts`), and a tap on Kip or
+  the chip puts it away. After a pick-up, **Make a song about it** appears,
+  but only when the song route says it is on.
+- The song player has Pause and Play, Stop, and a mini karaoke that follows
+  the song's own line times, with a docked card, "New words" and an animated
+  wait.
+- The app installs: a real manifest, icons and home-screen tags. iOS ignores
+  the manifest's icons, so it gets its own 180 px PNG.
+- The game's default Kip is the Kip demo's Kip: the kid head with its inset
+  face plate, the demo's face, skin tones, a tee, jeans and orange boots.
 
 
 
@@ -206,25 +266,27 @@ SAM 3.1 outlines run Worker-side only through the official parser, prompted
 with text like "toy car" rather than clicks; malformed masks fall back to the
 bounding box. Muse creates worlds from validated world code and composes loops
 from reviewed stems. No toy photo or model weights leave the approved path.
+The one thing that does leave it is a child's voice, and only under the demo
+exception below.
 
 | Feature | Status |
 | --- | --- |
-| Scan outline | SAM 3.1, live. |
+| Scan outline | SAM 3.1, live. The camera pick-up also uses it, and the hosted vision model names the object when the child does not say what it is (screened: no people, body parts or surfaces). |
 | Skins & Kip Smart Face | Muse Image + SAM 3.1, live (Smart Face opt-in). |
 | Create worlds | Muse Spark, live with validated recipes + word-parser fallback. |
-| Kip Describe & Build | Curated `fit_matrix`-validated recipe book live; custom endpoint opt-in. |
+| Kip Describe & Build | Live: `POST /api/describe` reads the child's words and picks one of ten `fit_matrix`-validated builds; the curated recipe book is the offline fallback. |
 | STEM drafts | Muse Spark, human-reviewed. |
 | Forge AI Recipe v1, Scan Assist, Build Coach | Stretch ([forge-ai-spec.md](../specs/forge-ai-spec.md)). |
-| Voice transcription (`muse-voice-transcribe-1.0`) | Live for the demo only, through Meta's hosted model, adults speaking (an exception recorded in decision 0008); our own Whisper is written, not deployed. |
-| Theme songs and loops | Built and live (`/api/theme-song` says enabled): a sung theme song from a description, a player with Pause/Play/Stop and a karaoke line, metered per device; a song about a camera pick-up is a button. No real song made from a pick-up yet. |
-| Camera pick-up (point the camera at a spoon or a guitar) | Built, committed and live: a camera view with an overlay on a still frame, SAM cut-out, Kip holds it, then the game's Kip. Not tracked AR. Not yet tried on a real phone. |
+| Voice transcription | **Demo exception, live since 2026-11-04.** The Describe & Build microphone posts to `POST /api/transcribe`, which runs Meta's hosted `muse-voice-transcribe-1.0`. It is on only because `TRANSCRIBE_BACKEND=hosted` is set explicitly on the Worker: an unset switch, `MODEL_BACKEND=hosted` and `DEFAULT_MODE` all leave it off, so deploying the code never sends a child's voice to Meta by itself. The page converts the recording to a 16 kHz mono WAV and the words get the same scrub, cap and kid-safe check as any other route. Per [decision 0008](../decisions/0008-meta-models-and-under-18-users.md) this is a demo-only exception, run by adults, to end by unsetting `TRANSCRIBE_BACKEND`; self-hosted Whisper large-v3-turbo (MIT) stays the plan for children, and that server is written, not deployed. |
+| Theme song for a build or a level | **Live since 2026-11-04** (`GET /api/theme-song` answers `enabled:true`). `POST /api/theme-song` has the text model write a name and the words, `shared/songLyrics.ts` builds the lyrics, and Mureka sings one song. Off unless `THEME_SONG=on` and the Mureka key is set; metered at five songs a week a device and `SONG_MONTHLY_BUDGET` a month across everyone. The finished song is copied to R2 so it outlives Mureka's 30-day link. The Reveal entrance theme is still the synth. |
 
 Two rejections stand: models never emit raw untrusted meshes (models may only
 propose parameters or part assemblies that deterministic gated code builds and
-verifies, because one failed kid print collapses the pitch), and songs are not
-generated live (latency and mood whiplash), with one exception: the theme song,
-generated live from its description when it is asked for; the Reveal theme is
-generated ahead of time or synthesized deterministically.
+verifies, because one failed kid print collapses the pitch), and no song is
+generated during play (latency and mood whiplash). The theme song is a
+"making" artifact, not play: it is ordered at the end of a level or a build,
+takes about a minute, and is cut to whole bars so the character can dance on
+the beat.
 
 
 ## What is real in the demo
@@ -235,7 +297,13 @@ generated ahead of time or synthesized deterministically.
 | Builder | Grid snapping, live checks, two-archetype Build sheet | Part library made ahead |
 | Play | Live STL hero rigs + procedural fallback, 6-district ring, STEM XP | Town Phases B-E stretch |
 | 3D print | Verified STL/GLB + Kip `.3mf` plate & sticker packs | Delivery handoff; `F1`/`F2` bench coupon pending |
-| Reveal | Entrance animation, card, synth theme | The sung theme song exists (see above); the reveal itself still uses the synth theme |
+| Reveal | Entrance animation, card, synth theme | The Reveal entrance keeps the synth; the Mureka song is a separate route |
+| End-of-level song and dance party | The name and the words, the song cut to whole bars, the character dancing on the beat | The song itself is ordered from Mureka and takes about a minute; it is on in production (`THEME_SONG=on`) and metered |
+| Describe & Build | The model picks one of ten validated builds, with an exploded view and a build animation | Inventing new builds is local only; the hosted validator is not deployed |
+| **Camera pick-up** | A full-screen live camera view, the object named (typed, or by the Worker), cut out of the frozen frame and lifted into Kip's hand; the game's Kip holds it afterwards | Needs https, so the live site or localhost; the real SAM and the real naming model were run on five public photos (2026-11-04: the right name 5 of 5, an outline 5 of 5, the teddy bear's scarf cut it to its head), but not on a real phone's camera |
+| Song player | Pause and Play, Stop, and a mini karaoke on the song's own line times, with a docked card, "New words" and an animated wait | The song itself comes from the metered theme-song route |
+| Cleaning and cooking levels | The mess and the Clean button, the vacuum, the mop and the soapy sponge; crack, pour, flip and serve pancakes | Not verified end to end in a browser; the paid step is 25 English lines and 14 prop-name clips |
+| Title menu | The toy on the turntable and the factory's meshing gears, with Play, Build and Create a world | It was removed with the old HTML stage on 2026-11-02 and brought back on 2026-11-04 |
 | Packs | Seeded daily pulls with equip flow | Billing |
 | Pro & Pro Powered Add-On lines | TU-lattice beams, pins, gears, Motion, Rank 6 powered-module trays | Live electronics bench test pending |
 
@@ -245,9 +313,10 @@ across `public/`). Geometry, placement, and digital assembly fit are exact;
 physical print fit (`F1_printed_fit`, `F2_breakage`) stays marked prototype
 until bench coupons are logged. Print files stay hidden until four checks
 pass; calibration uses a fixed primer and hidden-dot first-print selector. The
-Reveal theme remains a synth placeholder until approved stems land. Glass is
-reserved for focus surfaces; child-facing copy uses brand tokens while Pro
-tools keep technical readouts and exact engineering wording.
+Reveal entrance theme remains a synth placeholder; the Mureka theme song is a
+separate route for a build or a level. Glass is reserved for focus surfaces;
+child-facing copy uses brand tokens while Pro tools keep technical readouts and
+exact engineering wording.
 
 One stat per part, always: the moment a part is good at two things it becomes
 the default pick and the rest of the library might as well not exist. Rarity
@@ -269,8 +338,17 @@ user as a child. Parents approve contacts and toys, inspect builds and contact
 status, and can lock mic, camera, print, purchase, or STEM access without
 breaking play. ToyVentor never shows another player’s name, contact, location,
 voice, photo, or build unless parents approve it. Grown-up unlock uses one
-deliberate hold plus a short-lived proof token; the child UI never shows
-balances, PINs, answers, or remaining-time numbers.
+deliberate hold plus a short-lived proof token (5 minutes in the every-time
+mode, 10 minutes in the sitting mode, `worker/parent.ts`); the child UI never
+shows balances, PINs, answers, or remaining-time numbers.
+
+The camera pick-up sends the frame to the hosted vision model for an outline
+and, when the child does not say what it is, to name it. The photo is never
+stored or logged, only the count of names; the names are screened like every
+other model word a child sees - no people, body parts or surfaces, nothing the
+kid-safe lists refuse, one or two plain words (`worker/nameIt.ts`). The hosted
+model's terms are for adults, so the camera flow is adult-operated for the
+demo ([decision 0008](../decisions/0008-meta-models-and-under-18-users.md)).
 
 Named assistant modes have fixed jobs: Bench tests and reviews printable
 files; Print recommends material and orientation; STEM ties missions to
@@ -427,8 +505,9 @@ Today: the unified one-stage ToyVentor World (in-process `three.js` 0.183,
 standalone page retired) with live STL hero rigs, two-archetype Build, five
 bridged part sets, connected 6-district Town Slice 1, accuracy-bonus STEM XP,
 Maker Ranks 1-6, Daily Quests, Real-Life Routines, and Kip `Describe & Build` +
-`.3mf` Plate Print. Next: `F1`/`F2` physical bench coupon sign-off, live
-production cutover, and the Stretch Goals above (`Forge AI` `Recipe v1`, Town
+`.3mf` Plate Print. Live at `toyventor.com` (2026-11-04). Next: `F1`/`F2`
+physical bench coupon sign-off, the self-hosted speech model that ends the demo
+exception, and the Stretch Goals above (`Forge AI` `Recipe v1`, Town
 Phases B-E, and `SAM 3.1` + `Muse` physical-to-digital loops). Later: weekly
 STEM packs, profiles, ordering, licensed IP, classroom tools, and **Max**
 (Snap -> Pro -> Max), opening with kid-safe battle bots and missions where play

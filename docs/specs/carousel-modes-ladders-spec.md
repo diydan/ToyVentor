@@ -883,7 +883,7 @@ session needs the grown-up to set the age first. Whether a 2–3 year old finds 
 at all is what the session decides (Q1: promote `Map` to a dock icon
 only if playtesters miss it). Setup, device checks, per-rung blanks and
 the target table are in
-[carousel-playtest-runsheet.md](carousel-playtest-runsheet.md) (values
+[product/qa.md](../product/qa.md) (the values
 and blanks only; rules stay here).
 
 ## 14. Sign-off

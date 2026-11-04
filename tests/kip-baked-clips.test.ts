@@ -13,6 +13,7 @@ import * as bakedMod from "../parts/kip/viewer/kip-baked-clips.js";
 // @ts-expect-error untyped JS module
 import * as clipsMod from "../parts/kip/viewer/kip-clips.js";
 import { pickDance, tempoRate } from "../shared/songBeat";
+import { LOCO_FILES } from "../src/features/game/world/runtime/gameMoves";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const { BAKED_JOINTS, BAKED_VERSION, bakedToClip, checkBaked, clipToBaked, closeLoop, removeHipsDrift, trimClip } = bakedMod as any;
@@ -190,12 +191,34 @@ describe("baked clips: the shipped data (public/kip/mixamo/baked)", () => {
   const files = readdirSync(bakedDir).filter((f) => f.endsWith(".json") && f !== "index.json");
   const baked = new Map<string, any>(files.map((f) => [f.replace(/\.json$/, ""), JSON.parse(read(`public/kip/mixamo/baked/${f}`))]));
   const GROUPS = ["dance", "move", "music", "react", "act"];
+  // The locomotion set is baked from its own config (scripts/mixamo-loco-clips.json) and is loaded by PATH, not through the index: it is the game's own idle, walk and run
+  // cycles (src/features/game/world/runtime/gameMoves.ts, LOCO_FILES), checked there field by field (parseJointClip). It is deliberately NOT in the index, because the
+  // index is the clip library the bench page offers a child (kip-bench.js registers every index entry as a clip), and a second "Idle" and "Walk" there would be a
+  // duplicate, not a new dance. The index is also written only by a full bake, so an index entry for these would be lost on the next one.
+  const loco = (JSON.parse(read("scripts/mixamo-loco-clips.json")) as { id: string }[]).map((c) => c.id);
+  const locoIds = new Set(loco);
+  const library = new Set([...baked.keys()].filter((id) => !locoIds.has(id)));
 
-  it("has an index entry for every file and a file for every index entry", () => {
+  it("has an index entry for every library file and a file for every index entry", () => {
     expect(index.v).toBe(1);
-    expect(index.clips.map((c: any) => c.id).sort()).toEqual([...baked.keys()].sort());
+    expect(index.clips.map((c: any) => c.id).sort()).toEqual([...library].sort());
     expect(new Set(index.clips.map((c: any) => c.id)).size).toBe(index.clips.length);
     expect(index.clips.length).toBeGreaterThanOrEqual(16);
+  });
+
+  it("ships a file for every locomotion clip, keeps them out of the library index, and points the game at exactly those", () => {
+    expect(loco.length).toBeGreaterThanOrEqual(3);
+    const ids = index.clips.map((c: any) => c.id);
+    for (const id of loco) {
+      expect(baked.has(id), `${id} is in the config but not baked`).toBe(true);
+      expect(ids, `${id} must stay out of the clip library`).not.toContain(id);
+      const b = baked.get(id)!;
+      expect(b.id, id).toBe(id);
+      expect(b.group, id).toBe("loco");
+      expect(b.planted, id).toBe(false);
+      expect(b.source, id).toMatch(/^Mixamo Xbot "/);
+    }
+    expect(Object.values(LOCO_FILES).sort()).toEqual([...loco].sort()); // the game's idle, walk and run are exactly the baked ones
   });
 
   it("every clip passes its own check, matches its index entry, and is a sane size", () => {
@@ -280,6 +303,28 @@ describe("baked clips: the shipped data (public/kip/mixamo/baked)", () => {
       steps.sort((x, y) => x - y);
       const p95 = steps[Math.floor(steps.length * 0.95)]!;
       expect(top, `${c.id}: a hand turns ${top.toFixed(1)} degrees in one frame, usual ${p95.toFixed(1)}`).toBeLessThanOrEqual(3.5 * (p95 + 0.5));
+    }
+  });
+
+  it("the locomotion cycles pass the same gates as the library: their own check, natural wrists, and hands that do not jerk", () => {
+    // They are shipped animation data (the game plays them every frame), so they are held to the library's standards even though they are not library entries.
+    for (const id of loco) {
+      const b = baked.get(id)!;
+      expect(checkBaked(b, { loop: true }), id).toEqual([]);
+      let worst = 0;
+      for (const h of ["LeftHand", "RightHand"]) for (let i = 0; i < b.frames; i++) worst = Math.max(worst, (Math.acos(Math.min(1, new THREE.Vector3(0, 1, 0).applyQuaternion(q(b.q[h], i)).y)) * 180) / Math.PI);
+      expect(worst, `${id} wrist ${worst.toFixed(0)} degrees`).toBeLessThanOrEqual(45);
+      const steps: number[] = [];
+      let top = 0;
+      for (const h of ["LeftHand", "RightHand"]) for (let i = 1; i < b.frames; i++) {
+        const a = q(b.q[h], i - 1), z = q(b.q[h], i);
+        const s = (2 * Math.acos(Math.min(1, Math.abs(a.x * z.x + a.y * z.y + a.z * z.z + a.w * z.w))) * 180) / Math.PI;
+        steps.push(s);
+        top = Math.max(top, s);
+      }
+      steps.sort((x, y) => x - y);
+      const p95 = steps[Math.floor(steps.length * 0.95)]!;
+      expect(top, `${id}: a hand turns ${top.toFixed(1)} degrees in one frame, usual ${p95.toFixed(1)}`).toBeLessThanOrEqual(3.5 * (p95 + 0.5));
     }
   });
 
