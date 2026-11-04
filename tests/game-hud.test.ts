@@ -25,7 +25,7 @@ describe("the one button and its drawer (GameCanvas.tsx)", () => {
     expect(canvas).toContain('if (t && !t.classList.contains("tv-ctl-gear")) window.setTimeout(() => setMenuOpen(false), 0);');
     for (const label of ["Build", "Create", "Pack"]) expect(canvas).toContain(`${label}\n`);
     expect(canvas).toContain("<WorkshopLauncher");
-    expect(canvas).toContain('className="tv-ctl tv-ctl-gear"');
+    expect(canvas).toContain('className="tv-ctl tv-ctl-gear tv-navstrip-btn"');
   });
   it("the menu is open inside the drawer, and it gained a Worlds entry (the world pill is gone); the Map is one of the strip's three buttons at the top, not listed twice", () => {
     expect(canvas).toContain("{(moreOpen || menuOpen) && (");

@@ -36,9 +36,9 @@ describe("Home: the world goes back to the main menu", () => {
 });
 
 describe("Home: the drawer button", () => {
-  it("NavStrip is three labelled buttons, Home first, each carrying data-nav", () => {
-    const order = [...strip.matchAll(/data-nav="(\w+)"/g)].map((m) => m[1]);
-    expect(order).toEqual(["home", "map", "settings"]);
+  it("NavStrip leads with Home and Map, and its third cell is the Settings button it is handed", () => {
+    expect([...strip.matchAll(/data-nav="(\w+)"/g)].map((m) => m[1])).toEqual(["home", "map"]);
+    expect(strip).toContain("{settings}");
   });
   it("goHome closes what is open, ends a Learn run and a song party, and only shows the menu if the world agreed", () => {
     const i = canvas.indexOf("const goHome = useCallback(");
@@ -49,9 +49,18 @@ describe("Home: the drawer button", () => {
     expect(body).toContain("if (engine()?.goTitle()) setTitleOpen(true);");
     expect(body.indexOf("closeEngineSheets();")).toBeLessThan(body.indexOf("goTitle()"));
   });
-  it("the strip is mounted once, disabled while the toy sleeps, with Map and Settings wired", () => {
+  it("the strip is mounted once with Map wired, and Settings in it is THE grown-ups' gear: one button, the 1.2 s hold kept, not a second Settings in the drawer", () => {
     expect(canvas.match(/<NavStrip/g)?.length).toBe(1);
     expect(canvas).toMatch(/<NavStrip[\s\S]{0,120}disabled=\{sleepActive\}[\s\S]{0,60}onHome=\{goHome\}/);
-    expect(canvas).toMatch(/onMap=\{[\s\S]{0,200}openMap\(\)[\s\S]{0,200}onSettings=\{\(\) => openGrownUps\(false\)\}/);
+    expect(canvas).toMatch(/onMap=\{[\s\S]{0,200}openMap\(\)/);
+    expect(canvas.match(/tv-ctl tv-ctl-gear/g)?.length).toBe(1);
+    expect(canvas).toMatch(/settings=\{\s*<button[\s\S]{0,160}className="tv-ctl tv-ctl-gear tv-navstrip-btn"\s+data-nav="settings"/);
+    expect(canvas).toContain("onPointerDown={startGearHold}");
+    expect(canvas).toContain("openGrownUps(true);"); // the long press still skips the sheet's own hold
+    expect(canvas).toContain('className="tv-parent-dot"');
+  });
+  it("opening the grown-ups' card closes the drawer (the Settings button inside it does not close it by itself)", () => {
+    const i = canvas.indexOf("const openGrownUps = useCallback(");
+    expect(canvas.slice(i, canvas.indexOf("[closeEngineSheets, closeReactOverlays],", i))).toContain("setMenuOpen(false);");
   });
 });

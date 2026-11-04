@@ -189,7 +189,7 @@ describe("Phase 1: Toy Box mini-icon fallback chain, single parent entry & Demo 
     expect(myToySrc).not.toContain("onOpenGrownUps");
     expect(myToySrc).not.toContain("Grown-ups");
     expect(canvasSrc).toContain('className="tv-toy-pill-name">Toy Box</span>');
-    expect(canvasSrc).toContain('className="tv-ctl tv-ctl-gear"');
+    expect(canvasSrc).toContain('className="tv-ctl tv-ctl-gear tv-navstrip-btn"');
     expect(canvasSrc).not.toContain("<span>Grown-ups</span>");
 
     // SleepCurtain door preserved
