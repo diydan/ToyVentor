@@ -48,17 +48,24 @@ SELF_TEXT_API=
 SELF_TEXT_REASONING=
 # "tuned" sends the SHORT prompt (shared/forgeTunePrompt.ts) to a model trained on it (scripts/tuning/README.md). Leave empty for the base Glimmer: it needs the long prompt.
 SELF_TEXT_PROMPT=
-# The FAST PATH (docs/specs/forge-ai-spec.md, "Fast path"): our tuned model asked first for a hat or head wish, the standard model above as the fallback. OFF unless FORGE_FAST_MODE is
-# exactly on or optin. SELF_FAST_URL is an https address (/v1 included), SELF_FAST_MODEL the served name (forge-glimmer), SELF_FAST_KEY the key that server takes.
+# MAKE-FROM-WORDS runs on OUR OWN models by default (docs/specs/forge-ai-spec.md, "Fast path"): the tuned model first for a hat or head wish (SELF_FAST_*), our own base Glimmer (SELF_TEXT_* above, with
+# SELF_TEXT_API=chat) as the fallback and the repairer. The hosted model is never used for make, and there is no setting for it. Local development with only a hosted key needs FORGE_AUDIENCE_DEFAULT=adult.
+# SELF_FAST_URL is an https address (/v1 included), SELF_FAST_MODEL the served name (forge-glimmer), SELF_FAST_KEY the key that server takes. The tuned model is on whenever URL and model are set;
+# FORGE_FAST_MODE=off (exactly) is the kill switch.
 FORGE_FAST_MODE=
 SELF_FAST_URL=
 SELF_FAST_KEY=
 SELF_FAST_MODEL=
-# WHO the service treats a make request as being for (docs/specs/forge-ai-spec.md, "Fast path"): the hosted model is for adults only; a child's request goes to our own models only.
-# FORGE_HOSTED_FOR_ADULTS=off (exactly) = every request is a child's (make-from-words on our own models only). FORGE_AUDIENCE_DEFAULT = child or adult (the build's default is adult for the Nov 4 demo).
-# A device cannot choose: there is no setting in the app.
+# The OPERATOR's safety net, not a user option: FORGE_AUDIENCE_DEFAULT=adult lets the hosted model answer make-from-words as the fallback and repairer (for example while the Modal servers are cold).
+# FORGE_HOSTED_FOR_ADULTS=off (exactly) beats it and keeps make on our own models only. Unset = our own models only.
 FORGE_HOSTED_FOR_ADULTS=
 FORGE_AUDIENCE_DEFAULT=
+# The grown-up gate in front of the routes that use ANOTHER model (docs/specs/forge-ai-spec.md, "Parent supervision"): on only when set to exactly "on". OFF = today's behaviour.
+# A proof at most 3 minutes old for segment (SAM outline, camera pick-up), image (art, skins) and transcribe; 5 minutes for AR (the Scavenger camera, request purpose "ar").
+PARENT_GATE_SEGMENT=
+PARENT_GATE_IMAGE=
+PARENT_GATE_TRANSCRIBE=
+PARENT_GATE_AR=
 SELF_SEGMENT_URL=
 SELF_SEGMENT_KEY=
 SELF_IMAGE_URL=

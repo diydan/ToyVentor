@@ -22,7 +22,7 @@ import { foldText } from "../../../shared/kidSafeNormalize";
 import { TERM_LANGS, type TermLang } from "../../../shared/kidSafeTerms";
 import type { MakeSlot } from "../../../shared/forgeMakeLimits";
 import { BRAND_WORDS, mentionsBrand } from "./brandWishes";
-import { KID_BRAND_RE } from "../../../worker/forgeMake";
+import { KID_BRAND_BASE_RE } from "../../../worker/forgeMake";
 import type { Expect } from "./compare";
 import { LANG_NAMES, acceptWish, isEvalLike, jaccard, normalizeWish } from "./wishgen";
 
@@ -362,6 +362,6 @@ ${rows.join("\n")}
 /** True if `brand` is known to the training list or to the production filter: a brand in the blind set must make this false. */
 export const brandIsKnown = (brand: string): { training: boolean; production: boolean } => ({
   training: mentionsBrand(`a ${brand} hat`) || BRAND_WORDS.some((w) => foldText(w) === foldText(brand)),
-  production: KID_BRAND_RE.test(`a ${brand} hat`) || KID_BRAND_RE.test(brand),
+  production: KID_BRAND_BASE_RE.test(`a ${brand} hat`) || KID_BRAND_BASE_RE.test(brand), // the SHORT list as it was when the set was built (the longer list now covers them: shared/kidBrands.ts)
 });
 

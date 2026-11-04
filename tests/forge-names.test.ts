@@ -115,7 +115,7 @@ describe("parseNames keeps only names that are safe to speak", () => {
     const r = parseNames({ ...GOOD, fr: { w: "chapeau de sorcier magique", g: "m" } }, "chapeau de sorcier magique", "Wizard Cap");
     expect(Object.keys(r.names)).toContain("en");
     expect(r.names.fr).toBeUndefined();
-    expect(r.dropped).toEqual([{ lang: "fr", reason: "unsafe" }]);
+    expect(r.dropped).toEqual([{ lang: "fr", reason: "echo" }]); // not "unsafe": nothing is wrong with the words, they copy the child's
   });
   it("copes with anything the model might send, and ignores inherited keys", () => {
     for (const raw of [null, undefined, "x", 3, [], [GOOD], { constructor: GOOD }, JSON.parse('{"__proto__":{"w":"x","g":"m"}}')]) {

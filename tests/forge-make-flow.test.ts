@@ -87,7 +87,7 @@ describe("makeFromText", () => {
 
   beforeEach(async () => {
     resetForgeRateLimit();
-    env = { DB: fakeDb(), PARENT_GATE_SECRET: "gate-secret-for-tests", FORGE_OPTIMIZER_URL: DAEMON, MODEL_API_KEY: "test-key", VOICE_SIGNING_KEY: "voice-signing-key-for-the-tests-0123456789" };
+    env = { DB: fakeDb(), PARENT_GATE_SECRET: "gate-secret-for-tests", FORGE_OPTIMIZER_URL: DAEMON, MODEL_API_KEY: "test-key", FORGE_AUDIENCE_DEFAULT: "adult", /* the flow tests use the stubbed hosted model: the operator's safety net; the build's default is child */ VOICE_SIGNING_KEY: "voice-signing-key-for-the-tests-0123456789" };
     proof = await mintProof();
     calls = { model: [], previews: 0, jobGets: 0 };
     progress = [];

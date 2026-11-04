@@ -94,6 +94,7 @@ describe("POST /api/forge/make", () => {
       FORGE_OPTIMIZER_URL: DAEMON,
       MODEL_API_KEY: "test-key",
       VOICE_SIGNING_KEY: "voice-signing-key-for-the-tests-0123456789",
+      FORGE_AUDIENCE_DEFAULT: "adult", // the hosted-path tests below are the operator's safety net; the build's own default is child (see the fast-path tests)
     };
     headers = { "content-type": "application/json", "x-device-id": DEVICE, "x-parent-proof": await parentProof(env) };
     seen = { model: [], modelCalls: [], daemonPosts: [], daemonGets: [] };
@@ -173,9 +174,8 @@ describe("POST /api/forge/make", () => {
       expect(seen.daemonPosts).toHaveLength(1); // the recipe from the chat reply reached the daemon
     });
 
-    describe("the fast path: a tuned model first for a hat or head wish, the standard model as the fallback", () => {
-      const FAST: ForgeMakeEnv = { ...SELF, SELF_TEXT_API: "chat", SELF_FAST_URL: "https://fast.example.test/v1", SELF_FAST_MODEL: "forge-fast", SELF_FAST_KEY: "fast-key" };
-      const ON: ForgeMakeEnv = { ...FAST, FORGE_FAST_MODE: "on" };
+    describe("the fast path: our tuned model is the DEFAULT for a hat or head wish, our own standard model the fallback", () => {
+      const FAST: ForgeMakeEnv = { ...SELF, SELF_TEXT_API: "chat", SELF_FAST_URL: "https://fast.example.test/v1", SELF_FAST_MODEL: "forge-fast", SELF_FAST_KEY: "fast-key" }; // no FORGE_FAST_MODE: it is on by default
       /** Answers a chat reply; the fast host answers with `fastStatus` instead when one is given. */
       const answer = (fastStatus?: number) => () => {
         const url = seen.modelCalls.at(-1)!.url;
@@ -183,15 +183,16 @@ describe("POST /api/forge/make", () => {
         return json({ choices: [{ message: { content: JSON.stringify({ recipe: recipeOf(), names: NAMES }) } }] });
       };
       const hosts = () => seen.modelCalls.map((c) => new URL(c.url).host);
+      /** The service's own default audience is the build's (child): the test base env's "adult" is for the hosted-path tests above and is switched off here unless a test sets it. */
       const run = async (body: object, e: ForgeMakeEnv) => {
         resetForgeRateLimit();
-        const res = await make(body, headers, { ...env, ...e });
+        const res = await make(body, headers, { ...env, FORGE_AUDIENCE_DEFAULT: undefined, ...e });
         return { res, out: (await res.json()) as { ok?: boolean; model?: string; status?: string } };
       };
 
-      it("on: the first attempt at a hat goes to the fast model with its own key and name, reads the production prompt, and the reply says which model made it", async () => {
+      it("by default the first attempt at a hat goes to the fast model with its own key and name, reads the production prompt, and the reply says which model made it", async () => {
         model = answer();
-        const { res, out } = await run({ text: "a wizard hat" }, ON);
+        const { res, out } = await run({ text: "a wizard hat" }, FAST);
         expect(res.status).toBe(200);
         expect(hosts()).toEqual(["fast.example.test"]);
         expect(seen.modelCalls[0]).toMatchObject({ auth: "Bearer fast-key", body: { model: "forge-fast" } });
@@ -200,9 +201,9 @@ describe("POST /api/forge/make", () => {
         expect(logs().some((l) => l.includes('"status":"ok"') && l.includes('"model":"fast"'))).toBe(true);
       });
 
-      it("when the fast model is down or slow, the standard model answers the SAME request, and the log says so", async () => {
+      it("when the fast model is down or slow, OUR standard model answers the SAME request, and the log says so", async () => {
         model = answer(500);
-        const { res, out } = await run({ text: "a wizard hat" }, ON);
+        const { res, out } = await run({ text: "a wizard hat" }, FAST);
         expect(res.status).toBe(200);
         // askText asks a model that answered 5xx once more when time allows (existing behaviour): so the fast model may be tried twice, the standard model answers exactly once
         expect(hosts()[0]).toBe("fast.example.test");
@@ -218,7 +219,7 @@ describe("POST /api/forge/make", () => {
         const real = AbortSignal.timeout.bind(AbortSignal);
         vi.spyOn(AbortSignal, "timeout").mockImplementation((ms: number) => (waits.push(ms), real(ms)));
         model = answer(500);
-        await run({ text: "a wizard hat" }, ON);
+        await run({ text: "a wizard hat" }, FAST);
         expect(waits[0]).toBeLessThanOrEqual(FAST_TIMEOUT_MS);
         expect(FAST_TIMEOUT_MS + 55_000).toBeLessThanOrEqual(90_000);
         expect(waits[1]).toBeLessThanOrEqual(55_000);
@@ -226,89 +227,62 @@ describe("POST /api/forge/make", () => {
 
       it("a repair attempt (attempt 2 or later) never goes to the fast model", async () => {
         model = answer();
-        const { res } = await run({ text: "a wizard hat", attempt: 2, repair: { bad_recipe: true, recipe: recipeOf() } }, ON);
+        const { res } = await run({ text: "a wizard hat", attempt: 2, repair: { bad_recipe: true, recipe: recipeOf() } }, FAST);
         expect(res.status).toBe(200);
         expect(hosts()).toEqual(["glimmer.example.test"]);
       });
 
-      it("every vehicle slot and the held prop go to the standard model; crown and head can go fast", async () => {
+      it("every vehicle slot and the held prop go to the standard model; crown and head go fast", async () => {
         model = answer();
         for (const slot of ["back", "hand", "front", "rollbar", "spoiler", "hood", "roof", "exhaust"]) {
           seen.modelCalls.length = 0;
-          await run({ text: "a toy part", slot }, ON);
+          await run({ text: "a toy part", slot }, FAST);
           expect(hosts(), slot).toEqual(["glimmer.example.test"]);
         }
         for (const slot of ["crown", "head"]) {
           seen.modelCalls.length = 0;
-          await run({ text: "a wizard hat", slot }, ON);
+          await run({ text: "a wizard hat", slot }, FAST);
           expect(hosts(), slot).toEqual(["fast.example.test"]);
         }
       });
 
-      it("the grown-up's choice: fast:false is the standard model only; anything but true or false is refused", async () => {
+      it("there is no option: a request that says fast:false, or names any model or audience, is treated like one that says nothing", async () => {
         model = answer();
-        await run({ text: "a wizard hat", fast: false }, ON);
-        expect(hosts()).toEqual(["glimmer.example.test"]);
-        const bad = await run({ text: "a wizard hat", fast: "yes" }, ON);
-        expect(bad.res.status).toBe(422);
-        expect(bad.out.status).toBe("invalid");
-      });
-
-      it("optin: only when the client says fast:true; with no choice it is the standard model", async () => {
-        model = answer();
-        await run({ text: "a wizard hat" }, { ...FAST, FORGE_FAST_MODE: "optin" });
-        expect(hosts()).toEqual(["glimmer.example.test"]);
-        seen.modelCalls.length = 0;
-        await run({ text: "a wizard hat", fast: true }, { ...FAST, FORGE_FAST_MODE: "optin" });
-        expect(hosts()).toEqual(["fast.example.test"]);
-      });
-
-      it("off by default: unset, misspelt or anything else is the standard model, even when the client asks for fast", async () => {
-        model = answer();
-        for (const mode of [undefined, "", "off", "ON ", "true", "1", "yes", "optIn "]) {
+        for (const extra of [{ fast: false }, { fast: true }, { audience: "adult" }, { audience: "child" }, { model: "hosted" }, { backend: "hosted" }]) {
           seen.modelCalls.length = 0;
-          const e: ForgeMakeEnv = { ...FAST, ...(mode === undefined ? {} : { FORGE_FAST_MODE: mode }) };
-          await run({ text: "a wizard hat", fast: true }, e);
-          // "ON " and "optIn " are trimmed and lower-cased like every other switch, so they DO mean on and optin: the rest are off
-          const expected = mode === "ON " || mode === "optIn " ? "fast.example.test" : "glimmer.example.test";
-          expect(hosts(), JSON.stringify(mode)).toEqual([expected]);
+          const { res } = await run({ text: "a wizard hat", ...extra }, FAST);
+          expect(res.status, JSON.stringify(extra)).toBe(200);
+          expect(hosts(), JSON.stringify(extra)).toEqual(["fast.example.test"]);
+        }
+      });
+
+      it("the kill switch is exactly FORGE_FAST_MODE=off (trimmed, any case); nothing else turns it off", async () => {
+        model = answer();
+        for (const mode of ["off", "OFF", " Off "]) {
+          seen.modelCalls.length = 0;
+          await run({ text: "a wizard hat" }, { ...FAST, FORGE_FAST_MODE: mode });
+          expect(hosts(), mode).toEqual(["glimmer.example.test"]);
+        }
+        for (const mode of [undefined, "", "on", "optin", "false", "0", "no", "disabled", "of"]) {
+          seen.modelCalls.length = 0;
+          await run({ text: "a wizard hat" }, { ...FAST, ...(mode === undefined ? {} : { FORGE_FAST_MODE: mode }) });
+          expect(hosts(), String(mode)).toEqual(["fast.example.test"]);
         }
       });
 
       it("not fully configured means no fast path: no address, no model name, or an address that is not https", async () => {
         model = answer();
-        for (const e of [{ ...ON, SELF_FAST_URL: undefined }, { ...ON, SELF_FAST_MODEL: undefined }, { ...ON, SELF_FAST_URL: "http://fast.example.test/v1" }]) {
+        for (const e of [{ ...FAST, SELF_FAST_URL: undefined }, { ...FAST, SELF_FAST_MODEL: undefined }, { ...FAST, SELF_FAST_URL: "http://fast.example.test/v1" }]) {
           seen.modelCalls.length = 0;
           await run({ text: "a wizard hat" }, e as ForgeMakeEnv);
           expect(hosts()).toEqual(["glimmer.example.test"]);
         }
       });
 
-      it("with the standard backend HOSTED (today's adult-operated demo) the fast path still runs our own model first, and the hosted model is the fallback and the repairer", async () => {
-        const HOSTED_FAST: ForgeMakeEnv = { FORGE_FAST_MODE: "on", SELF_FAST_URL: "https://fast.example.test/v1", SELF_FAST_MODEL: "forge-fast", SELF_FAST_KEY: "fast-key" }; // no MODEL_BACKEND: hosted by default
-        const chat = () => json({ choices: [{ message: { content: JSON.stringify({ recipe: recipeOf(), names: NAMES }) } }] });
-        const hostedReply = () => json({ output_text: JSON.stringify({ recipe: recipeOf(), names: NAMES }) });
-        model = () => (seen.modelCalls.at(-1)!.url.startsWith("https://fast.example.test") ? chat() : hostedReply());
-        const ok = await run({ text: "a wizard hat" }, HOSTED_FAST);
-        expect(ok.out.model).toBe("fast");
-        expect(hosts()).toEqual(["fast.example.test"]);
-        expect(seen.modelCalls[0]!.auth).toBe("Bearer fast-key"); // our own key goes to our own server only, never the hosted key
-        seen.modelCalls.length = 0;
-        model = () => (seen.modelCalls.at(-1)!.url.startsWith("https://fast.example.test") ? json({ error: "down" }, 500) : hostedReply());
-        const fallback = await run({ text: "a wizard hat" }, HOSTED_FAST);
-        expect(fallback.out.model).toBe("standard");
-        expect(hosts().at(-1)).not.toBe("fast.example.test"); // the hosted model answered
-        expect(seen.modelCalls.at(-1)!.auth).toBe("Bearer test-key");
-        seen.modelCalls.length = 0;
-        model = hostedReply;
-        await run({ text: "a wizard hat", attempt: 2, repair: { bad_recipe: true, recipe: recipeOf() } }, HOSTED_FAST);
-        expect(hosts().every((h) => h !== "fast.example.test")).toBe(true); // a repair never goes to the fast model
-      });
-
       describe("who the SERVICE treats the request as: a child's request never reaches the hosted model", () => {
         const OWN: ForgeMakeEnv = { SELF_TEXT_URL: "https://glimmer.example.test/v1", SELF_TEXT_MODEL: "muse-glimmer-30b", SELF_TEXT_KEY: "own-key", SELF_TEXT_API: "chat" }; // our standard server, configured beside the HOSTED switch
-        const HOSTED_FAST: ForgeMakeEnv = { ...OWN, FORGE_FAST_MODE: "on", SELF_FAST_URL: "https://fast.example.test/v1", SELF_FAST_MODEL: "forge-fast", SELF_FAST_KEY: "fast-key" }; // MODEL_BACKEND unset: hosted by default
-        const CHILD: ForgeMakeEnv = { ...HOSTED_FAST, FORGE_AUDIENCE_DEFAULT: "child" };
+        const HOSTED_FAST: ForgeMakeEnv = { ...OWN, SELF_FAST_URL: "https://fast.example.test/v1", SELF_FAST_MODEL: "forge-fast", SELF_FAST_KEY: "fast-key" }; // MODEL_BACKEND unset: hosted by default
+        const OPERATOR_ADULT: ForgeMakeEnv = { ...HOSTED_FAST, FORGE_AUDIENCE_DEFAULT: "adult" }; // the operator's safety net: the hosted model as the fallback and the repairer
         const chat = () => json({ choices: [{ message: { content: JSON.stringify({ recipe: recipeOf(), names: NAMES }) } }] });
         const hostedReply = () => json({ output_text: JSON.stringify({ recipe: recipeOf(), names: NAMES }) });
         const routed = (fastDown = false) => () => {
@@ -318,40 +292,44 @@ describe("POST /api/forge/make", () => {
         };
         const hostedCalls = () => seen.modelCalls.filter((c) => c.url.includes("/responses"));
 
-        it("a child: the fast model first, then OUR standard server as the fallback and the repairer; the hosted model is never called", async () => {
+        it("DEFAULT (nothing set): the fast model first, then OUR standard server as the fallback and the repairer; the hosted model is never called and its key never leaves", async () => {
           model = routed(true);
-          const a = await run({ text: "a wizard hat" }, CHILD);
+          const a = await run({ text: "a wizard hat" }, HOSTED_FAST);
           expect(a.out.model).toBe("standard");
           expect((a.out as { audience?: string }).audience).toBe("child");
           expect(new Set(hosts())).toEqual(new Set(["fast.example.test", "glimmer.example.test"]));
           seen.modelCalls.length = 0;
           model = routed();
-          await run({ text: "a wizard hat", attempt: 2, repair: { bad_recipe: true, recipe: recipeOf() } }, CHILD);
-          await run({ text: "a toy part", slot: "hood" }, CHILD);
+          await run({ text: "a wizard hat", attempt: 2, repair: { bad_recipe: true, recipe: recipeOf() } }, HOSTED_FAST);
+          await run({ text: "a toy part", slot: "hood" }, HOSTED_FAST);
           expect(hosts().every((h) => h === "glimmer.example.test")).toBe(true);
           expect(hostedCalls()).toHaveLength(0);
-          expect(seen.modelCalls.every((c) => c.auth !== "Bearer test-key")).toBe(true); // the hosted key never leaves for a child
+          expect(seen.modelCalls.every((c) => c.auth !== "Bearer test-key")).toBe(true);
         });
 
-        it("an adult build (the Nov 4 default): the hosted model is the standard one, exactly as today", async () => {
+        it("the operator's safety net (FORGE_AUDIENCE_DEFAULT=adult): the hosted model is the standard one again, the tuned model still goes first", async () => {
+          model = routed();
+          const first = await run({ text: "a wizard hat" }, OPERATOR_ADULT);
+          expect(first.out.model).toBe("fast");
+          expect((first.out as { audience?: string }).audience).toBe("adult");
+          seen.modelCalls.length = 0;
           model = routed(true);
-          const a = await run({ text: "a wizard hat" }, HOSTED_FAST);
-          expect(a.out.model).toBe("standard");
-          expect((a.out as { audience?: string }).audience).toBe("adult");
+          const fb = await run({ text: "a wizard hat" }, OPERATOR_ADULT);
+          expect(fb.out.model).toBe("standard");
           expect(hostedCalls().length).toBeGreaterThan(0);
         });
 
         it("a child with no server of ours configured gets NO part, not a hosted one (503 disabled), and nothing is sent anywhere", async () => {
           model = routed();
-          const { res, out } = await run({ text: "a wizard hat" }, { FORGE_AUDIENCE_DEFAULT: "child" });
+          const { res, out } = await run({ text: "a wizard hat" }, {});
           expect(res.status).toBe(503);
           expect(out.status).toBe("disabled");
           expect(seen.modelCalls).toHaveLength(0);
           expect(logs().some((l) => l.includes("no_model_for_audience") && l.includes("child_has_no_own_model"))).toBe(true);
         });
 
-        it("a child with only the fast model configured: it answers first attempts, and a repair or a vehicle slot (which it must not make) is refused 503, never sent to the hosted model", async () => {
-          const ONLY_FAST: ForgeMakeEnv = { FORGE_AUDIENCE_DEFAULT: "child", FORGE_FAST_MODE: "on", SELF_FAST_URL: "https://fast.example.test/v1", SELF_FAST_MODEL: "forge-fast" };
+        it("with only the fast model configured: it answers first attempts, and a repair or a vehicle slot (which it must not make) is refused 503, never sent to the hosted model", async () => {
+          const ONLY_FAST: ForgeMakeEnv = { SELF_FAST_URL: "https://fast.example.test/v1", SELF_FAST_MODEL: "forge-fast" };
           model = routed();
           const first = await run({ text: "a wizard hat" }, ONLY_FAST);
           expect(first.out.model).toBe("fast");
@@ -363,55 +341,49 @@ describe("POST /api/forge/make", () => {
           expect(seen.modelCalls).toHaveLength(0);
         });
 
-        it("the server-wide child lock (FORGE_HOSTED_FOR_ADULTS=off) makes every request a child's, so make-from-words runs on our own models only; an unrecognised value does not lock", async () => {
+        it("the server-wide child lock (FORGE_HOSTED_FOR_ADULTS=off) beats the operator's safety net; an unrecognised value does not lock", async () => {
           model = routed();
-          await run({ text: "a wizard hat" }, { ...HOSTED_FAST, FORGE_FAST_MODE: "off", FORGE_AUDIENCE_DEFAULT: "adult", FORGE_HOSTED_FOR_ADULTS: "off" });
+          await run({ text: "a wizard hat" }, { ...OPERATOR_ADULT, FORGE_FAST_MODE: "off", FORGE_HOSTED_FOR_ADULTS: "off" });
           expect(hostedCalls()).toHaveLength(0);
           expect(hosts()).toEqual(["glimmer.example.test"]);
           seen.modelCalls.length = 0;
-          await run({ text: "a wizard hat" }, { ...HOSTED_FAST, FORGE_FAST_MODE: "off", FORGE_HOSTED_FOR_ADULTS: "no" });
+          await run({ text: "a wizard hat" }, { ...OPERATOR_ADULT, FORGE_FAST_MODE: "off", FORGE_HOSTED_FOR_ADULTS: "no" });
           expect(hostedCalls().length).toBeGreaterThan(0);
         });
 
-        it("a request that names no audience gets the service's default: the build's (adult for Nov 4), or what FORGE_AUDIENCE_DEFAULT says; an odd value falls back to the build's", async () => {
+        it("what a request without an audience gets: child (the build's default) unless the operator says adult; an odd value falls back to the build's default", async () => {
           model = routed();
           await run({ text: "a wizard hat" }, { ...HOSTED_FAST, FORGE_FAST_MODE: "off" });
-          expect(hostedCalls().length).toBeGreaterThan(0);
-          seen.modelCalls.length = 0;
-          await run({ text: "a wizard hat" }, { ...HOSTED_FAST, FORGE_FAST_MODE: "off", FORGE_AUDIENCE_DEFAULT: "child" });
           expect(hostedCalls()).toHaveLength(0);
           seen.modelCalls.length = 0;
-          await run({ text: "a wizard hat" }, { ...HOSTED_FAST, FORGE_FAST_MODE: "off", FORGE_AUDIENCE_DEFAULT: "banana" });
+          await run({ text: "a wizard hat" }, { ...HOSTED_FAST, FORGE_FAST_MODE: "off", FORGE_AUDIENCE_DEFAULT: "adult" });
           expect(hostedCalls().length).toBeGreaterThan(0);
+          seen.modelCalls.length = 0;
+          await run({ text: "a wizard hat" }, { ...HOSTED_FAST, FORGE_FAST_MODE: "off", FORGE_AUDIENCE_DEFAULT: "banana" });
+          expect(hostedCalls()).toHaveLength(0);
         });
 
-        it("a device cannot choose: a request that names an audience is treated exactly like one that does not (it can neither widen nor narrow what the service allows)", async () => {
+        it("a device cannot choose: a request that names an audience is treated exactly like one that does not", async () => {
           model = routed();
-          const asksAdult = await run({ text: "a wizard hat", audience: "adult" }, { ...CHILD, FORGE_FAST_MODE: "off" });
-          expect(asksAdult.res.status).toBe(200);
+          await run({ text: "a wizard hat", audience: "adult" }, { ...HOSTED_FAST, FORGE_FAST_MODE: "off" });
           expect(hostedCalls()).toHaveLength(0); // the service says child: naming itself an adult changes nothing
           seen.modelCalls.length = 0;
-          const asksChild = await run({ text: "a wizard hat", audience: "child" }, { ...HOSTED_FAST, FORGE_FAST_MODE: "off" });
-          expect(asksChild.res.status).toBe(200);
-          expect(hostedCalls().length).toBeGreaterThan(0); // the service says adult: the field is ignored
+          await run({ text: "a wizard hat", audience: "child" }, { ...OPERATOR_ADULT, FORGE_FAST_MODE: "off" });
+          expect(hostedCalls().length).toBeGreaterThan(0); // the operator says adult: the field is ignored
         });
-      });
 
-      it("a standard backend switched OFF is off for the fast path too", async () => {
-        model = answer();
-        const { res } = await run({ text: "a wizard hat" }, { ...ON, MODEL_BACKEND: "off" });
-        expect(res.status).toBe(503);
-        expect(seen.modelCalls).toHaveLength(0);
+        it("a standard backend switched OFF is off for everything (a deliberate master switch)", async () => {
+          model = routed();
+          const { res } = await run({ text: "a wizard hat" }, { ...HOSTED_FAST, MODEL_BACKEND: "off" });
+          expect(res.status).toBe(503);
+          expect(seen.modelCalls).toHaveLength(0);
+        });
       });
 
       it("fastEligible, as a table", () => {
-        const e = (o: Partial<Parameters<typeof fastEligible>[0]>) => fastEligible({ mode: "on", wantsFast: undefined, attempt: 1, repaired: false, ...o });
+        const e = (o: Partial<Parameters<typeof fastEligible>[0]>) => fastEligible({ mode: "on", attempt: 1, repaired: false, ...o });
         expect(e({})).toBe(true);
         expect(e({ mode: "off" })).toBe(false);
-        expect(e({ wantsFast: false })).toBe(false);
-        expect(e({ mode: "optin" })).toBe(false);
-        expect(e({ mode: "optin", wantsFast: true })).toBe(true);
-        expect(e({ mode: "off", wantsFast: true })).toBe(false);
         expect(e({ attempt: 2 })).toBe(false);
         expect(e({ repaired: true })).toBe(false);
         expect(e({ slot: "crown" })).toBe(true);
@@ -645,6 +617,22 @@ describe("POST /api/forge/make", () => {
     expect(res.status).toBe(502);
     expect(((await res.json()) as { status: string }).status).toBe("no-recipe");
     expect(seen.daemonPosts).toHaveLength(1); // the second never reached the daemon
+  });
+
+  it("a brand from the LONGER list in the model's name, text or names is replaced before a child sees it (found 2026-11-04: new brands reached the screen on 24% to 40% of brand wishes)", async () => {
+    model = modelSays({
+      recipe: recipeOf({ name: "Cocomelon Star Hat", behavior: "Sings like Baby Shark" }),
+      names: { ...NAMES, en: { w: "wizard hat", g: "m" }, es: { w: "sombrero de Bluey", g: "m" }, fr: { w: "chapeau Zelda", g: "m" } },
+    });
+    const out = (await (await make({ text: "a Cocomelon hat" })).json()) as { recipe: { name: string; behavior: string }; names: Record<string, { w: string }> };
+    expect(out.recipe.name).toBe("My Creation");
+    expect(out.recipe.behavior).toBe("Made from your idea");
+    expect(Object.keys(out.names).sort()).toEqual(["de", "en", "it", "pt", "tr"]); // es and fr carried a brand: those two languages are dropped, the rest stay
+    expect(JSON.stringify(out)).not.toMatch(/cocomelon|baby shark|bluey|zelda/i);
+    resetForgeRateLimit();
+    model = modelSays({ recipe: recipeOf({ name: "Starlight Wizard Hat" }), names: NAMES });
+    const clean = (await (await make({ text: "a wizard hat" })).json()) as { recipe: { name: string } };
+    expect(clean.recipe.name).toBe("Starlight Wizard Hat");
   });
 
   it("does not trust what the model says: a brand in the recipe, text that is not JSON, a model that fails", async () => {

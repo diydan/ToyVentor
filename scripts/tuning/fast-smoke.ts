@@ -2,7 +2,7 @@
  * A live smoke test for the fast path: send a few wishes through the DEPLOYED app's real make route (the whole client loop: model, first look, print checks) and report, per wish, which
  * model made the part (the reply's `model`), whether it printed, how many calls it took and how long it took.
  *
- *   npx tsx scripts/tuning/fast-smoke.ts --url https://<the live app origin> [--wishes 10] [--fast true|false] [--expect fast|standard|any] [--proof <parent proof token>]
+ *   npx tsx scripts/tuning/fast-smoke.ts --url https://<the live app origin> [--wishes 10] [--expect fast|standard|any] [--proof <parent proof token>]
  *
  * Each wish is a new device, as a real child's would be; the Worker's own rate limits apply (a refused call is waited out by the client loop), so ten wishes can take a while.
  * It asks for a hat or head wish with no slot for most, one vehicle slot (which must go to the standard model), one brand wish and one the intake must refuse. Exit 1 when a wish
@@ -35,7 +35,6 @@ async function main() {
   const origin = (str(flags, "url") ?? "").replace(/\/+$/, "");
   if (!/^https:\/\/[^/]+$/.test(origin)) throw new Error("pass --url https://<the live app origin> (no path)");
   const n = Math.min(CASES.length, Math.max(1, num(flags, "wishes", 10)));
-  const fastFlag = str(flags, "fast") === "true" ? true : str(flags, "fast") === "false" ? false : undefined;
   const expectModel = str(flags, "expect") ?? "any";
   const proof = str(flags, "proof");
   const cases = [...CASES.slice(0, Math.min(n, 8)), ...CASES.slice(8)].slice(0, Math.max(n, 3)).filter((_, i) => i < n || i >= 8);
@@ -52,9 +51,7 @@ async function main() {
       ...(c.slot ? { slot: c.slot } : {}),
       gate: { headers: () => ({ "x-device-id": device, ...(proof ? { "x-parent-proof": proof } : {}) }) },
       fetch: async (url, init) => {
-        // --fast false asks the Worker for the standard model only (a field the Worker reads; the app's client does not send it)
-        const body = fastFlag !== undefined && url.includes("/api/forge/make") && typeof init?.body === "string" ? JSON.stringify({ ...(JSON.parse(init.body) as object), fast: fastFlag }) : init?.body;
-        const res = await fetch(`${origin}${url}`, { ...(init as RequestInit), ...(body !== undefined ? { body } : {}) });
+        const res = await fetch(`${origin}${url}`, init as RequestInit);
         if (url.includes("/api/forge/make") && model === "?") {
           try { const j = (await res.clone().json()) as { model?: string }; if (typeof j.model === "string") model = j.model; } catch { /* not JSON: leave it */ }
         }

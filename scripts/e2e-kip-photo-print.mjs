@@ -122,7 +122,7 @@ function fakeDb() {
     }),
   };
 }
-const env = { DB: fakeDb(), PARENT_GATE_SECRET: "gate-secret-for-the-e2e", FORGE_OPTIMIZER_URL: "http://127.0.0.1:8791", MODEL_API_KEY: "e2e-key" };
+const env = { DB: fakeDb(), PARENT_GATE_SECRET: "gate-secret-for-the-e2e", FORGE_OPTIMIZER_URL: "http://127.0.0.1:8791", FORGE_AUDIENCE_DEFAULT: "adult", MODEL_API_KEY: "e2e-key" };
 
 // The harness proxies every unmocked /api request to this server, which hands it to the real Worker.
 const workerServer = http.createServer((req, res) => {

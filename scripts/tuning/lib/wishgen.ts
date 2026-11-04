@@ -18,7 +18,7 @@ import { foldText } from "../../../shared/kidSafeNormalize";
 import { findUnsafeTerm, TERM_LANGS, type TermLang } from "../../../shared/kidSafeTerms";
 import { MAKE_MAX_TEXT_CHARS, type MakeSlot } from "../../../shared/forgeMakeLimits";
 import { checkForgeRecipeBrandSafety, type ForgeRecipeV1 } from "../../../shared/forgeOptimizer";
-import { KID_BRAND_RE } from "../../../worker/forgeMake";
+import { KID_BRAND_BASE_RE } from "../../../worker/forgeMake";
 import { kidSafeText, scrubContactDetails } from "../../../worker/muse";
 const HERE = fileURLToPath(new URL(".", import.meta.url));
 
@@ -69,7 +69,7 @@ export function acceptWish(raw: string): { ok: true; text: string } | { ok: fals
   if (text.length > MAKE_MAX_TEXT_CHARS) return { ok: false, reason: "too_long" };
   if (hadContact || !/\p{L}{3,}/u.test(text)) return { ok: false, reason: "not_a_wish" };
   if (!kidSafeText(text) || findUnsafeTerm(text) !== null) return { ok: false, reason: "unsafe" };
-  if (KID_BRAND_RE.test(text) || checkForgeRecipeBrandSafety({ name: text, slot: "crown", shape: { slices: [] } } as unknown as ForgeRecipeV1)) return { ok: false, reason: "brand" };
+  if (KID_BRAND_BASE_RE.test(text) || checkForgeRecipeBrandSafety({ name: text, slot: "crown", shape: { slices: [] } } as unknown as ForgeRecipeV1)) return { ok: false, reason: "brand" };
   return { ok: true, text };
 }
 

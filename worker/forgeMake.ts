@@ -16,8 +16,9 @@
 import { type DaemonJob, buildFeedback } from "../scripts/lib/forgeEvalCore";
 import { MAKE_CHOICE_SLOTS, MAKE_MAX_CALLS, MAKE_MAX_TEXT_CHARS, MAKE_SLOTS, buildMakePrompt, type MakeSlot } from "../shared/forgeMakePrompt";
 import { checkForgeRecipeBrandSafety, type ForgeRecipeV1 } from "../shared/forgeOptimizer";
+import { matchesMoreBrands } from "../shared/kidBrands";
 import { readCappedJson } from "./body";
-import { issueSpokenNames, parseNames, type SigningEnv } from "./forgeNames";
+import { type ParsedNames, type SpokenNames, issueSpokenNames, parseNames, type SigningEnv } from "./forgeNames";
 import {
   JOB_ID_RE,
   UPSTREAM_POLL_TIMEOUT_MS,
@@ -79,8 +80,14 @@ const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === "obj
  * part "Mickey Style Ears Hat" for "mickey mouse ears" and the two-word form missed it. This filter runs on what the MODEL says, never on the child's wish, and a false positive
  * only swaps a name for "My Creation", so it can afford to be liberal; refusing a child's own wish is the costly side and stays narrow.
  */
-export const KID_BRAND_RE =
+export const KID_BRAND_BASE_RE =
   /\b(spider-?man|bat-?man|super-?man|wonder woman|iron man|pok[eé]mon|pikachu|mickey|minnie|disney|marvel|hello kitty|sanrio|nintendo|super mario|minecraft|roblox|barbie|paw patrol|peppa pig|star wars|darth vader|harry potter|hogwarts|transformers|optimus prime|hot wheels|fortnite|pixar|nickelodeon)\b/i;
+
+/**
+ * The brand check the product uses on what the model says: the short list above PLUS the longer list in shared/kidBrands.ts (Dan, 2026-11-04 night). Same `.test(text)` shape as a RegExp, so
+ * every caller is unchanged. The short list stays exported on its own because the blind evaluation set records brands that were in neither list when it was built.
+ */
+export const KID_BRAND_RE: { test(text: string): boolean } = { test: (text: string) => KID_BRAND_BASE_RE.test(text) || matchesMoreBrands(text) };
 
 /** The child's words, cleaned: contact details out, control characters out, whitespace collapsed. */
 function cleanWish(raw: unknown): string {
@@ -91,27 +98,63 @@ function cleanWish(raw: unknown): string {
     .trim();
 }
 
+/** Why a piece of model text was or was not shown. "echo" = nothing wrong with the words, they just copy the child's (see kidSafeText); "brand" and "unsafe" are the filters doing safety work. */
+export type TextVerdict = "ok" | "brand" | "unsafe" | "echo";
+export interface ShapedModelText {
+  /** What a child reads: the part's name, or "My Creation" when the model's own failed a check. */
+  name: string;
+  behavior: string;
+  nameVerdict: TextVerdict;
+  behaviorVerdict: TextVerdict;
+  /** The names in the seven languages that survived: a language whose name failed is simply missing (the app speaks the English one), and with no good English name nothing is kept. */
+  names: SpokenNames;
+  /** Every language that was left out, and why (brand drops included). For the log and for scoring, never shown. */
+  dropped: ParsedNames["dropped"];
+}
+
+/**
+ * The checks every piece of model text goes through before a child can read it or hear it: the part's name and its one-line behaviour (filtered like any model text, and never echoing the wish), and the
+ * names in seven languages (the recipe's own name may stand in for an English name that only echoes the wish). ONE function, used by the make route and by scripts/tuning/rescore.ts, so a stored answer
+ * can be re-scored under today's rules without asking the model again and the two can never drift apart.
+ */
+export function shapeModelText(rawName: string, rawBehavior: string | undefined, rawNames: unknown, wish: string): ShapedModelText {
+  const said = wish.toLowerCase();
+  const verdict = (t: string): TextVerdict => (KID_BRAND_RE.test(t) ? "brand" : kidSafeText(t, said) ? "ok" : kidSafeText(t) ? "echo" : "unsafe");
+  const nameTidy = tidy(rawName);
+  const nameVerdict = verdict(nameTidy);
+  const name = nameVerdict === "ok" ? nameTidy : "My Creation";
+  const behaviorVerdict: TextVerdict = rawBehavior ? verdict(rawBehavior) : "ok";
+  const behavior = rawBehavior && behaviorVerdict === "ok" ? tidy(rawBehavior) : "Made from your idea";
+  const parsed = parseNames(rawNames, said, name);
+  const dropped = [...parsed.dropped];
+  const names = Object.fromEntries(
+    Object.entries(parsed.names).filter(([lang, n]) => {
+      const brand = KID_BRAND_RE.test(n.w);
+      if (brand) dropped.push({ lang: lang as ParsedNames["dropped"][number]["lang"], reason: "brand" });
+      return !brand;
+    }),
+  ) as SpokenNames;
+  if (!names.en) for (const k of Object.keys(names)) delete names[k as keyof typeof names]; // English is every language's fallback: with no good English name nothing is kept
+  return { name, behavior, nameVerdict, behaviorVerdict, names, dropped };
+}
+
 interface MakeRequest {
   text: string;
   slot?: MakeSlot;
   attempt: number;
   repair?: { jobId?: string; recipe: unknown; badRecipe: boolean };
-  /** The grown-up's choice for the fast path: false = standard model only, true = the fast path is welcome; absent = whatever the server's FORGE_FAST_MODE says. */
-  fast?: boolean;
 }
 
 /**
- * Does THIS call try the fast (tuned) model first? Only the FIRST attempt of a hat or head wish: a repair, or any later attempt, goes to the standard model (it is the fallback and the
- * better one at fixing), and every vehicle slot goes to the standard model (a tuned model that saw only hats and heads lost the held prop in the probe: scripts/tuning/results/slot-probe-*.md).
- * FORGE_FAST_MODE "on": yes unless the client sent fast:false. "optin": only when the client sent fast:true. Off: never.
+ * Does THIS call try the fast (tuned) model first? Only the FIRST attempt of a hat or head wish: a repair, or any later attempt, goes to the standard model for the audience (our own base Glimmer, or the
+ * hosted one when the operator allows it) and every vehicle slot goes there too (a tuned model that saw only hats and heads lost the held prop in the probe: scripts/tuning/results/slot-probe-*.md).
+ * It is the default whenever the fast server is configured; FORGE_FAST_MODE=off is the kill switch. There is no per-request or per-device option.
  */
-export function fastEligible(a: { mode: FastMode; wantsFast: boolean | undefined; attempt: number; repaired: boolean; slot?: MakeSlot }): boolean {
+export function fastEligible(a: { mode: FastMode; attempt: number; repaired: boolean; slot?: MakeSlot }): boolean {
   if (a.mode === "off") return false;
-  if (a.mode === "optin" ? a.wantsFast !== true : a.wantsFast === false) return false;
   if (a.attempt !== 1 || a.repaired) return false;
   return !a.slot || (MAKE_CHOICE_SLOTS as readonly string[]).includes(a.slot);
 }
-/** The fast model gets a short leash so the fallback still fits in one request (a Worker request that runs past about 100 s may be cut at Cloudflare's edge). */
 export const FAST_TIMEOUT_MS = 35_000;
 const FALLBACK_AFTER_FAST_TIMEOUT_MS = 55_000;
 
@@ -129,11 +172,6 @@ function parseRequest(raw: unknown): Parsed {
     if (typeof raw.slot !== "string" || !(MAKE_SLOTS as readonly string[]).includes(raw.slot)) return bad("invalid");
     slot = raw.slot as MakeSlot;
   }
-  let fast: boolean | undefined;
-  if (raw.fast !== undefined) {
-    if (typeof raw.fast !== "boolean") return bad("invalid");
-    fast = raw.fast;
-  }
   const attempt = raw.attempt === undefined ? 1 : raw.attempt;
   if (typeof attempt !== "number" || !Number.isInteger(attempt) || attempt < 1 || attempt > MAKE_MAX_CALLS) return bad("invalid");
   let repair: MakeRequest["repair"];
@@ -146,7 +184,7 @@ function parseRequest(raw: unknown): Parsed {
     if (jobId === undefined && !badRecipe) return bad("invalid"); // a repair says what to repair: a job, or a recipe the daemon refused
     repair = { ...(jobId ? { jobId } : {}), recipe: r.recipe, badRecipe };
   }
-  return { ok: true, req: { text, ...(slot ? { slot } : {}), attempt, ...(repair ? { repair } : {}), ...(fast !== undefined ? { fast } : {}) } };
+  return { ok: true, req: { text, ...(slot ? { slot } : {}), attempt, ...(repair ? { repair } : {}) } };
 }
 
 /**
@@ -224,7 +262,7 @@ export async function handleForgeMake(request: Request, env: ForgeMakeEnv): Prom
   if (!body.ok) return reply(body.over ? 413 : 400, { ok: false, status: body.over ? "too-large" : "invalid" });
   const parsed = parseRequest(body.value);
   if (!parsed.ok) return parsed.response;
-  const { text, slot, attempt, repair, fast: wantsFast } = parsed.req;
+  const { text, slot, attempt, repair } = parsed.req;
 
   // A repair: ask the daemon what failed, never trust the client's account of it.
   let previous: ForgeRecipeV1 | undefined;
@@ -254,7 +292,7 @@ export async function handleForgeMake(request: Request, env: ForgeMakeEnv): Prom
   const audience = effectiveAudience(env);
   const ownStandard = audience === "child" ? selfBackend(env, "text") : null;
   const standard: Backend | null = audience === "adult" ? backend : ownStandard && ownStandard.mode !== "off" ? ownStandard : null;
-  const fastBackend = fastEligible({ mode: fastMode(env), wantsFast, attempt, repaired: repair !== undefined, ...(slot ? { slot } : {}) }) ? resolveFastBackend(env) : null;
+  const fastBackend = fastEligible({ mode: fastMode(env), attempt, repaired: repair !== undefined, ...(slot ? { slot } : {}) }) ? resolveFastBackend(env) : null;
   if ((!standard || standard.mode === "off") && !fastBackend) {
     logEvent("forge_make", "no_model_for_audience", { audience, reason: audience === "adult" ? backend.reason : "child_has_no_own_model" });
     return reply(503, { ok: false, status: "disabled" });
@@ -294,13 +332,9 @@ export async function handleForgeMake(request: Request, env: ForgeMakeEnv): Prom
 
   const clean = sanitizeRecipe(wanted);
   if (!clean.ok || checkForgeRecipeBrandSafety(clean.recipe)) return reply(502, { ok: false, status: "no-recipe", attempt });
-  // What a child reads (the part's name and its one-line behaviour) is filtered like any model text, and never echoes the wish.
-  const name = tidy(clean.recipe.name);
-  const recipe: ForgeRecipeV1 = {
-    ...clean.recipe,
-    name: kidSafeText(name, text.toLowerCase()) && !KID_BRAND_RE.test(name) ? name : "My Creation",
-    behavior: clean.recipe.behavior && kidSafeText(clean.recipe.behavior, text.toLowerCase()) && !KID_BRAND_RE.test(clean.recipe.behavior) ? tidy(clean.recipe.behavior) : "Made from your idea",
-  };
+  // What a child reads (the part's name, its one-line behaviour and its names) is filtered like any model text, and never echoes the wish: shapeModelText.
+  const shaped = shapeModelText(clean.recipe.name, clean.recipe.behavior, envelope.names, text);
+  const recipe: ForgeRecipeV1 = { ...clean.recipe, name: shaped.name, behavior: shaped.behavior };
 
   const up = await fetchUpstreamJson(
     upstreamUrl(g.baseUrl, "/v1/fast-preview"),
@@ -316,9 +350,7 @@ export async function handleForgeMake(request: Request, env: ForgeMakeEnv): Prom
   }
   if (!up.ok) return up.response;
 
-  const parsedNames = parseNames(envelope.names, text.toLowerCase(), recipe.name); // the filtered recipe name may stand in for an English name that only echoes the wish
-  const names = Object.fromEntries(Object.entries(parsedNames.names).filter(([, n]) => !KID_BRAND_RE.test(n.w))) as typeof parsedNames.names;
-  if (!names.en) for (const k of Object.keys(names)) delete names[k as keyof typeof names]; // English is every language's fallback: with no good English name nothing is kept
+  const names = shaped.names;
   const signed = await issueSpokenNames(env, names);
   logEvent("forge_make", "ok", { backend: askedMode, audience, ...(retried ? { retried: true } : {}), attempt, slot: recipe.slot, repaired: repair !== undefined, namesKept: Object.keys(names).length, spoken: Object.keys(signed).length, model: usedFast ? "fast" : "standard" });
   return reply(200, {

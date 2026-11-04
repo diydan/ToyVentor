@@ -92,7 +92,7 @@ export interface BackendEnv extends MuseEnv {
   SELF_TEXT_PROMPT?: string;
   /**
    * The FAST PATH (docs/specs/forge-ai-spec.md, "Fast path"): a second model of ours, tuned on Recipe v1, asked FIRST for a hat or head wish, with the standard model above as the fallback.
-   * FORGE_FAST_MODE: "on" = every make request tries it first unless the client says fast:false; "optin" = only when the client says fast:true; anything else, unset included = never.
+   * It is the DEFAULT: on whenever SELF_FAST_URL and SELF_FAST_MODEL are set. FORGE_FAST_MODE=off (exactly) is the kill switch; there is no client option.
    * It needs SELF_FAST_URL and SELF_FAST_MODEL; it is always our own server (chat shape) and reads the production prompt, which is the text it was trained on. The standard backend, hosted or self, is the fallback.
    */
   FORGE_FAST_MODE?: string;
@@ -212,23 +212,23 @@ export function selfBackend(env: BackendEnv, capability: Capability): Backend {
  * gets no part, never an outside one. The SERVICE decides, not the device: there is no parent-facing choice and a client cannot name an audience (a field that says so is ignored).
  *  - FORGE_HOSTED_FOR_ADULTS = "off" (exactly) is the server-wide child lock: every request is a child's, so make-from-words runs on our own models only;
  *  - otherwise FORGE_AUDIENCE_DEFAULT ("child" or "adult"), else the constant below.
- * The constant is "adult" for the Nov 4 build only because the demo is run by adults (decision 0008, option B, like DEFAULT_MODE): it lets the hosted model stay as the fallback and the
- * repairer while our tuned model is proven. Flip it to "child" (or set the lock) for the child-facing deployment, with the tests that say so. A practical control, not an age check and not compliance.
+ * The constant is "child": make-from-words runs on OUR OWN models by default (our tuned model first, our own base Glimmer second), with no hosted fallback and no setting (Dan, 2026-11-04 night: "use the
+ * custom model as default and ideally have no reason to have any other option"). The hosted model for make is an OPERATOR safety net only: FORGE_AUDIENCE_DEFAULT=adult brings it back as the fallback and
+ * repairer (for example while the Modal servers are cold during judging); it is never a choice a user or a parent makes. A practical control, not an age check and not compliance.
  */
 export type Audience = "child" | "adult";
-export const DEFAULT_AUDIENCE: Audience = "adult";
+export const DEFAULT_AUDIENCE: Audience = "child";
 export function effectiveAudience(env: BackendEnv): Audience {
   if (text(env.FORGE_HOSTED_FOR_ADULTS).toLowerCase() === "off") return "child";
   const d = norm(env.FORGE_AUDIENCE_DEFAULT);
   return d === "child" ? "child" : d === "adult" ? "adult" : DEFAULT_AUDIENCE;
 }
 
-export type FastMode = "on" | "optin" | "off";
+export type FastMode = "on" | "off";
 
-/** Only the exact words "on" and "optin" turn the fast path on; anything else, unset included, is off. */
+/** Our tuned model is the DEFAULT for make-from-words: it is on whenever its address and model name are configured, and "off" (exactly, trimmed, any case) is the kill switch. */
 export function fastMode(env: BackendEnv): FastMode {
-  const m = norm(env.FORGE_FAST_MODE);
-  return m === "on" ? "on" : m === "optin" ? "optin" : "off";
+  return norm(env.FORGE_FAST_MODE) === "off" ? "off" : "on";
 }
 
 /**

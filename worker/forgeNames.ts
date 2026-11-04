@@ -57,7 +57,7 @@ export function normalizeNoun(lang: LangCode, raw: unknown): Noun | null {
 export interface ParsedNames {
   names: SpokenNames;
   /** Languages that were left out, and why: for the log, never shown to a child. */
-  dropped: Array<{ lang: LangCode; reason: "missing" | "shape" | "unsafe" | "brand" }>;
+  dropped: Array<{ lang: LangCode; reason: "missing" | "shape" | "unsafe" | "brand" | "echo" }>;
 }
 
 /** The recipe's own name as an English noun, if it is speakable, passes the kid-safety check WITH the echo rule, and is not the generic placeholder; else null. */
@@ -89,7 +89,7 @@ export function parseNames(raw: unknown, childSaid = "", recipeName?: string): P
     if (!kidSafeText(noun.w, said)) {
       // English only, and only when the sole fault is the echo (the name is fine without the child's words in view): the recipe's own name may stand in
       const stand = lang === "en" && kidSafeText(noun.w) ? standIn(recipeName, said) : null;
-      if (!stand) { dropped.push({ lang, reason: "unsafe" }); continue; }
+      if (!stand) { dropped.push({ lang, reason: kidSafeText(noun.w) ? "echo" : "unsafe" }); continue; } // "echo": nothing wrong with the name but it copies the child's words (the app speaks the English name instead)
       noun = stand;
     }
     if (checkForgeRecipeBrandSafety({ name: noun.w, slot: "crown", shape: { slices: [] } } as unknown as ForgeRecipeV1)) { dropped.push({ lang, reason: "brand" }); continue; }
