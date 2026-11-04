@@ -85,6 +85,11 @@ export interface BackendEnv extends MuseEnv {
   SELF_TEXT_API?: string;
   /** Glimmer takes its reasoning strength from the system prompt ("Reasoning strength: low"), not from an API parameter. low (default), medium, high, xhigh; "off" sends none. */
   SELF_TEXT_REASONING?: string;
+  /**
+   * Which prompt the make route sends our own text model: "base" (default, the long prompt that teaches the Recipe v1 operations) or "tuned" (the short prompt in shared/forgeTunePrompt.ts, for a
+   * model trained on it: scripts/tuning/README.md). Only "tuned", spelt exactly, selects it; anything else is "base". Never applies to the hosted API.
+   */
+  SELF_TEXT_PROMPT?: string;
   SELF_SEGMENT_URL?: string;
   SELF_SEGMENT_KEY?: string;
   SELF_IMAGE_URL?: string;
@@ -106,6 +111,8 @@ export interface Backend {
   api: "responses" | "chat";
   /** Our own text model only: the reasoning strength sent in the system prompt, or null for none. */
   reasoning: string | null;
+  /** Which prompt the make route builds for this backend (see BackendEnv.SELF_TEXT_PROMPT). */
+  promptStyle: "base" | "tuned";
 }
 
 const SPECIFIC: Record<Capability, keyof BackendEnv> = {
@@ -153,7 +160,7 @@ export function parseSelfUrl(value: unknown): string | null {
   return `${u.origin}${u.pathname.replace(/\/+$/, "")}`;
 }
 
-const OFF = (capability: Capability, reason: OffReason): Backend => ({ capability, mode: "off", reason, baseUrl: null, key: null, model: null, api: "responses", reasoning: null });
+const OFF = (capability: Capability, reason: OffReason): Backend => ({ capability, mode: "off", reason, baseUrl: null, key: null, model: null, api: "responses", reasoning: null, promptStyle: "base" });
 
 export function resolveBackend(env: BackendEnv, capability: Capability): Backend {
   const { mode, invalid } = requestedMode(env, capability);
@@ -163,7 +170,7 @@ export function resolveBackend(env: BackendEnv, capability: Capability): Backend
   if (mode === "hosted") {
     const key = apiKey(env);
     if (!key) return OFF(capability, "not_configured");
-    return { capability, mode, reason: null, baseUrl: apiUrl(env, ""), key, model: capability === "text" ? resolveModel(undefined, env) : null, api: "responses", reasoning: null };
+    return { capability, mode, reason: null, baseUrl: apiUrl(env, ""), key, model: capability === "text" ? resolveModel(undefined, env) : null, api: "responses", reasoning: null, promptStyle: "base" };
   }
 
   // self: never falls through to hosted
@@ -175,7 +182,8 @@ export function resolveBackend(env: BackendEnv, capability: Capability): Backend
   const api = capability === "text" && norm(env.SELF_TEXT_API) === "chat" ? "chat" : "responses";
   const strength = norm(env.SELF_TEXT_REASONING) || "low";
   const reasoning = capability === "text" && ["low", "medium", "high", "xhigh"].includes(strength) ? strength : null; // anything else, "off" included, sends none
-  return { capability, mode, reason: null, baseUrl, key, model: model || null, api, reasoning };
+  const promptStyle = capability === "text" && norm(env.SELF_TEXT_PROMPT) === "tuned" ? "tuned" : "base";
+  return { capability, mode, reason: null, baseUrl, key, model: model || null, api, reasoning, promptStyle };
 }
 
 /** Modes only, for logs and for a future capabilities route: never a URL, a key or a model name. */

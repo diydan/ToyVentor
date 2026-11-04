@@ -32,6 +32,7 @@ import {
   upstreamUrl,
   type ForgeOptimizerEnv,
 } from "./forgeOptimizer";
+import { buildTunePrompt } from "../shared/forgeTunePrompt";
 import { type BackendEnv, askText, resolveBackend } from "./modelBackend";
 import { firstJsonObject, kidSafeText, scrubContactDetails, tidy } from "./muse";
 
@@ -213,7 +214,9 @@ export async function handleForgeMake(request: Request, env: ForgeMakeEnv): Prom
   }
 
   let retried = false; // our own model was asked a second time (worker/modelBackend.ts askText): said in the log line, so a retry can be counted
-  const asked = await askText(backend, buildMakePrompt({ text, ...(slot ? { slot } : {}), ...(previous ? { previous, feedback } : {}) }), { timeoutMs: backend.mode === "self" ? MODEL_TIMEOUT_SELF_MS : MODEL_TIMEOUT_MS, onRetry: () => { retried = true; } });
+  // our own model, once trained on the short prompt (SELF_TEXT_PROMPT=tuned, default off): training and serving use the same text, see shared/forgeTunePrompt.ts
+  const promptArgs = { text, ...(slot ? { slot } : {}), ...(previous ? { previous, feedback } : {}) };
+  const asked = await askText(backend, backend.promptStyle === "tuned" ? buildTunePrompt(promptArgs) : buildMakePrompt(promptArgs), { timeoutMs: backend.mode === "self" ? MODEL_TIMEOUT_SELF_MS : MODEL_TIMEOUT_MS, onRetry: () => { retried = true; } });
   if (!asked.ok) {
     logEvent("forge_make", asked.status === null ? "model_failed" : "model_status", { ...(asked.status !== null ? { httpStatus: asked.status } : {}), backend: backend.mode, ...(retried ? { retried: true } : {}) }); // error detail stays on the server
     return reply(502, { ok: false, status: "unavailable", attempt });

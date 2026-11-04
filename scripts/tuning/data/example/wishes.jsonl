@@ -1,0 +1,86 @@
+{"text":"a bunny head with big round eyes","lang":"en","slot":"head","source":"seed","split":"val"}
+{"text":"a pink princess hat","lang":"en","source":"seed","split":"train"}
+{"text":"I want a ninja hat","lang":"en","source":"seed","split":"train"}
+{"text":"birthday hat","lang":"en","source":"seed","split":"train"}
+{"text":"I want to be a sheep","lang":"en","slot":"head","source":"seed","split":"heldout"}
+{"text":"a chicken head with a big smile","lang":"en","source":"seed","split":"train"}
+{"text":"I want to be a frog","lang":"en","slot":"head","source":"seed","split":"heldout"}
+{"text":"a tiny hippo head with big round eyes","lang":"en","slot":"head","source":"seed","split":"train"}
+{"text":"a birthday hat with a ribbon","lang":"en","slot":"crown","source":"seed","split":"heldout"}
+{"text":"a rainbow hat","lang":"en","source":"seed","split":"train"}
+{"text":"a funny baker hat with a feather","lang":"en","slot":"crown","source":"seed","split":"train"}
+{"text":"queen hat","lang":"en","slot":"crown","source":"seed","split":"train"}
+{"text":"make me an owl","lang":"en","slot":"head","source":"seed","split":"train"}
+{"text":"sun hat","lang":"en","slot":"crown","source":"seed","split":"train"}
+{"text":"a mouse head","lang":"en","slot":"head","source":"seed","split":"train"}
+{"text":"make me a wolf","lang":"en","slot":"head","source":"seed","split":"train"}
+{"text":"viking hat","lang":"en","source":"seed","split":"train"}
+{"text":"an astronaut hat with spots","lang":"en","source":"seed","split":"train"}
+{"text":"an unicorn hat with a star on top","lang":"en","source":"seed","split":"train"}
+{"text":"a cute panda head with floppy ears","lang":"en","source":"seed","split":"heldout"}
+{"text":"an elf head with a fluffy mane","lang":"en","slot":"head","source":"seed","split":"train"}
+{"text":"a cozy pig head","lang":"en","slot":"head","source":"seed","split":"train"}
+{"text":"a silver bunny head","lang":"en","source":"seed","split":"train"}
+{"text":"a green snowman head","lang":"en","slot":"head","source":"seed","split":"heldout"}
+{"text":"something silly","lang":"en","source":"seed","split":"train"}
+{"text":"a farmer hat with a pom pom","lang":"en","slot":"crown","source":"seed","split":"train"}
+{"text":"a turtle head with freckles","lang":"en","source":"seed","split":"train"}
+{"text":"a turtle head with a bow tie","lang":"en","source":"seed","split":"train"}
+{"text":"a wizard head with a pointy nose","lang":"en","source":"seed","split":"train"}
+{"text":"a koala head with a bow tie","lang":"en","source":"seed","split":"train"}
+{"text":"witch hat","lang":"en","slot":"crown","source":"seed","split":"train"}
+{"text":"a chef hat with little ears","lang":"en","slot":"crown","source":"seed","split":"train"}
+{"text":"a blue horse head with a long snout","lang":"en","source":"seed","split":"heldout"}
+{"text":"knight hat","lang":"en","source":"seed","split":"train"}
+{"text":"a baker hat","lang":"en","slot":"crown","source":"seed","split":"train"}
+{"text":"a fluffy witch hat","lang":"en","source":"seed","split":"heldout"}
+{"text":"make me a fairy","lang":"en","slot":"head","source":"seed","split":"train"}
+{"text":"a robot hat","lang":"en","slot":"crown","source":"seed","split":"train"}
+{"text":"I want an unicorn hat","lang":"en","slot":"crown","source":"seed","split":"train"}
+{"text":"detective hat","lang":"en","source":"seed","split":"train"}
+{"text":"make me a dog","lang":"en","source":"seed","split":"heldout"}
+{"text":"I want an explorer hat","lang":"en","slot":"crown","source":"seed","split":"train"}
+{"text":"I want to be a tiger","lang":"en","slot":"head","source":"seed","split":"train"}
+{"text":"garden hat","lang":"en","slot":"crown","source":"seed","split":"train"}
+{"text":"I want a bunny hat","lang":"en","source":"seed","split":"train"}
+{"text":"make me a penguin","lang":"en","slot":"head","source":"seed","split":"train"}
+{"text":"a mermaid head with a long snout","lang":"en","source":"seed","split":"train"}
+{"text":"can you make me a cute space hat","lang":"en","slot":"crown","source":"seed","split":"heldout"}
+{"text":"can you make me a green explorer hat","lang":"en","slot":"crown","source":"seed","split":"train"}
+{"text":"something round","lang":"en","source":"seed","split":"train"}
+{"text":"a golden hippo head with a fluffy mane","lang":"en","source":"seed","split":"train"}
+{"text":"a dragon head with big round eyes","lang":"en","source":"seed","split":"train"}
+{"text":"make me a snowman","lang":"en","slot":"head","source":"seed","split":"train"}
+{"text":"I want to be a butterfly","lang":"en","slot":"head","source":"seed","split":"train"}
+{"text":"I want a jester hat","lang":"en","slot":"crown","source":"seed","split":"val"}
+{"text":"a dragon head with floppy ears","lang":"en","slot":"head","source":"seed","split":"train"}
+{"text":"a shiny rainbow hat","lang":"en","source":"seed","split":"train"}
+{"text":"a tiny mermaid head with a bow tie","lang":"en","slot":"head","source":"seed","split":"train"}
+{"text":"I want a baker hat","lang":"en","source":"seed","split":"heldout"}
+{"text":"make me a pumpkin","lang":"en","slot":"head","source":"seed","split":"heldout"}
+{"text":"make me a duck","lang":"en","slot":"head","source":"seed","split":"train"}
+{"text":"a pumpkin head with a pointy nose","lang":"en","source":"seed","split":"train"}
+{"text":"a cow head","lang":"en","slot":"head","source":"seed","split":"train"}
+{"text":"a thing for my teddy","lang":"en","source":"seed","split":"train"}
+{"text":"can you make me a rainbow cowboy hat","lang":"en","slot":"crown","source":"seed","split":"train"}
+{"text":"a silver viking hat","lang":"en","source":"seed","split":"train"}
+{"text":"wizard hat","lang":"en","slot":"crown","source":"seed","split":"train"}
+{"text":"a happy mouse head with round glasses","lang":"en","slot":"head","source":"seed","split":"heldout"}
+{"text":"a fluffy wolf head with a big smile","lang":"en","slot":"head","source":"seed","split":"train"}
+{"text":"a funny detective hat with a ribbon","lang":"en","source":"seed","split":"train"}
+{"text":"a tiny space hat with a bow","lang":"en","slot":"crown","source":"seed","split":"heldout"}
+{"text":"a purple owl head with a big smile","lang":"en","source":"seed","split":"train"}
+{"text":"I want to be a wolf","lang":"en","source":"seed","split":"heldout"}
+{"text":"a round giraffe head with round glasses","lang":"en","slot":"head","source":"seed","split":"train"}
+{"text":"make me a dinosaur","lang":"en","slot":"head","source":"seed","split":"train"}
+{"text":"rainbow hat","lang":"en","slot":"crown","source":"seed","split":"heldout"}
+{"text":"a purple butterfly head","lang":"en","source":"seed","split":"train"}
+{"text":"a dinosaur head with a pointy nose","lang":"en","slot":"head","source":"seed","split":"train"}
+{"text":"a firefighter hat","lang":"en","source":"seed","split":"train"}
+{"text":"a small bunny hat with wings","lang":"en","source":"seed","split":"train"}
+{"text":"I want a firefighter hat","lang":"en","source":"seed","split":"train"}
+{"text":"an elf hat","lang":"en","slot":"crown","source":"seed","split":"val"}
+{"text":"an explorer hat","lang":"en","source":"seed","split":"train"}
+{"text":"a scientist hat with a bow","lang":"en","slot":"crown","source":"seed","split":"train"}
+{"text":"a sleepy dragon hat with stars","lang":"en","slot":"crown","source":"seed","split":"heldout"}
+{"text":"a witch hat with a pom pom","lang":"en","slot":"crown","source":"seed","split":"train"}
