@@ -1,7 +1,7 @@
 // What the game's character does on its own when nothing is going on, and on the title screen (Dan, 2026-11-04: "like idle waves and random dances if nothing is going on").
 //
-// The world already has an idle tick (`idleAct`: a hop, a shake, a nod, a spin, an arm raised); it now comes after 30 to 60 s of standing still and then every 45 to 120 s (`idleGapSeconds`). This adds three more things it can do, from the Mixamo
-// clips the repo ships (public/kip/mixamo/baked/): a WAVE, a CLAP, and a DANCE. They are played the way the dance party plays a dance: as a beat source, on a clock of their own, so the
+// The world already has an idle tick (`idleAct`: a hop, a shake, a nod, a spin, an arm raised); it now comes after 30 to 60 s of standing still and then every 45 to 120 s (`idleGapSeconds`). This adds four more things it can do, from the Mixamo
+// clips the repo ships (public/kip/mixamo/baked/): a WAVE, a CLAP, a DANCE, and a FIDGET (Dan, 2026-11-04, after downloading them: thinking, bored, a yawn, a shrug, a look around, an arm stretch; each played once, whole). They are played the way the dance party plays a dance: as a beat source, on a clock of their own, so the
 // character turns to face the camera for them and back afterwards (the camera itself does not move), they fade in and out, and walking or a tap pulls the character out of them. They are posed with the bench's own joint
 // rotations (runtime/snapFlex.ts), so the elbows, wrists and knees bend as in the Kip demo.
 //
@@ -13,21 +13,24 @@
 import { jointClipToGame, parseJointClip } from "./bakedDance";
 import type { BakedClip, BeatSource } from "./mixamo";
 
-export type IdleKind = "wave" | "clap" | "dance";
+export type IdleKind = "wave" | "clap" | "dance" | "fidget";
 
 /** The baked files a behaviour may use. The Samba, the character's own dance, is always in its bank (`SAMBA_CLIP`) and needs no file. */
 export const IDLE_FILES: Readonly<Record<IdleKind, readonly string[]>> = {
   wave: ["react_wave"],
   clap: ["react_clap"],
   dance: ["dance_silly", "dance_hiphop", "dance_swing", "dance_locking", "dance_chicken"],
+  fidget: ["mood_thinking", "mood_bored", "mood_yawn", "mood_shrug", "mood_look", "move_arms"],
 };
+/** The group a baked file says it is in, where that is not `react` (the library refuses a file whose group is not the one its name belongs to). The arm stretch is the movement break's clip; the kick and the sneak are acts (gameActions.ts). */
+const GROUP_OF: Readonly<Record<string, string>> = { move_arms: "move", act_kick: "act", act_sneak: "act" };
 export const SAMBA_CLIP = "dance";
 /** What the driver's `busyAction` says while one of these is playing, so the party's checks for `dance` (and every test that reads it) never mistake an idle wave for a party. */
 export const IDLE_LABEL = "idle";
-export const IDLE_IDS: readonly string[] = [...IDLE_FILES.wave, ...IDLE_FILES.clap, ...IDLE_FILES.dance];
+export const IDLE_IDS: readonly string[] = [...IDLE_FILES.wave, ...IDLE_FILES.clap, ...IDLE_FILES.dance, ...IDLE_FILES.fidget];
 
-/** Of every idle tick: the share that becomes a dance (only once the character has been idle for a while), a wave, a clap. The rest is left to the old gestures. */
-export const IDLE_ODDS = { dance: 0.22, wave: 0.24, clap: 0.1 } as const;
+/** Of every idle tick: the share that becomes a dance (only once the character has been idle for a while), a wave, a clap, a fidget. The rest (a quarter) is left to the old gestures. */
+export const IDLE_ODDS = { dance: 0.22, wave: 0.24, clap: 0.1, fidget: 0.2 } as const;
 /** A dance is only offered from the Nth idle tick of one spell of standing still (the second: a minute and a half to three minutes in), so a wave or a clap comes first. */
 export const DANCE_FROM_TICK = 1;
 
@@ -44,14 +47,15 @@ export function idleGapSeconds(rng: () => number, chain: number): number {
   const r = Number.isFinite(d) ? Math.min(0.999999, Math.max(0, d)) : 0.5; // a draw that is not a number must not stop the ticks for good
   return lo + r * (hi - lo);
 }
-/** How long a behaviour runs, seconds: a wave and a clap about three, a dance about seven, always whole loops of the clip so it ends where it began (so a bit over: the 4.7 s Hip Hop plays twice, 9.5 s); a clip at least as long as the cap (the 21 s swing) is cut at the cap. */
-export const IDLE_SECONDS = { wave: 3, clap: 3.5, dance: 7, danceCap: 9 } as const;
+/** How long a behaviour runs, seconds: a wave and a clap about three, a dance about seven, always whole loops of the clip so it ends where it began (so a bit over: the 4.7 s Hip Hop plays twice, 9.5 s); a clip at least as long as the cap (the 21 s swing) is cut at the cap. A fidget is played once, whole (the longest, the 10.7 s Bored, is under `fidgetCap`). */
+export const IDLE_SECONDS = { wave: 3, clap: 3.5, dance: 7, danceCap: 9, fidget: 5, fidgetCap: 11 } as const;
 
 export interface IdleChoice { kind: IdleKind; clip: string; seconds: number }
 
 /** Whole loops of a clip `dur` seconds long to cover at least `want` seconds (a clip longer than the cap, or `want`, is cut at the cap). */
 export function playSeconds(kind: IdleKind, dur: number): number {
   if (!(dur > 0) || !Number.isFinite(dur)) return IDLE_SECONDS[kind];
+  if (kind === "fidget") return Math.min(dur, IDLE_SECONDS.fidgetCap); // once, whole: it begins and ends standing
   const want = IDLE_SECONDS[kind];
   const cap = kind === "dance" ? IDLE_SECONDS.danceCap : want;
   if (dur >= cap) return cap;
@@ -74,6 +78,7 @@ export function chooseIdle(rng: () => number, chain: number, have: ReadonlyMap<s
   if (chain >= DANCE_FROM_TICK) { acc += IDLE_ODDS.dance; if (r < acc) return pick("dance"); }
   acc += IDLE_ODDS.wave; if (r < acc) return pick("wave");
   acc += IDLE_ODDS.clap; if (r < acc) return pick("clap");
+  acc += IDLE_ODDS.fidget; if (r < acc) return pick("fidget");
   return null;
 }
 
@@ -103,7 +108,7 @@ export function createGestureLibrary(deps: GestureLibraryDeps): GestureLibrary {
   const allowed = deps.allowed ?? IDLE_IDS;
   const loaded = new Map<string, number>();
   const loading = new Map<string, Promise<boolean>>();
-  const groupOf = (id: string): string => (IDLE_FILES.dance.includes(id) ? "dance" : "react");
+  const groupOf = (id: string): string => (IDLE_FILES.dance.includes(id) ? "dance" : GROUP_OF[id] ?? "react");
 
   function load(id: string): Promise<boolean> {
     if (!ID.test(id) || !allowed.includes(id)) return Promise.resolve(false);

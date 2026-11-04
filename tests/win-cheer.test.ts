@@ -1,5 +1,5 @@
-// The win cheer (src/features/game/world/runtime/winCheer.ts; Dan, 2026-11-04: "then start 2": the baked Mixamo cheer and fist pump in place of the hand-built cheer). Every win moment asks the
-// driver for the action `cheer`; this makes that the real performance, alternating two, at about the length the win moments reserve. The rules are functions of an implementation so each can
+// The win cheer (src/features/game/world/runtime/winCheer.ts; Dan, 2026-11-04: "then start 2": the baked Mixamo cheer and fist pump in place of the hand-built cheer; then his "Cheering 2 hands" and "Victory"). Every win moment asks the
+// driver for the action `cheer`; this makes that the real performance, taking turns between four, at about the length the win moments reserve. The rules are functions of an implementation so each can
 // be run on a version that is wrong on purpose and must fail.
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -44,6 +44,13 @@ describe("the clip a win plays", () => {
     expect({ name: src.name, duration: src.duration, loop: src.loop }).toEqual(before);
     expect(src.duration).toBeGreaterThan(3); // the real clip is 3.4 s
   });
+  it("plays each at 1.4 to 2 times the speed it was made at: a quick yes, never slowed and never frantic (the two-handed one and Victory are the shorter sources)", () => {
+    for (const id of CHEER_FILES) {
+      const speed = realClip(id).duration / CHEER_SECONDS;
+      expect(speed, id).toBeGreaterThan(1.4);
+      expect(speed, id).toBeLessThan(2.0);
+    }
+  });
   it("lasts about as long as the win moments reserve for it: not shorter than cleaning's 1.8 s by more than a fifth of a second, not longer than cooking's 2.0 s by more than a tenth", () => {
     expect(CHEER_SECONDS).toBeGreaterThanOrEqual(CLEAN_CHEER_S - 0.2);
     expect(CHEER_SECONDS).toBeLessThanOrEqual(COOK_CHEER_S + 0.1);
@@ -58,7 +65,8 @@ describe("which cheer comes next", () => {
   function failures(pick: (last: string | null, have: readonly string[], rng: () => number) => string | null): string[] {
     const bad = new Set<string>();
     const both: string[] = [...CHEER_FILES];
-    // two loaded: they alternate, starting from either
+    // all loaded: they take turns, never the same one twice running, starting from any of them
+    const used = new Set<string>();
     for (const seed of [1, 2, 3, 4, 5, 6]) {
       const rng = seeded(seed);
       let last: string | null = null;
@@ -66,12 +74,19 @@ describe("which cheer comes next", () => {
         const n = pick(last, both, rng);
         if (n === null || !both.includes(n)) { bad.add("a cheer that is loaded"); break; }
         if (n === last) { bad.add("two wins in a row are not the same cheer"); break; }
+        used.add(n);
         last = n;
       }
     }
+    if (used.size < both.length) bad.add("every cheer gets a turn");
     // the first pick is not always the same one
     const firsts = new Set([0.1, 0.4, 0.6, 0.9].map((r) => pick(null, both, () => r)));
     if (firsts.size < 2) bad.add("the first cheer is not always the same");
+    // with two loaded they alternate, and one that did not load is never offered
+    for (const two of [[CHEER_FILES[0], CHEER_FILES[2]], [CHEER_FILES[1], CHEER_FILES[3]]] as const) {
+      let last: string | null = null;
+      for (let i = 0; i < 6; i++) { const n = pick(last, [...two], seeded(i + 1)); if (!n || !two.includes(n as never) || n === last) { bad.add("with two loaded, they alternate"); break; } last = n; }
+    }
     // one loaded: that one, every time; none: nothing, so the hand-built cheer stays
     for (const only of both) { let last: string | null = null; for (let i = 0; i < 4; i++) { const n = pick(last, [only], seeded(9)); if (n !== only) bad.add("with one loaded, that one"); last = n; } }
     if (pick(null, [], seeded(3)) !== null) bad.add("with none loaded, nothing (the hand-built cheer stays)");
@@ -79,11 +94,12 @@ describe("which cheer comes next", () => {
     if (pick(null, ["dance_silly"], seeded(3)) !== null) bad.add("only our own cheers");
     return [...bad];
   }
-  it("alternates the two, starts with either, uses the only one there is, and says nothing when there is none", () => {
+  it("takes turns between the four, starts with any, uses the only one there is, and says nothing when there is none", () => {
     expect(failures(nextCheer)).toEqual([]);
   });
-  it("is caught when it repeats one, always starts with the same, ignores what is loaded, or picks what is not ours", () => {
+  it("is caught when it repeats one, always starts with the same, uses only two of the four, ignores what is loaded, or picks what is not ours", () => {
     expect(failures((last, have) => (have.includes("react_cheer") ? "react_cheer" : null)).length).toBeGreaterThan(0);
+    expect(failures((last, have) => (have.length ? (last === "react_cheer" ? "react_fistpump" : "react_cheer") : null)).length).toBeGreaterThan(0); // only ever the first two
     expect(failures((last, have, rng) => (have.length ? have[Math.floor(rng() * have.length)]! : null)).length).toBeGreaterThan(0); // random: repeats
     expect(failures((last, have) => (have.length ? (last === "react_cheer" ? "react_fistpump" : "react_cheer") : null)).length).toBeGreaterThan(0); // first pick fixed; picks one that is not loaded
     expect(failures((last, have) => (last === "dance_silly" ? null : have[0] ?? "dance_silly")).length).toBeGreaterThan(0);
@@ -100,31 +116,35 @@ describe("the cheers in the driver's bank", () => {
     const cheers = createCheers({ fetchImpl: fetchOf(over), addClips: (c) => { adds++; Object.assign(bank, c); }, rng });
     return { cheers, bank, adds: () => adds };
   }
-  it("loads both real files and puts the next one in the bank as `cheer` each time, alternating", async () => {
+  it("loads all four real files and puts the next one in the bank as `cheer` each time, never the same twice running, and every one gets a turn", async () => {
     const { cheers, bank } = make();
     expect((await cheers.load()).sort()).toEqual([...CHEER_FILES].sort());
+    const frames = new Map(CHEER_FILES.map((id) => [realClip(id).frames, id] as const));
+    expect(frames.size).toBe(CHEER_FILES.length); // the four files have four different lengths, so the frame count says which one is in the bank
     const seen: string[] = [];
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 24; i++) {
       expect(cheers.roll()).toBe(true);
       expect(bank.cheer!.name).toBe("cheer");
       expect(bank.cheer!.duration).toBe(CHEER_SECONDS);
-      seen.push(bank.cheer!.frames === realClip("react_cheer").frames ? "cheer" : "fistpump");
+      expect(bank.cheer!.joints).toBeTruthy();
+      seen.push(frames.get(bank.cheer!.frames)!);
     }
     for (let i = 1; i < seen.length; i++) expect(seen[i]).not.toBe(seen[i - 1]);
+    expect(new Set(seen).size).toBe(CHEER_FILES.length);
     expect(Object.keys(bank)).toEqual(["cheer"]); // nothing else is put in the driver's bank by the win cheer
   });
   it("leaves the hand-built cheer in the bank until a file has loaded, and when none can", async () => {
     const m = make();
     expect(m.cheers.roll()).toBe(false);
     expect(m.adds()).toBe(0);
-    const broken = make({ react_cheer: 404, react_fistpump: "{not json" });
+    const broken = make({ react_cheer: 404, react_fistpump: "{not json", react_cheer2: 500, react_victory: baked("react_wave") });
     expect(await broken.cheers.load()).toEqual([]);
     expect(broken.cheers.roll()).toBe(false);
     expect(broken.adds()).toBe(0);
   });
   it("uses the one that loaded when the other file is missing or is a different clip", async () => {
     const wrongId = baked("react_wave"); // a real file, but not the cheer it is asked for
-    for (const over of [{ react_fistpump: 404 }, { react_fistpump: wrongId }] as const) {
+    for (const over of [{ react_fistpump: 404, react_cheer2: 404, react_victory: 404 }, { react_fistpump: wrongId, react_cheer2: wrongId, react_victory: wrongId }] as const) {
       const { cheers, bank } = make(over);
       expect(await cheers.load()).toEqual(["react_cheer"]);
       for (let i = 0; i < 3; i++) { expect(cheers.roll()).toBe(true); expect(bank.cheer!.name).toBe("cheer"); }
@@ -136,7 +156,7 @@ describe("the cheers in the driver's bank", () => {
     const lib = createGestureLibrary({ fetchImpl: fetchOf(), addClips: (c) => Object.assign(bank, c), allowed: CHEER_FILES });
     expect(await lib.ensure(["dance_silly", "react_wave", "react_cheer"])).toEqual(["react_cheer"]);
     const idleLib = createGestureLibrary({ fetchImpl: fetchOf(), addClips: (c) => Object.assign(bank, c) });
-    expect(await idleLib.ensure(["react_cheer", "react_fistpump"])).toEqual([]);
+    expect(await idleLib.ensure(["react_cheer", "react_fistpump", "react_cheer2", "react_victory"])).toEqual([]);
   });
 });
 

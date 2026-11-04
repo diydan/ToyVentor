@@ -154,6 +154,96 @@
    "loop": false,
    "planted": true,
    "source": "Mixamo \"Pick Up Lifting\""
+  },
+  {
+   "id": "mood_thinking",
+   "label": "Thinking",
+   "group": "react",
+   "dur": 4.2333,
+   "loop": false,
+   "planted": true,
+   "source": "Mixamo \"Thinking\""
+  },
+  {
+   "id": "mood_bored",
+   "label": "Bored",
+   "group": "react",
+   "dur": 10.6667,
+   "loop": false,
+   "planted": true,
+   "source": "Mixamo \"Bored\""
+  },
+  {
+   "id": "mood_yawn",
+   "label": "Yawn",
+   "group": "react",
+   "dur": 8.3333,
+   "loop": false,
+   "planted": true,
+   "source": "Mixamo \"Yawn\""
+  },
+  {
+   "id": "mood_shrug",
+   "label": "Shrug",
+   "group": "react",
+   "dur": 2,
+   "loop": false,
+   "planted": true,
+   "source": "Mixamo \"Shrugging\""
+  },
+  {
+   "id": "mood_look",
+   "label": "Looking Around",
+   "group": "react",
+   "dur": 6.3333,
+   "loop": false,
+   "planted": true,
+   "source": "Mixamo \"Looking Around\""
+  },
+  {
+   "id": "mood_sad",
+   "label": "Sad",
+   "group": "react",
+   "dur": 2.8,
+   "loop": false,
+   "planted": true,
+   "source": "Mixamo \"Sad Idle\""
+  },
+  {
+   "id": "react_cheer2",
+   "label": "Cheer, two hands",
+   "group": "react",
+   "dur": 2.9,
+   "loop": false,
+   "planted": false,
+   "source": "Mixamo \"Cheering 2 hands\""
+  },
+  {
+   "id": "react_victory",
+   "label": "Victory",
+   "group": "react",
+   "dur": 3.2333,
+   "loop": false,
+   "planted": false,
+   "source": "Mixamo \"Victory\""
+  },
+  {
+   "id": "act_kick",
+   "label": "Kick",
+   "group": "act",
+   "dur": 1.0333,
+   "loop": false,
+   "planted": true,
+   "source": "Mixamo \"kick\""
+  },
+  {
+   "id": "act_sneak",
+   "label": "Sneak",
+   "group": "act",
+   "dur": 1.6667,
+   "loop": false,
+   "planted": true,
+   "source": "Mixamo \"Sneaking Forward\""
   }
  ]
 }

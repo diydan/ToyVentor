@@ -4,6 +4,9 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { jointClipToGame, parseJointClip } from "../src/features/game/world/runtime/bakedDance";
+import { IDLE_IDS } from "../src/features/game/world/runtime/idleBehavior";
+import { CHEER_FILES } from "../src/features/game/world/runtime/winCheer";
+import { ACTION_FILES } from "../src/features/game/world/runtime/gameActions";
 
 const root = join(__dirname, "..");
 const read = (rel: string) => readFileSync(join(root, rel), "utf8");
@@ -32,6 +35,19 @@ describe("joint data is opt-in, so nobody's clip changes by accident", () => {
   it("the party's dances and the idle clips do ask for them", () => {
     expect(read("src/features/game/world/runtime/gameDances.ts")).toContain("jointClipToGame(joint, id, { joints: true })");
     expect(read("src/features/game/world/runtime/idleBehavior.ts")).toContain("jointClipToGame(joint, id, { joints: true })");
+  });
+});
+
+describe("every baked clip the game asks for is shipped and listed", () => {
+  it("each idle, win-cheer and baked-action file is on disk, in the baked index, and is the clip its name says", () => {
+    const index = new Map<string, { id: string; group: string }>(JSON.parse(read("public/kip/mixamo/baked/index.json")).clips.map((c: { id: string; group: string }) => [c.id, c]));
+    const ids = new Set<string>([...IDLE_IDS, ...CHEER_FILES, ...Object.values(ACTION_FILES)]);
+    expect(ids.size).toBe(IDLE_IDS.length + CHEER_FILES.length + Object.keys(ACTION_FILES).length); // none is in two lists
+    for (const id of ids) {
+      expect(existsSync(join(root, "public/kip/mixamo/baked", `${id}.json`)), id).toBe(true);
+      expect(index.has(id), id).toBe(true);
+      expect(JSON.parse(read(`public/kip/mixamo/baked/${id}.json`)).id, id).toBe(id);
+    }
   });
 });
 

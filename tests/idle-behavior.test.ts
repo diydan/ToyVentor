@@ -31,8 +31,9 @@ const seeded = (seed: number) => () => ((seed = (seed * 1664525 + 1013904223) >>
 const ALL = new Map<string, number>([[SAMBA_CLIP, 4.4], ...IDLE_IDS.map((id) => [id, JSON.parse(baked(id)).dur as number] as const)]);
 
 describe("how long a behaviour plays for", () => {
-  it("is whole loops of the clip, between the time asked for and the cap, for every clip we ship", () => {
+  it("is whole loops of the clip, between the time asked for and the cap, for every clip we ship (a fidget is played once, whole: see below)", () => {
     for (const [id, dur] of ALL) {
+      if (IDLE_FILES.fidget.includes(id)) continue;
       const kind = IDLE_FILES.wave.includes(id) ? "wave" : IDLE_FILES.clap.includes(id) ? "clap" : "dance";
       const s = playSeconds(kind, dur);
       expect(s, id).toBeGreaterThanOrEqual(Math.min(IDLE_SECONDS[kind], dur));
@@ -45,6 +46,29 @@ describe("how long a behaviour plays for", () => {
   it("cuts a clip longer than the cap at the cap (the 21 second swing is nine seconds of it), and survives a length that is not a number", () => {
     expect(playSeconds("dance", 20.9)).toBe(IDLE_SECONDS.danceCap);
     for (const bad of [0, -1, NaN, Infinity]) expect(playSeconds("dance", bad)).toBe(IDLE_SECONDS.dance);
+  });
+  /** The rules for a fidget (a shrug, a yawn, a look around, thinking, being bored, an arm stretch), as a function of the play time, so a broken one can be run through them. */
+  function fidgetFailures(play: (kind: "fidget", dur: number) => number): string[] {
+    const bad = new Set<string>();
+    for (const id of IDLE_FILES.fidget) {
+      const dur = ALL.get(id)!;
+      const s = play("fidget", dur);
+      if (Math.abs(s - dur) > 1e-9) bad.add("a fidget is played once, whole: not looped, not cut short");
+      if (s > IDLE_SECONDS.fidgetCap + 1e-9) bad.add("and never past the cap");
+    }
+    if (Math.abs(play("fidget", 2.0) - 2.0) > 1e-9) bad.add("a short fidget is not repeated to fill time");
+    if (play("fidget", 30) !== IDLE_SECONDS.fidgetCap) bad.add("one longer than the cap is cut at it");
+    for (const nan of [0, -1, NaN, Infinity]) { const s = play("fidget", nan); if (!(s > 0) || !Number.isFinite(s)) bad.add("a length that is not a number still gives a real time"); }
+    return [...bad];
+  }
+  it("plays a fidget once, whole, up to the cap (the 10.7 s Bored included), and survives a length that is not a number", () => {
+    expect(Math.max(...IDLE_FILES.fidget.map((id) => ALL.get(id)!))).toBeLessThanOrEqual(IDLE_SECONDS.fidgetCap); // none of ours is cut
+    expect(fidgetFailures(playSeconds)).toEqual([]);
+  });
+  it("is caught when a fidget is looped like a wave, cut like a dance, or given no guard", () => {
+    expect(fidgetFailures((_k, dur) => Math.ceil(IDLE_SECONDS.fidget / dur) * dur).length).toBeGreaterThan(0);              // whole loops to fill the time
+    expect(fidgetFailures((_k, dur) => Math.min(dur, 4)).length).toBeGreaterThan(0);                                         // cut at a few seconds
+    expect(fidgetFailures((_k, dur) => dur).length).toBeGreaterThan(0);                                                      // no cap, no guard
   });
 });
 
@@ -94,7 +118,10 @@ describe("what to do on an idle tick", () => {
     if (Math.abs(share("dance") - IDLE_ODDS.dance) > 0.04) bad.add("a dance about as often as the odds say");
     if (Math.abs(share("wave") - IDLE_ODDS.wave) > 0.04) bad.add("a wave about as often as the odds say");
     if (Math.abs(share("clap") - IDLE_ODDS.clap) > 0.03) bad.add("a clap about as often as the odds say");
-    if (Math.abs(later.filter((c) => c === null).length / later.length - (1 - IDLE_ODDS.dance - IDLE_ODDS.wave - IDLE_ODDS.clap)) > 0.04) bad.add("the rest is left to the old gestures");
+    if (Math.abs(share("fidget") - IDLE_ODDS.fidget) > 0.04) bad.add("a fidget about as often as the odds say");
+    if (Math.abs(later.filter((c) => c === null).length / later.length - (1 - IDLE_ODDS.dance - IDLE_ODDS.wave - IDLE_ODDS.clap - IDLE_ODDS.fidget)) > 0.04) bad.add("the rest is left to the old gestures");
+    // a fidget is quiet: it is offered from the very first tick, unlike a dance
+    if (!draws(0, ALL).some((c) => c?.kind === "fidget")) bad.add("a fidget can come on the first tick");
     // only clips that are loaded
     const onlyWave = new Map([["react_wave", 0.53]]);
     for (const c of draws(5, onlyWave)) if (c && (c.clip !== "react_wave")) { bad.add("only a clip that is in the bank"); break; }
@@ -102,12 +129,13 @@ describe("what to do on an idle tick", () => {
     // every dance is offered (variety), and each pick is a clip of its own kind
     const dances = new Set(later.filter((c) => c?.kind === "dance").map((c) => c!.clip));
     if (dances.size < 5) bad.add("every dance gets a turn");
+    if (new Set(later.filter((c) => c?.kind === "fidget").map((c) => c!.clip)).size < IDLE_FILES.fidget.length) bad.add("every fidget gets a turn");
     for (const c of later) if (c && !(c.kind === "dance" ? [SAMBA_CLIP, ...IDLE_FILES.dance] : IDLE_FILES[c.kind]).includes(c.clip)) { bad.add("a pick belongs to its kind"); break; }
     for (const c of later) if (c && !(c.seconds > 0)) { bad.add("a positive time"); break; }
     return [...bad];
   }
 
-  it("follows the rules: no dance before the third tick, the odds, only loaded clips, every dance gets a turn", () => {
+  it("follows the rules: no dance before the second tick, the odds (wave, clap, dance, fidget), only loaded clips, every dance and every fidget gets a turn", () => {
     expect(failures(chooseIdle)).toEqual([]);
   });
 
@@ -118,6 +146,10 @@ describe("what to do on an idle tick", () => {
     expect(failures(eager).length).toBeGreaterThan(0);
     expect(failures(blind).length).toBeGreaterThan(0);
     expect(failures(samePick).length).toBeGreaterThan(0);
+    const noFidgets: typeof chooseIdle = (rng, chain, have) => { const c = chooseIdle(rng, chain, have); return c && c.kind === "fidget" ? null : c; };
+    const oneFidget: typeof chooseIdle = (rng, chain, have) => { const c = chooseIdle(rng, chain, have); return c && c.kind === "fidget" ? { ...c, clip: "mood_shrug", seconds: have.get("mood_shrug") ?? 2 } : c; };
+    expect(failures(noFidgets).length).toBeGreaterThan(0);  // never fidgets
+    expect(failures(oneFidget).length).toBeGreaterThan(0);  // always the same one
   });
 });
 
@@ -154,8 +186,19 @@ describe("the files", () => {
     expect(ok).not.toContain("react_clap");
     expect(ok).not.toContain("dance_silly"); // dance_hiphop's bytes under dance_silly's name
     expect(ok).not.toContain("dance_swing");
-    expect(ok.sort()).toEqual(["dance_chicken", "dance_hiphop", "dance_locking"]);
-    expect(Object.keys(bank).sort()).toEqual(["dance_chicken", "dance_hiphop", "dance_locking"]);
+    const rest = IDLE_IDS.filter((id) => !["react_wave", "react_clap", "dance_silly", "dance_swing"].includes(id)).sort();
+    expect(rest).toContain("dance_locking"); expect(rest).toContain("mood_shrug"); expect(rest).toContain("move_arms");
+    expect(ok.sort()).toEqual(rest);
+    expect(Object.keys(bank).sort()).toEqual(rest);
+  });
+  it("takes the fidgets from their real files (the arm stretch from the movement break's `move` group, the others `react`), and refuses one whose file says a different group", async () => {
+    const asGroup = (id: string, group: string) => JSON.stringify({ ...JSON.parse(baked(id)), group });
+    const bank: Record<string, BakedClip> = {};
+    const lib = createGestureLibrary({ fetchImpl: fetchOf({ mood_shrug: asGroup("mood_shrug", "dance"), move_arms: asGroup("move_arms", "react"), mood_yawn: baked("mood_shrug") }), addClips: (c) => Object.assign(bank, c) });
+    const ok = await lib.ensure(IDLE_FILES.fidget);
+    expect(ok.sort()).toEqual(["mood_bored", "mood_look", "mood_thinking"]); // shrug (said it was a dance), arm stretch (said it was react) and yawn (shrug's bytes) refused
+    const all = createGestureLibrary({ fetchImpl: fetchOf(), addClips: () => {} });
+    expect((await all.ensure(IDLE_FILES.fidget)).sort()).toEqual([...IDLE_FILES.fidget].sort());
   });
 
   it("will not fetch a name it does not know, and fetches a clip once however often it is asked for", async () => {
@@ -204,6 +247,19 @@ describe("the controller", () => {
     c.tick(3);
     expect(src()!.time).toBeCloseTo(3, 6); // it runs from its own start, not from the world's clock
     c.tick(IDLE_SECONDS.danceCap + 1);
+    expect(c.mix.calls).toContain("stop");
+    expect(c.idle.active).toBe(false);
+  });
+  it("plays a fidget once, whole, from its own start (it can come on the first tick), and ends when the clip does: a shrug is two seconds, not nine", () => {
+    // at the first tick the slices are wave .24, clap .34, fidget .54: 0.45 is a fidget, and the pick (second draw) is the shrug when it is the one the draw lands on
+    const picks: number[] = [0.45, (IDLE_FILES.fidget.indexOf("mood_shrug") + 0.5) / IDLE_FILES.fidget.length];
+    let i = 0;
+    const c = controller({ rng: () => picks[i++ % 2]! });
+    expect(c.idle.tryStart(0)).toBe(true);
+    expect(c.idle.clip).toBe("mood_shrug");
+    c.tick(1.5);
+    expect(c.idle.active).toBe(true);
+    c.tick(0.6); // 2.1 s in: the 2.0 s clip is over
     expect(c.mix.calls).toContain("stop");
     expect(c.idle.active).toBe(false);
   });

@@ -13,7 +13,8 @@ import { applyLightRig, followHero, setDusk } from "./lighting";
 import { backdropFor, createBackdrop, disposeArtCache, type ArtCache } from "./backdrop";
 import { MixamoDriver, loadMixamoBank, type BakedClip, type BeatSource, type MixAction } from "./mixamo";
 import { PROCEDURAL_CLIPS } from "./proceduralClips";
-import { IDLE_IDS, IDLE_LABEL, SAMBA_CLIP, createGestureLibrary, createIdle, idleGapSeconds } from "./idleBehavior";
+import { IDLE_FILES, IDLE_IDS, IDLE_LABEL, SAMBA_CLIP, createGestureLibrary, createIdle, idleGapSeconds } from "./idleBehavior";
+import { createActions } from "./gameActions";
 import { createCheers } from "./winCheer";
 import { SPOT_COUNT, codeToSeed, composeLevel } from "./levelKit";
 import * as MPD from "./missionData";
@@ -573,10 +574,10 @@ var mix: MixamoDriver|null=null,mixLoading=false;
 /* What the character does on its own (runtime/idleBehavior.ts; Dan, 2026-11-04: "idle waves and random dances if nothing is going on"): a wave, a clap or a dance on an idle tick, and a dance show on the title.
    The clips are the Mixamo ones the repo ships, posed with the bench's own joint rotations. The party's dance always wins: a behaviour never stops a dance that is not its own. */
 var GESTURES=createGestureLibrary({fetchImpl:(function(){return fetch.apply(window,arguments as any)}) as typeof fetch,addClips:function(c: Record<string,BakedClip>){if(mix)mix.addClips(c)}});
-var CHEERS=createCheers({fetchImpl:(function(){return fetch.apply(window,arguments as any)}) as typeof fetch,addClips:function(c: Record<string,BakedClip>){if(mix)mix.addClips(c)}});
+var CHEERS=createCheers({fetchImpl:(function(){return fetch.apply(window,arguments as any)}) as typeof fetch,addClips:function(c: Record<string,BakedClip>){if(mix)mix.addClips(c)}});var ACTIONS=createActions({fetchImpl:(function(){return fetch.apply(window,arguments as any)}) as typeof fetch,addClips:function(c: Record<string,BakedClip>){if(mix)mix.addClips(c)}});
 var IDLEB=createIdle({mix:function(){return mix},ok:idleOk,begin:function(){if(P.danceBack==null){P.danceBack=P.tface;P.tface=-Math.PI/2}},rng:Math.random,now:function(){return performance.now()/1000},durations:function(){var m=new Map(GESTURES.durations());if(mix&&mix.hasClip(SAMBA_CLIP))m.set(SAMBA_CLIP,4.4);return m}});
 function idleOk(){return !disposed&&!reduce&&S.type==="character"&&!HELD.item&&!!P.rig&&P.rig.type==="character"&&!!mix&&mix.canDrive(P.rig)&&!P.showcase&&!P.busy&&!P.mDrive&&!P.target&&P.speed<.1&&!ED.on&&!paused&&!hostEl.classList.contains("building")}
-function startGestures(){CHEERS.load().catch(function(){});GESTURES.ensure(["react_wave","dance_silly","dance_hiphop","react_clap","dance_locking","dance_chicken","dance_swing"]).catch(function(){});if(P.title&&!reduce)IDLEB.startShow()}
+function startGestures(){CHEERS.load().catch(function(){});ACTIONS.load().catch(function(){});GESTURES.ensure(["react_wave","dance_silly","dance_hiphop","react_clap","dance_locking","dance_chicken","dance_swing"]).then(function(){return GESTURES.ensure(IDLE_FILES.fidget)}).catch(function(){});if(P.title&&!reduce)IDLEB.startShow()}
 void IDLE_IDS;
 /* The jump and the shove are the Mixamo Jump and Push clips (gameMoves.ts), loaded once the driver exists; until then, or if they fail, the old procedural hop and lunge play. */
 var MOVES={shoveContact:.6,shoveDur:2.2};

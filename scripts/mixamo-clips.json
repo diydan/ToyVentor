@@ -14,5 +14,15 @@
   { "id": "react_fistpump", "file": "Standing Fist Pump.fbx", "label": "Fist Pump", "group": "react", "loop": false, "plant": false },
   { "id": "react_jump", "file": "Jump.fbx", "label": "Jump (Mixamo)", "group": "react", "loop": false, "plant": false },
   { "id": "act_push", "file": "Push.fbx", "label": "Push", "group": "act", "loop": false },
-  { "id": "act_pickup", "file": "Pick Up Lifting.fbx", "label": "Pick Up", "group": "act", "loop": false }
+  { "id": "act_pickup", "file": "Pick Up Lifting.fbx", "label": "Pick Up", "group": "act", "loop": false },
+  { "id": "mood_thinking", "file": "Thinking.fbx", "label": "Thinking", "group": "react", "loop": false },
+  { "id": "mood_bored", "file": "Bored.fbx", "label": "Bored", "group": "react", "loop": false },
+  { "id": "mood_yawn", "file": "Yawn.fbx", "label": "Yawn", "group": "react", "loop": false },
+  { "id": "mood_shrug", "file": "Shrugging.fbx", "label": "Shrug", "group": "react", "loop": false },
+  { "id": "mood_look", "file": "Looking Around.fbx", "label": "Looking Around", "group": "react", "loop": false },
+  { "id": "mood_sad", "file": "Sad Idle.fbx", "label": "Sad", "group": "react", "loop": false },
+  { "id": "react_cheer2", "file": "Cheering 2 hands.fbx", "label": "Cheer, two hands", "group": "react", "loop": false, "plant": false },
+  { "id": "react_victory", "file": "Victory.fbx", "label": "Victory", "group": "react", "trim": [0.7, 4.0], "loop": false, "plant": false },
+  { "id": "act_kick", "file": "kick.fbx", "label": "Kick", "group": "act", "trim": [0.4, 1.45], "loop": false },
+  { "id": "act_sneak", "file": "Sneaking Forward.fbx", "label": "Sneak", "group": "act", "loop": false }
 ]
