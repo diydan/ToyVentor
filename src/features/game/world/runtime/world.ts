@@ -161,6 +161,8 @@ import { buildBed } from "./bed";
 import { bushKind, kindById, orchardKind, palmFronds, palmFruitOffsets, palmKind, treeShape, type TreeKind } from "./treeKinds";
 import { createSleepHook } from "./sleepHook";
 import { BELT_TOYS, createActs } from "./toyRoomActs";
+import { TOOL_BUILDERS } from "./toolMeshes";
+import { TOOL_WORK_S, TOOL_WORK_SCALE, newToolPose, toolPose } from "./toolWork";
 import { createFetch } from "./dogFetch";
 import { createFollow } from "./dogFollow";
 import { GEAR_RATIO, createTurntable } from "./turntableSpin";
@@ -1363,7 +1365,8 @@ function toolMesh(k: string){var g=new T.Group(),mt=metal("#cfd8ff");
  else if(k==="spanner"){g.add(M(rbox(.09,.6,.04,.02),mt,0,-.34,.1));var hd=M(new T.TorusGeometry(.12,.035,8,16,Math.PI*1.5),mt,0,0,.1);hd.rotation.z=Math.PI*.75;g.add(hd)}
  else{var hd2=new T.Group();hd2.position.z=.12;hd2.add(M(new T.CylinderGeometry(.035,.04,.62,8),plastic("#c98a4a"),.1,-.32,0));hd2.add(M(rbox(.36,.13,.13,.03),mt,.1,0,0));var cl=M(new T.TorusGeometry(.08,.025,6,10,Math.PI),mt,-.12,.02,0);cl.rotation.z=Math.PI;hd2.add(cl);g.add(hd2);g.userData.hd=hd2}
  linearize(g);return g}
-function toolAnim(g: THREE.Object3D,k: string){var p=g.getWorldPosition(new T.Vector3()),m=toolMesh(k);m.position.copy(p);scene.add(m);toolSound(k);var hd=m.userData.hd;fx.push({t:0,d:.62,f:function(q){if(k==="hammer"){hd.rotation.z=.6*Math.sin(Math.PI*q);m.position.z=p.z+q*.5}else m.rotation.z=-q*Math.PI*3},end:function(){scene.remove(m)}})}
+/* A tool used on a fit is the one in Kip's hand (toolWork.ts): its twin, built from the same mesh, flies from his fist to the fit, works (the screwdriver and spanner turn, the hammer bonks twice, the drill whirrs) and flies back, while the one in the hand is hidden. */
+function toolAnim(g: THREE.Object3D,k: string){var bolt=g.getWorldPosition(new T.Vector3()),m=TOOL_BUILDERS[k as "hammer"]?TOOL_BUILDERS[k as "hammer"]():toolMesh(k),hand=new T.Vector3(),hp=handOf(1),o=newToolPose();m.scale.setScalar(TOOL_WORK_SCALE);scene.add(m);toolSound(k);PICK.beltVisible(false);fx.push({t:0,d:TOOL_WORK_S,f:function(q){if(hp)hp.getWorldPosition(hand);else hand.set(P.pos.x+.4,P.pos.y+1,P.pos.z+.3);toolPose(k as "hammer",q,hand,bolt,o);m.position.copy(o.position);m.quaternion.copy(o.quaternion)},end:function(){scene.remove(m);m.traverse(function(c: any){if(c.geometry)c.geometry.dispose()});PICK.beltVisible(true)}})}
 function toolHint(ft: string){var need=FITS[ft]!;sfx.bump&&sfx.bump();if(!S.tool){toast("This is a "+FTN[ft]+". Pick the "+TK[need]!.n.toLowerCase()+" from your tool belt.");beltOpen(true);return}
  toast(TWHY[S.tool+">"+ft]||("The drill makes holes. To take out this "+FTN[ft]+", use the "+TK[need]!.n.toLowerCase()+"."));var b=$("#beltb");b.classList.remove("nudge");void b.offsetWidth;b.classList.add("nudge")}
 function beltIcon(){$("#belt-ic").innerHTML=TSVG[S.tool||"box"]||"";$("#beltb").setAttribute("aria-label","Tool belt, holding "+((S.tool&&TK[S.tool])?TK[S.tool]!.n:"nothing"));/* the tool is in Kip's hand too (pickupHeld.ts `take`) */PICK.take((S.tool&&TK[S.tool])?S.tool:null,(S.tool&&TK[S.tool])?TK[S.tool]!.n:"")}

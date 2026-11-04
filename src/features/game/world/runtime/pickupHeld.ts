@@ -208,6 +208,8 @@ export function createPickupHeld(opts: PickupHeldOptions) {
   /** Which of `wanted` and `base` the meshes on the arm belong to (a different one means they are replaced). */
   let mountedFor: Wanted | null = null;
   const current = (): Wanted | null => wanted ?? base;
+  /** False while the belt's tool is away working on a fit (a copy of it flies to the fit, world.ts `toolAnim`): the one in the hand is hidden, and back when it returns. */
+  let beltShown = true;
   let chip: HTMLButtonElement | null = null;
   let loadId = 0;
   let disposed = false;
@@ -274,6 +276,7 @@ export function createPickupHeld(opts: PickupHeldOptions) {
         return mesh;
       });
       mountedFor = w;
+      if (w === base) for (const m of mounted) m.visible = beltShown;
       showChip(!w.quiet);
       return true;
     }
@@ -401,6 +404,11 @@ export function createPickupHeld(opts: PickupHeldOptions) {
     /** What is wanted and whether it is on Kip, for tests and the page. */
     get state() {
       return { wanted: wanted ? { id: wanted.info.id, kind: wanted.info.kind, label: wanted.info.label, item: wanted.item, card: Boolean(wanted.card) } : null, onKip: Boolean(mounted), chipShowing: Boolean(chip && !chip.hidden) };
+    },
+    /** Hide (false) or show (true) the belt's tool in the hand while a copy of it is away working on a fit. Safe whatever is held; the setting is remembered for the next time it is put on the arm. */
+    beltVisible(on: boolean): void {
+      beltShown = on;
+      if (mounted && mountedFor === base) for (const m of mounted) m.visible = on;
     },
     /** What the belt has Kip holding (a tool or a toy), or null. For tests and the page. */
     get belt(): HeldItem | null { return base ? base.item : null; },

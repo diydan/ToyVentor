@@ -70,3 +70,13 @@ export function buildDrillMesh(): THREE.Group {
   g.add(M(rbox(0.1, 0.08, 0.1, 0.03), plastic("#ff6b4a", { roughness: 0.4 }), -0.15, -0.13, 0));                     // the battery foot
   return g;
 }
+
+export type ToolKind = "screwdriver" | "spanner" | "hammer" | "drill";
+export const TOOL_BUILDERS: Readonly<Record<ToolKind, () => THREE.Group>> = {
+  screwdriver: buildScrewdriverMesh,
+  spanner: buildSpannerMesh,
+  hammer: buildHammerMesh,
+  drill: buildDrillMesh,
+};
+/** How far from its origin (the handle's foot) the working end is, along the tool's own +y: the tip, the open jaw, the face of the hammer, the bit. */
+export const TOOL_TIP: Readonly<Record<ToolKind, number>> = { screwdriver: 0.98, spanner: 0.86, hammer: 0.82, drill: 0.9 };

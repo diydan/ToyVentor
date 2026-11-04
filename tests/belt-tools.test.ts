@@ -217,3 +217,30 @@ describe("the page wiring (text pins)", () => {
     expect(dom).toContain(".belt-toys[hidden] {display:none}");
   });
 });
+
+describe("the belt's tool steps out of the hand while its twin works (pickupHeld.beltVisible)", () => {
+  it("hides the tool in the fist and shows it again; a tool put on while hidden stays hidden until shown", () => {
+    const r = rig();
+    const p = createPickupHeld({ held: createHeld(), rig: () => r });
+    p.take("hammer");
+    const mesh = r.armR.children[0]!;
+    expect(mesh.visible).toBe(true);
+    p.beltVisible(false);
+    expect(mesh.visible).toBe(false);
+    p.take("spanner");                                                            // a new tool while the old one's twin is out: it is not drawn either
+    expect(r.armR.children[0]!.visible).toBe(false);
+    p.beltVisible(true);
+    expect(r.armR.children[0]!.visible).toBe(true);
+    p.dispose();
+  });
+  it("does nothing to a camera pick-up in the hand", async () => {
+    const r = rig();
+    const p = createPickupHeld({ held: createHeld(), rig: () => r });
+    p.take("drill");
+    await p.pick(info("guitar", "guitar"));
+    p.beltVisible(false);
+    expect(r.model.children[2]!.visible).toBe(true);                              // the guitar
+    p.beltVisible(true);
+    p.dispose();
+  });
+});
