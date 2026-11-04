@@ -6,7 +6,8 @@
 // WHAT IT DOES. One free GET asks the app's own route (worker/transcribe.ts, POST/GET /api/transcribe) whether voice input is on; only an `enabled: true` shows the button. A static
 // server, a Worker with no speech model of ours behind it, or any error leaves it hidden and the tab exactly as it was. Nothing is recorded, and the microphone is not even asked
 // for, until the child presses the button. A press starts listening (the browser asks permission the first time); a tap stops it, or letting go of a press held for more than a
-// moment stops it, or 8 seconds pass. The recording is kept in memory only, sent once to the app's own route, and dropped. The words that come back go into the text box for the
+// moment stops it, or 8 seconds pass. The recording is kept in memory only, converted in the page to a 16 kHz mono WAV (the one format every speech model behind the route takes: a Worker
+// cannot decode the webm or mp4 a browser records), sent once to the app's own route, and dropped. The words that come back go into the text box for the
 // child to SEE and change: nothing is built until the child presses Build it.
 //
 // WHAT IT NEVER DOES. It never auto-builds, never keeps the audio or the words anywhere (no storage of any kind), never talks to anything but the app's own route, and always
@@ -29,6 +30,62 @@ export function pickMime(isTypeSupported) {
 }
 /** `audio/webm;codecs=opus` -> `audio/webm`. */
 export const baseType = (mime) => String(mime || '').split(';')[0].trim().toLowerCase();
+
+// ---- the recording as a 16 kHz mono 16-bit WAV ------------------------------------------------------------------------------------------------------------------------------------
+export const WAV_RATE = 16000;
+const MAX_WAV_SAMPLES = WAV_RATE * 10;   // the route refuses more than 10 seconds (worker/transcribe.ts MAX_WAV_SECONDS)
+
+/** Average any number of channels into one. A mono recording comes back as it is. */
+export function mixToMono(channels) {
+  if (channels.length === 1) return channels[0];
+  const out = new Float32Array(channels[0].length);
+  for (const ch of channels) for (let i = 0; i < out.length; i++) out[i] += ch[i] / channels.length;
+  return out;
+}
+/** Linear resampling, for a browser whose decoder did not already give the rate asked for. */
+export function resample(samples, fromRate, toRate) {
+  if (fromRate === toRate) return samples;
+  const n = Math.max(1, Math.round(samples.length * toRate / fromRate));
+  const out = new Float32Array(n);
+  const step = fromRate / toRate;
+  for (let i = 0; i < n; i++) {
+    const at = i * step, lo = Math.floor(at), hi = Math.min(lo + 1, samples.length - 1);
+    out[i] = samples[lo] + (samples[hi] - samples[lo]) * (at - lo);
+  }
+  return out;
+}
+/** Float samples in [-1, 1] as a RIFF/WAVE file: one channel, 16-bit integer PCM. */
+export function encodeWav(samples, rate = WAV_RATE) {
+  const dataBytes = samples.length * 2;
+  const bytes = new Uint8Array(44 + dataBytes);
+  const v = new DataView(bytes.buffer);
+  const tag = (at, str) => { for (let i = 0; i < str.length; i++) v.setUint8(at + i, str.charCodeAt(i)); };
+  tag(0, 'RIFF'); v.setUint32(4, 36 + dataBytes, true); tag(8, 'WAVE'); tag(12, 'fmt '); v.setUint32(16, 16, true);
+  v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, rate, true); v.setUint32(28, rate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  tag(36, 'data'); v.setUint32(40, dataBytes, true);
+  for (let i = 0; i < samples.length; i++) {
+    const x = Math.max(-1, Math.min(1, samples[i]));
+    v.setInt16(44 + i * 2, x < 0 ? Math.round(x * 32768) : Math.round(x * 32767), true);
+  }
+  return bytes;
+}
+/**
+ * Decode what the browser recorded (webm, mp4, ogg: whatever MediaRecorder made) and return it as a 16 kHz mono WAV Blob. Throws when this browser has no decoder or cannot read it:
+ * the caller then sends the original, which the route accepts only when its speech model is our own. `OfflineAudioContextClass` is injected for tests.
+ */
+export async function recordingToWav(blob, { OfflineAudioContextClass = globalThis.OfflineAudioContext || globalThis.webkitOfflineAudioContext } = {}) {
+  if (!OfflineAudioContextClass) throw new Error('no audio decoder');
+  const ctx = new OfflineAudioContextClass(1, 1, WAV_RATE);       // decodeAudioData resamples to the context's rate
+  const data = await blob.arrayBuffer();
+  const decoded = await new Promise((resolve, reject) => {
+    const p = ctx.decodeAudioData(data, resolve, reject);        // older Safari answers by callback only, newer browsers by both
+    if (p && typeof p.then === 'function') p.then(resolve, reject);
+  });
+  const channels = [];
+  for (let i = 0; i < decoded.numberOfChannels; i++) channels.push(decoded.getChannelData(i));
+  const mono = resample(mixToMono(channels), decoded.sampleRate, WAV_RATE);
+  return new Blob([encodeWav(mono.subarray(0, MAX_WAV_SAMPLES))], { type: 'audio/wav' });
+}
 
 /** What the child is told, in words a small child can read. */
 export const SAY = {
@@ -54,7 +111,7 @@ const make = (doc, tag, attrs = {}, ...kids) => {
 export function createVoiceInput({
   doc = globalThis.document, fetchImpl = globalThis.fetch, url = '/api/transcribe',
   getUserMedia = (c) => globalThis.navigator.mediaDevices.getUserMedia(c), MediaRecorderClass = globalThis.MediaRecorder,
-  maxMs = MAX_MS, holdMs = HOLD_MS, minMs = MIN_MS, now = () => Date.now(),
+  maxMs = MAX_MS, holdMs = HOLD_MS, minMs = MIN_MS, now = () => Date.now(), toWav = recordingToWav,
   setTimeout: later = (fn, ms) => globalThis.setTimeout(fn, ms), clearTimeout: cancelLater = (id) => globalThis.clearTimeout(id),
   onText = () => {}, onStatus = () => {}, onState = () => {}, currentText = () => '',
 } = {}) {
@@ -87,8 +144,11 @@ export function createVoiceInput({
   }
   const hide = () => { available = false; node.hidden = true; setState('hidden'); };
 
-  async function upload(blob, mine) {
-    const type = ALLOWED.has(baseType(blob.type)) ? baseType(blob.type) : baseType(mime);
+  async function upload(recorded, mine) {
+    let blob = recorded;
+    let type = ALLOWED.has(baseType(recorded.type)) ? baseType(recorded.type) : baseType(mime);
+    try { blob = await toWav(recorded); type = 'audio/wav'; } catch { /* no decoder here: send what was recorded (the route takes it only for our own speech model, and answers 415 otherwise) */ }
+    if (mine !== run) return;       // cancelled while it was being converted: nothing is sent
     const abort = typeof AbortController === 'function' ? new AbortController() : null;
     const stop = abort ? later(() => abort.abort(), UPLOAD_TIMEOUT_MS) : 0;
     try {

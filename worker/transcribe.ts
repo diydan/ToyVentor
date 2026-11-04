@@ -1,9 +1,12 @@
 // POST /api/transcribe: a few seconds of a child's voice in, the words out, for the microphone button in Describe & build (docs/specs/describe-and-build-viewer-spec.md).
 //
-// A CHILD'S VOICE NEVER GOES TO META. docs/decisions/0008-meta-models-and-under-18-users.md: Meta's hosted `muse-voice-transcribe-1.0` is not used for children, and the route for
-// them is a speech model we host ourselves (Whisper large-v3-turbo, MIT, on Modal: scripts/modal/whisper_server.py). So this route works ONLY when the `transcribe` capability
-// (worker/modelBackend.ts) is in mode "self" with a URL set: "hosted" (which is what an unset switch means today) is OFF here BY POLICY, "off" is off, and a self URL that is
-// missing or not https is off. It fails closed and never falls back to anything.
+// WHO HEARS A CHILD'S VOICE. docs/decisions/0008-meta-models-and-under-18-users.md: the route for children is a speech model we host ourselves (Whisper large-v3-turbo, MIT, on Modal:
+// scripts/modal/whisper_server.py), because Meta's Model API terms (10.1) are for adult end users. Two modes, both fail closed and neither falls back to the other:
+//   - "self": `transcribe` is in mode "self" with an https address set (worker/modelBackend.ts). The intended mode for children.
+//   - "hosted" (Meta's `muse-voice-transcribe-1.0`): a TEMPORARY exception for the Nov 4 demo (Dan, 2026-11-04: "use meta for demo and we will self host in the future"; review after
+//     the hackathon). It is on ONLY when TRANSCRIBE_BACKEND is set to exactly "hosted" and the Meta key is set. An unset switch, MODEL_BACKEND=hosted and DEFAULT_MODE do NOT turn it
+//     on, so deploying the code never switches a child's voice to Meta by itself: someone has to choose it. To end the exception, unset TRANSCRIBE_BACKEND (or set it to self or off).
+// "off", a missing key, a missing or non-https self address, or a misspelt mode are off.
 //
 //   GET  /api/transcribe       {ok, route, contract, enabled}  a free probe: the page shows its microphone button only when this says enabled
 //   POST /api/transcribe       the audio bytes as the body, Content-Type audio/webm | audio/mp4 | audio/ogg | audio/wav  ->  {text, note?}
@@ -16,7 +19,7 @@
 // What it never does: store the audio or the words, log either (the log line carries a status and a mode, nothing else), return the speech model's address or key, or build anything:
 // the words land in a text box for the child to see and change, and only the child's own press of "Build it" sends them anywhere else.
 import { kidSafeText, scrubContactDetails } from "./muse";
-import { resolveBackend, type BackendEnv } from "./modelBackend";
+import { parseSelfUrl, resolveBackend, type BackendEnv } from "./modelBackend";
 
 export const TRANSCRIBE_CONTRACT = 1;
 /** The page records 8 s at most; a compressed 8 s clip is well under 200 KB, so this leaves room and still stops anything that is not a short voice clip. */
@@ -26,6 +29,9 @@ export const MAX_TEXT_CHARS = 300;
 const MIN_AUDIO_BYTES = 200; // anything smaller is a header with no sound in it
 const WHISPER_MODEL = "whisper-large-v3-turbo";
 const WHISPER_TIMEOUT_MS = 25_000;
+/** Meta's speech model and the one audio format its file endpoint takes (dev.meta.ai/docs/api-reference/voice/transcribe, read 2026-11-04): a RIFF/WAVE of mono integer PCM at 16 or 24 kHz. */
+export const META_ASR_MODEL = "muse-voice-transcribe-1.0";
+const META_WAV_RATES: ReadonlySet<number> = new Set([16000, 24000]);
 /** In-isolate per-IP budget. Best effort only (requests can land on different isolates); the Cloudflare dashboard rule is the durable limit, like the other metered routes. */
 const RATE_WINDOW_MS = 60_000;
 const RATE_MAX_PER_WINDOW = 8;
@@ -97,6 +103,23 @@ export function wavSeconds(b: Uint8Array): number | null {
   return null;
 }
 
+/** Is this the WAV Meta's file endpoint takes: integer PCM (format 1), ONE channel, 16 bits, 16 kHz or 24 kHz? Read from the "fmt " chunk wherever it sits. */
+export function metaWavOk(b: Uint8Array): boolean {
+  if (!looksLike("wav", b)) return false;
+  const v = new DataView(b.buffer, b.byteOffset, b.byteLength);
+  let at = 12;
+  while (at + 8 <= b.length) {
+    const size = v.getUint32(at + 4, true);
+    if (ascii(b, at, "fmt ")) {
+      if (size < 16 || at + 8 + 16 > b.length) return false;
+      const format = v.getUint16(at + 8, true), channels = v.getUint16(at + 10, true), rate = v.getUint32(at + 12, true), bits = v.getUint16(at + 22, true);
+      return format === 1 && channels === 1 && bits === 16 && META_WAV_RATES.has(rate);
+    }
+    at += 8 + size + (size % 2);
+  }
+  return false;
+}
+
 /** Read the request body, giving up as soon as more than `maxBytes` arrive (a missing content-length cannot get round the cap). */
 async function readCappedBytes(request: Request, maxBytes: number): Promise<{ ok: true; bytes: Uint8Array<ArrayBuffer> } | { ok: false; over: boolean }> {
   const declared = Number(request.headers.get("content-length") ?? "0");
@@ -121,10 +144,21 @@ async function readCappedBytes(request: Request, maxBytes: number): Promise<{ ok
   return { ok: true, bytes };
 }
 
-/** Whether this Worker will transcribe: only our own speech model, with an address. Hosted (Meta) is off for this route by policy. */
-export function transcribeEnabled(env: TranscribeEnv): boolean {
+/**
+ * Which speech model this Worker will use for a child's voice, or "off". "self" needs an https address. "hosted" (Meta) needs the Meta key AND TRANSCRIBE_BACKEND set to exactly
+ * "hosted": the per-capability variable only, never the master switch or the unset default, so it is always a deliberate choice (see the header).
+ */
+export function transcribeMode(env: TranscribeEnv): "self" | "hosted" | "off" {
   const backend = resolveBackend(env, "transcribe");
-  return backend.mode === "self" && Boolean(backend.baseUrl);
+  if (backend.mode === "self" && backend.baseUrl) return "self";
+  // a key of only spaces is no key, and Meta's address must be https (or this machine, for a test): a child's voice never goes over plain http or to an address with credentials in it
+  if (backend.mode === "hosted" && backend.key?.trim() && parseSelfUrl(backend.baseUrl) && (env.TRANSCRIBE_BACKEND ?? "").trim().toLowerCase() === "hosted") return "hosted";
+  return "off";
+}
+
+/** Whether this Worker will transcribe at all. */
+export function transcribeEnabled(env: TranscribeEnv): boolean {
+  return transcribeMode(env) !== "off";
 }
 
 /** Where the speech model's endpoint is: the configured address with a trailing /v1 (the way our text model's address is written) or none, then /v1/audio/transcriptions. */
@@ -141,16 +175,48 @@ export function safeWords(raw: unknown): { text: string; note?: string } {
   return { text };
 }
 
+/**
+ * Meta's file endpoint (POST <base>/asr/transcribe): multipart with a `request` part (JSON) and an `audio` part (the WAV); Bearer key; Accept JSON; the words are `transcript`.
+ * Same safety after as for our own model: the words are scrubbed, capped and kid-checked before the page sees them. Never logs the audio or the words, never returns the key.
+ */
+async function transcribeWithMeta(wavBytes: Uint8Array<ArrayBuffer>, baseUrl: string, key: string): Promise<Response> {
+  if (!metaWavOk(wavBytes)) return json({ error: "voice input needs a WAV recording: mono, 16 kHz or 24 kHz" }, 415);
+  const form = new FormData();
+  form.append("request", new Blob([JSON.stringify({ model: META_ASR_MODEL, audioEncoding: "WAV", mode: "PUSH_TO_TALK" })], { type: "application/json" }));
+  form.append("audio", new Blob([wavBytes], { type: "audio/wav" }), "voice.wav");
+  let transcript: unknown;
+  let status: number | "fetch-failed" = "fetch-failed";
+  try {
+    const res = await fetch(`${baseUrl}/asr/transcribe`, {
+      method: "POST",
+      headers: { authorization: `Bearer ${key}`, accept: "application/json" },
+      body: form,
+      signal: AbortSignal.timeout(WHISPER_TIMEOUT_MS),
+    });
+    status = res.status;
+    if (res.ok) transcript = ((await res.json().catch(() => null)) as { transcript?: unknown } | null)?.transcript;
+  } catch {
+    status = "fetch-failed";
+  }
+  console.log(JSON.stringify({ event: "transcribe", status: typeof transcript === "string" ? "ok" : status, backend: "hosted" })); // never the audio, never the words
+  if (status === 429) return json({ error: "Slow down, one at a time. Try again in a minute." }, 429);
+  if (typeof transcript !== "string") return json({ error: "the voice helper is not answering" }, 502);
+  return json(safeWords(transcript));
+}
+
 export async function handleTranscribe(request: Request, env: TranscribeEnv): Promise<Response> {
   if (request.method === "GET") return json({ ok: true, route: "transcribe", contract: TRANSCRIBE_CONTRACT, enabled: transcribeEnabled(env) });
   if (request.method !== "POST") return json({ error: "method not allowed" }, 405);
 
+  const mode = transcribeMode(env);
   const backend = resolveBackend(env, "transcribe");
-  if (backend.mode !== "self" || !backend.baseUrl) return json({ error: "voice input is off" }, 503); // hosted is off for a child's voice, by policy
+  if (mode === "off" || !backend.baseUrl) return json({ error: "voice input is off" }, 503); // hosted is off unless TRANSCRIBE_BACKEND=hosted was chosen, by policy
   if (transcribeRateLimited(request.headers.get("CF-Connecting-IP"))) return json({ error: "Slow down, one at a time. Try again in a minute." }, 429);
 
   const kind = audioKindOf(request.headers.get("content-type"));
   if (!kind) return json({ error: "expected audio/webm, audio/mp4, audio/ogg or audio/wav" }, 415);
+  // Meta's endpoint takes WAV only and a Worker cannot decode anything else, so the page converts before it sends (kip-describe-voice.js recordingToWav): refuse early, before reading.
+  if (mode === "hosted" && kind !== "wav") return json({ error: "voice input needs a WAV recording: mono, 16 kHz or 24 kHz" }, 415);
   const read = await readCappedBytes(request, MAX_AUDIO_BYTES);
   if (!read.ok) return json({ error: "that recording is too long" }, 413);
   const bytes = read.bytes;
@@ -160,6 +226,7 @@ export async function handleTranscribe(request: Request, env: TranscribeEnv): Pr
     const seconds = wavSeconds(bytes);
     if (seconds === null || seconds > MAX_WAV_SECONDS) return json({ error: "that recording is too long" }, 413);
   }
+  if (mode === "hosted") return transcribeWithMeta(bytes, parseSelfUrl(backend.baseUrl)!, backend.key!.trim());
 
   const form = new FormData();
   form.append("file", new Blob([bytes], { type: FILE_TYPE[kind].mime }), FILE_TYPE[kind].name);
