@@ -318,6 +318,7 @@ export function GameCanvas({
     if (phase === "writing" || phase === "making" || phase === "ready" || phase === "dancing") return; // a song is already on its way, or a party is on
     void s.flow.canMake().then((on) => { // the route is on, a grown-up has not switched songs off, and a song is left this week
       if (!on) return;
+      void s.flow.warm(); // the offer is up: wake our own model while the child decides
       if (phase === "over" || phase === "failed") s.flow.cancel(); // the old card gives way to the new offer
       setSongOffer(levelDescription(missionType));
       if (songOfferTimerRef.current !== null) window.clearTimeout(songOfferTimerRef.current);
@@ -343,6 +344,7 @@ export function GameCanvas({
     setSongsQuota(null);
     setSongsOpen(true);
     void getSong().flow.probe(true).then((p) => { setSongsAvailable(p.enabled); setSongsQuota(p.quota); });
+    void getSong().flow.warm(); // a song is likely coming: wake our own model now (a no-op unless it is ours)
   }, [getSong]);
   const startFromSheet = useCallback((begin: () => void) => {
     noteGesture(); // this tap is what lets the song play later

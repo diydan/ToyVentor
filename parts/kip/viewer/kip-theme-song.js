@@ -111,6 +111,17 @@ export function createThemeSong({
     } catch { available = false; quota = null; }
     return available;
   }
+  let lastWarm = -Infinity;
+  /** Wake our own song-writing model before a song is asked for (it scales to zero when idle). Fire and forget; at most once every three minutes; only when the route is on; never throws. */
+  async function warm() {
+    try {
+      if (!(await isOn())) return;
+      const t = now();
+      if (t - lastWarm < 3 * 60 * 1000) return;
+      lastWarm = t;
+      await fetchImpl(`${url}/warm`, { method: 'POST', headers: themeHeaders(storage) });
+    } catch { /* a warm-up that fails changes nothing */ }
+  }
   /** A kind sentence in place of a song (the week is used up, a grown-up switched songs off). The card stays, the build carries on. */
   function showNote(text) {
     node.hidden = false; nameEl.textContent = ''; lyrics.hidden = true; standIn.hidden = true; playBtn.hidden = true;
@@ -220,7 +231,7 @@ export function createThemeSong({
   playBtn.addEventListener('click', () => { if (audioKind === 'song') stopAudio(); else if (song) play(song.url, 'song'); });
 
   return {
-    node, start,
+    node, start, warm,
     /** Stop everything and hide the card (a new build, or closing the panel's song). */
     /** Stop any sound but keep the card (the panel closed). */
     silence() { stopAudio(); },

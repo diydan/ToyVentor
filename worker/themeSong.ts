@@ -16,7 +16,7 @@
 //     by default, the monthly budget SONG_MONTHLY_BUDGET for everyone, unset means no budget and nothing is made) and given back if anything fails before the song is ordered;
 //   - a grown-up can switch songs off or lower the weekly limit for the device (POST /api/theme-song/settings, behind the parent proof);
 //   - a song's status and audio are answered only to the device that made it (a numeric task id is not a secret);
-//   - with an R2 bucket bound as SONGS the finished audio is copied there, so a kept song outlives the provider's 30-day link; without it the link is used, as before.
+//   - with an R2 bucket bound as UPLOADS (toyventor-uploads) the finished audio is copied there, so a kept song outlives the provider's 30-day link; without it the link is used, as before.
 // THEME_SONG_QUOTA=off runs it UNMETERED for local probes (no D1, no device id, a per-instance cap of THEME_SONG_MAX_STARTS): never set it in production.
 // The Mureka key is read here and sent only as the Authorization header to the Mureka host. It is never logged or returned.
 import { isPlayerId } from "../shared/ownership";
@@ -45,6 +45,10 @@ const DEFAULT_MAX_STARTS = 25;
 /** A theme song is about 1.6 MB; nothing near this is a song of ours. */
 const MAX_AUDIO_BYTES = 8_000_000;
 const AUDIO_TIMEOUT_MS = 20_000;
+/** Waking our own model: at most one ping a Worker instance every 4 minutes (best effort: instances multiply), however many children open the Songs sheet. */
+const WARM_EVERY_MS = 4 * 60_000;
+const WARM_TIMEOUT_MS = 28_000; // a Worker keeps a background task for about 30 s after it has answered
+let lastWarmPing = -Infinity;
 const startHits = new Map<string, number[]>();
 const pollHits = new Map<string, number[]>();
 let startsThisInstance = 0;
@@ -72,7 +76,7 @@ export interface ThemeSongEnv extends MuseEnv, ParentEnv {
   /** "off" runs the route unmetered (local probes only). Anything else, or unset, is metered and needs the D1 binding (`DB`). */
   THEME_SONG_QUOTA?: string;
   /** An R2 bucket for finished songs. Optional: without it the provider's 30-day link is all there is. */
-  SONGS?: R2Like;
+  UPLOADS?: R2Like;
 }
 
 const SONG_KEY = /^[A-Za-z0-9_-]{8,64}$/;
@@ -98,6 +102,7 @@ export function resetThemeSongLimits(): void {
   startHits.clear();
   pollHits.clear();
   startsThisInstance = 0;
+  lastWarmPing = -Infinity;
 }
 
 export function themeSongEnabled(env: ThemeSongEnv): boolean {
@@ -357,23 +362,23 @@ async function handleAudio(request: Request, env: ThemeSongEnv, id: string): Pro
     if (o instanceof Response) return o;
     owner = o;
     // our own copy first: it outlives the provider's 30-day link
-    if (env.SONGS && owner.stored) {
-      try { const obj = await env.SONGS.get(r2Key(owner.deviceId, id)); if (obj) return bytesResponse(await obj.arrayBuffer()); } catch { /* fall back to the provider */ }
+    if (env.UPLOADS && owner.stored) {
+      try { const obj = await env.UPLOADS.get(r2Key(owner.deviceId, id)); if (obj) return bytesResponse(await obj.arrayBuffer()); } catch { /* fall back to the provider */ }
     }
   }
   const link = await finishedLink(env, id);
   if (!link.ok) return json(link.status === "error" ? { error: link.code === null ? "the song studio did not answer" : `the song studio returned ${link.code}` } : { status: link.status }, link.status === "error" ? 502 : 404);
   const bytes = await fetchAudio(link.url);
   if (!bytes) return json({ error: "the song file did not arrive" }, 502);
-  if (owner && env.SONGS && !owner.stored) await keepCopy(env, owner, id, bytes);
+  if (owner && env.UPLOADS && !owner.stored) await keepCopy(env, owner, id, bytes);
   return bytesResponse(bytes);
 }
 
 /** Copy a finished song into our own bucket (when there is one) and remember that it is there. Never throws: the song still plays from the provider's link. */
 async function keepCopy(env: ThemeSongEnv, owner: { deviceId: string; key: string }, task: string, bytes: ArrayBuffer): Promise<void> {
-  if (!env.SONGS) return;
+  if (!env.UPLOADS) return;
   try {
-    await env.SONGS.put(r2Key(owner.deviceId, task), bytes, { httpMetadata: { contentType: "audio/mpeg" } });
+    await env.UPLOADS.put(r2Key(owner.deviceId, task), bytes, { httpMetadata: { contentType: "audio/mpeg" } });
     await markStored(db(env), owner.key);
   } catch (err) {
     console.log(JSON.stringify({ event: "theme-song", step: "r2", ok: false, message: String(err instanceof Error ? err.message : err).slice(0, 100) }));
@@ -393,13 +398,39 @@ async function handleStatus(request: Request, env: ThemeSongEnv, id: string): Pr
   if (link.ok) {
     if (owner) {
       try { if (owner.state === "reserved") await commitSong(db(env), owner.key, Date.now()); } catch { /* committed on the next look */ }
-      if (env.SONGS && !owner.stored) { const bytes = await fetchAudio(link.url); if (bytes) await keepCopy(env, owner, id, bytes); }
+      if (env.UPLOADS && !owner.stored) { const bytes = await fetchAudio(link.url); if (bytes) await keepCopy(env, owner, id, bytes); }
     }
     return json({ status: "ready", url: link.url, durationMs: link.durationMs });
   }
   if (link.status === "error") return json({ error: link.code === null ? "the song studio did not answer" : `the song studio returned ${link.code}` }, 502);
   if (link.status === "failed" && owner && owner.state === "reserved") { try { await refundSong(db(env), owner.key, "provider_failed", Date.now()); } catch { /* it expires by itself */ } } // the provider could not sing it: the child's slot comes back
   return json({ status: link.status });
+}
+
+/**
+ * POST /api/theme-song/warm: a child opened the Songs sheet (or a build began), so a song is likely coming. When the text model is OUR OWN (a Modal container that scales to zero) this
+ * pings its /health so the container is awake by the time the words are asked for, instead of the first song after idle waiting out a cold start. With the hosted model there is nothing to
+ * wake. It always answers 202 and says nothing about the model: no address, no key, no state. Same shape and rate as the Forge's warm-up (worker/forgeMake.ts handleForgeWarm).
+ */
+async function handleWarm(request: Request, env: ThemeSongEnv, ctx?: { waitUntil(p: Promise<unknown>): void }): Promise<Response> {
+  if (request.method !== "POST") return json({ error: "method not allowed" }, 405);
+  if (limited(pollHits, request.headers.get("CF-Connecting-IP"), POLL_WINDOW_MS, POLLS_PER_WINDOW, Date.now())) return json({ error: "Slow down." }, 429);
+  if (isMetered(env) && !isPlayerId(request.headers.get("x-device-id"))) return json({ error: "A device id is needed.", reason: "device_required" }, 401);
+  const accepted = () => json({ ok: true, status: "accepted" }, 202);
+  const backend = resolveBackend(env, "text");
+  if (backend.mode !== "self" || !backend.baseUrl) return accepted();
+  const now = Date.now();
+  if (now - lastWarmPing < WARM_EVERY_MS) return accepted();
+  let health: string;
+  try { health = `${new URL(backend.baseUrl).origin}/health`; } catch { return accepted(); }
+  lastWarmPing = now;
+  const started = Date.now();
+  const ping = fetch(health, { method: "GET", signal: AbortSignal.timeout(WARM_TIMEOUT_MS) }).then(
+    (r) => console.log(JSON.stringify({ event: "theme-song", step: "warm", status: "up", httpStatus: r.status, ms: Date.now() - started })),
+    () => console.log(JSON.stringify({ event: "theme-song", step: "warm", status: "no_answer", ms: Date.now() - started })),
+  );
+  if (ctx) ctx.waitUntil(ping);
+  return accepted();
 }
 
 /** /api/theme-song/settings: a grown-up's choices for this device. Reading is open (the child's own screen needs to know); changing needs the parent proof. */
@@ -426,10 +457,11 @@ async function handleSettings(request: Request, env: ThemeSongEnv): Promise<Resp
   }
 }
 
-export async function handleThemeSong(request: Request, env: ThemeSongEnv): Promise<Response> {
+export async function handleThemeSong(request: Request, env: ThemeSongEnv, ctx?: { waitUntil(p: Promise<unknown>): void }): Promise<Response> {
   const url = new URL(request.url);
   const sub = url.pathname.replace(/^\/api\/theme-song/, "");
   if (sub === "/settings") return handleSettings(request, env);
+  if (sub === "/warm") return themeSongEnabled(env) ? handleWarm(request, env, ctx) : json({ error: "theme songs are off" }, 503);
   if (sub !== "" && sub !== "/") return json({ error: "not found" }, 404);
   if (request.method === "GET" && !url.searchParams.has("id")) {
     // a free probe: is the route on, and (with a device id) how many songs this device has left this week
