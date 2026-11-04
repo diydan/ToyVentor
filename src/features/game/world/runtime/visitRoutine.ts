@@ -88,7 +88,8 @@ export function createVisitor(a: VisitAdapter) {
       if (phase === "walking" && v) {
         const tx = a.targetX();
         if (tx !== null && Math.abs(tx - v.standX) > REDIRECT_X) { a.stopWalk(); v = null; go("idle"); return; }   // the player sent the toy elsewhere
-        if (Math.abs(a.position().x - v.standX) < ARRIVE_X && (v.standZ === undefined || Math.abs(a.position().z - v.standZ) < (v.deep ? ARRIVE_DEEP_Z : ARRIVE_X))) { a.face(v.face); go("acting"); cue = 0; v.begin(); }
+        // The walk finishes first (the toy's last step ends with its feet together, and it stands exactly on its mark); the act starts when it has stopped walking, not when it first comes within reach.
+        if (tx === null && Math.abs(a.position().x - v.standX) < ARRIVE_X && (v.standZ === undefined || Math.abs(a.position().z - v.standZ) < (v.deep ? ARRIVE_DEEP_Z : ARRIVE_X))) { a.face(v.face); go("acting"); cue = 0; v.begin(); }
         else { t += dt; if (t >= WALK_TIMEOUT_S) { a.stopWalk(); v = null; go("idle"); } }
         return;
       }

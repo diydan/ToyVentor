@@ -45,3 +45,21 @@ describe("the Mixamo moves in the world", () => {
     expect(acts).toContain('w.clip("jump");');
   });
 });
+
+describe("foot slide as the game wires it (stops, key release, turns, the alert hover)", () => {
+  it("tells the driver where the walk will stop, so its feet are together there", () => {
+    expect(world).toContain("stopIn:(P.target&&!P.busy&&!P.showcase)?Math.max(0,Math.sqrt((P.target.x-P.pos.x)*(P.target.x-P.pos.x)+(P.target.z-P.pos.z)*(P.target.z-P.pos.z))-.07):undefined");
+  });
+  it("letting go of a movement key runs on a little to a stop (a target ahead of the toy) instead of stopping dead", () => {
+    expect(world).toContain("var KEY_COAST=.6;");
+    expect(world).toContain("if(!kd){if(P.kdLast&&!P.target&&!P.busy&&!P.showcase&&!P.mDrive&&P.speed>1.2)P.target=new T.Vector3(Math.max(kLo,Math.min(kHi,P.pos.x+P.kdLast*KEY_COAST)),0,P.pos.z);P.kdLast=0}else P.kdLast=kd;");
+  });
+  it("the alert hover is a bump that goes back to the ground (nHop, not a raise of P.hop nothing lowered), and a turn on the spot starts with a small hop (turnHop)", () => {
+    expect(world).not.toContain("P.hop=Math.max(P.hop,nk*.12)");
+    expect(world).toContain("P.nHop=nk*.12");
+    expect(world).toContain("P.model.position.set(P.lunge,P.hop+(P.nHop||0)+(P.turnHop||0),0);");
+    expect(world).toContain("var TURN_HOP=.1;");
+    expect(world).toContain("P.turnHop=(S.type==='character'&&!reduce&&!P.busy&&!P.showcase&&sp<.6&&!(mix&&mix.busyAction))?TURN_HOP*thk*thk*(3-2*thk):0;");
+  });
+});
+

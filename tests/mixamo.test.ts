@@ -6,6 +6,8 @@ import { beforeAll, describe, expect, it } from "vitest";
 import {
   DEFAULT_TUNING,
   MixamoDriver,
+  WALK_STOP_TRIM,
+  walkStopPhase,
   loadMixamoBank,
   mixPose,
   newPose,
@@ -15,6 +17,7 @@ import {
 import { stockCol, stockSel } from "../src/features/game/world/runtime/catalog";
 import { buildToy, upgradeRigWithStl } from "../src/features/game/world/runtime/playerRig";
 import { existsSync } from "node:fs";
+import { loadMoves } from "../src/features/game/world/runtime/gameMoves";
 
 const ROOT = process.cwd();
 
@@ -232,6 +235,106 @@ describe("MixamoDriver on the Kip character rig", () => {
     expect(b.wRun).toBeLessThan(0.6);
     for (let i = 0; i < 30; i++) d2.update(mk(), 1 / 60, 0, { ...none, gait: 3.4 });
     expect(b.wRun).toBeGreaterThan(0.99);
+  });
+
+  // the baked locomotion clips are Mixamo assets: a checkout without them (public/kip/mixamo/baked) skips these
+  describe.skipIf(!existsSync(resolve(ROOT, "public/kip/mixamo/baked/loco_walk.json")))("foot slide at a stop: the walk ends with its feet together, and its stance is as wide as the hips", () => {
+    // the real baked locomotion clips (the game adds them to the bank with loadMoves), read from disk
+    let loco: ClipBank;
+    beforeAll(async () => {
+      loco = { ...bank };
+      const fetchImpl = (async (u: string) => {
+        const f = resolve(ROOT, "public", String(u).replace(/^\//, ""));
+        return existsSync(f) ? { ok: true, text: async () => readFileSync(f, "utf8") } : { ok: false, text: async () => "" };
+      }) as unknown as typeof fetch;
+      await loadMoves({ fetchImpl, addClips: (c) => Object.assign(loco, c) });
+    });
+    const none = { headYaw: 0, headPitch: 0 };
+    const plain = () => {
+      const rig = buildToy("character", stockSel().character as never, stockCol());
+      rig.arms.length = 0;
+      rig.arms.push(new THREE.Group(), new THREE.Group());
+      rig.head = new THREE.Group();
+      return rig;
+    };
+
+    it("walkStopPhase finds the feet-together phase of the real walk clip: a half-cycle value near the measured 0.07 (the knee and foot put the boots 0.032 of a cycle after the legs)", () => {
+      expect(loco.walk!.joints).toBeTruthy();                      // the baked loco clip, not the direction-only Xbot one
+      const ph = walkStopPhase(loco.walk!);
+      expect(ph).toBeGreaterThanOrEqual(0);
+      expect(ph).toBeLessThan(0.5);
+      expect(ph).toBeGreaterThan(0.05);
+      expect(ph).toBeLessThan(0.09);
+      expect(WALK_STOP_TRIM).toBeCloseTo(0.032, 3);
+    });
+
+    it("a walk to a mark is timed to its feet-together moment: after travelling `stopIn` at the walking pace the clock is on that phase, however far away the mark was when the walk began", () => {
+      const walkRef = DEFAULT_TUNING.walkRefSpeed, dur = loco.walk!.duration;
+      const want = walkStopPhase(loco.walk!);
+      for (const startDist of [1.5, 1.9, 2.3]) {          // the distance the walk still has to go when the run hands over (the run covers 0.4 + 0.68 of its own)
+        const d = new MixamoDriver(loco);
+        const rig = plain();
+        const a = d as unknown as { tWalk: number };
+        let left = startDist + 12 * 3.4 / 60;
+        // running in (the walk is not the visible gait yet, so its clock is re-timed every frame) ...
+        for (let i = 0; i < 12; i++) {
+          d.update(rig, 1 / 60, 0, { ...none, gait: 3.4, stopIn: left });
+          left -= 3.4 / 60;
+        }
+        // ... then at the walking pace, when the walk takes over and its clock runs by itself at ground speed / walkRefSpeed
+        while (left > 0) {
+          d.update(rig, 1 / 60, 0, { ...none, gait: walkRef, stopIn: left });
+          left -= walkRef / 60;
+        }
+        const ph = ((a.tWalk / dur) % 0.5 + 0.5) % 0.5;
+        const err = Math.min(Math.abs(ph - want), 0.5 - Math.abs(ph - want));
+        expect(err).toBeLessThan(0.04);                             // within 4 % of a cycle (a frame is 1.7 %): under 0.06 of a stage unit on the ground, where the unlocked walk was up to 0.25 of a cycle out
+      }
+    });
+
+    it("without a mark (stopIn absent) the walk clock is left alone", () => {
+      const d = new MixamoDriver(loco);
+      const rig = plain();
+      const a = d as unknown as { tWalk: number };
+      for (let i = 0; i < 30; i++) d.update(rig, 1 / 60, 0, { ...none, gait: 3.4 });
+      const t = a.tWalk;
+      d.update(rig, 1 / 60, 0, { ...none, gait: 3.4 });
+      expect(a.tWalk - t).toBeCloseTo((1 / 60) * Math.min(1.9, 3.4 / DEFAULT_TUNING.walkRefSpeed), 6);
+    });
+
+    it("the walking stance is as wide as the idle one: the feet are no longer under the middle line (a gap of 0.3 against the hips' 0.74)", async () => {
+      const full = (u: string) => resolve(ROOT, "public", u.replace(/^\//, "").split("?")[0]!);
+      const fetcher = (u: string) => {
+        const f = full(u);
+        if (!existsSync(f)) return Promise.resolve(null);
+        const b = readFileSync(f);
+        return Promise.resolve(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer);
+      };
+      const sel = stockSel().character as never;
+      const col = stockCol();
+      const rig = buildToy("character", sel, col);
+      await upgradeRigWithStl(rig, { type: "character", sel, col, toyId: "kip", token: { cancelled: false }, fetcher } as never);
+      const legs = (rig as unknown as { snap: { legs: Array<{ foot: THREE.Object3D; boot: THREE.Object3D }> } }).snap.legs;
+      const root = new THREE.Group();
+      root.add(rig.g);
+      const v = new THREE.Vector3();
+      const gap = (gait: number) => {
+        const d = new MixamoDriver(loco);
+        let sum = 0, n = 0;
+        for (let i = 0; i < 360; i++) {
+          d.update(rig, 1 / 120, gait, { ...none, gait });
+          root.updateMatrixWorld(true);
+          if (i < 120) continue;
+          const z = legs.map((l) => v.set(l.boot.position.x, l.boot.position.y, l.boot.position.z).applyMatrix4(l.foot.matrixWorld).z);
+          sum += Math.abs(z[1]! - z[0]!); n++;
+        }
+        return sum / n;
+      };
+      const idle = gap(0), walk = gap(1.55), run = gap(3.4);
+      expect(idle).toBeGreaterThan(0.6);
+      expect(walk).toBeGreaterThan(idle * 0.8);
+      expect(run).toBeGreaterThan(idle * 0.8);
+    });
   });
 
   it("plays a one-shot dance and releases it", () => {

@@ -380,10 +380,17 @@ export interface DriverExtras {
    * eased `speed`, so the feet always go back at the pace the ground goes by (a foot that is down must not slide). Absent: `speed` is used, as before.
    */
   gait?: number;
+  /**
+   * How far the toy will still travel before it stops (stage units), while it walks to a target; absent otherwise. The walk cycle is timed so its feet are together at that moment (a stop
+   * with the feet a stride apart slides them shut), see `walkStopPhase`.
+   */
+  stopIn?: number;
 }
 const NO_EXTRAS: DriverExtras = { headYaw: 0, headPitch: 0 };
 const AXIS_Y = new THREE.Vector3(0, 1, 0);
 const AXIS_X = new THREE.Vector3(1, 0, 0);
+/** The rig's forward axis in the clip (CAD) frame: x left, y up, z forward. */
+const AXIS_FWD = new THREE.Vector3(0, 0, 1);
 
 const ACTION_FADE = 0.28;
 /** The in-game dance party: the dance eases in over half a second and out over 0.4 s. */
@@ -426,8 +433,35 @@ export interface DriverTuning {
 export const DEFAULT_TUNING: DriverTuning = { walkRefSpeed: 1.55, runRefSpeed: 3.1, runFrom: 2.3, runTo: 2.9, hipsGain: 2.2, bodyGain: 0.7, poseGain: 0.6 };
 /** How quickly the idle / walk / run mix follows the real ground speed (seconds): short, so a start or a stop is a quick blend and not a one-frame pop. */
 const GAIT_EASE_S = 0.06;
+/**
+ * The baked Xbot walk and run put the feet 0.3 apart (human gait: under the body's middle line) on a toy whose hips are 0.74 apart, so the legs lean in like knocked knees and every stop slid
+ * each foot 0.15 sideways out to the idle stance. Rolling each hip outward by this much (and keeping the foot flat) puts the stance at the idle's width. Measured on the Snap figure: walk feet
+ * at z -0.26..-0.12 / 0.08..0.19 against the idle's -0.37 / 0.37.
+ */
+const HIP_SPREAD_RAD = 0.3;
+/** The walk clock is re-timed for a stop only while the walk is less than this much of the pose (it cannot be seen jumping). */
+const STOP_LOCK_BELOW = 0.05;
 /** How high the baked run's lowest sole stays above the floor, as a share of the hip height (measured on the Snap figure: 0.079 against the idle's 0.019 at a hip height of 1.14). */
 const RUN_SOLE_HOVER = 0.0527;
+
+/**
+ * Where in a walk cycle (a fraction of it, 0 to 0.5: the two halves are the same step on the other foot) the two feet are together, i.e. where a stop leaves no stride to slide shut.
+ * Taken from the clip's own leg directions (the fore-aft part of hip-to-ankle crosses between the two legs), plus a trim for the knee bend and the foot, which the straight hip-to-ankle line leaves
+ * out: measured on the Snap figure the boots pass each other 0.032 of a cycle later than the legs do (0.07 against 0.035 for the baked Xbot walk). Falls back to 0.07 for a clip without legs.
+ */
+export const WALK_STOP_TRIM = 0.032;
+export function walkStopPhase(c: BakedClip): number {
+  const n = c.frames;
+  if (n < 3) return 0.07;
+  for (let i = 0; i < n - 1; i++) {
+    const a = c.legL[i * 3 + 2]! - c.legR[i * 3 + 2]!, b = c.legL[(i + 1) * 3 + 2]! - c.legR[(i + 1) * 3 + 2]!;
+    if ((a < 0) !== (b < 0)) {
+      const ph = (i + a / (a - b)) / (n - 1) + WALK_STOP_TRIM;
+      return ((ph % 0.5) + 0.5) % 0.5;
+    }
+  }
+  return 0.07;
+}
 
 export class MixamoDriver {
   private j: Joints | null = null;
@@ -463,6 +497,10 @@ export class MixamoDriver {
   private readonly qw = new THREE.Quaternion();
   private readonly qx = new THREE.Quaternion();
   private readonly v2 = new THREE.Vector3();
+  private readonly qhk = new THREE.Quaternion();
+  private readonly qrl = new THREE.Quaternion();
+  private readonly qrr = new THREE.Quaternion();
+  private readonly qnw = new THREE.Quaternion();
   private readonly inv = new THREE.Matrix4();
 
   constructor(private readonly bank: ClipBank, private readonly tuning: DriverTuning = DEFAULT_TUNING) {}
@@ -566,6 +604,13 @@ export class MixamoDriver {
     this.tIdle += dt;
     this.tWalk += dt * Math.max(0.12, Math.min(1.9, gait / tn.walkRefSpeed));
     this.tRun += dt * Math.max(0.7, Math.min(1.4, gait / tn.runRefSpeed));
+    // A walk to a target ends with the feet together: while the walk is not yet the visible gait (the toy is still running in, or has only just set off) its clock is set so it reaches the
+    // feet-together moment exactly when the toy will have travelled `stopIn`; after that the clock runs on by itself (one whole cycle covers walkRefSpeed x duration on the ground).
+    if (typeof extras.stopIn === "number" && Number.isFinite(extras.stopIn) && bank.walk && this.wWalk < STOP_LOCK_BELOW) {
+      const dur = bank.walk.duration;
+      const ph = walkStopPhase(bank.walk) - Math.max(0, extras.stopIn) / (tn.walkRefSpeed * dur);
+      this.tWalk = ((((ph % 0.5) + 0.5) % 0.5)) * dur;
+    }
 
     // idle * wIdle + walk * wWalk + run * wRun, built as two sequential lerps (the weights sum to 1).
     const p = this.p;
@@ -622,11 +667,47 @@ export class MixamoDriver {
       }
       if (bd.leaving && bd.w <= 0) this.beat = null;
     }
+    this.spreadHips(p, wWalk + wRun);
     this.apply(j, p);
     this.applyJoints(j, p);
+    // A limb-direction clip (no joint data: the Samba, yawn, eat, oops, smell...) has no planted foot, so it can leave the toy floating: measured 2026-11-04, the Samba's lowest sole a median 0.23 above the floor and up to 0.5, yawn 0.09, eat 0.23. While an action or a dance plays, lower the toy until its lowest sole touches the floor (never raise it: a crouch or a seat is the clip's own business), and not while it walks or runs (their sole height is tuned below).
+    if ((this.action || this.beat) && wWalk + wRun < 0.05 && p.jw < 0.999) this.dropToFloor(j, 1 - p.jw);
     // The baked run never brings the sole lower than 0.06 stage units (5 % of the hip height) above the floor the idle stands on, so the whole run hovers and its planted foot looks like it skates
     // on air. Bring the toy down by that much while it runs: the stance foot is on the floor, the flight phase still leaves it.
     if (wRun > 0.001) j.g.position.y -= RUN_SOLE_HOVER * j.hipY * wRun;
+  }
+
+  /** Lower the toy by `w` of the height of its lowest sole above the floor, when there is one (the floor is y = 0 in the frame the rig hangs in). Only ever lowers: see the call. A rig with no Snap handles is left alone. */
+  private dropToFloor(j: Joints, w: number): void {
+    const sn = j.snap, parent = j.g.parent;
+    if (!sn || !parent || !(w > 0.001)) return;
+    parent.updateWorldMatrix(true, false);
+    this.inv.copy(parent.matrixWorld).invert();
+    let lowest = Infinity;
+    for (const leg of sn.legs) {
+      leg.foot.updateWorldMatrix(true, false);
+      for (const [dx, dz] of SOLE_PROBES) {
+        this.v.set(leg.boot.position.x + dx, leg.boot.position.y, leg.boot.position.z + dz).applyMatrix4(leg.foot.matrixWorld).applyMatrix4(this.inv);
+        if (this.v.y < lowest) lowest = this.v.y;
+      }
+    }
+    if (Number.isFinite(lowest) && lowest > 0.002) j.g.position.y -= lowest * Math.min(1, w);
+  }
+
+  /** Roll the hips outward by `HIP_SPREAD_RAD x amount` (see there), with the ankles undoing it so the soles stay as the clip has them. Only on a pose that carries joint data. */
+  private spreadHips(p: Pose, amount: number): void {
+    const a = HIP_SPREAD_RAD * Math.min(1, amount);
+    if (a < 1e-4 || p.jw < 0.001) return;
+    const sides = [["hipL", "kneeL", "ankleL", 1], ["hipR", "kneeR", "ankleR", -1]] as const;
+    for (const [hk, kk, ak, side] of sides) {
+      const hip = p.j[hk], knee = p.j[kk], ankle = p.j[ak];
+      this.qhk.copy(hip).multiply(knee);                                   // hip x knee: the frame the ankle hangs in
+      this.qrl.setFromAxisAngle(AXIS_FWD, side * a);
+      // new ankle = (hip x knee)^-1 x roll^-1 x (hip x knee) x ankle: the foot ends up exactly where the clip aims it, whatever the leg did to get there
+      this.qnw.copy(this.qhk).invert().multiply(this.qrr.copy(this.qrl).invert()).multiply(this.qhk).multiply(ankle);
+      ankle.copy(this.qnw);
+      hip.premultiply(this.qrl);
+    }
   }
 
   /** Release the rig back to its rest pose (called when the driver is swapped out). */

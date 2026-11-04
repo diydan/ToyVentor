@@ -8,7 +8,7 @@ function harness(start = { x: 10, y: 0, z: 0.5 }) {
   const v = createVisitor({
     position: () => ({ ...s.pos }),
     targetX: () => s.target,
-    walkTo: (x, z) => { s.target = x; log.push(`walkTo:${x},${z}`); },
+    walkTo: (x, z) => { s.target = Math.abs(s.pos.x - x) < 0.08 ? null : x; log.push(`walkTo:${x},${z}`); },     // a mark within 0.08 is reached at once, as in the game
     stopWalk: () => { s.target = null; log.push("stopWalk"); },
     face: (d) => log.push(`face:${d}`),
     onPhase: (p) => phases.push(p),
@@ -70,7 +70,7 @@ describe("a visit", () => {
   });
 
   it("starts at once when the toy is already standing there", () => {
-    const h = harness({ x: 15.1, y: 0, z: 0 });
+    const h = harness({ x: 15.05, y: 0, z: 0 });
     h.v.start(h.visit());
     h.run(0.05);
     expect(h.v.phase).toBe("acting");
@@ -82,6 +82,18 @@ describe("a visit", () => {
     h.run(0.2);
     expect(h.v.phase).toBe("walking");
     h.s.pos.x = 15 - ARRIVE_X + 0.05;
+    h.s.target = null;                                         // the walk has ended there
+    h.run(0.1);
+    expect(h.v.phase).toBe("acting");
+  });
+
+  it("does not start while the toy is still walking, even within reach: the walk finishes first (the last step ends with the feet together)", () => {
+    const h = harness({ x: 15 - ARRIVE_X + 0.1, y: 0, z: 0 });
+    h.v.start(h.visit());
+    h.run(0.3);
+    expect(h.v.phase).toBe("walking");                         // within reach, but the target is still set
+    h.s.pos.x = 14.95;
+    h.s.target = null;
     h.run(0.1);
     expect(h.v.phase).toBe("acting");
   });
@@ -197,7 +209,7 @@ describe("a deep visit (foot slide: the toy walks out to its prop's depth instea
     const h = deepHarness();
     h.v.start(h.visit());
     expect(h.log).toEqual(["walkDeep:15,-1.9"]);
-    h.s.pos.x = 15;                                                       // on the right spot in x, but still at the lane's edge: 0.7 short in depth
+    h.s.pos.x = 15; h.s.target = null;                                    // on the right spot in x and the walk over, but still at the lane's edge: 0.7 short in depth
     h.run(0.2);
     expect(h.v.phase).toBe("walking");
     h.s.pos.z = -1.9 + ARRIVE_DEEP_Z * 0.9;
@@ -209,7 +221,7 @@ describe("a deep visit (foot slide: the toy walks out to its prop's depth instea
     const h = deepHarness();
     h.v.start(h.visit({ deep: false, standZ: -1.2 }));
     expect(h.log).toEqual(["walkTo:15,-1.2"]);
-    h.s.pos.x = 15; h.s.pos.z = -1.2 + ARRIVE_X * 0.9;
+    h.s.pos.x = 15; h.s.pos.z = -1.2 + ARRIVE_X * 0.9; h.s.target = null;
     h.run(0.1);
     expect(h.v.phase).toBe("acting");
   });
