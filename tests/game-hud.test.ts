@@ -27,10 +27,12 @@ describe("the one button and its drawer (GameCanvas.tsx)", () => {
     expect(canvas).toContain("<WorkshopLauncher");
     expect(canvas).toContain('className="tv-ctl tv-ctl-gear"');
   });
-  it("the menu is open inside the drawer, and it gained a Worlds entry (the world pill is gone) next to the Map entry it already had", () => {
+  it("the menu is open inside the drawer, and it gained a Worlds entry (the world pill is gone); the Map is one of the strip's three buttons at the top, not listed twice", () => {
     expect(canvas).toContain("{(moreOpen || menuOpen) && (");
     expect(canvas).toMatch(/tv-menu-worlds[\s\S]{0,400}setWorldsOpen\(true\)/);
-    expect(canvas).toContain("<span>Map</span>");
+    expect(canvas).toContain("<NavStrip");
+    expect(canvas).toMatch(/<NavStrip[\s\S]{0,400}onMap=\{[\s\S]{0,200}openMap\(\)/);
+    expect(canvas).not.toMatch(/<span>Map<\/span>\s*<span className="tv-menu-meta">Play<\/span>/);                    // (no "Map / Play" menu item under Worlds)
   });
   it("a scrim behind the open drawer closes it", () => {
     expect(canvas).toContain('className="tv-drawer-scrim"');
