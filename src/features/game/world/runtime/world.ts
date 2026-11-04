@@ -178,6 +178,7 @@ import { buildUpSandcastle, buildUpSnowman } from "./buildUp";
 import { attachCraneDrop } from "./craneDrop";
 import { buildBasket } from "./basket";
 import { buildAngelPatch, buildBunny, buildFlowerBed, buildPicnic, buildPuffCloud, buildPumpkinPatch, buildSwing } from "./outdoorProps";
+import { isNearDepth, setBackSpot } from "./hideSpots";
 import { PLAY_CLIPS } from "./playClips";
 import { musicGain as sleepMusicGain } from "./sleepRoutine";
 import { ladderById } from "../../../../lib/ladders";
@@ -546,7 +547,7 @@ function buildWorld(id: string){
  if(E.fireflies)W.ff=points(R.night?30:26,[0,44,-5,2,.6,3.4],E.fireflies,R.night?.45:.35);
  var treeN=0,palmN=0,bushN=0;var propBuilders: Record<string, (x: number, z: number, y?: any) => any>={lantern:lantern,windmill:function(x,z){windmill(x,z,1)},cottage:cottage,tree:function(x,z){return tree(x,z,x<3?undefined:orchardKind(R.theme||id,treeN++))},bushes:function(x,z){return bushes(x,z,bushKind(R.theme||id,bushN++))},cloud:function(x,z){cloud(x,z,1.5,6+Math.random()*3)},island:function(x,z,y){island(x,z,y,1.1)},tire:tire,drum:drum,shed:shed,cranebg:function(x,z){return attachCraneDrop(cranebg(x,z))},palm:function(x,z){return palm(x,z,x<3?undefined:palmKind(R.theme||id,palmN++))},umbrella:umbrella,sandcastle:function(x,z){return buildUpSandcastle(sandcastle(x,z))},pine:pine,snowman:function(x,z){return buildUpSnowman(snowman(x,z))},igloo:igloo,lamp:roomLamp,blocks:function(x,z){return add(buildBlockTower(x,z,blockMat))},books:bookStack,chair:kidChair,plant:potPlant,teddy:teddyBear,ball:playBall,cushions:cushionPile,bed:function(x,z){return add(buildBed(x,z))},guitar:function(x,z){return add(buildGuitarProp(x,z))},bubbles:function(x,z){return add(buildBubbleBottle(x,z))},dog:function(x,z){return add(buildDog(x,z))},xylophone:function(x,z){return add(buildXylophone(x,z))},cup:function(x,z){return add(buildCupTable(x,z))},toybox:function(x,z){return add(buildToyBox(x,z))},cleancart:function(x,z){return add(buildCleanCart(x,z))},hob:function(x,z){return add(buildHobProp(x,z))},puffcloud:function(x,z){return add(buildPuffCloud(x,z))},angelpatch:function(x,z){return add(buildAngelPatch(x,z))},flowerbed:function(x,z){return add(buildFlowerBed(x,z))},bunny:function(x,z){return add(buildBunny(x,z))},picnic:function(x,z){return add(buildPicnic(x,z))},swing:function(x,z){return add(buildSwing(x,z))},pumpkins:function(x,z){return add(buildPumpkinPatch(x,z))},basket:function(x,z){return add(buildBasket(x,z))}};
  R.props.forEach(function(p){var f=propBuilders[p[0]];if(!f)return;var n0=W.root.children.length;f(p[1],clearLane(p[2]),p[3]);PFX.register(p[0],W.root.children.slice(n0),p[3])});
- R.spots.forEach(function(d,i){var sp: any={d:d,i:i,got:!!S.found[d.k],hidden:d.t!=="speed",spark:makeSpark(),cover:null,bolts:0};spots.push(sp);if(sp.got){if(d.cover==="bed")furnishBed(d);return}
+ R.spots.forEach(function(d0,i){var d=setBackSpot(d0,CLEAR_Z);var sp: any={d:d,i:i,got:!!S.found[d.k],hidden:d.t!=="speed",spark:makeSpark(),cover:null,bolts:0};spots.push(sp);if(sp.got){if(d.cover==="bed")furnishBed(d);return}
   if(d.t==="junk")junkMachine(sp);else buildCover(sp,R.theme||id);
   var y=sp.spY!=null?sp.spY:(d.y||.8);sp.spark.position.set(d.x,y,sp.spZ!=null?sp.spZ:d.z);sp.spark.visible=!sp.hidden;add(sp.spark);if(sp.hidden){var gl=glowSprite("rgba(255,240,180,0.9)",.9);gl.position.set(d.x,d.t==="junk"?3.8:d.cover==="pipe"?2.7:d.cover==="windmill"?4.2:2.3,d.z);add(gl);sp.glint=gl}});
  buildMissions(R);
@@ -683,7 +684,7 @@ async function ability(st: string){if(P.busy||P.showcase)return;var sd=STATS[st]
    var ok=await new Promise<boolean>(function(res){var lastX=P.pos.x,lastF=FR,still=0,iv=setInterval(function(){if(P.target!==tgt){clearInterval(iv);res(P.target===null);return}if(FR===lastF)return;lastF=FR;if(Math.abs(P.pos.x-lastX)<.004){if(++still>45){clearInterval(iv);res(true)}}else{still=0;lastX=P.pos.x}},30)});if(!ok||Math.abs(best.d.x-P.pos.x)>range+.8)return}
   P.face=P.tface}
  P.busy=true;P.target=null;try{if(ABIL[st])await ABIL[st]!()}catch(e){console.error(e)}P.busy=false}
-function near(sp: any,r: number){return Math.abs(sp.d.x-P.pos.x)<r&&Math.abs(P.pos.z-((sp.d as any).z||0))<2}
+function near(sp: any,r: number){return Math.abs(sp.d.x-P.pos.x)<r&&isNearDepth(P.pos.z,(sp.d as any).z||0)}
 function reveal(sp: any){if(!sp.hidden||sp.got)return;sp.hidden=false;if(sp.glint){W.root.remove(sp.glint);sp.glint=null}var c=sp.cover,d=sp.d;
  if(d.cover==="bush"||d.cover==="pipe"||sp.fade){var s0=c.scale.clone();fx.push({t:0,d:.9,f:function(k){c.material.opacity=1-k;c.scale.set(s0.x*(1+k*.5),s0.y*(1+k*.5),1)},end:function(){W.root.remove(c)}});if(sp.bushes){sp.bushes.children.forEach(function(m: any){m.material=glowMat("#2fb3a6",.35)});linearize(sp.bushes)}}
  if(d.cover==="fog"){fx.push({t:0,d:1,f:function(k){c.children.forEach(function(f: any){f.material.opacity=.95*(1-k);f.position.y+=.01})},end:function(){W.root.remove(c)}})}
