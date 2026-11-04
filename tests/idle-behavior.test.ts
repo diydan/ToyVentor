@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 import {
   DANCE_FROM_TICK,
   IDLE_FILES,
+  IDLE_GAP_SECONDS,
   IDLE_IDS,
   IDLE_ODDS,
   IDLE_SECONDS,
@@ -15,6 +16,7 @@ import {
   chooseIdle,
   createGestureLibrary,
   createIdle,
+  idleGapSeconds,
   playSeconds,
   type IdleChoice,
   type IdleMix,
@@ -46,12 +48,47 @@ describe("how long a behaviour plays for", () => {
   });
 });
 
+describe("how long he stands still before an idle tick", () => {
+  /** The rules, as a function of the gap, so a broken one can be run through them. Dan: "idle animations can be min 30 to 60 seconds or even minutes". */
+  function failures(gap: (rng: () => number, chain: number) => number): string[] {
+    const bad = new Set<string>();
+    const rng = seeded(11);
+    const first: number[] = [], later: number[] = [];
+    for (let i = 0; i < 3000; i++) { first.push(gap(rng, 0)); later.push(gap(rng, 1 + (i % 5))); }
+    if (Math.min(...first) < 30) bad.add("the first tick of a spell is never sooner than 30 s");
+    if (Math.max(...first) > 60) bad.add("and never later than 60 s");
+    if (Math.min(...later) < 45) bad.add("later ticks are never sooner than 45 s");
+    if (Math.max(...later) > 120) bad.add("and never later than two minutes");
+    const spread = (a: number[]) => Math.max(...a) - Math.min(...a);
+    if (spread(first) < 20 || spread(later) < 50) bad.add("it is drawn each time: not the same wait over and over");
+    if (!(first.reduce((a, b) => a + b) / first.length < later.reduce((a, b) => a + b) / later.length)) bad.add("the first wait is the shorter one");
+    // the draw's two ends, and a draw that is out of range
+    if (gap(() => 0, 0) !== 30 || gap(() => 0, 1) !== 45) bad.add("the shortest wait is exactly the lower bound");
+    if (!(gap(() => 0.999999, 0) <= 60) || !(gap(() => 0.999999, 3) <= 120)) bad.add("the longest wait stays inside the upper bound");
+    const inRange = (v: number, lo: number, hi: number) => v >= lo && v <= hi;
+    if (!inRange(gap(() => 2, 0), 30, 60) || !inRange(gap(() => -1, 0), 30, 60) || !inRange(gap(() => NaN, 0), 30, 60)) bad.add("a draw outside 0 to 1, or not a number, cannot take it out of range");
+    return [...bad];
+  }
+  it("is 30 to 60 s before the first tick and 45 to 120 s before each one after it, drawn each time", () => {
+    expect(failures(idleGapSeconds)).toEqual([]);
+    expect(IDLE_GAP_SECONDS.first[0]).toBeGreaterThanOrEqual(30);
+  });
+  it("is caught when the wait is the old 6.5 s, a fixed number, too long, or the same for every tick", () => {
+    expect(failures(() => 6.5).length).toBeGreaterThan(0);
+    expect(failures(() => 45).length).toBeGreaterThan(0);
+    expect(failures((rng, chain) => 30 + rng() * 400 + chain).length).toBeGreaterThan(0);
+    expect(failures((rng) => 30 + rng() * 30).length).toBeGreaterThan(0); // the first tick's wait for all of them: later ticks come too soon
+    expect(failures((rng, chain) => (chain <= 0 ? 10 + rng() * 50 : 45 + rng() * 75)).length).toBeGreaterThan(0); // a first tick that can come after 10 s
+    expect(failures((rng, chain) => { const d = rng(); return chain <= 0 ? 30 + d * 30 : 45 + d * 75; }).length).toBeGreaterThan(0); // no guard: NaN and out-of-range draws get through
+  });
+});
+
 describe("what to do on an idle tick", () => {
   /** The rules, as a function of the chooser, so a broken one can be run through them. Returns what is wrong. */
   function failures(choose: (rng: () => number, chain: number, have: ReadonlyMap<string, number>) => IdleChoice | null): string[] {
     const bad = new Set<string>();
     const draws = (chain: number, have: ReadonlyMap<string, number>, n = 4000) => { const rng = seeded(7 + chain); const out: (IdleChoice | null)[] = []; for (let i = 0; i < n; i++) out.push(choose(rng, chain, have)); return out; };
-    for (const chain of [0, 1]) if (draws(chain, ALL).some((c) => c?.kind === "dance")) bad.add("no dance before the third tick of standing still");
+    for (let chain = 0; chain < DANCE_FROM_TICK; chain++) if (draws(chain, ALL).some((c) => c?.kind === "dance")) bad.add("no dance before the tick it is offered from");
     const later = draws(DANCE_FROM_TICK, ALL);
     const share = (k: string) => later.filter((c) => c?.kind === k).length / later.length;
     if (Math.abs(share("dance") - IDLE_ODDS.dance) > 0.04) bad.add("a dance about as often as the odds say");

@@ -1,6 +1,6 @@
 // What the game's character does on its own when nothing is going on, and on the title screen (Dan, 2026-11-04: "like idle waves and random dances if nothing is going on").
 //
-// The world already has an idle tick (`idleAct`, every 6.5 s of standing still: a hop, a shake, a nod, a spin, an arm raised). This adds three more things it can do, from the Mixamo
+// The world already has an idle tick (`idleAct`: a hop, a shake, a nod, a spin, an arm raised); it now comes after 30 to 60 s of standing still and then every 45 to 120 s (`idleGapSeconds`). This adds three more things it can do, from the Mixamo
 // clips the repo ships (public/kip/mixamo/baked/): a WAVE, a CLAP, and a DANCE. They are played the way the dance party plays a dance: as a beat source, on a clock of their own, so the
 // character turns to face the camera for them and back afterwards (the camera itself does not move), they fade in and out, and walking or a tap pulls the character out of them. They are posed with the bench's own joint
 // rotations (runtime/snapFlex.ts), so the elbows, wrists and knees bend as in the Kip demo.
@@ -28,8 +28,22 @@ export const IDLE_IDS: readonly string[] = [...IDLE_FILES.wave, ...IDLE_FILES.cl
 
 /** Of every idle tick: the share that becomes a dance (only once the character has been idle for a while), a wave, a clap. The rest is left to the old gestures. */
 export const IDLE_ODDS = { dance: 0.22, wave: 0.24, clap: 0.1 } as const;
-/** A dance is only offered from the Nth idle tick of one spell of standing still (the third: about twenty seconds in), so a wave comes first. */
-export const DANCE_FROM_TICK = 2;
+/** A dance is only offered from the Nth idle tick of one spell of standing still (the second: a minute and a half to three minutes in), so a wave or a clap comes first. */
+export const DANCE_FROM_TICK = 1;
+
+/**
+ * How long he stands still before an idle tick, seconds. Dan, 2026-11-04, after seeing the first version (a tick every 6.5 s): "maybe a little busy, idle animations can be min 30 to 60 seconds or
+ * even minutes". So the first tick of a spell of standing still comes after 30 to 60 s, and each one after it 45 to 120 s later (drawn each time, so it is never a metronome). This is the gap for
+ * EVERY idle gesture, the old hop, shake, nod and spin included, not only the new ones. Touching, moving or doing anything starts the count again.
+ */
+export const IDLE_GAP_SECONDS = { first: [30, 60], later: [45, 120] } as const;
+/** The gap before the next idle tick: `chain` is how many ticks this spell has had (0 before the first). */
+export function idleGapSeconds(rng: () => number, chain: number): number {
+  const [lo, hi] = chain <= 0 ? IDLE_GAP_SECONDS.first : IDLE_GAP_SECONDS.later;
+  const d = rng();
+  const r = Number.isFinite(d) ? Math.min(0.999999, Math.max(0, d)) : 0.5; // a draw that is not a number must not stop the ticks for good
+  return lo + r * (hi - lo);
+}
 /** How long a behaviour runs, seconds: a wave and a clap about three, a dance about seven, always whole loops of the clip so it ends where it began (so a bit over: the 4.7 s Hip Hop plays twice, 9.5 s); a clip at least as long as the cap (the 21 s swing) is cut at the cap. */
 export const IDLE_SECONDS = { wave: 3, clap: 3.5, dance: 7, danceCap: 9 } as const;
 
@@ -74,6 +88,8 @@ export interface GestureLibraryDeps {
   addClips(clips: Record<string, BakedClip>): void;
   /** Where the baked files are (default /kip/mixamo/baked/). */
   base?: string;
+  /** The ids it may load (default: the idle behaviours' own, IDLE_IDS): anything else is refused. The win cheers (winCheer.ts) use the same checks with their own list. */
+  allowed?: readonly string[];
 }
 export interface GestureLibrary {
   /** Fetch, check and convert these clips (default: all of IDLE_IDS) that are not loaded yet. Resolves the ids that are playable now; one that fails is simply left out. */
@@ -84,12 +100,13 @@ export interface GestureLibrary {
 
 export function createGestureLibrary(deps: GestureLibraryDeps): GestureLibrary {
   const base = (deps.base ?? "/kip/mixamo/baked/").replace(/\/*$/, "/");
+  const allowed = deps.allowed ?? IDLE_IDS;
   const loaded = new Map<string, number>();
   const loading = new Map<string, Promise<boolean>>();
   const groupOf = (id: string): string => (IDLE_FILES.dance.includes(id) ? "dance" : "react");
 
   function load(id: string): Promise<boolean> {
-    if (!ID.test(id) || !IDLE_IDS.includes(id)) return Promise.resolve(false);
+    if (!ID.test(id) || !allowed.includes(id)) return Promise.resolve(false);
     if (loaded.has(id)) return Promise.resolve(true);
     let p = loading.get(id);
     if (!p) {
@@ -116,7 +133,7 @@ export function createGestureLibrary(deps: GestureLibraryDeps): GestureLibrary {
   }
 
   return {
-    async ensure(ids = IDLE_IDS) {
+    async ensure(ids = allowed) {
       const r = await Promise.all(ids.map(async (id) => [id, await load(id)] as const));
       return r.filter(([, ok]) => ok).map(([id]) => id);
     },

@@ -13,7 +13,8 @@ import { applyLightRig, followHero, setDusk } from "./lighting";
 import { backdropFor, createBackdrop, disposeArtCache, type ArtCache } from "./backdrop";
 import { MixamoDriver, loadMixamoBank, type BakedClip, type BeatSource, type MixAction } from "./mixamo";
 import { PROCEDURAL_CLIPS } from "./proceduralClips";
-import { IDLE_IDS, IDLE_LABEL, SAMBA_CLIP, createGestureLibrary, createIdle } from "./idleBehavior";
+import { IDLE_IDS, IDLE_LABEL, SAMBA_CLIP, createGestureLibrary, createIdle, idleGapSeconds } from "./idleBehavior";
+import { createCheers } from "./winCheer";
 import { SPOT_COUNT, codeToSeed, composeLevel } from "./levelKit";
 import * as MPD from "./missionData";
 import * as CUD from "./customizerData";
@@ -422,6 +423,7 @@ function sleepAmbient(l: number){setDusk(l);PFX.lightsOut(l>.45);if(MUS.on&&!pau
 var SLEEPH=createSleepHook({root:function(){return W.root},eater:function(){return S.type==="robot"?"robot":S.type==="vehicle"?"vehicle":"character"},position:function(){return{x:P.pos.x,y:P.hop||0,z:P.pos.z}},targetX:function(){return P.target?P.target.x:null},walkTo:function(x: number,z: number){setTarget(x,z)},stopWalk:function(){P.target=null},setPosition:function(x: number,y: number,z: number){P.pos.x=x;P.pos.z=z;P.hop=y},lieDown:function(){P.face=P.tface=0;if(mix&&!reduce)mix.holdAction("sleep")},getUp:function(){if(mix&&!reduce){mix.releaseHold();mix.trigger("yawn")}},allowed:function(){return !paused&&!P.showcase&&!P.mDrive&&!P.busy&&!ED.on&&!ACTS.busy},ambient:sleepAmbient,phase:function(p: string){P.busy=p!=="awake"&&p!=="walking";if(p==="climbing"){P.target=null;P.face=P.tface=0}if(p==="awake"){P.hop=0;if(mix)mix.releaseHold()}},refuse:function(){TOYFX.wobble();TOYFX.tone(300,0,.16,"sawtooth",.05,200)}});
 /* What Kip holds while it plays (book, guitar, wand) and the soap bubbles it blows (a tap pops one): heldItems.ts and bubbles.ts. */
 var HELD=createHeld();
+/* What Kip picked up with the camera in the Kip bench ("tv:kip-picked-up", kip-pickup.js): the game's Kip holds it too (pickupHeld.ts). It wraps HELD, so it steps aside while an act has Kip's hands. */
 var PICK=createPickupHeld({held:HELD,rig:function(){return P.rig&&P.model?{model:P.model,armR:P.rig.arms&&P.rig.arms[1],armL:P.rig.arms&&P.rig.arms[0]}:null},playerRoot:function(){return P.root},host:hostEl,toast:function(s: string){toast(s)},reduced:function(){return reduce}});
 winOn("tv:kip-picked-up",function(e: any){var info=parsePickup(e&&e.detail);if(info)void PICK.pick(info)});
 var BUBBLES=createBubbles({root:function(){return W.root},tone:function(f: number,dl: number,du: number,ty: OscillatorType,v: number,sl?: number){tone(f,dl,du,ty,v,sl)}});
@@ -560,13 +562,14 @@ var mix: MixamoDriver|null=null,mixLoading=false;
 /* What the character does on its own (runtime/idleBehavior.ts; Dan, 2026-11-04: "idle waves and random dances if nothing is going on"): a wave, a clap or a dance on an idle tick, and a dance show on the title.
    The clips are the Mixamo ones the repo ships, posed with the bench's own joint rotations. The party's dance always wins: a behaviour never stops a dance that is not its own. */
 var GESTURES=createGestureLibrary({fetchImpl:(function(){return fetch.apply(window,arguments as any)}) as typeof fetch,addClips:function(c: Record<string,BakedClip>){if(mix)mix.addClips(c)}});
+var CHEERS=createCheers({fetchImpl:(function(){return fetch.apply(window,arguments as any)}) as typeof fetch,addClips:function(c: Record<string,BakedClip>){if(mix)mix.addClips(c)}});
 var IDLEB=createIdle({mix:function(){return mix},ok:idleOk,begin:function(){if(P.danceBack==null){P.danceBack=P.tface;P.tface=-Math.PI/2}},rng:Math.random,now:function(){return performance.now()/1000},durations:function(){var m=new Map(GESTURES.durations());if(mix&&mix.hasClip(SAMBA_CLIP))m.set(SAMBA_CLIP,4.4);return m}});
 function idleOk(){return !disposed&&!reduce&&S.type==="character"&&!HELD.item&&!!P.rig&&P.rig.type==="character"&&!!mix&&mix.canDrive(P.rig)&&!P.showcase&&!P.busy&&!P.mDrive&&!P.target&&P.speed<.1&&!ED.on&&!paused&&!hostEl.classList.contains("building")}
-function startGestures(){GESTURES.ensure(["react_wave","dance_silly","dance_hiphop","react_clap","dance_locking","dance_chicken","dance_swing"]).catch(function(){});if(P.title&&!reduce)IDLEB.startShow()}
+function startGestures(){CHEERS.load().catch(function(){});GESTURES.ensure(["react_wave","dance_silly","dance_hiphop","react_clap","dance_locking","dance_chicken","dance_swing"]).catch(function(){});if(P.title&&!reduce)IDLEB.startShow()}
 void IDLE_IDS;
 /* The jump and the shove are the Mixamo Jump and Push clips (gameMoves.ts), loaded once the driver exists; until then, or if they fail, the old procedural hop and lunge play. */
 var MOVES={shoveContact:.6,shoveDur:2.2};
-function mixGo(a: MixAction,o?: {lift?: number;fade?: number;rate?: number;until?: number}){return !!(mix&&!reduce&&P.rig&&mix.canDrive(P.rig)&&mix.trigger(a,o))}
+function mixGo(a: MixAction,o?: {lift?: number;fade?: number;rate?: number;until?: number}){if(a==="cheer")CHEERS.roll();return !!(mix&&!reduce&&P.rig&&mix.canDrive(P.rig)&&mix.trigger(a,o))}
 var P: Record<string, any>={pos:new T.Vector3(2,0,0),face:0,tface:0,speed:0,phase:0,busy:false,target:null,spin:0,lunge:0,hop:0,root:new T.Group(),model:null,rig:null,blinkT:2,dropT:1,showcase:false};
 scene.add(P.root);
 function buildPlayer(drop: string | null){if(P.stlToken)P.stlToken.cancelled=true;if(P.model)P.root.remove(P.model);P.rig=buildToy(S.type,cur() as any,S.col);P.model=new T.Group();P.model.add(P.rig.g);P.root.add(P.model);P.dropSlot=null;
@@ -832,7 +835,7 @@ if(!P.showcase&&!P.busy&&!P.mDrive){tidySpots.forEach(function(ts){if(ts.done)re
  markT+=dt;marker.material.opacity=Math.max(0,.8-markT*1.2);marker.scale.setScalar(1+markT*.6);
  if(!P.showcase){
   if(P.speed>1&&P.hop<.01){P.dustT=(P.dustT||0)-dt;if(P.dustT<0){P.dustT=.13;puff()}}
-  if(P.speed<.1&&!P.busy&&!P.target){P.idleT=(P.idleT||0)+dt;if(P.idleT>6.5){P.idleT=0;if(!reduce&&!(mix&&mix.busyAction))idleAct()}}else{P.idleT=0;P.idleN=0}
+  if(P.speed<.1&&!P.busy&&!P.target){P.idleT=(P.idleT||0)+dt;if(P.idleT>(P.idleGap||(P.idleGap=idleGapSeconds(Math.random,P.idleN||0)))){P.idleT=0;P.idleGap=0;if(!reduce&&!(mix&&mix.busyAction))idleAct()}}else{P.idleT=0;P.idleN=0;P.idleGap=0}
   if(P.joyPending&&!P.busy){P.joyPending=false;if(!reduce)joy()}
   var dirNow=Math.cos(P.tface)>0?1:-1;if(P.lastDir&&dirNow!==P.lastDir&&!P.busy&&!reduce)fx.push({t:0,d:.32,f:function(k){if(!P.busy)P.hop=Math.max(P.hop,.2*Math.sin(Math.PI*k))},end:function(){if(!P.busy)P.hop=0}});P.lastDir=dirNow;
   if(S.type!=="vehicle"&&P.speed>.6&&P.hop<.01){var sgn=Math.sin(P.phase)>0?1:-1;if(sgn!==P.lastStep){P.lastStep=sgn;if(sound&&AC){if(S.type==="robot")tone(210,0,.05,"square",.025,150);else tone(300,0,.06,"sine",.045,180)}}}
