@@ -12,6 +12,8 @@ import {
   toCreasedNormals,
 } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import type { RigColors, RigSel, ToyRig } from "./playerRig";
+import { FACEPLATE_HOLDER, KID_CROWN_Y, kipBodyColors } from "./kipLook";
+import { buildFaceDecalGeometry, kipFaceMaterial } from "./kipFacePlate";
 import { SNAP_ARM_FLEX, SNAP_CUFF_Q, SNAP_LEG_FLEX, makeFlexLimb, makeHandFollow, type SnapArmHandles, type SnapLegHandles, type SnapRigHandles } from "./snapFlex";
 import {
   GLASS,
@@ -389,6 +391,9 @@ export function resolveStlHeroRecipe(
     const hatUrl = resolveCharacterHatUrl(sel.hat);
     if (hatUrl) {
       parts.push({ key: "hat", url: hatUrl, creaseDeg: 34, required: false });
+    } else if (headSpec.mode === "human") {
+      // The demo's mandatory Spark crown buds (the two orange studs on top of a human head); a hat sits on them instead.
+      parts.push({ key: "crownBuds", url: "/kip/partspec/toyventor_crown_buds_2x1.stl", creaseDeg: 34, required: false });
     }
     if (sel.ears === "horns") {
       parts.push({
@@ -669,6 +674,14 @@ function applyCharacterStlRig(
   const skinMat = plastic(col.skin || "#f2b98c", { roughness: 0.55, clearcoat: 0.12 });
   const sparkMat = plastic("#ff6b4a", { roughness: 0.34, clearcoat: 0.42 });
 
+  // The human Kip (the Figure Pal head, the game's stock toy) is dressed the way the Kip demo dresses him (kipLook.ts): bare skin on the arms (short sleeves), hands and neck, the shirt
+  // on the torso, the pants on the legs. The other heads keep the old cream arms and hands.
+  const headSpec = resolveCharacterHeadSpec(sel);
+  const human = headSpec.mode === "human";
+  const body = kipBodyColors(col);
+  const limbMat = human ? plastic(body.arms, { roughness: 0.55, clearcoat: 0.12 }) : shellMat;
+  const neckMat = human ? plastic(body.neck, { roughness: 0.55, clearcoat: 0.12 }) : sparkMat;
+
   const baseSlot = rig.slots.base ?? new T.Group();
   // Stage forward is +X; CAD forward is +Z -> rotate +PI/2 on Y, scaled to stage units.
   const kipFrame = new T.Group();
@@ -696,7 +709,7 @@ function applyCharacterStlRig(
     // The Snap fake rigging (runtime/snapFlex.ts, ported from the Kip bench): the one-piece sleeve bends at the elbow when a clip says so, and the hand rides the end of the
     // bent sleeve. At rest nothing is bent, so this is the rigid arm it always was. The flex mesh carries its own upright pose and placement (no rotation, no offset here).
     const flexArm = makeFlexLimb(geos.snapArm!, SNAP_ARM_FLEX.offsetY, SNAP_ARM_FLEX.midY, SNAP_ARM_FLEX.midZ, SNAP_ARM_FLEX.band);
-    const armMesh = new T.Mesh(flexArm.geometry, shellMat);
+    const armMesh = new T.Mesh(flexArm.geometry, limbMat);
     armMesh.castShadow = true;
     armMesh.receiveShadow = true;
     armCad.add(armMesh);
@@ -714,7 +727,7 @@ function applyCharacterStlRig(
     const handWrap = new T.Group();
     handWrap.position.y = -0.8;
     handWrap.rotation.z = Math.PI;
-    handWrap.add(scadMesh(side === 1 ? geos.handL! : geos.handR!, shellMat));
+    handWrap.add(scadMesh(side === 1 ? geos.handL! : geos.handR!, limbMat));
     handRest.add(handWrap);
     // Between the holder and the sleeve: nothing at rest. When a clip bends the elbow the holder goes with the hand (so what Kip holds goes with it) and this undoes that for the sleeve.
     const handCounter = new T.Group();
@@ -780,12 +793,11 @@ function applyCharacterStlRig(
   rig.head = headPivot;
 
   if (geos.neckTurret) {
-    const ntMesh = scadMesh(geos.neckTurret, sparkMat);
+    const ntMesh = scadMesh(geos.neckTurret, neckMat);
     ntMesh.position.y = -7.4;
     headPivot.add(ntMesh);
   }
 
-  const headSpec = resolveCharacterHeadSpec(sel);
   const crownHeightMm = 32.0;
   const headMat =
     headSpec.mode === "human"
@@ -795,11 +807,37 @@ function applyCharacterStlRig(
         : c1Mat;
   headPivot.add(scadMesh(geos.headMain!, headMat));
   if (geos.faceplate) {
+    // The inset plate, seated and drawn the way the Kip demo does it (kipLook.ts: its holder position, the plate turned half a turn, the face on a plane that hugs the plate).
+    // Before 2026-11-04 it sat at a fixed (0, 14.3, 10.2), about 1 mm low and 1.6 mm proud of the pocket, and had no face at all.
     const fpHolder = new T.Group();
-    fpHolder.position.set(0, 14.3, 10.2);
-    fpHolder.rotation.y = Math.PI;
-    fpHolder.add(scadMesh(geos.faceplate, skinMat));
+    fpHolder.position.set(0, FACEPLATE_HOLDER.y, FACEPLATE_HOLDER.z);
+    const fpOrient = new T.Group();
+    fpOrient.rotation.y = Math.PI;
+    fpOrient.add(scadMesh(geos.faceplate, skinMat));
+    fpHolder.add(fpOrient);
+    const faceMat = kipFaceMaterial();
+    if (faceMat) {
+      const decal = new T.Mesh(buildFaceDecalGeometry(geos.faceplate), faceMat);
+      decal.renderOrder = 2;
+      decal.userData.kipFace = true;
+      fpHolder.add(decal);
+    }
     headPivot.add(fpHolder);
+  }
+
+  // The two orange crown studs of the demo's human head (kip-vehicles-wardrobe.js `altCrownBuds`: spark colour, a hair larger than the head's own studs)
+  if (geos.crownBuds && human) {
+    // The overlay is only 0.6 % larger than the head's own studs (0.03 mm out), which the game's depth buffer cannot tell apart: the skin studs won and the orange never showed.
+    // A polygon offset pulls the overlay toward the camera so the orange wins, the way it does in the demo.
+    const budsMat = sparkMat.clone();
+    budsMat.polygonOffset = true;
+    budsMat.polygonOffsetFactor = -2;
+    budsMat.polygonOffsetUnits = -2;
+    const buds = scadMesh(geos.crownBuds, budsMat);
+    buds.scale.set(1.006, 1.01, 1.006);
+    buds.position.y = KID_CROWN_Y;   // the head's stud plane (the demo sets altCrownBuds.position.y = headCrownY)
+    buds.userData.kipBuds = true;
+    headPivot.add(buds);
   }
 
   // Hat / Crown
