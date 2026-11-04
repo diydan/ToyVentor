@@ -283,7 +283,7 @@ Difficulty: too easy / just right / too hard. Explains back: ask "why did that w
 
 ## 8. Not covered here
 
-- **Physical print tests** (coupons, balloon jet, clutch, friction): [motion-print-test-runsheet.md](../specs/motion-print-test-runsheet.md) and `parts-engineering-spec.md` section 11.1. They gate geometry decisions, not the app.
+- **Physical print tests** (coupons, balloon jet, clutch, friction): [motion-print-test-runsheet.md](../specs/motion-print-test-runsheet.md) and `motion-stage-options-spec.md` section 10. They gate geometry decisions, not the app.
 - **Print-gate phase 4 and the per-gate switchboard, and compliance:** deferred until after the hackathon ([workshop-print-gate-spec.md](../specs/workshop-print-gate-spec.md), 7b and 7c).
 - **Hosted-model terms for under-18 users:** a decision record ([0008](../decisions/0008-meta-models-and-under-18-users.md)), not a test. No public privacy claim until it is settled.
 - **Worker against the real D1 and real model keys:** only part 4 covers it.

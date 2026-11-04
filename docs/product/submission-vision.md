@@ -63,17 +63,23 @@ October 9, 2026, section 10.1) say end users must be 18 or older and that
 products built on it must not be targeted at people under 18. So this demo uses
 the hosted API with adults operating it, and the route for children is a
 self-hosted model: the same feature on Muse Glimmer 30B, run on our own
-infrastructure. On 40 test wishes Glimmer returned 33 printable parts out of 37
-that should make one, against 36 of 37 on Spark; four calls got no answer, and
-the cause is not yet known. One setting per capability picks hosted, self-hosted,
+infrastructure. On 40 test wishes, run three times, Glimmer returned 33, 37 and
+36 printable parts out of the 37 that should make one, against 36 of 37 on Spark.
+In the first run, three of the four failures were Modal's proxy dropping the
+connection (the model server's own log shows no error) and one was a timeout;
+the last run had one timeout, most likely a slow generation under load. One
+setting per capability picks hosted, self-hosted,
 or off, and "self-hosted" never falls back to hosted.
 
 Not claimed: that ToyVentor is assessed under COPPA, the UK Children's Code, or
 GDPR for children; that Glimmer is the default or in production; that the
-safety checks have had a children's red-team (the unsafe-word list is
-English-only); or that any grown-up check stands in front of file downloads in
+safety checks have had a children's red-team (the unsafe-word lists cover
+seven languages, but no native speaker has read the six translations); or that any grown-up check stands in front of file downloads in
 this build. Photos of toys reach Meta's hosted API with no grown-up check in
-front of the scan, and the selfie cloud route is off.
+front of the scan. The optional Smart face in the Kip selfie is switched on for
+this demo: after a consent screen and a grown-up check, it sends one downscaled
+photo of a face to Meta's hosted API. That is another reason the demo is
+adult-operated, and the route for children keeps it off.
 
 ## Business sketch
 

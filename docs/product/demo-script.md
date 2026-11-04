@@ -49,7 +49,9 @@ Say once, out loud: this demo uses Meta's hosted model with adults operating it,
 because Meta's hosted terms are for adults; for children the same feature runs
 on a self-hosted model. Scan a toy, not a person: the photo goes to Meta's
 hosted model through our Worker, and this build has no grown-up check in front
-of the scan.
+of the scan. The selfie's optional Smart face is on for the demo: it sends one
+downscaled photo of a face to the same hosted model after a consent screen and
+a grown-up check, so use an adult's face and say so.
 
 
 ## Where this lives

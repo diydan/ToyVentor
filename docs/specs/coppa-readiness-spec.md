@@ -50,6 +50,7 @@ The grown-up check in the Grown-Ups sheet is **not** consent. A hold plus a math
 - `/api/scan` and `/api/skin`: grown-up proof required, or off, in the child build. Self-hosting SAM is the longer fix (0008 lists the candidate).
 - Toy name: stop syncing it, or run it through the same filter as the Forge names.
 - Cloudflare: the rate-limit rule on `/api/forge/make` and the rest of `deploy-checklist.md`; read the log and trace retention and decide whether traces stay on.
+- `SELFIE_CLOUD`: on for the adult-operated Nov 4 demo (Dan, 2026-11-04). Delete the secret, or set it to anything but `on`, before any child uses a deployed build.
 - Name the owner (D2).
 - Gate: one test per item (for example, a scan request without a proof header returns the gate-required status in the child build).
 
@@ -70,7 +71,7 @@ The grown-up check in the Grown-Ups sheet is **not** consent. A hold plus a math
 
 ## 4. What the entry may say
 
-- Today: "ToyVentor is built for children, so every user is treated as one. It has no accounts, stores no wish text, and keeps the selfie route off. We have not completed a COPPA assessment: there is no privacy notice yet, and toy photos reach a hosted model without a grown-up check."
+- Today: "ToyVentor is built for children, so every user is treated as one. It has no accounts, stores no wish text, and puts a consent screen and a grown-up check in front of the one route that sends a face (the optional Smart face, on for the adult-operated demo only). We have not completed a COPPA assessment: there is no privacy notice yet, and toy photos reach a hosted model without a grown-up check."
 - After P2: add what is true then (the notice, the delete control).
 - After P4 only: any claim of compliance. Never "certified", "approved" or "safe".
 
