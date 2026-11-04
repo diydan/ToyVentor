@@ -53,6 +53,12 @@ export const makeRequiresProof = (env: ForgeMakeEnv): boolean => env.FORGE_MAKE_
 const MAX_MAKE_BODY_BYTES = 12_000;
 /** Spark took 14 to 36 s for a recipe plus names in the eval (p95 36 s); the daemon's first look then takes about 40 ms. */
 const MODEL_TIMEOUT_MS = 55_000;
+const MODEL_TIMEOUT_SELF_MS = 80_000;
+/**
+ * Our own model (Glimmer on Modal) shares one GPU between its two slots, so under load a long generation runs at about a third of its solo speed: in the 2026-11-04 run 3, one of 37 wishes
+ * outlasted 55 s and fell back to a ready-made part, while a child alone waits 10 to 14 s. Dan (2026-11-04): wait longer instead. The panel already says "this can take a minute", and a slow
+ * generation that finishes is better than a fallback. CAUTION, not yet checked: a request that takes over about 100 s may meet Cloudflare's edge timeout once this is deployed (the model wait,
+ * up to 80 s, plus the daemon's first look, normally under a second but up to 37 CPU-seconds for a monkey head). The hosted API keeps 55 s.
 /**
  * How long the daemon gets for the first look. The shared 8 s (UPSTREAM_PREVIEW_TIMEOUT_MS) suits a mesh that is already built; for a recipe the daemon
  * builds the part first, and a head with big side ears takes 37 CPU-seconds (a monkey, measured 2026-11-03), so 8 s turned those wishes into "unavailable".
@@ -156,7 +162,7 @@ export async function handleForgeMake(request: Request, env: ForgeMakeEnv): Prom
   }
 
   let retried = false; // our own model was asked a second time (worker/modelBackend.ts askText): said in the log line, so a retry can be counted
-  const asked = await askText(backend, buildMakePrompt({ text, ...(slot ? { slot } : {}), ...(previous ? { previous, feedback } : {}) }), { timeoutMs: MODEL_TIMEOUT_MS, onRetry: () => { retried = true; } });
+  const asked = await askText(backend, buildMakePrompt({ text, ...(slot ? { slot } : {}), ...(previous ? { previous, feedback } : {}) }), { timeoutMs: backend.mode === "self" ? MODEL_TIMEOUT_SELF_MS : MODEL_TIMEOUT_MS, onRetry: () => { retried = true; } });
   if (!asked.ok) {
     logEvent("forge_make", asked.status === null ? "model_failed" : "model_status", { ...(asked.status !== null ? { httpStatus: asked.status } : {}), backend: backend.mode, ...(retried ? { retried: true } : {}) }); // error detail stays on the server
     return reply(502, { ok: false, status: "unavailable", attempt });

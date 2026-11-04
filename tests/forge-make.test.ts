@@ -191,6 +191,21 @@ describe("POST /api/forge/make", () => {
       expect(seen.modelCalls[1]!.body).not.toHaveProperty("reasoning");
     });
 
+    it("our own model is given 80 s and the hosted API 55 s, so a slow Glimmer answer finishes instead of falling back", async () => {
+      const spy = vi.spyOn(AbortSignal, "timeout");
+      await make({ text: "a wizard hat" }, headers, { ...env, ...SELF });
+      const selfMs = spy.mock.calls[0]?.[0] as number;
+      spy.mockClear();
+      resetForgeRateLimit();
+      await make({ text: "a wizard hat" });
+      const hostedMs = spy.mock.calls[0]?.[0] as number;
+      expect(selfMs).toBeGreaterThan(79_000);
+      expect(selfMs).toBeLessThanOrEqual(80_000);
+      expect(hostedMs).toBeGreaterThan(54_000);
+      expect(hostedMs).toBeLessThanOrEqual(55_000);
+      spy.mockRestore();
+    });
+
     it("a retried call shows in the log line, and a call that was not retried does not", async () => {
       let n = 0;
       model = () => (++n === 1 ? json({ error: "proxy dropped" }, 500) : json({ output_text: JSON.stringify({ recipe: recipeOf(), names: NAMES }) }));

@@ -449,6 +449,20 @@ Goal: submission in. No code after 6 PM ET (buffer for form, video, screenshots)
 - **Demo-day settings.** `PARENT_GATE_SECRET` is now in `.dev.vars` (generated in the shell; I never saw it; `.dev.vars` is git-ignored and owner-only). The Glimmer Modal script now defaults to `min_containers = 1` (about $47 a day while deployed): **it takes effect only on the next `modal deploy`**, which I did not run because a third 40-wish run was using the live container; `GLIMMER_MIN_CONTAINERS=0 modal deploy ...` goes back to scale-to-zero afterwards. The demo itself still records on the hosted model, so the always-warm container is for showing Glimmer, not for the recording.
 - **Run 3 of the 40 wishes is in progress** (it started before the change, so it still refuses "a scary monster head" as intake): results in the next entry.
 
+### Status — Wed Nov 4 ~01:35 CET (Glimmer run 3; witnessed; uncommitted)
+
+- **Run 3 of the 40 wishes: 36 of 37 printable (97%), one no-answer.** The no-answer is "a funny hat", a 55 s timeout. Median 28.9 s, p90 57 s, max 100.9 s (three wishes needed repair calls: a dragon head, "something cool", the Mickey ears). Together with run 2: 73 of 74 printable (98.6%). Run 1 was 33 of 37.
+- **The retry never fired:** no log line says `retried`, in 80 calls over two runs, and no HTTP 5xx reached the Worker (run 1 had three in 37). I cannot say what caused the three in run 1 (run 1 was the first heavy use after the deploy, and Modal started a second container during it); the retry is tested but untested in the wild.
+- **Against the bar** (95% or better on two runs, no endpoint errors): the percentage passes both times (100%, 97%), the zero-errors part fails by one timeout. That timeout is most likely a capacity effect: my harness keeps two requests in flight on one GPU, so each runs at about a third of its solo speed. One child alone waits 10 to 14 s for the model.
+- **Not ready as the child-facing default,** and not because of the numbers: the native read of the word lists, the risk assessment, the "AI-made" label and a classifier are all open. Nov 4 stays on the hosted model.
+- **Decisions waiting on Dan:** whether the make route should wait longer for our own model (80 s instead of 55 s, so a slow generation finishes instead of falling back to a ready-made part); deploying the warm-container setting (`modal deploy`, about $47 a day); the native read; the hackathon terms.
+
+### Status — Wed Nov 4 ~01:45 CET (Dan's answers on run 3; the hackathon rules checked; witnessed; uncommitted)
+
+- **Dan: yes to a longer wait, no to a warm container.** The make route now gives our own model 80 s (hosted stays 55 s), with a test that fails if the two are swapped; the one timeout in run 3 was a long generation outlasting 55 s while two requests shared the GPU. And because "we want to keep cheaper for now", the Glimmer script's default is back to scale-to-zero (`min_containers` 0): the commit `c6e8798` had made it 1 (about $47 a day once deployed), nothing was ever deployed with it, and this reverts it before anyone does. `GLIMMER_MIN_CONTAINERS=1 modal deploy ...` keeps one warm for a live demo.
+- **The hackathon rules, checked from outside:** Meta's event page and the organizer's page say nothing about age or children's products and nothing that changes the Model API terms; the Official Rules were published to selected participants before Oct 26 and are not readable publicly (the organizer's waiver page loads its text with JavaScript). So whether the rules change Meta's 18+ clause is unknown until the rules Dan accepted are read; the plan (hosted demo with adults operating it, Glimmer for children) is unchanged.
+- **One stale line in the submission text:** `docs/product/submission-vision.md` still says Glimmer returned 33 of 37 with "four calls got no answer, and the cause is not yet known". That was run 1. The cause is known (the proxy), and runs 2 and 3 were 37 of 37 and 36 of 37. Not edited: it is the submission narrative, Dan's call.
+
 ## Later — time of day and weather (noted Tue Nov 3)
 
 The map's day and night looks are built on one clock (`timeOfDay.ts`); the 3D
