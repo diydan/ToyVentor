@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import "../../../nav-strip.css";
 
 interface NavStripProps {
@@ -5,8 +6,11 @@ interface NavStripProps {
   onHome: () => void;
   /** The Map: places to play. */
   onMap: () => void;
-  /** Settings: the Grown-ups sheet (it asks for the hold itself). */
-  onSettings: () => void;
+  /**
+   * Settings, as a ready-made button: the grown-ups' gear (GameCanvas owns its 1.2 s hold, the parent-controls dot and its labels). It sits in the third cell and takes the
+   * strip's button look (`tv-navstrip-btn`), so there is one Settings in the drawer, not a button and a gear.
+   */
+  settings: ReactNode;
   disabled?: boolean;
 }
 
@@ -14,7 +18,7 @@ interface NavStripProps {
  * Home, Map and Settings: the three ways out of whatever the child is doing, as the first thing in the drawer under the Kip button. Big, labelled, always the same
  * three. Everything else in the drawer (Build, Workshop, Create, Pack, the world list, language, ...) stays below them.
  */
-export function NavStrip({ onHome, onMap, onSettings, disabled = false }: NavStripProps) {
+export function NavStrip({ onHome, onMap, settings, disabled = false }: NavStripProps) {
   return (
     <nav className="tv-navstrip" aria-label="Home, Map and Settings">
       <button type="button" className="tv-navstrip-btn" data-nav="home" disabled={disabled} onClick={onHome}>
@@ -29,12 +33,7 @@ export function NavStrip({ onHome, onMap, onSettings, disabled = false }: NavStr
         </span>
         <span>Map</span>
       </button>
-      <button type="button" className="tv-navstrip-btn" data-nav="settings" disabled={disabled} onClick={onSettings}>
-        <span className="tv-navstrip-glyph" aria-hidden="true">
-          ⚙️
-        </span>
-        <span>Settings</span>
-      </button>
+      {settings}
     </nav>
   );
 }

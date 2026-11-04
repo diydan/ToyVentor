@@ -25,7 +25,7 @@ describe("the one button and its drawer (GameCanvas.tsx)", () => {
     expect(canvas).toContain('if (t && !t.classList.contains("tv-ctl-gear")) window.setTimeout(() => setMenuOpen(false), 0);');
     for (const label of ["Build", "Create", "Pack"]) expect(canvas).toContain(`${label}\n`);
     expect(canvas).toContain("<WorkshopLauncher");
-    expect(canvas).toContain('className="tv-ctl tv-ctl-gear"');
+    expect(canvas).toContain('className="tv-ctl tv-ctl-gear tv-navstrip-btn"');
   });
   it("the menu is open inside the drawer, and it gained a Worlds entry (the world pill is gone); the Map is one of the strip's three buttons at the top, not listed twice", () => {
     expect(canvas).toContain("{(moreOpen || menuOpen) && (");
@@ -56,8 +56,8 @@ describe("where everything sits (game-hud.css)", () => {
     expect(d).toContain("visibility: hidden;");
     expect(rule('.tv-host .tv-dock[data-open="true"]')).toContain("visibility: visible;");
   });
-  it("the world pill and the Map button are gone from the screen (the drawer has both)", () => {
-    expect(rule(".tv-host .tv-map-fab")).toContain("display: none;");
+  it("the world pill and the big Map button are gone from the screen (the drawer has both; the Map button is not in the markup at all any more)", () => {
+    expect(canvas).not.toContain("tv-map-fab");
     expect(rule(".tv-host .tv-worlds-btn")).toContain("display: none;");
   });
   it("every sheet and every full-screen modal is a card at the left edge, never a bottom sheet", () => {

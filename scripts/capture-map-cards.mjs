@@ -67,7 +67,7 @@ const hide = (panel) => `(() => {
   if (!s) { s = document.createElement("style"); s.id = "cap-hide"; document.head.appendChild(s); }
   s.textContent = ${JSON.stringify(
     panel
-      ? '.tv-map-fab, .tv-worlds-compact, .tv-dock, .tv-topbar, [class*="toast"] { visibility: hidden !important; }'
+      ? '.tv-kip-fab, .tv-worlds-compact, .tv-dock, .tv-topbar, [class*="toast"] { visibility: hidden !important; }'
       : '.tv-stage > :not(.tv-stage-canvas-host), .tv-stage-canvas-host > :not(canvas), [class*="toast"], [role="status"], .tv-dock, .tv-topbar { visibility: hidden !important; }',
   )};
 })()`;
@@ -87,7 +87,7 @@ try {
     await page.ev(`localStorage.clear(); localStorage.setItem("tvTimeOfDay:v1", "day"); localStorage.setItem("toyforge:progression:v1", JSON.stringify({version:1,totalXp:0,missionStars:{},daily:{},unlockedIds:[],sandboxUnlockAll:true,ageBand:${band}}))`);
     await page.send("Page.navigate", { url: `http://localhost:${PORT}/?title=0` });
     // Wait for the stage (the first load transforms every module, so a fixed sleep is not enough).
-    for (let i = 0; i < 90 && !(await page.ev(`!!document.querySelector(".tv-map-fab")`)); i++) await sleep(500);
+    for (let i = 0; i < 90 && !(await page.ev(`!!document.querySelector('.tv-navstrip-btn[data-nav=map]')`)); i++) await sleep(500);
     await sleep(2500);
     await metrics();
   };
@@ -95,10 +95,10 @@ try {
   for (const card of cards) {
     try {
       await load(card.band);
-      await page.ev(`document.querySelector(".tv-map-fab")?.click()`); await sleep(1200);
+      await page.ev(`document.querySelector('.tv-navstrip-btn[data-nav=map]')?.click()`); await sleep(1200);
       const tapped = await page.ev(`(() => { const b = document.querySelector('.tv-map-card[data-id="${card.id}"] .tv-map-card-btn'); if (!b) return false; b.scrollIntoView({inline:"center"}); b.click(); return true; })()`);
       if (!tapped) {
-        const seen = await page.ev(`JSON.stringify({fab: !!document.querySelector(".tv-map-fab"), trail: !!document.querySelector(".tv-trail-full"), cards: [...document.querySelectorAll(".tv-map-card")].map((e) => e.dataset.id), title: !!document.querySelector("#title:not([hidden])"), body: document.body.innerText.slice(0, 80)})`);
+        const seen = await page.ev(`JSON.stringify({navMap: !!document.querySelector('.tv-navstrip-btn[data-nav=map]'), trail: !!document.querySelector(".tv-trail-full"), cards: [...document.querySelectorAll(".tv-map-card")].map((e) => e.dataset.id), title: !!document.querySelector("#title:not([hidden])"), body: document.body.innerText.slice(0, 80)})`);
         throw new Error(`card not on the Map (${seen})`);
       }
       await sleep(1200);

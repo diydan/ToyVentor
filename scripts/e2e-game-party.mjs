@@ -387,6 +387,10 @@ async function main() {
     await cdp.ev(`document.querySelector(".tv-ctl-gear").click(); 0`);
     check("the sheet opens straight onto the settings (the checks are off in this tab)", await waitFor(async () => (await cdp.ev(`!!document.querySelector(".tv-parent-modal [data-testid=song-settings]")`)) || null, { timeoutMs: 15000, label: "songs section" }).catch(() => false));
     await sleep(500);
+    // the Songs group is closed in the sheet (one tap opens it): the summary already says where it stands, then open it as a grown-up would
+    check("the Songs group is closed and its summary says the maker is on, 3 a week", (await cdp.ev(`!document.querySelector("[data-testid=song-settings]").open && /Maker on . 3 a week/.test(document.querySelector("[data-testid=song-settings] summary").innerText)`)) === true);
+    await cdp.ev(`document.querySelector("[data-testid=song-settings] summary").click(); 0`);
+    await sleep(300);
     const sec = (q) => cdp.ev(`document.querySelector("[data-testid=song-settings] ${q}")?.textContent ?? null`);
     check("it shows the maker on and the weekly limit read from the Worker", (await cdp.ev(`document.querySelector("[data-testid=song-settings]").innerText`)).includes("Song maker: On") && (await sec("[data-testid=song-limit]")) === "3");
     check("its buttons are labelled and the section says what it does", (await cdp.ev(`!!document.querySelector('[data-testid=song-settings] [aria-label="Fewer songs a week"]') && !!document.querySelector('[data-testid=song-settings] [aria-label="More songs a week"]')`)) && /written and sung by AI/.test(await cdp.ev(`document.querySelector("[data-testid=song-settings]").innerText`)));

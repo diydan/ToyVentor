@@ -787,6 +787,7 @@ export function GameCanvas({
       setParentSnapshot(getLocalParentSnapshot());
       setGrownUpsHoldSatisfied(holdDone);
       setGrownUpsOpen(true);
+      setMenuOpen(false); // the grown-ups' card replaces the drawer (the Settings button is in it, and its tap does not close the drawer by itself)
     },
     [closeEngineSheets, closeReactOverlays],
   );
@@ -1233,7 +1234,64 @@ export function GameCanvas({
             closeReactOverlays();
             openMap();
           }}
-          onSettings={() => openGrownUps(false)}
+          settings={
+            <button
+              type="button"
+              className="tv-ctl tv-ctl-gear tv-navstrip-btn"
+              data-nav="settings"
+              aria-label={gearAriaLabel}
+              aria-pressed={grownUpsOpen}
+              title="Hold 1.2s for Grown-up settings"
+              onPointerDown={startGearHold}
+              onPointerUp={cancelGearHold}
+              onPointerLeave={cancelGearHold}
+              onPointerCancel={cancelGearHold}
+              onKeyDown={(e) => {
+                if ((e.key === " " || e.key === "Enter") && !e.repeat) {
+                  e.preventDefault();
+                  startGearHold();
+                }
+              }}
+              onKeyUp={(e) => {
+                if (e.key === " " || e.key === "Enter") {
+                  e.preventDefault();
+                  const fired = gearLongPressFiredRef.current;
+                  cancelGearHold();
+                  if (!fired) {
+                    if (grownUpsOpen) setGrownUpsOpen(false);
+                    else openGrownUps(false);
+                  }
+                  gearLongPressFiredRef.current = false;
+                }
+              }}
+              onClick={() => {
+                if (gearLongPressFiredRef.current) {
+                  gearLongPressFiredRef.current = false;
+                  return;
+                }
+                if (grownUpsOpen) {
+                  setGrownUpsOpen(false);
+                  return;
+                }
+                openGrownUps(false);
+              }}
+            >
+              {gearHoldPct > 0 && (
+                <span
+                  className="tv-gear-hold-fill"
+                  style={{ width: `${Math.round(gearHoldPct * 100)}%` }}
+                  aria-hidden="true"
+                />
+              )}
+              {(parentSnapshot.settings.enabled || demoMode) && (
+                <span className="tv-parent-dot" aria-hidden="true" />
+              )}
+              <span className="tv-navstrip-glyph" aria-hidden="true">
+                ⚙️
+              </span>
+              <span>Settings</span>
+            </button>
+          }
         />
 
         <div className="tv-dock-right">
@@ -1457,59 +1515,6 @@ export function GameCanvas({
               </div>
             )}
           </div>
-
-          <button
-            type="button"
-            className="tv-ctl tv-ctl-gear"
-            aria-label={gearAriaLabel}
-            aria-pressed={grownUpsOpen}
-            title="Hold 1.2s for Grown-up settings"
-            onPointerDown={startGearHold}
-            onPointerUp={cancelGearHold}
-            onPointerLeave={cancelGearHold}
-            onPointerCancel={cancelGearHold}
-            onKeyDown={(e) => {
-              if ((e.key === " " || e.key === "Enter") && !e.repeat) {
-                e.preventDefault();
-                startGearHold();
-              }
-            }}
-            onKeyUp={(e) => {
-              if (e.key === " " || e.key === "Enter") {
-                e.preventDefault();
-                const fired = gearLongPressFiredRef.current;
-                cancelGearHold();
-                if (!fired) {
-                  if (grownUpsOpen) setGrownUpsOpen(false);
-                  else openGrownUps(false);
-                }
-                gearLongPressFiredRef.current = false;
-              }
-            }}
-            onClick={() => {
-              if (gearLongPressFiredRef.current) {
-                gearLongPressFiredRef.current = false;
-                return;
-              }
-              if (grownUpsOpen) {
-                setGrownUpsOpen(false);
-                return;
-              }
-              openGrownUps(false);
-            }}
-          >
-            {gearHoldPct > 0 && (
-              <span
-                className="tv-gear-hold-fill"
-                style={{ width: `${Math.round(gearHoldPct * 100)}%` }}
-                aria-hidden="true"
-              />
-            )}
-            {(parentSnapshot.settings.enabled || demoMode) && (
-              <span className="tv-parent-dot" aria-hidden="true" />
-            )}
-            <span aria-hidden="true">⚙️</span>
-          </button>
         </div>
       </div>
 
@@ -1720,34 +1725,6 @@ export function GameCanvas({
               )}
             </div>
           ))}
-
-        {/* One-tap Map: the stage-to-level path is Map + a card (2 taps), not
-            More + Map + a card. 96 px for ages 2-4 (play-design touch preset). */}
-        {!sleepActive &&
-          !mapOpen &&
-          !editor.testing &&
-          !editor.open &&
-          !create.open && (
-            <button
-              type="button"
-              className={`tv-map-fab${
-                progression.ageBand == null || progression.ageBand <= 1
-                  ? " tv-map-fab-kid"
-                  : ""
-              }${demoMode ? " tv-map-fab-demo" : ""}`}
-              aria-label="Map: places to play"
-              onClick={() => {
-                closeEngineSheets();
-                closeReactOverlays();
-                openMap();
-              }}
-            >
-              <span className="tv-map-fab-glyph" aria-hidden="true">
-                🗺️
-              </span>
-              <span>Map</span>
-            </button>
-          )}
 
         {editor.testing && !editor.open && !create.open && (
           <button

@@ -124,4 +124,13 @@ describe("the Grown-ups sheet carries the Songs section", () => {
     expect(panel).toContain('aria-label="More songs a week"');
     expect(panel).not.toMatch(/mureka|api\.meta/i);
   });
+  it("is a closed group like the sheet's others: the summary says where it stands, one tap opens the controls", () => {
+    const panel = read("src/features/game/world/SongSettingsPanel.tsx");
+    expect(panel).toContain('<details className="tv-disclosure" data-testid="song-settings">');
+    expect(panel).not.toMatch(/<details[^>]*\sopen[\s={>]/);
+    expect(panel).toMatch(/<summary>[\s\S]{0,120}<span>Songs<\/span>[\s\S]{0,120}tv-disclosure-meta[\s\S]{0,200}makerOn \? "Maker on" : "Maker off"[\s\S]{0,60}settings\.limit\} a week/);
+    // the controls are inside the group
+    const inside = panel.slice(panel.indexOf('<div className="tv-parent-adv">'), panel.indexOf("</details>"));
+    for (const needle of ["Song maker: On", 'aria-label="Fewer songs a week"', 'aria-label="More songs a week"', 'data-testid="song-limit"']) expect(inside).toContain(needle);
+  });
 });

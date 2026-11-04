@@ -144,7 +144,6 @@
 .tv-host .tv-dock .tv-ctl-gear::after { content: "Grown-ups: hold 1.2 s"; margin-left: 8px; font: 700 13px var(--font-display, sans-serif); }
 
 /* ---- the world list is a card from the same edge, and the Map button is gone (the drawer has Map) ---------------------------------------------------- */
-.tv-host .tv-map-fab { display: none; }
 .tv-host .tv-worlds-compact { position: static; }
 .tv-host .tv-worlds-btn { display: none; }
 .tv-host .tv-worlds-popover {
@@ -330,4 +329,18 @@
   .tv-host .tv-dock-right { gap: 6px; }
   .tv-host .tv-dock-right .tv-ctl,
   .tv-host .tv-dock .tv-menu-item { min-height: 40px; }
+}
+
+/* ---- Demo Mode (a grown-up shows the game): the full world bar runs along the top, and the drawer has two more items --------------------------------- */
+/* The bar started under the Kip button (the Garden chip was hidden behind it): it starts beside it and scrolls sideways. The pop-ups that sit at the top left move below it (hints a row lower again). */
+.tv-host .tv-worlds { left: calc(72px + env(safe-area-inset-left, 0px)); }
+.tv-host:has(.tv-worlds) .tv-stage-canvas-host .toast,
+.tv-host:has(.tv-worlds) .tv-stage-canvas-host .intro { top: calc(46px + env(safe-area-inset-top, 0px)); }
+.tv-host:has(.tv-worlds) .tv-stage-canvas-host .bubble { top: calc(84px + env(safe-area-inset-top, 0px)) !important; }
+/* Level Editor and Kip 3D Rig make it six rows instead of five (the 3D Rig is the only link in the drawer): on a phone under 400 px tall they are 36 px high with 4 px gaps, so the drawer still fits. */
+@media (max-height: 400px) {
+  .tv-host .tv-dock:has(a.tv-menu-item) { gap: 4px; }
+  .tv-host .tv-dock:has(a.tv-menu-item) .tv-dock-right { gap: 4px; }
+  .tv-host .tv-dock:has(a.tv-menu-item) .tv-dock-right .tv-ctl,
+  .tv-host .tv-dock:has(a.tv-menu-item) .tv-menu-item { min-height: 36px; }
 }

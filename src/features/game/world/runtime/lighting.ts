@@ -52,7 +52,7 @@ export type PresetId = `${Place}-${LightTime}`;
 
 /** Moonlit open air: a cool key from the back-left for an edge on every shape, warm hero fill, reflections low so nothing glares. */
 const OUTDOOR_NIGHT: LightRig = {
-  exposure: 1.0,
+  exposure: 1.07,
   hemi: { sky: 0x8fa0ff, ground: 0x1f6a78, i: 0.85 },
   key: { color: 0xcdd9ff, i: 1.85, pos: [-9, 17, 7], radius: 3 },
   rim: { color: 0x9ab4ff, i: 1.2, pos: [-6, 9, -12] },
@@ -64,7 +64,7 @@ const OUTDOOR_NIGHT: LightRig = {
 };
 /** Open air by day: a warm sun, an airy fill, and nothing above the bloom threshold (so no bloom pass at all). Lower and cooler than before: it used to white out. */
 const OUTDOOR_DAY: LightRig = {
-  exposure: 0.9,
+  exposure: 0.98,
   hemi: { sky: 0xffffff, ground: 0xa9bfd8, i: 0.62 },
   key: { color: 0xfff1d4, i: 1.4, pos: [-9, 17, 10], radius: 3 },
   rim: { color: 0xd8ecff, i: 0.4, pos: [-6, 9, -12] },
@@ -76,7 +76,7 @@ const OUTDOOR_DAY: LightRig = {
 };
 /** A room in the evening (the Toy Room): a warm lamp key, a soft violet fill from the night window, a little glow round the lamp only. */
 const INDOOR_NIGHT: LightRig = {
-  exposure: 0.95,
+  exposure: 1.03,
   hemi: { sky: 0xffd7b0, ground: 0x3a2a60, i: 0.55 },
   key: { color: 0xffe0b8, i: 1.55, pos: [-5, 14, 10], radius: 3 },
   rim: { color: 0xffb27a, i: 0.7, pos: [-6, 8, -12] },
@@ -88,7 +88,7 @@ const INDOOR_NIGHT: LightRig = {
 };
 /** A room by day: window light, a soft warm fill, a pale warm wall colour in the fog, no bloom. */
 const INDOOR_DAY: LightRig = {
-  exposure: 0.93,
+  exposure: 1.0,
   hemi: { sky: 0xfff4e0, ground: 0xcdb89a, i: 0.75 },
   key: { color: 0xfff0d8, i: 1.25, pos: [-5, 14, 10], radius: 3 },
   rim: { color: 0xffe8cc, i: 0.3, pos: [-6, 8, -12] },
@@ -114,7 +114,7 @@ export const LIGHT_RIGS: Record<string, LightRig> = {
   sky: OUTDOOR_DAY,
   // Junkyard at sunset: low orange key for long shadows, magenta rim, the warm sky in the puddles.
   junk: {
-    exposure: 1.05,
+    exposure: 1.13,
     hemi: { sky: 0xb8a8ff, ground: 0x3a3f7a, i: 0.85 },
     key: { color: 0xffc9a0, i: 1.7, pos: [-14, 8, 7], radius: 3.5 },
     rim: { color: 0xff7aa8, i: 1.0, pos: [-6, 8, -12] },
@@ -127,7 +127,7 @@ export const LIGHT_RIGS: Record<string, LightRig> = {
   // Beach noon: a warm key and a sand-coloured fill, held below clipping.
   beach: {
     ...OUTDOOR_DAY,
-    exposure: 0.88,
+    exposure: 0.96,
     hemi: { sky: 0xffffff, ground: 0xe0c08a, i: 0.6 },
     key: { color: 0xfff0d0, i: 1.3, pos: [-9, 17, 10], radius: 3 },
     rim: { color: 0xd8ecff, i: 0.35, pos: [-6, 9, -12] },
@@ -137,7 +137,7 @@ export const LIGHT_RIGS: Record<string, LightRig> = {
   },
   // Snow Peak twilight: a cool moon key, snow kept from clipping and from glowing like day, an icy rim; the aurora does the bloom work.
   snow: {
-    exposure: 0.84,
+    exposure: 0.91,
     hemi: { sky: 0xbcd0ff, ground: 0x3a4f8a, i: 0.5 },
     key: { color: 0xd6e2ff, i: 1.3, pos: [-9, 15, 8], radius: 3 },
     rim: { color: 0x9fe0ff, i: 0.9, pos: [-6, 9, -12] },
@@ -172,7 +172,7 @@ export function moodRig(base: LightRig, mood: string, place: Place = "outdoor"):
   if (mood === "day") return { ...base, ...lightsOf(presetFor(place, "day")) };
   if (mood === "night") return { ...base, ...lightsOf(presetFor(place, "night")) };
   if (mood === "dusk") {
-    return { ...base, exposure: 1.06, hemi: { sky: 0xb8a8ff, ground: 0x3a3f7a, i: 0.85 }, key: { color: 0xffc29a, i: 1.75, pos: [-14, 8, 7], radius: 3.5 },
+    return { ...base, exposure: 1.13, hemi: { sky: 0xb8a8ff, ground: 0x3a3f7a, i: 0.85 }, key: { color: 0xffc29a, i: 1.75, pos: [-14, 8, 7], radius: 3.5 },
       rim: { color: 0xff7aa8, i: 1.0, pos: [-6, 8, -12] }, hero: { color: 0xffc799, i: 0.9 }, env: { scale: 0.6, palette: SUNSET_ENV },
       fog: { color: 0x4a2f66, near: 44, far: 140 }, bloom: { strength: 0.32, radius: 0.5, threshold: 1.3 } };
   }

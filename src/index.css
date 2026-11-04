@@ -3206,56 +3206,6 @@ button.tv-badge-pill:hover {
   color: #2b1d00;
 }
 
-/* One-tap Map on the stage (top right, clear of the Worlds chip). 96 px square
-   for ages 2-4 (play-design touch preset); a smaller pill for older bands. */
-.tv-map-fab {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  z-index: 8;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  min-width: 56px;
-  min-height: 56px;
-  padding: 6px 12px;
-  border-radius: 18px;
-  border: 3px solid rgba(255, 255, 255, 0.85);
-  background: var(--gold, #ffd24d);
-  color: #2b1d00;
-  font: 800 14px var(--font-display, sans-serif);
-  box-shadow: 0 6px 16px rgba(2, 6, 28, 0.55);
-  cursor: pointer;
-}
-
-.tv-map-fab-glyph {
-  font-size: 26px;
-  line-height: 1;
-}
-
-.tv-map-fab-kid {
-  min-width: 96px;
-  min-height: 96px;
-  border-radius: 24px;
-  font-size: 16px;
-}
-
-.tv-map-fab-kid .tv-map-fab-glyph {
-  font-size: 40px;
-}
-
-/* Demo mode puts a full-width Worlds tab row along the top; sit below it. */
-.tv-map-fab-demo {
-  top: 46px;
-}
-
-.tv-map-fab:focus-visible {
-  outline: 3px solid var(--focus, #ffd24d);
-  outline-offset: 3px;
-}
-
 /* Phone held sideways (wide and short): the stage must shrink to the screen, and the card
    strip gets compact cards that stay at or above the 96 px touch preset. */
 @media (orientation: landscape) and (max-height: 500px) {

@@ -14,6 +14,7 @@ import {
 import type { RigColors, RigSel, ToyRig } from "./playerRig";
 import { FACEPLATE_HOLDER, KID_CROWN_Y, kipBodyColors } from "./kipLook";
 import { buildFaceDecalGeometry, kipFaceMaterial } from "./kipFacePlate";
+import { lightenShadow } from "./shadowProxy";
 import { SNAP_ARM_FLEX, SNAP_CUFF_Q, SNAP_LEG_FLEX, makeFlexLimb, makeHandFollow, type SnapArmHandles, type SnapLegHandles, type SnapRigHandles } from "./snapFlex";
 import {
   GLASS,
@@ -242,7 +243,7 @@ function scadMesh(
   m.rotation.x = -Math.PI / 2;
   m.castShadow = true;
   m.receiveShadow = true;
-  return m;
+  return lightenShadow(m);
 }
 
 /**
@@ -260,7 +261,7 @@ function scadInvertedMesh(
   m.position.y = thicknessMm;
   m.castShadow = true;
   m.receiveShadow = true;
-  g.add(m);
+  g.add(lightenShadow(m));
   return g;
 }
 

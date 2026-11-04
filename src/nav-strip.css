@@ -40,3 +40,30 @@
   font-size: 22px;
   line-height: 1;
 }
+
+/* Settings is the grown-ups' gear (GameCanvas keeps its 1.2 s hold, the parent-controls dot and its labels) sitting in the third cell: it takes the strip's look, not the dock button's.
+   (Four selectors deep to beat the dock rules in game-hud.css and the gear rules in index.css.) */
+.tv-host .tv-dock .tv-navstrip .tv-ctl-gear {
+  position: relative;
+  grid-column: auto; /* the dock gives a lone gear a whole row */
+  width: auto;
+  min-width: 0;
+  padding: 6px 2px !important; /* index.css pins the gear's padding with !important */
+  box-shadow: none;
+}
+.tv-host .tv-dock .tv-navstrip .tv-ctl-gear::after {
+  content: none; /* the "Grown-ups: hold 1.2 s" text: Settings opens the sheet, which asks for the hold itself (a long press here still skips that step) */
+}
+.tv-host .tv-dock .tv-navstrip .tv-parent-dot {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 7px;
+  height: 7px;
+  pointer-events: none;
+}
+@media (max-height: 480px) {
+  .tv-host .tv-dock .tv-navstrip .tv-ctl-gear {
+    padding: 0 6px !important;
+  }
+}
