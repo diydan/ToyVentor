@@ -22,8 +22,8 @@ describe("the one button and its drawer (GameCanvas.tsx)", () => {
   it("the old top bar is the drawer: same buttons, slid in from the left, closed again by any button in it (the grown-ups' gear, which needs a hold, keeps it open)", () => {
     expect(canvas).toContain('id="tv-drawer"');
     expect(canvas).toContain('data-open={menuOpen ? "true" : "false"}');
-    expect(canvas).toContain('if (t && !t.classList.contains("tv-ctl-gear")) window.setTimeout(() => setMenuOpen(false), 0);');
-    for (const label of ["Build", "Create", "Pack"]) expect(canvas).toContain(`${label}\n`);
+    expect(canvas).toContain('if (t && !t.classList.contains("tv-ctl-gear") && !t.classList.contains("tv-ctl-more")) window.setTimeout(() => setMenuOpen(false), 0);');   // (the More row only folds its rows out: it does not close the drawer)
+    for (const label of ["Build", "Create", "Pack"]) expect(canvas).toContain(`<span>${label}</span>`);
     expect(canvas).toContain("<WorkshopLauncher");
     expect(canvas).toContain('className="tv-ctl tv-ctl-gear tv-navstrip-btn"');
   });
@@ -33,6 +33,16 @@ describe("the one button and its drawer (GameCanvas.tsx)", () => {
     expect(canvas).toContain("<NavStrip");
     expect(canvas).toMatch(/<NavStrip[\s\S]{0,400}onMap=\{[\s\S]{0,200}openMap\(\)/);
     expect(canvas).not.toMatch(/<span>Map<\/span>\s*<span className="tv-menu-meta">Play<\/span>/);                    // (no "Map / Play" menu item under Worlds)
+  });
+  it("every drawer row has an icon, Toy Box included, and the five lesser rows are folded under one More row that the drawer re-folds each time it closes (Dan, 2026-11-04: too many options, give all options icons)", () => {
+    const rows = canvas.slice(canvas.indexOf('id="tv-drawer"'), canvas.indexOf('className="tv-stage"'));
+    // Toy Box, Build, Create, Pack, More, Worlds, Free world, Story Moods & Mic, Words & Language, Character Card, Level Editor, Kip 3D Rig, Fullscreen = 13 icons (Workshop's is in its own file)
+    expect((rows.match(/className="tv-menu-ico"/g) ?? []).length).toBe(13);
+    expect(readFileSync(`${root}src/features/game/world/WorkshopLauncher.tsx`, "utf8")).toContain('className="tv-menu-ico"');
+    expect(rows).toMatch(/🧸[\s\S]{0,120}Toy Box/);
+    expect(rows).toContain('data-open={moreOpen ? "true" : "false"}');
+    expect(canvas).toMatch(/if \(!menuOpen\) setMoreOpen\(false\);/);
+    expect(css).toContain('.tv-host .tv-dock .tv-more-menu[data-open="false"] .tv-menu-item { display: none; }');
   });
   it("a scrim behind the open drawer closes it", () => {
     expect(canvas).toContain('className="tv-drawer-scrim"');

@@ -422,6 +422,9 @@ export function GameCanvas({
   // world is not that toy. Until the rig has loaded (or when it cannot be taken)
   // the token falls back to the toy's plain icon.
   const [portrait, setPortrait] = useState<string | null>(null);
+  // True while the picture is still being waited for (the rig loads after the first frame): the Kip button shows a spinner then, not the plain icon, and the icon only
+  // comes back if the picture cannot be taken (a scanned toy, or the rig never loaded).
+  const [portraitTrying, setPortraitTrying] = useState(true);
   // The map follows the clock (day or night) unless a grown-up pinned a look.
   const [todMode, setTodMode] = useState<TimeOfDayMode>(() => loadTimeOfDayMode());
   // The Garage: its sheet, the mission in progress (if any) and how it is going.
@@ -437,6 +440,19 @@ export function GameCanvas({
   garageMissionRef.current = garageMission;
   const toyRef = useRef(toy);
   toyRef.current = toy;
+  // the drawer always opens with More folded (its five lesser rows are one tap away)
+  useEffect(() => {
+    if (!menuOpen) setMoreOpen(false);
+  }, [menuOpen]);
+  // ...and opening More scrolls the drawer down so the rows it just revealed are in view (the drawer is only ~390 px tall on a phone held sideways)
+  useEffect(() => {
+    if (!moreOpen || !menuOpen) return;
+    const id = window.requestAnimationFrame(() => {
+      const dock = document.getElementById("tv-drawer");
+      dock?.scrollTo({ top: dock.scrollHeight, behavior: "smooth" });
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [moreOpen, menuOpen]);
   const refreshPortrait = useCallback(() => {
     const api = engineRef.current;
     const t = toyRef.current;
@@ -465,12 +481,14 @@ export function GameCanvas({
   // picture. Until then, and for a scanned toy, the plain icon shows.
   useEffect(() => {
     if (titleOpen) return;
+    setPortraitTrying(isBuiltInToy(toyRef.current)); // a scanned toy has no 3D picture to wait for
     refreshPortrait();
     let tries = 0;
     const id = window.setInterval(() => {
       tries += 1;
       if (engineRef.current?.portraitSig() || tries > 40) {
         refreshPortrait();
+        setPortraitTrying(false);
         window.clearInterval(id);
       }
     }, 500);
@@ -1208,6 +1226,8 @@ export function GameCanvas({
         >
           {portrait ? (
             <img className="tv-kip-fab-portrait" src={portrait} alt="" draggable={false} />
+          ) : portraitTrying ? (
+            <span className="tv-kip-fab-loader" role="status" aria-label="Getting your toy ready" />
           ) : (
             <ToyMiniIcon toy={toy} accentColor={toyColor} skinVersion={skinTick} size="tile" />
           )}
@@ -1224,7 +1244,7 @@ export function GameCanvas({
         onClickCapture={(e) => {
           // any button or link in the drawer does its job and the drawer gets out of the way (the cards it opens slide in from the same edge)
           const t = (e.target as HTMLElement).closest("button, a");
-          if (t && !t.classList.contains("tv-ctl-gear")) window.setTimeout(() => setMenuOpen(false), 0);
+          if (t && !t.classList.contains("tv-ctl-gear") && !t.classList.contains("tv-ctl-more")) window.setTimeout(() => setMenuOpen(false), 0);
         }}
       >
         <button
@@ -1245,6 +1265,10 @@ export function GameCanvas({
             setToySheetOpen(true);
           }}
         >
+          <span className="tv-menu-ico" aria-hidden="true">
+            🧸
+          </span>
+          <span className="tv-toy-pill-name">Toy Box</span>
           {portrait ? (
             <span className="tv-toy-mini-icon" aria-hidden="true">
               <img className="tv-toy-mini-img" src={portrait} alt="" draggable={false} />
@@ -1256,7 +1280,6 @@ export function GameCanvas({
               skinVersion={skinTick}
             />
           )}
-          <span className="tv-toy-pill-name">Toy Box</span>
           <span
             className="tv-rank-pip"
             title={nextRankProgress(progression.totalXp).rank.title}
@@ -1351,7 +1374,10 @@ export function GameCanvas({
               }
             }}
           >
-            Build
+            <span className="tv-menu-ico" aria-hidden="true">
+              🧱
+            </span>
+            <span>Build</span>
           </button>
 
           <WorkshopLauncher engine={engineRef} disabled={sleepActive} downloads={controlsMode === "off"} />
@@ -1373,7 +1399,10 @@ export function GameCanvas({
               else pendingEngineOpenRef.current = "create";
             }}
           >
-            Create
+            <span className="tv-menu-ico" aria-hidden="true">
+              ✨
+            </span>
+            <span>Create</span>
           </button>
 
           <button
@@ -1391,7 +1420,10 @@ export function GameCanvas({
               setPackOpen(true);
             }}
           >
-            Pack
+            <span className="tv-menu-ico" aria-hidden="true">
+              🎁
+            </span>
+            <span>Pack</span>
             {!packClaimed && (
               <span className="tv-badge-dot" aria-hidden="true" />
             )}
@@ -1418,7 +1450,13 @@ export function GameCanvas({
               ) : liveStatus.playing ? (
                 <span className="tv-music-dot" aria-hidden="true" />
               ) : null}
-              ⋯
+              <span className="tv-menu-ico" aria-hidden="true">
+                ⋯
+              </span>
+              <span className="tv-more-label">More</span>
+              <span className="tv-more-caret" aria-hidden="true">
+                {moreOpen ? "▴" : "▾"}
+              </span>
             </button>
 
             {(moreOpen || menuOpen) && (
@@ -1426,6 +1464,7 @@ export function GameCanvas({
                 className="tv-more-menu"
                 role="menu"
                 aria-label="More studio tools"
+                data-open={moreOpen ? "true" : "false"}
               >
                 <button
                   type="button"
@@ -1438,7 +1477,10 @@ export function GameCanvas({
                     setWorldsOpen(true);
                   }}
                 >
-                  <span>Worlds</span>
+                  <span className="tv-menu-ico" aria-hidden="true">
+                    🌍
+                  </span>
+                  <span className="tv-menu-label">Worlds</span>
                   <span className="tv-menu-meta">{currentWorldEntry.label}</span>
                 </button>
                 {state.learn && (
@@ -1452,7 +1494,10 @@ export function GameCanvas({
                       engine()?.stopLearnRun();
                     }}
                   >
-                    <span>Free world</span>
+                    <span className="tv-menu-ico" aria-hidden="true">
+                      🧭
+                    </span>
+                    <span className="tv-menu-label">Free world</span>
                     <span className="tv-menu-meta">
                       Learn {state.learn.step} of {state.learn.total}
                     </span>
@@ -1470,7 +1515,10 @@ export function GameCanvas({
                     setMoodsOpen(true);
                   }}
                 >
-                  <span>Story Moods &amp; Mic</span>
+                  <span className="tv-menu-ico" aria-hidden="true">
+                    🎤
+                  </span>
+                  <span className="tv-menu-label">Story Moods &amp; Mic</span>
                   <span className="tv-menu-meta">
                     {liveStatus.listening
                       ? "Mic on"
@@ -1491,7 +1539,10 @@ export function GameCanvas({
                     setLangOpen(true);
                   }}
                 >
-                  <span>Words &amp; Language</span>
+                  <span className="tv-menu-ico" aria-hidden="true">
+                    🗣️
+                  </span>
+                  <span className="tv-menu-label">Words &amp; Language</span>
                   <span className="tv-menu-meta">{propLangLabel(propLang)}</span>
                 </button>
 
@@ -1506,7 +1557,10 @@ export function GameCanvas({
                     setRevealState({ first: characterCardIsFirst() });
                   }}
                 >
-                  <span>Character Card</span>
+                  <span className="tv-menu-ico" aria-hidden="true">
+                    📇
+                  </span>
+                  <span className="tv-menu-label">Character Card</span>
                   <span className="tv-menu-meta">
                     {placements.length > 0 ? "Share" : "Build"}
                   </span>
@@ -1520,7 +1574,10 @@ export function GameCanvas({
                     disabled={sleepActive}
                     onClick={openEditorSheet}
                   >
-                    <span>Level Editor</span>
+                    <span className="tv-menu-ico" aria-hidden="true">
+                      📐
+                    </span>
+                    <span className="tv-menu-label">Level Editor</span>
                     <span className="tv-menu-meta">
                       {editor.open ? "Open" : "Grid"}
                     </span>
@@ -1536,7 +1593,10 @@ export function GameCanvas({
                     rel="noopener noreferrer"
                     onClick={() => setMoreOpen(false)}
                   >
-                    <span>Kip 3D Rig</span>
+                    <span className="tv-menu-ico" aria-hidden="true">
+                      🤖
+                    </span>
+                    <span className="tv-menu-label">Kip 3D Rig</span>
                     <span className="tv-menu-meta">Open</span>
                   </a>
                 )}
@@ -1550,7 +1610,10 @@ export function GameCanvas({
                     toggleFullscreen();
                   }}
                 >
-                  <span>{isFullscreen ? "Exit Fullscreen" : "Fullscreen"}</span>
+                  <span className="tv-menu-ico" aria-hidden="true">
+                    📺
+                  </span>
+                  <span className="tv-menu-label">{isFullscreen ? "Exit Fullscreen" : "Fullscreen"}</span>
                   <span className="tv-menu-meta">
                     {isFullscreen ? "Exit" : "Full"}
                   </span>

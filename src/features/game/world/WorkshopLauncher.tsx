@@ -243,7 +243,10 @@ export function WorkshopLauncher({
         aria-expanded={open}
         onClick={() => setOpen(true)}
       >
-        Workshop
+        <span className="tv-menu-ico" aria-hidden="true">
+          🛠️
+        </span>
+        <span>Workshop</span>
       </button>
       {overlay}
     </>
