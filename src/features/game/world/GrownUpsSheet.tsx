@@ -8,6 +8,8 @@ import {
 import { rememberGrownUpProof } from "../../../lib/grownUpGate";
 import { GateMathPad } from "./GateMathPad";
 import { SongSettingsPanel } from "./SongSettingsPanel";
+import { ForgetPlayerButton } from "./ForgetPlayerButton";
+import { safeName } from "../../../lib/returningPlayer";
 import { kipDemoUrl } from "../../../../shared/toycontract";
 import { postRoomPhoto } from "../../../lib/api";
 import type { TimeOfDayMode } from "../../../lib/timeOfDay";
@@ -70,6 +72,10 @@ export interface GrownUpsSheetProps {
   onOpenMap?: () => void;
   /** Open the new-player setup (names, favourites, a pile of bricks that builds Kip, a theme song and a quick tour). */
   onNewPlayer?: () => void;
+  /** The saved player's first name (src/lib/returningPlayer.ts): the New player group says who is set up and offers to forget them. Absent: nothing changes. */
+  playerName?: string;
+  /** The grown-up's two-tap "Forget this player": the caller removes the saved profile (and only that). */
+  onForgetPlayer?: () => void;
   /** The map's look: follow the time of day, or pin day or night (device setting). */
   timeOfDayMode?: TimeOfDayMode;
   onSetTimeOfDayMode?: (mode: TimeOfDayMode) => void;
@@ -140,6 +146,8 @@ export function GrownUpsSheet({
   onSetAgeBand,
   onOpenMap,
   onNewPlayer,
+  playerName,
+  onForgetPlayer,
   timeOfDayMode,
   onSetTimeOfDayMode,
   onToggleChore,
@@ -156,6 +164,7 @@ export function GrownUpsSheet({
   onSnapshotChange,
   onClose,
 }: GrownUpsSheetProps) {
+  const welcome = safeName(playerName); // the saved player's first name, only if it passes the setup's own rule
   const [step, setStep] = useState<GateStep>("hold");
   const [holdProgress, setHoldProgress] = useState(0);
   const [challenge, setChallenge] = useState<GateChallenge | null>(null);
@@ -1449,13 +1458,15 @@ export function GrownUpsSheet({
             <details className="tv-disclosure">
               <summary>
                 <span>New player</span>
-                <span className="tv-disclosure-meta">names, favourites, a song</span>
+                <span className="tv-disclosure-meta">{welcome ? welcome : "names, favourites, a song"}</span>
               </summary>
               <div className="tv-parent-adv">
+                {welcome ? <p data-player-set-up>{welcome} is set up on this device. Forgetting removes the name and favourites only: the game, the stars and the songs stay.</p> : null}
                 <p>Set up a new player with their name, their favourite colour, fruit and animal, a pile of bricks that builds their Kip, and a theme song. Anyone under 13 is set up by a grown-up. Names stay on this device.</p>
                 <button type="button" className="tv-ctl tv-ctl-primary" onClick={onNewPlayer} data-new-player>
-                  Set up a new player
+                  {welcome ? "Set up a different player" : "Set up a new player"}
                 </button>
+                {welcome && onForgetPlayer ? <ForgetPlayerButton name={welcome} onForget={onForgetPlayer} /> : null}
               </div>
             </details>
           )}

@@ -1,0 +1,2 @@
+/* A returning player (src/lib/returningPlayer.ts): the welcome line under the title's logo. ("Forget this player" uses the existing .tv-ctl-danger when armed.) */
+.tv-title-welcome { margin: 6px 0 0; font-size: 20px; font-weight: 800; color: #fff; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6); }

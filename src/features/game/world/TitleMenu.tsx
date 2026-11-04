@@ -1,5 +1,7 @@
 import { useEffect, useRef } from "react";
 import "../../../onboarding.css";
+import "../../../returning-player.css";
+import { notYouLine, welcomeLine } from "../../../lib/returningPlayer";
 import { TITLE_ENTRIES, TITLE_TAGLINE, type TitleChoice } from "./titleEntries";
 import { TitleMusic } from "./TitleMusic";
 
@@ -15,6 +17,8 @@ interface TitleMenuProps {
   songKey?: string;
   /** True while the new-player setup or a dance party has the sound: the title's music waits. */
   musicHold?: boolean;
+  /** The saved player's first name (src/lib/returningPlayer.ts): a welcome line under the logo, and the small link offers a different player instead of the first-run setup. Absent: nothing changes. */
+  playerName?: string;
 }
 
 /**
@@ -22,7 +26,8 @@ interface TitleMenuProps {
  * stage, the gears turn under it (both are the world's own showcase scene), the name and the three entries sit above and below. The overlay lets touches through
  * everywhere except the buttons.
  */
-export function TitleMenu({ toyName, ready, onChoose, onNewPlayer, songKey, musicHold }: TitleMenuProps) {
+export function TitleMenu({ toyName, ready, onChoose, onNewPlayer, songKey, musicHold, playerName }: TitleMenuProps) {
+  const welcome = welcomeLine(playerName);
   const playRef = useRef<HTMLButtonElement>(null);
   // the Play button takes focus as soon as it can be pressed, so a keyboard or a switch device is one key from the world
   useEffect(() => {
@@ -35,6 +40,7 @@ export function TitleMenu({ toyName, ready, onChoose, onNewPlayer, songKey, musi
         <h1 className="tv-title-logo">ToyVentor</h1>
         <p className="tv-title-tag">{TITLE_TAGLINE}</p>
         {toyName ? <p className="tv-title-toy">{toyName}</p> : null}
+        {welcome ? <p className="tv-title-welcome" data-title-welcome>{welcome}</p> : null}
       </header>
       {/* not inside the header: its entrance animation would make the header the box the speaker button is positioned against */}
       <TitleMusic songKey={songKey} hold={musicHold} />
@@ -57,7 +63,7 @@ export function TitleMenu({ toyName, ready, onChoose, onNewPlayer, songKey, musi
       </div>
       {onNewPlayer ? (
         <button type="button" className="tv-title-new" disabled={!ready} onClick={onNewPlayer} data-new-player>
-          New here? Set up a player with a grown-up
+          {welcome ? notYouLine(playerName) : "New here? Set up a player with a grown-up"}
         </button>
       ) : null}
     </section>

@@ -11,6 +11,8 @@ import { buildSignature } from "../../../../shared/reveal";
 import { isBuiltInToy, type Toy } from "../../../../shared/toy";
 import { loadToyPortrait, PORTRAIT_PX, saveToyPortrait } from "../../../lib/toyPortrait";
 import { BANDS } from "../../../lib/age";
+import { readProfile, type PlayerProfile } from "../../../lib/newPlayer";
+import { forgetPlayer } from "../../../lib/returningPlayer";
 import {
   completeGarage,
   completeGarageHousehold,
@@ -227,6 +229,12 @@ export function GameCanvas({
   const [langOpen, setLangOpen] = useState(false);
   // The new-player setup (OnboardingSheet.tsx, docs/specs/accounts-and-new-user-spec.md): opt-in, from the title screen, the Grown-Ups sheet, or ?onboarding=1.
   const [onboardOpen, setOnboardOpen] = useState(() => { try { return /[?&]onboarding=1(&|$)/.test(window.location.search); } catch { return false; } });
+  // The saved player (src/lib/returningPlayer.ts): the title greets them by name and offers a different player instead of the first-run setup; a grown-up can forget them in the Grown-Ups sheet.
+  const [player, setPlayer] = useState<PlayerProfile | null>(() => { try { return readProfile(window.localStorage); } catch { return null; } });
+  const forgetThisPlayer = useCallback(() => {
+    try { forgetPlayer(window.localStorage); } catch { /* blocked storage: nothing was saved to forget */ }
+    setPlayer(null);
+  }, []);
   const propLang = usePropLang();
   const [liveStatus, setLiveStatus] = useState<LivePlayStatus>({
     playing: false,
@@ -1679,8 +1687,8 @@ export function GameCanvas({
 
       <div className="tv-stage">
         <div ref={stageHostRef} className="tv-stage-canvas-host" />
-        {titleOpen && <TitleMenu toyName={label} ready={state.ready} onChoose={chooseTitle} onNewPlayer={openOnboarding} songKey={songFlow?.phase} musicHold={onboardOpen || songFlow?.phase === "dancing"} />}
-        {onboardOpen && <OnboardingSheet onClose={() => setOnboardOpen(false)} onStage={onboardStage} onHold={onboardHold} onPickUp={onboardPickUp} onIntroStart={onboardIntroStart} onSong={onboardSong} song={songFlow} />}
+        {titleOpen && <TitleMenu toyName={label} ready={state.ready} onChoose={chooseTitle} onNewPlayer={openOnboarding} songKey={songFlow?.phase} musicHold={onboardOpen || songFlow?.phase === "dancing"} playerName={player?.kidName} />}
+        {onboardOpen && <OnboardingSheet onClose={() => { setOnboardOpen(false); try { setPlayer(readProfile(window.localStorage)); } catch { /* keep what we had */ } }} onStage={onboardStage} onHold={onboardHold} onPickUp={onboardPickUp} onIntroStart={onboardIntroStart} onSong={onboardSong} song={songFlow} />}
         {!sleepActive &&
           (demoMode ? (
             <div className="tv-worlds" role="tablist" aria-label="Worlds">
@@ -2256,6 +2264,8 @@ export function GameCanvas({
             void pushProgression(next);
           }}
           onNewPlayer={openOnboarding}
+          playerName={player?.kidName}
+          onForgetPlayer={forgetThisPlayer}
           onOpenMap={() => {
             setGrownUpsOpen(false);
             closeEngineSheets();
