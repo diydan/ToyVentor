@@ -321,7 +321,7 @@ export function mixPose(into: Pose, other: Pose, w: number): void {
 /* ---------- driving the rig ---------- */
 
 /** The baked Mixamo gestures, then the hand-authored ones (runtime/proceduralClips.ts: eat, sour, belly_pat, yawn, and sleep, which is a HELD pose). */
-export type MixAction = "dance" | "nod" | "no" | "sneak" | "sad" | "eat" | "sour" | "belly_pat" | "yawn" | "sleep" | "hug" | "kick" | "cheer" | "read" | "strum" | "blow" | "pet" | "mallet" | "oops" | "mop" | "tidy";
+export type MixAction = "dance" | "nod" | "no" | "sneak" | "sad" | "eat" | "sour" | "belly_pat" | "yawn" | "sleep" | "hug" | "kick" | "cheer" | "read" | "strum" | "blow" | "pet" | "mallet" | "oops" | "mop" | "tidy" | "jump" | "shove";
 
 interface Joints {
   g: THREE.Object3D;
@@ -368,7 +368,7 @@ export type BeatSource = () => { name: string; time: number } | null;
 /** A held pose (sleep) eases in slowly and wakes a little faster. */
 const HOLD_FADE_IN = 0.8;
 const HOLD_FADE_OUT = 0.6;
-const ACTION_ENV = (t: number, dur: number): number => Math.max(0, Math.min(1, Math.min(t / ACTION_FADE, (dur - t) / ACTION_FADE)));
+const ACTION_ENV = (t: number, dur: number, fade = ACTION_FADE): number => Math.max(0, Math.min(1, Math.min(t / fade, (dur - t) / fade)));
 const smooth = (a: number, b: number, x: number): number => {
   const t = Math.max(0, Math.min(1, (x - a) / (b - a)));
   return t * t * (3 - 2 * t);
@@ -399,7 +399,7 @@ export class MixamoDriver {
   private tIdle = 0;
   private tWalk = 0;
   private tRun = 0;
-  private action: { clip: BakedClip; t: number } | null = null;
+  private action: { clip: BakedClip; t: number; lift: number; fade: number; rate: number; until: number } | null = null;
   /** A pose that stays until releaseHold(): w eases 0 to 1 while it is held and back to 0 while it is leaving. */
   private held: { clip: BakedClip; t: number; w: number; leaving: boolean } | null = null;
   /** A dance locked to a SONG clock (the dance party): sampled at whatever time `time()` answers each frame, not at a clock of its own, so it cannot drift from the sound. */
@@ -428,11 +428,20 @@ export class MixamoDriver {
     return !!this.bank.idle && !!this.bank.walk && jointsOf(rig) !== null;
   }
 
-  /** Start a one-shot gesture. Returns false if the clip is not in the bank. */
-  trigger(name: MixAction): boolean {
+  /**
+   * Start a one-shot gesture. Returns false if the clip is not in the bank. `lift` scales how much of the clip's own hips lift (a jump's height) it uses: 1 all of it, 0 none, for when the game
+   * moves the toy up and down itself (the cushions) and the clip is only for the pose; `fade` is how fast it eases in and out (a jump wants a sudden take-off: the default is slower);
+   * `rate` plays it faster or slower (0.5 to 2; the clip's length and every moment in it scale with it). `until` ends it that many seconds in (of the clip's own time), easing out over `fade`: for a
+   * long clip of which only the start is wanted (a push), played as authored, never cut or joined.
+   */
+  trigger(name: MixAction, opts: { lift?: number; fade?: number; rate?: number; until?: number } = {}): boolean {
     const clip = this.bank[name];
     if (!clip) return false;
-    this.action = { clip, t: 0 };
+    const lift = typeof opts.lift === "number" && Number.isFinite(opts.lift) ? Math.max(0, Math.min(1, opts.lift)) : 1;
+    const fade = typeof opts.fade === "number" && Number.isFinite(opts.fade) && opts.fade > 0.001 ? Math.min(ACTION_FADE, opts.fade) : ACTION_FADE;
+    const rate = typeof opts.rate === "number" && Number.isFinite(opts.rate) ? Math.max(0.5, Math.min(2, opts.rate)) : 1;
+    const until = typeof opts.until === "number" && Number.isFinite(opts.until) && opts.until > 0.1 ? opts.until : Infinity;
+    this.action = { clip, t: 0, lift, fade, rate, until };
     return true;
   }
 
@@ -515,11 +524,16 @@ export class MixamoDriver {
 
     const act = this.action;
     if (act) {
-      act.t += dt;
-      const dur = act.clip.pose ? 1.4 : act.clip.duration;
+      act.t += dt * act.rate;
+      const dur = Math.min(act.clip.pose ? 1.4 : act.clip.duration, act.until);
       // Walking cancels gestures fast; a one-shot stands still.
-      const w = ACTION_ENV(act.t, dur) * (act.clip.pose ? tn.poseGain : 1) * (1 - smooth(0.4, 1.2, speed));
+      const w = ACTION_ENV(act.t, dur, act.fade) * (act.clip.pose ? tn.poseGain : 1) * (1 - smooth(0.4, 1.2, speed));
       sampleClip(act.clip, act.t, this.a);
+      if (act.lift !== 1) {
+        this.a.hips.y *= act.lift; this.a.hips.x *= act.lift; this.a.hips.z *= act.lift;
+        // a clip with the bench's joint data carries the hips' own height too (mm, standing at KIP_HIP_REST_MM): scale how far it rises or crouches from standing, by the same share
+        if (this.a.jw > 0) this.a.j.hipsMm.y = KIP_HIP_REST_MM + (this.a.j.hipsMm.y - KIP_HIP_REST_MM) * act.lift;
+      }
       mixPose(p, this.a, w);
       if (act.t >= dur) this.action = null;
     }

@@ -83,7 +83,7 @@ const clearToast = (cdp) => cdp.ev(`(() => { const t = document.querySelector("#
 const props = (cdp, expr) => cdp.ev(`(() => { const fx = window.__tvWorld && window.__tvWorld.props; if (!fx) return null; return ${expr}; })()`);
 
 async function loadApp(cdp, lang) {
-  const source = `try { ${lang === undefined ? 'localStorage.removeItem("toyforge:prop-lang:v1");' : `localStorage.setItem("toyforge:prop-lang:v1", ${JSON.stringify(lang)});`} } catch (e) {}`;
+  const source = `try { localStorage.setItem("tvTimeOfDay:v1", "night"); } catch (e) {} try { ${lang === undefined ? 'localStorage.removeItem("toyforge:prop-lang:v1");' : `localStorage.setItem("toyforge:prop-lang:v1", ${JSON.stringify(lang)});`} } catch (e) {}`;
   const { identifier } = await cdp.send("Page.addScriptToEvaluateOnNewDocument", { source });
   try {
     await cdp.send("Page.navigate", { url: APP });

@@ -354,6 +354,6 @@ describe("wiring", () => {
     const { readFileSync } = await import("node:fs");
     const world = readFileSync(new URL("../src/features/game/world/runtime/world.ts", import.meta.url), "utf8");
     expect(world).toMatch(/from "\.\/proceduralClips"/);
-    expect(world).toMatch(/new MixamoDriver\(\{\.\.\.b,\.\.\.PROCEDURAL_CLIPS\}\)/);
+    expect(world).toMatch(/new MixamoDriver\(\{\.\.\.b,\.\.\.PROCEDURAL_CLIPS(,\.\.\.PLAY_CLIPS)?\}\)/);
   });
 });

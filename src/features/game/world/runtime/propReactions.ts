@@ -12,8 +12,11 @@
 import * as THREE from "three";
 import { colorKeyFromHex, describeObject, languageInfo, type ColorKey, type Described, type LangCode, type NounKey } from "../../../../lib/propNames";
 import { getPropLang } from "../../../../lib/propSpeech";
-import { BALL_BOUNDS, kick as startKick, stepBall, type BallState } from "./ballKick";
-import { kindById, kindFits, slotDirs } from "./treeKinds";
+import { BALL_BOUNDS, BALL_R, kick as startKick, stepBall, type BallState } from "./ballKick";
+
+/** A rolling tire turns this much for every turn the ball model does for the same distance: the ball is 0.55 across its radius, the tire 0.72. */
+const TIRE_SPIN = BALL_R / 0.72;
+import { kindById, kindFits, kindNoun, slotDirs } from "./treeKinds";
 import { prefetchObjectVoices, sayObject } from "../../../../lib/propVoice";
 import { sfx, sound, tone } from "./audio";
 
@@ -21,6 +24,8 @@ export const PROP_TYPES = [
   "lantern", "windmill", "cottage", "tree", "bushes", "cloud", "island", "tire", "drum", "shed", "cranebg", "palm", "umbrella",
   "sandcastle", "pine", "snowman", "igloo", "lamp", "blocks", "books", "chair", "plant", "teddy", "ball", "cushions", "bed", "guitar", "bubbles", "dog", "xylophone",
   "cup", "toybox", "cleancart", "hob",
+  // Things to play with outside (runtime/playthings.ts, outdoorProps.ts).
+  "puffcloud", "angelpatch", "flowerbed", "bunny", "picnic", "swing", "pumpkins", "basket",
 ] as const;
 export type PropType = (typeof PROP_TYPES)[number];
 
@@ -53,11 +58,12 @@ export const PROP_SPECS: Record<PropType, PropSpec> = {
   tire: { noun: "tire", color: "black", idle: "none", poke: "hop", use: "none" },
   drum: { noun: "drum", color: "pink", idle: "none", poke: "squash", use: "boom" },
   shed: { noun: "shed", color: "blue", idle: "none", poke: "shake", use: "none" },
-  cranebg: { noun: "crane", color: "red", idle: "none", poke: "swing", use: "none" },
+  cranebg: { noun: "crane", color: "red", idle: "none", poke: "swing", use: "stack" },
   windmill: { noun: "windmill", color: "blue", idle: "none", poke: "wiggle", use: "windmill" },
   umbrella: { noun: "umbrella", color: "red", idle: "sway", poke: "wiggle", use: "spin" },
-  sandcastle: { noun: "sandcastle", color: "yellow", idle: "none", poke: "squash", use: "none" },
-  snowman: { noun: "snowman", color: "white", idle: "none", poke: "wiggle", use: "hat" },
+  // The sandcastle and the snowman are built up a piece at a time by taps and come down on the last one (runtime/buildUp.ts), the way the block tower does: the prop animates itself, so no poke.
+  sandcastle: { noun: "sandcastle", color: "yellow", idle: "none", poke: "none", use: "stack" },
+  snowman: { noun: "snowman", color: "white", idle: "none", poke: "none", use: "stack" },
   igloo: { noun: "igloo", color: "white", idle: "none", poke: "squash", use: "none" },
   blocks: { noun: "blocks", color: "colorful", idle: "none", poke: "none", use: "stack" },
   books: { noun: "books", color: "colorful", idle: "none", poke: "wiggle", use: "flutter" },
@@ -80,6 +86,17 @@ export const PROP_SPECS: Record<PropType, PropSpec> = {
   cleancart: { noun: "cleancart", color: "blue", idle: "none", poke: "none", use: "none" },
   // The cooking level's door in the Toy Room (runtime/cook.ts): a little counter with a hob and a pan.
   hob: { noun: "hob", color: "blue", idle: "none", poke: "none", use: "none" },
+  // The outside things (runtime/playthings.ts): a tap names the prop and sends Kip over to bounce on the cloud, make the angel, water the flowers, feed the bunny, eat the picnic, ride the swing.
+  puffcloud: { noun: "cloud", color: "white", idle: "none", poke: "squash", use: "squish" },
+  angelpatch: { noun: "snowangel", color: "white", idle: "none", poke: "squash", use: "none" },
+  flowerbed: { noun: "flowers", color: "colorful", idle: "none", poke: "wiggle", use: "none" },
+  bunny: { noun: "bunny", color: "white", idle: "none", poke: "hop", use: "none" },
+  picnic: { noun: "picnic", color: "red", idle: "none", poke: "squash", use: "none" },
+  swing: { noun: "swing", color: "pink", idle: "none", poke: "none", use: "none" },
+  // The pumpkin patch: pumpkins sit on the ground in it; a tap shakes them loose and they roll (use "berries" drops the fruit slots like a bush).
+  pumpkins: { noun: "pumpkin", color: "orange", idle: "none", poke: "squash", use: "berries" },
+  // The fruit basket (runtime/basket.ts): drag a fruit onto it and let go, and it counts them.
+  basket: { noun: "basket", color: "brown", idle: "none", poke: "squash", use: "none" },
 };
 
 /** A prop type with no spec (something added later, or generated): it still reacts and is still named, in English. */
@@ -98,6 +115,8 @@ export interface PropInst {
   type: string;
   known: boolean;
   spec: PropSpec;
+  /** What it is called when tapped: its spec's noun, or for a tree, palm or bush of a kind (treeKinds.ts) the kind's own ("pear tree"). */
+  noun: NounKey | null;
   holder: THREE.Group;
   /** Balls spin about their own centre, not the ground point. */
   pivot: THREE.Group | null;
@@ -150,6 +169,8 @@ export interface PropFxDeps {
   onBed?: (inst: PropInst) => void;
   /** Any prop was tapped (after it has reacted and named itself): the world may send the toy over to hug the teddy, jump on the cushions or kick the ball. */
   onTap?: (inst: PropInst) => void;
+  /** A build-up prop took a tap (blocks, sandcastle, snowman, the crane): what happened. The world lets Kip react (cheer at a tall tower, startle at a crash). */
+  onStack?: (inst: PropInst, result: { kind: "added"; layers?: number; sfx?: string } | { kind: "crash"; sfx?: string } | { kind: "busy" }) => void;
 }
 
 /** World-space box around a prop's real meshes only: glow sprites (a lantern's is 4 units wide) and our own hit proxy do not count. */
@@ -171,7 +192,7 @@ const easeOutBack = (k: number) => { const c1 = 1.70158, c3 = c1 + 1; return 1 +
 const cap = (s: string, lang: LangCode) => s.charAt(0).toLocaleUpperCase(languageInfo(lang).bcp47) + s.slice(1);
 
 export type FruitKind =
-  | "apple" | "pear" | "orange" | "lemon" | "cherry" | "banana" | "plum" | "strawberry" | "blueberry" | "coconut" | "pumpkin"
+  | "apple" | "greenapple" | "pear" | "orange" | "lemon" | "cherry" | "banana" | "plum" | "strawberry" | "blueberry" | "coconut" | "pumpkin"
   | "snow" | "berry" | "rain";
 /**
  * `r` is the radius, `color` the material colour, `sy` a vertical stretch (a pear is tall, a pumpkin squat). `noun` and `say` are what a tap on it says
@@ -181,6 +202,7 @@ export type FruitKind =
 export const FRUIT: Record<FruitKind, { r: number; color: string; rough: number; sy?: number; glow?: number; noun?: NounKey; say?: ColorKey }> = {
   // 0.24, up from 0.15 (2026-11-03): at 0.15 a hanging apple was about 9 px on a phone, dark red on a dark crown, and easy to miss.
   apple: { r: 0.24, color: "#e5392b", rough: 0.35, glow: 0.28, noun: "apple", say: "red" },
+  greenapple: { r: 0.24, color: "#86d12f", rough: 0.35, glow: 0.2, noun: "apple", say: "green" },     // a colour variant of the apple: the same fruit, named for its colour
   pear: { r: 0.21, color: "#a8c23a", rough: 0.5, sy: 1.3, glow: 0.2, noun: "pear", say: "green" },
   orange: { r: 0.24, color: "#ff9a1f", rough: 0.6, glow: 0.2, noun: "orange" },   // no `say`: named for its colour, so it says "orange", never "orange orange"
   lemon: { r: 0.19, color: "#ffe23f", rough: 0.5, sy: 1.15, glow: 0.2, noun: "lemon", say: "yellow" },
@@ -217,7 +239,7 @@ export function createPropFx(deps: PropFxDeps) {
       const f = FRUIT[kind];
       const mat = kind === "rain"
         ? new THREE.MeshBasicMaterial({ color: f.color, transparent: true, opacity: 0.85 })
-        : new THREE.MeshPhysicalMaterial({ color: f.color, roughness: f.rough, clearcoat: kind === "apple" ? 0.8 : 0.2, ...(f.glow ? { emissive: new THREE.Color(f.color), emissiveIntensity: f.glow } : {}) });
+        : new THREE.MeshPhysicalMaterial({ color: f.color, roughness: f.rough, clearcoat: kind === "apple" || kind === "greenapple" ? 0.8 : 0.2, ...(f.glow ? { emissive: new THREE.Color(f.color), emissiveIntensity: f.glow } : {}) });
       k = { geo: new THREE.SphereGeometry(f.r, 14, 10), mat };
       kits.set(kind, k);
     }
@@ -285,7 +307,7 @@ export function createPropFx(deps: PropFxDeps) {
    * that is not a ball. Returns false if it could not be kicked.
    */
   function kickBall(inst: PropInst, vx: number, vy: number): boolean {
-    if (inst.type !== "ball") return false;
+    if (inst.type !== "ball" && inst.type !== "tire") return false;                       // (a tire is pushed and rolls like a ball, only farther round)
     for (let i = anims.length - 1; i >= 0; i--) { const a = anims[i]!; if (a.inst === inst && a.kind === "use") { anims.splice(i, 1); a.end?.(); } }
     inst.kick = startKick(inst.base.px, vx, vy);
     tone(180, 0, 0.09, "sine", 0.1, 110);
@@ -316,6 +338,8 @@ export function createPropFx(deps: PropFxDeps) {
     for (const s of inst.sprites) s.s.visible = on;
     for (const g of inst.glows) g.m.emissiveIntensity = on ? g.i : g.i * 0.06;
   }
+  /** Every light prop (the lanterns) on or off at once: lit at night, dark by day (worldLook.ts). Call it once the world is final: a prop's brightness is read at the moment it is switched off. */
+  function setLights(on: boolean) { for (const inst of insts) if (inst.spec.use === "light" && inst.on !== on) setLight(inst, on); }
   function useLight(inst: PropInst) {
     setLight(inst, !inst.on);
     if (inst.on) tone(660, 0, 0.09, "triangle", 0.08, 990);
@@ -421,16 +445,36 @@ export function createPropFx(deps: PropFxDeps) {
    * A blocks prop built some other way, with no tower, topples its top block instead.
    */
   function useStack(inst: PropInst) {
-    const stack = inst.holder.userData.stack as (() => { kind: "added"; note: number; landsIn: number } | { kind: "crash" } | { kind: "busy" }) | undefined;
+    const stack = inst.holder.userData.stack as (() => { kind: "added"; note: number; landsIn: number; sfx?: string } | { kind: "crash"; sfx?: string } | { kind: "busy" }) | undefined;
     if (!stack) { useTopple(inst); return; }
     const r = stack();
+    deps.onStack?.(inst, r);
     if (r.kind === "added") {
-      tone(150, r.landsIn, 0.07, "square", 0.05, 100);                                       // the thud
-      tone(r.note, r.landsIn, 0.3, "triangle", 0.12);
-      tone(r.note * 2, r.landsIn, 0.1, "sine", 0.04);
+      if (r.sfx === "clank") {                                                               // the crane's crate hitting the ground: a metal clank and a wooden bounce
+        tone(140, r.landsIn, 0.12, "square", 0.09, 70);
+        tone(880, r.landsIn, 0.3, "triangle", 0.07, 700);
+        tone(110, r.landsIn + 0.32, 0.1, "square", 0.05, 70);
+      } else if (r.sfx === "soft") {                                                         // sand or snow: a soft pat instead of a wooden thud
+        tone(120, r.landsIn, 0.09, "sine", 0.07, 70);
+        tone(r.note, r.landsIn, 0.32, "triangle", 0.1);
+        tone(r.note * 1.5, r.landsIn + 0.05, 0.16, "sine", 0.04);
+      } else {
+        tone(150, r.landsIn, 0.07, "square", 0.05, 100);                                     // the thud
+        tone(r.note, r.landsIn, 0.3, "triangle", 0.12);
+        tone(r.note * 2, r.landsIn, 0.1, "sine", 0.04);
+      }
     } else if (r.kind === "crash") {
-      for (let i = 0; i < 7; i++) tone(95 + (i % 3) * 22, 0.1 + i * 0.11, 0.16, "sawtooth", 0.08, 45);        // blocks clattering down
-      tone(70, 0.05, 0.5, "square", 0.06, 35);
+      if (r.sfx === "crumble") {                                                             // sand sliding down
+        for (let i = 0; i < 9; i++) tone(210 - i * 14, 0.02 + i * 0.07, 0.12, "sawtooth", 0.035, 70);
+        tone(90, 0.05, 0.5, "sine", 0.07, 45);
+      } else if (r.sfx === "poof") {                                                         // a soft puff and a falling giggle
+        tone(300, 0, 0.35, "sine", 0.08, 90);
+        tone(660, 0.05, 0.18, "triangle", 0.05, 330);
+        tone(520, 0.2, 0.18, "triangle", 0.04, 260);
+      } else {
+        for (let i = 0; i < 7; i++) tone(95 + (i % 3) * 22, 0.1 + i * 0.11, 0.16, "sawtooth", 0.08, 45);        // blocks clattering down
+        tone(70, 0.05, 0.5, "square", 0.06, 35);
+      }
     }
   }
   function useFlutter(inst: PropInst) {
@@ -514,7 +558,7 @@ export function createPropFx(deps: PropFxDeps) {
   function nameOf(inst: PropInst) {
     const lang = getPropLang();
     const color = colorOf(inst);
-    return inst.spec.noun ? describeObject({ noun: inst.spec.noun, color }, lang) : describeObject({ label: inst.type, color }, lang);
+    return inst.noun ? describeObject({ noun: inst.noun, color }, lang) : describeObject({ label: inst.type, color }, lang);
   }
   /** Show a name as the toast and say it (the Gemini clip, the device voice, or just the caption). */
   function speakName(d: Described, noun: NounKey | undefined, color: ColorKey | undefined) {
@@ -526,7 +570,7 @@ export function createPropFx(deps: PropFxDeps) {
   }
   function announce(inst: PropInst) {
     const d = nameOf(inst);
-    if (d) speakName(d, inst.spec.noun ?? undefined, colorOf(inst));
+    if (d) speakName(d, inst.noun ?? undefined, colorOf(inst));
   }
   const fruitKindOf = (o: THREE.Object3D): FruitKind | null => (o.userData.fruitKind as FruitKind | undefined) ?? null;
   /**
@@ -583,6 +627,30 @@ export function createPropFx(deps: PropFxDeps) {
     tone(440, 0, 0.05, "triangle", 0.05, 600);
     return true;
   }
+  /** Where a fallen fruit lies, in world x, if it is loose on the ground (falling, hopping or resting: not carried, not being eaten and not on a tree); null otherwise. */
+  function looseFruitX(ref: FruitRef): number | null {
+    const f = fallerOf(ref);
+    return f && f.state < 2 ? f.mesh.position.x : null;
+  }
+  /** The basket (a prop that takes fruit, runtime/basket.ts) under a ray, or null. */
+  function basketAt(ray: THREE.Raycaster): PropInst | null {
+    const targets = insts.filter((i) => typeof i.holder.userData.stash === "function").map((i) => i.holder);
+    if (!targets.length) return null;
+    const hit = ray.intersectObjects(targets, true).find((h) => !h.object.userData.noPick);
+    return hit ? instOf(hit.object) : null;
+  }
+  /** A carried fruit is let go over a basket: it drops in and is counted. False when it was not being carried or the basket will not take it (full): the caller then lets it fall as usual. */
+  function stashFruit(ref: FruitRef, basket: PropInst): boolean {
+    const f = fallerOf(ref);
+    const stash = basket.holder.userData.stash as ((mesh: THREE.Object3D, kind: string) => boolean) | undefined;
+    if (!f || f.state !== 3 || !stash) return false;
+    if (!stash(f.mesh, f.kind)) return false;
+    fallers.splice(fallers.indexOf(f), 1);
+    const n = basket.holder.userData.lastNote as number | undefined;
+    if (n) { tone(n, 0, 0.35, "triangle", 0.1); tone(n * 2, 0.02, 0.12, "sine", 0.03); }
+    play(basket, "use", 0.4, (k, o) => { o.dy -= Math.sin(k * Math.PI) * 0.05 * amp(); });
+    return true;
+  }
   /** Show a carried fruit at this world position. */
   function carryFruit(ref: FruitRef, at: THREE.Vector3) {
     const f = fallerOf(ref);
@@ -633,17 +701,18 @@ export function createPropFx(deps: PropFxDeps) {
     }
 
     let pivot: THREE.Group | null = null;
-    if (type === "ball") {
+    if (type === "ball" || type === "tire") {                                              // both turn about their own centre: the ball's is 0.55 up, the tire's holder already sits at its centre
+      const rise = type === "ball" ? 0.55 : 0;
       pivot = new THREE.Group();
-      pivot.position.y = 0.55;
-      for (const c of [...holder.children]) { c.position.y -= 0.55; pivot.add(c); }
+      pivot.position.y = rise;
+      for (const c of [...holder.children]) { c.position.y -= rise; pivot.add(c); }
       holder.add(pivot);
     }
     holder.updateMatrixWorld(true);
     const box = meshBox(holder);
     const size = box.getSize(new THREE.Vector3());
     const inst: PropInst = {
-      type, known: type in PROP_SPECS, spec, holder, pivot,
+      type, known: type in PROP_SPECS, spec, noun: spec.noun, holder, pivot,
       base: { px: holder.position.x, py: holder.position.y, pz: holder.position.z, rx: holder.rotation.x, ry: holder.rotation.y, rz: holder.rotation.z, sx: holder.scale.x, sy: holder.scale.y, sz: holder.scale.z },
       phase: Math.random() * Math.PI * 2, size, on: true,
       lightColor: type === "lantern" && typeof arg === "string" && /^#[0-9a-f]{6}$/i.test(arg) ? arg : null,
@@ -679,18 +748,18 @@ export function createPropFx(deps: PropFxDeps) {
         }
       });
     }
-    if (type === "tree" || type === "palm" || type === "bushes") {
+    if (type === "tree" || type === "palm" || type === "bushes" || type === "pumpkins") {
       // A tree, palm or bush built as a kind (treeKinds.ts) grows ITS fruit. A kind that does not fit the prop (a pear on a bush) is ignored; a plain tree grows apples as it always did.
       const tk = kindById(String(holder.userData.treeKind ?? ""));
-      if (tk && kindFits(type, tk)) { inst.fruit = tk.fruit; inst.fruitSlots = tk.slots; hangFruit(inst); }
+      if (tk && kindFits(type, tk)) { inst.fruit = tk.fruit; inst.fruitSlots = tk.slots; inst.noun = kindNoun(tk) ?? inst.noun; hangFruit(inst); }
       else if (type === "tree") hangFruit(inst);
     }
 
     holder.userData.propInst = inst;
     insts.push(inst);
-    if (spec.noun && getPropLang() !== "off" && (deps.canSpeak ? deps.canSpeak() : sound)) {
+    if (inst.noun && getPropLang() !== "off" && (deps.canSpeak ? deps.canSpeak() : sound)) {
       const lang = getPropLang();
-      if (lang !== "off") prefetchObjectVoices([{ noun: spec.noun, color: colorOf(inst) }], lang);
+      if (lang !== "off") prefetchObjectVoices([{ noun: inst.noun, color: colorOf(inst) }], lang);
     }
     return inst;
   }
@@ -803,7 +872,11 @@ export function createPropFx(deps: PropFxDeps) {
         const next = stepBall(inst.kick, dt, BALL_BOUNDS[0], BALL_BOUNDS[1]);
         inst.base.px = next.x;
         o.dy += next.h;
-        if (inst.pivot) inst.pivot.rotation.z = next.spin;
+        if (inst.pivot) {
+          inst.pivot.rotation.z = next.spin * (inst.type === "tire" ? TIRE_SPIN : 1);
+          const tyre = inst.type === "tire" ? inst.pivot.children[0] : null;
+          if (tyre) tyre.rotation.y *= Math.max(0, 1 - dt * 12);                          // a tire standing a little turned straightens as it starts to roll, so it turns about its own axis
+        }
         inst.kick = next.resting ? null : next;
       }
       offs.set(inst, o);
@@ -865,8 +938,8 @@ export function createPropFx(deps: PropFxDeps) {
   }
 
   return {
-    register, tap, update, reset, activate, screenPos, nameOf,
-    pickFruit, liftFruit, carryFruit, dropFruit, eatFruit, lightsOut, squish, kickBall, cue, nearby, placeProp, strike,
+    register, tap, update, reset, activate, screenPos, nameOf, setLights,
+    pickFruit, liftFruit, carryFruit, dropFruit, eatFruit, looseFruitX, basketAt, stashFruit, lightsOut, squish, kickBall, cue, nearby, placeProp, strike,
     /** Flutter a prop's pages (the book being read) without a tap. */
     flutter: useFlutter,
     /** Say a prop's name (caption and voice), exactly as a tap does, without reacting. */

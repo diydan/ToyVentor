@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from "vitest";
 import { BALL_BOUNDS } from "../src/features/game/world/runtime/ballKick";
 import { BLOW_PUFFS_S, HUG_SQUEEZE_S, KICK_CONTACT_S, MALLET_COUNT, MALLET_EVERY_S, MALLET_START_S, PET_STROKES_S, READ_PAGES_S, STRUM_COUNT, STRUM_EVERY_S } from "../src/features/game/world/runtime/proceduralClips";
 import type { PropInst } from "../src/features/game/world/runtime/propReactions";
+import { BAR_COUNT } from "../src/features/game/world/runtime/xylophone";
 import {
   ACT_FOR_PROP, MALLET_S, MALLET_STAND, TUNE, BLOW_S, BLOW_STAND, BUBBLES_PER_PUFF, CUSHION_TOP, HEART_RISE, HEART_RISE_S, HUG_S, HUG_SECOND_SQUEEZE_S, HUG_STAND, JUMP_BOUNCES, JUMP_DOWN_S, JUMP_STAND, JUMP_UP_S, FOLLOW_STAND, PET_CUE_S, PET_S, PET_STAND, PLAY_S, PLAY_STAND, READ_NAMES, READ_S, READ_STAND, RIFF, KICK_ROOM, KICK_S, KICK_STAND, KICK_VX, KICK_VY,
   createActs, jumpPath, type JumpPlan,
@@ -537,14 +538,15 @@ describe("playing the xylophone", () => {
     expect(g.strikes).toHaveLength(3);
   });
 
-  it("is a tune: it climbs and falls over the bars, ending where it began (twinkle, twinkle)", () => {
+  it("is a tune on the five bars: Mary had a little lamb (E D C D E E E, D D D, E G G) and home to C", () => {
     expect(TUNE).toHaveLength(MALLET_COUNT);
-    expect(TUNE[0]).toBe(TUNE.at(-1));
-    expect(Math.max(...TUNE)).toBeLessThan(8);
+    expect(TUNE).toEqual([2, 1, 0, 1, 2, 2, 2, 1, 1, 1, 2, 3, 3, 0]);
+    expect(Math.max(...TUNE)).toBeLessThan(BAR_COUNT);                       // only bars the xylophone has
     expect(Math.min(...TUNE)).toBeGreaterThanOrEqual(0);
-    expect(new Set(TUNE).size).toBeGreaterThanOrEqual(5);
+    expect(new Set(TUNE).size).toBe(4);                                      // C, D, E and G
+    expect(TUNE.at(-1)).toBe(0);                                             // it ends on the home note
+    expect(TUNE.slice(0, 3)).toEqual([2, 1, 0]);                             // and begins with the three notes everyone knows
   });
-
   it("music notes float up from the bars it hits", () => {
     const g = game({ start: { x: 1, y: 0, z: 0.4 } });
     g.acts.tap(xylo);
@@ -659,6 +661,18 @@ describe("jumping on the cushions", () => {
     expect(g.places.some((p) => p[1] > CUSHION_TOP)).toBe(true);           // it really went above the pile
   });
 
+  it("takes off with the Mixamo jump clip (the pose; the path lifts it) and then cheers at the top: jump first, cheer second, each once", () => {
+    const g = game({ start: { x: 12, y: 0, z: 0.4 } });
+    g.acts.tap(cush);
+    g.arriveAt(22 - JUMP_STAND);
+    g.run(0.05);
+    expect(g.log.filter((l) => l.startsWith("clip:"))).toEqual(["clip:jump"]);                 // at once, as it leaves the floor
+    g.run(JUMP_UP_S + 0.1);
+    expect(g.log.filter((l) => l.startsWith("clip:"))).toEqual(["clip:jump", "clip:cheer"]);
+    g.run(JUMP_DOWN_S);
+    expect(g.log.filter((l) => l === "clip:jump")).toHaveLength(1);
+  });
+
   it("cut short (a reset) it is put back on the floor where it started", () => {
     const g = game({ start: { x: 12, y: 0, z: 0.4 } });
     g.acts.tap(cush);
@@ -768,7 +782,7 @@ describe("wiring in world.ts", () => {
     expect(world).toContain("bubbles:BUBBLES,held:HELD,fetch:DOGF,");
   });
   it("Kip can hold a book, the guitar, the wand and a pair of mallets: the right arm is arms[1], the left arms[0] and the mouth is found from Kip's own box", () => {
-    expect(world).toContain("hold:function(i: \"book\"|\"guitar\"|\"wand\"|\"mallets\"){HELD.hold(i,P.model,P.rig&&P.rig.arms&&P.rig.arms[1],P.rig&&P.rig.arms&&P.rig.arms[0])}");
+    expect(world).toContain("hold:function(i: \"book\"|\"guitar\"|\"wand\"|\"mallets\"|\"can\"|\"carrot\"|\"bouquet\"|\"sandwich\"){HELD.hold(i,P.model,P.rig&&P.rig.arms&&P.rig.arms[1],P.rig&&P.rig.arms&&P.rig.arms[0])}");
     expect(world).toContain("release:function(){HELD.release()}");
     expect(world).toContain("bubbles:BUBBLES,");
     expect(world).toMatch(/mouth:function\(d: number\)\{var b=new T\.Box3\(\)\.setFromObject\(P\.root\)/);

@@ -1,0 +1,158 @@
+{
+ "sky-far-day": {
+  "prompt": "A wide panoramic daytime sky for a children's game: a bright blue sky fading to pale cream at the horizon, a warm sun, big soft fluffy white and pale pink clouds stacked in layers along the bottom like a cloud meadow, a few tiny distant floating islands, hazy and light. Smooth flat illustration, soft clay toy style for a children's game, no text. Level horizon, nothing in the middle of the picture, the same soft look from left to right.",
+  "requested": "4096x512",
+  "file": "sky-far-day.webp",
+  "bytes": 124456,
+  "ms": 9874,
+  "usage": {
+   "input_tokens": 10324,
+   "output_tokens": 1103,
+   "total_tokens": 11427
+  },
+  "at": "2026-11-04T02:14:17.789Z"
+ },
+ "sky-far-night": {
+  "prompt": "A wide panoramic night sky for a children's game: a deep indigo sky with many twinkling stars and a glowing full moon, soft layered clouds in blue and lavender along the bottom like a cloud meadow, a few tiny distant floating islands with warm glowing windows. Smooth flat illustration, soft clay toy style for a children's game, no text. Level horizon, nothing in the middle of the picture, the same soft look from left to right.",
+  "requested": "4096x512",
+  "file": "sky-far-night.webp",
+  "bytes": 204656,
+  "ms": 23253,
+  "usage": {
+   "input_tokens": 28293,
+   "output_tokens": 2467,
+   "total_tokens": 30760
+  },
+  "at": "2026-11-04T02:14:47.679Z"
+ },
+ "sky-mid": {
+  "prompt": "A wide horizontal strip of soft puffy rounded clouds in white and pale pink with two tiny floating grassy islands with small round trees, soft clay toy style, centered with empty space above, on a PURE SOLID BLACK background (#000000), nothing else, no ground line, no sky, no text.",
+  "requested": "4096x512",
+  "file": "sky-mid.webp",
+  "bytes": 200420,
+  "ms": 8662,
+  "usage": {
+   "input_tokens": 10222,
+   "output_tokens": 1056,
+   "total_tokens": 11278
+  },
+  "at": "2026-11-04T02:14:56.342Z"
+ },
+ "beach-far-day": {
+  "prompt": "A wide panoramic daytime beach landscape for a children's game: a bright turquoise sea meeting a light blue sky at a level horizon, a warm sun, a few fluffy white clouds, tiny distant sailboats, soft sandy dunes with palm tree silhouettes along the bottom, hazy and light. Smooth flat illustration, soft clay toy style for a children's game, no text. Level horizon, nothing in the middle of the picture, the same soft look from left to right.",
+  "requested": "4096x512",
+  "file": "beach-far-day.webp",
+  "bytes": 129270,
+  "ms": 9950,
+  "usage": {
+   "input_tokens": 10359,
+   "output_tokens": 1125,
+   "total_tokens": 11484
+  },
+  "at": "2026-11-04T02:15:06.292Z"
+ },
+ "beach-far-night": {
+  "prompt": "A wide panoramic night beach landscape for a children's game: a deep blue starry sky with a glowing full moon, a dark calm sea with the moon's reflection at a level horizon, tiny distant sailboats with warm lit windows, soft dunes with palm tree silhouettes along the bottom in navy and indigo. Smooth flat illustration, soft clay toy style for a children's game, no text. Level horizon, nothing in the middle of the picture, the same soft look from left to right.",
+  "requested": "4096x512",
+  "file": "beach-far-night.webp",
+  "bytes": 347202,
+  "ms": 18051,
+  "usage": {
+   "input_tokens": 18557,
+   "output_tokens": 1973,
+   "total_tokens": 20530
+  },
+  "at": "2026-11-04T02:15:24.343Z"
+ },
+ "beach-mid": {
+  "prompt": "A wide horizontal strip of cute rounded sand dunes in warm cream and gold with small round cartoon palm trees, a tiny striped beach hut and a few round rocks, soft clay toy style, centered with empty space above, on a PURE SOLID BLACK background (#000000), nothing else, no ground line, no sky, no text.",
+  "requested": "4096x512",
+  "file": "beach-mid.webp",
+  "bytes": 138078,
+  "ms": 17551,
+  "usage": {
+   "input_tokens": 18056,
+   "output_tokens": 1708,
+   "total_tokens": 19764
+  },
+  "at": "2026-11-04T02:15:41.895Z"
+ },
+ "snow-far-day": {
+  "prompt": "A wide panoramic daytime snowy mountain landscape for a children's game: a clear light blue sky with a bright sun and a few thin white clouds, layered soft snow-covered mountains in white and pale blue with tiny pine trees along the bottom, hazy and light. Smooth flat illustration, soft clay toy style for a children's game, no text. Level horizon, nothing in the middle of the picture, the same soft look from left to right.",
+  "requested": "4096x512",
+  "file": "snow-far-day.webp",
+  "bytes": 180732,
+  "ms": 7780,
+  "usage": {
+   "input_tokens": 10300,
+   "output_tokens": 1087,
+   "total_tokens": 11387
+  },
+  "at": "2026-11-04T02:15:49.675Z"
+ },
+ "snow-far-night": {
+  "prompt": "A wide panoramic night snowy mountain landscape for a children's game: a deep blue-purple sky full of stars with a glowing full moon and soft green and pink northern lights ribbons, layered snow-covered mountains in icy blue and indigo with tiny pine trees along the bottom. Smooth flat illustration, soft clay toy style for a children's game, no text. Level horizon, nothing in the middle of the picture, the same soft look from left to right.",
+  "requested": "4096x512",
+  "file": "snow-far-night.webp",
+  "bytes": 263624,
+  "ms": 9447,
+  "usage": {
+   "input_tokens": 10444,
+   "output_tokens": 1212,
+   "total_tokens": 11656
+  },
+  "at": "2026-11-04T02:15:59.122Z"
+ },
+ "snow-mid": {
+  "prompt": "A wide horizontal strip of rounded snowy hills in white and icy blue with small round snow-covered pine trees and one tiny cozy igloo, soft clay toy style, centered with empty space above, on a PURE SOLID BLACK background (#000000), nothing else, no ground line, no sky, no text.",
+  "requested": "4096x512",
+  "file": "snow-mid.webp",
+  "bytes": 108314,
+  "ms": 14764,
+  "usage": {
+   "input_tokens": 18004,
+   "output_tokens": 1717,
+   "total_tokens": 19721
+  },
+  "at": "2026-11-04T02:16:13.886Z"
+ },
+ "junk-far-day": {
+  "prompt": "A wide panoramic daytime scrapyard skyline for a children's game: a blue sky with a warm sun and a few fluffy clouds, distant piles of colourful scrap, old tyres and rusty cranes as soft silhouettes in muted grey, purple and orange along the bottom, hazy and light. Smooth flat illustration, soft clay toy style for a children's game, no text. Level horizon, nothing in the middle of the picture, the same soft look from left to right.",
+  "requested": "4096x512",
+  "file": "junk-far-day.webp",
+  "bytes": 118002,
+  "ms": 20365,
+  "usage": {
+   "input_tokens": 18883,
+   "output_tokens": 2223,
+   "total_tokens": 21106
+  },
+  "at": "2026-11-04T02:16:34.252Z"
+ },
+ "junk-far-night": {
+  "prompt": "A wide panoramic sunset scrapyard skyline for a children's game: a deep purple and orange sunset sky fading to indigo with the first stars, distant piles of scrap, old tyres and cranes as dark soft silhouettes along the bottom. Smooth flat illustration, soft clay toy style for a children's game, no text. Level horizon, nothing in the middle of the picture, the same soft look from left to right.",
+  "requested": "4096x512",
+  "file": "junk-far-night.webp",
+  "bytes": 204108,
+  "ms": 18041,
+  "usage": {
+   "input_tokens": 18414,
+   "output_tokens": 1939,
+   "total_tokens": 20353
+  },
+  "at": "2026-11-04T02:16:52.294Z"
+ },
+ "junk-mid": {
+  "prompt": "A wide horizontal strip of cute rounded piles of junk: stacked old tyres, a rusty crane, round barrels, crates and a little tin shed, in muted orange, teal and purple, soft clay toy style, centered with empty space above, on a PURE SOLID BLACK background (#000000), nothing else, no ground line, no sky, no text.",
+  "requested": "4096x512",
+  "file": "junk-mid.webp",
+  "bytes": 139374,
+  "ms": 8180,
+  "usage": {
+   "input_tokens": 10254,
+   "output_tokens": 1050,
+   "total_tokens": 11304
+  },
+  "at": "2026-11-04T02:17:00.474Z"
+ }
+}

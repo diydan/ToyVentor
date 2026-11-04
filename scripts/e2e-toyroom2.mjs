@@ -81,7 +81,7 @@ const clearToast = (cdp) => cdp.ev(`(() => { const t = document.querySelector("#
 const props = (cdp, expr) => cdp.ev(`(() => { const fx = window.__tvWorld && window.__tvWorld.props; if (!fx) return null; return ${expr}; })()`);
 
 async function loadApp(cdp, lang) {
-  const source = `try { ${lang === undefined ? 'localStorage.removeItem("toyforge:prop-lang:v1");' : `localStorage.setItem("toyforge:prop-lang:v1", ${JSON.stringify(lang)});`} } catch (e) {}`;
+  const source = `try { localStorage.setItem("tvTimeOfDay:v1", "night"); } catch (e) {} try { ${lang === undefined ? 'localStorage.removeItem("toyforge:prop-lang:v1");' : `localStorage.setItem("toyforge:prop-lang:v1", ${JSON.stringify(lang)});`} } catch (e) {}`;
   const { identifier } = await cdp.send("Page.addScriptToEvaluateOnNewDocument", { source });
   try {
     await cdp.send("Page.navigate", { url: APP });
@@ -154,25 +154,28 @@ async function check_xylophone(cdp) {
   await clearToast(cdp);
   const b4 = await barScreen(cdp, 4);
   check("xylophone: a bar is on screen to tap", b4.on && b4.x > 20 && b4.x < 370 && b4.y > 150, JSON.stringify(b4));
+  const bars = []; for (let i = 0; i < 5; i++) bars.push(await barScreen(cdp, i));
+  const pitch = bars.slice(1).map((b, i) => Math.abs(b.x - bars[i].x));
+  check("xylophone: the bars are big enough for a small finger on a phone (at least 36 CSS px apart; eight bars were 26)", pitch.length === 4 && pitch.every((p) => p >= 36), JSON.stringify(pitch.map((p) => +p.toFixed(1))));
   await cdp.tapAt(b4.x, b4.y);
   const ring = await sample(cdp, 400, async () => barYs(cdp), 25);
   check("xylophone: tapping a bar rings that bar (it dips) and no other", Math.min(...ring.map((r) => r[4])) < -0.02 && ring.every((r) => r.every((y, i) => i === 4 || Math.abs(y) < 0.001)), JSON.stringify(ring.map((r) => r[4]).slice(0, 8)));
   check("xylophone: a bar tap says nothing and does not send Kip over", (await toastText(cdp)) === null && (await phase(cdp)) === "idle" && (await toy(cdp)).target === null, JSON.stringify({ toast: await toastText(cdp), phase: await phase(cdp) }));
   // tap each bar in turn: every one rings
   const seen = new Set();
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < 5; i++) {
     const b = await barScreen(cdp, i);
     if (!(b.on && b.x > 10 && b.x < 380)) continue;
     await cdp.tapAt(b.x, b.y);
     const ys = await sample(cdp, 160, async () => barYs(cdp), 25);
     if (Math.min(...ys.map((r) => r[i])) < -0.02) seen.add(i);
   }
-  check("xylophone: every bar on screen rings when it is tapped", seen.size >= 6, JSON.stringify([...seen]));
+  check("xylophone: every one of the five bars rings when it is tapped", seen.size === 5, JSON.stringify([...seen]));
   // a tap on the frame: Kip plays the tune
   await sleep(700);
   await clearToast(cdp);
   const inst = await propScreen(cdp, "xylophone");
-  const legs = await cdp.ev(`(() => { const i = window.__tvWorld.props.list().find((p) => p.type === "xylophone"); const v = i.holder.localToWorld(new window.__tvDebug.camera.position.constructor(-1.55, 0.3, 0.35)).project(window.__tvDebug.camera); const r = document.querySelector("canvas").getBoundingClientRect(); return { x: r.left + (v.x * 0.5 + 0.5) * r.width, y: r.top + (-v.y * 0.5 + 0.5) * r.height }; })()`);
+  const legs = await cdp.ev(`(() => { const i = window.__tvWorld.props.list().find((p) => p.type === "xylophone"); const v = i.holder.localToWorld(new window.__tvDebug.camera.position.constructor(-1.4, 0.3, 0.35)).project(window.__tvDebug.camera); const r = document.querySelector("canvas").getBoundingClientRect(); return { x: r.left + (v.x * 0.5 + 0.5) * r.width, y: r.top + (-v.y * 0.5 + 0.5) * r.height }; })()`);
   await cdp.tapAt(legs.x, legs.y);
   await sleep(250);
   check("xylophone: a tap on its frame names it", (await toastText(cdp)) === "Colorful xylophone", JSON.stringify({ toast: await toastText(cdp), legs, inst }));
@@ -180,7 +183,7 @@ async function check_xylophone(cdp) {
   const tune = await sample(cdp, 6500, async () => { const a = (await toy(cdp)).action; const ys = await barYs(cdp); const notes = await world(cdp, `w.acts.noteCount`); if (!shotTune && a === "mallet" && notes >= 2) { shotTune = true; await shot(cdp, "7-xylophone-tune"); } const held = await world(cdp, `w.held.item`); const mallets = (await world(cdp, `w.held.meshes.length`)); const floor = await world(cdp, `w.props.list().find((p) => p.type === "xylophone").holder.userData.mallets.visible`); return { a, ys, notes, held, mallets, floor }; }, 40);
   check("xylophone: Kip plays the mallet clip", tune.some((s) => s.a === "mallet"), JSON.stringify([...new Set(tune.map((s) => s.a))]));
   const rung = new Set(); for (const s of tune) s.ys.forEach((y, i) => { if (y < -0.02) rung.add(i); });
-  check("xylophone: it plays a tune over several different bars", rung.size >= 4, JSON.stringify([...rung]));
+  check("xylophone: it plays a tune over several different bars (the exact tune is pinned by the unit tests; the sampler can miss a short dip on a loaded machine)", rung.size >= 3, JSON.stringify([...rung]));
   check("xylophone: music notes float up", Math.max(...tune.map((s) => s.notes)) >= 2, String(Math.max(...tune.map((s) => s.notes))));
   check("xylophone: Kip holds a mallet in each hand while it plays", tune.some((s) => s.held === "mallets" && s.mallets === 2), JSON.stringify([...new Set(tune.map((s) => `${s.held}/${s.mallets}`))]));
   check("xylophone: the mallets leave the ledge while Kip has them, and are back on it afterwards", tune.some((s) => s.held === "mallets" && s.floor === false) && !tune.some((s) => s.held === "mallets" && s.floor === true) && tune.at(-1).floor === true && tune.at(-1).held === null, JSON.stringify([...new Set(tune.map((s) => `${s.held}/${s.floor}`))]));
@@ -313,19 +316,21 @@ async function main() {
   const chrome = spawn(CHROME, ["--headless=new", "--use-angle=metal", "--ignore-gpu-blocklist", "--autoplay-policy=no-user-gesture-required",
     `--remote-debugging-port=${DEBUG_PORT}`, `--user-data-dir=${PROFILE}`, "--no-first-run", "--no-default-browser-check", "about:blank"], { stdio: "ignore" });
   const killAll = () => { try { chrome.kill(); } catch {} try { dev.kill(); } catch {} };
+  let cdp = null, pageOrigin = null;
   process.on("SIGINT", () => { killAll(); process.exit(130); });
   try {
     await waitFor(async () => (await fetch(APP)).ok || null, { label: APP, timeoutMs: 120000 });
     await waitFor(async () => (await fetch(`http://localhost:${DEBUG_PORT}/json/version`)).ok || null, { label: "chrome" });
     await fetch(`http://localhost:${DEBUG_PORT}/json/new?about:blank`, { method: "PUT" });
     const targets = await waitFor(async () => { const l = (await (await fetch(`http://localhost:${DEBUG_PORT}/json/list`)).json()).filter((t) => t.url === "about:blank"); return l.length ? l : null; }, { label: "new tab" });
-    const cdp = new Cdp(targets[0].webSocketDebuggerUrl);
+    cdp = new Cdp(targets[0].webSocketDebuggerUrl);
     await cdp.connect();
     await cdp.send("Emulation.setDeviceMetricsOverride", { width: 390, height: 844, deviceScaleFactor: 2, mobile: true });
     await cdp.send("Runtime.enable"); await cdp.send("Page.enable");
     await cdp.send("Fetch.enable", { patterns: [{ urlPattern: "*/api/voice*" }] });
 
     await loadApp(cdp, "en");
+    pageOrigin = await cdp.ev(`performance.timeOrigin`);               // (the dev server hot-reloads the page when anyone edits a source file: Kip and every toy would be back at the start mid-run)
     await cdp.ev(`window.__tvWorld.handle.go("room")`);
     await sleep(3000);
     for (const t of ["books", "guitar", "bubbles", "dog"]) check(`setup: the Toy Room has ${t}`, Boolean(await prop(cdp, t)));
@@ -433,10 +438,12 @@ async function main() {
     await check_blocks(cdp);
     await check_dog_follow(cdp);
 
+    check("the page was not reloaded during the run (if this fails, the checks after the reload are not to be trusted: a source file changed under the dev server)", (await cdp.ev(`performance.timeOrigin`)) === pageOrigin, "reloaded");
     check("no page exceptions", cdp.exceptions.length === 0, cdp.exceptions.slice(0, 3).join(" | "));
     killAll();
   } catch (err) {
     check("e2e ran to completion", false, String(err && err.stack || err));
+    try { if (cdp && pageOrigin !== null && (await cdp.ev(`performance.timeOrigin`)) !== pageOrigin) check("the page was not reloaded during the run (it WAS: a source file changed under the dev server, so what failed above is not to be trusted)", false, "reloaded"); } catch {}
     killAll();
   }
   const failed = results.filter((r) => !r.pass);

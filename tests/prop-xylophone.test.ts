@@ -41,7 +41,8 @@ const rayAt = (m: THREE.Object3D) => {
   return new THREE.Raycaster(p.clone().addScaledVector(up, 10), up.clone().negate());
 };
 const barMesh = (g: THREE.Group, i: number) => (g.userData.bars[i] as THREE.Group).children[0]!;
-const frameMesh = (g: THREE.Group) => { let f: THREE.Object3D | null = null; g.traverse((o) => { if (!f && (o as THREE.Mesh).isMesh && barIndexOf(o) === null && (o as THREE.Mesh).geometry.type === "ExtrudeGeometry") f = o; }); return f!; };
+/** A ray straight down onto the front edge of the base plank, out in front of the rack (where a finger finds the frame; the middle of the plank is under the middle bar). */
+const plankFront = (g: THREE.Group) => { const p = g.getObjectByName("plank")!; p.updateWorldMatrix(true, false); const at = p.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0.7, 0.2, 0.75)); return new THREE.Raycaster(at, new THREE.Vector3(0, -1, 0)); };
 
 describe("the xylophone prop", () => {
   it("is a real prop with a name, a colour and a chime", () => {
@@ -51,7 +52,7 @@ describe("the xylophone prop", () => {
   it("a tap on a bar rings that bar's note (and a bright overtone), and does not name the prop or count as a tap on it", () => {
     const onTap = vi.fn();
     const c = room(onTap);
-    for (const i of [0, 3, 7]) {
+    for (const i of [0, 2, 4]) {
       tones.length = 0;
       expect(c.fx.tap(rayAt(barMesh(c.g, i)))).toBe(true);
       expect(tones.map((t) => t[0]), `bar ${i}`).toEqual([XYLO_NOTES[i], XYLO_NOTES[i]! * 3]);
@@ -74,7 +75,7 @@ describe("the xylophone prop", () => {
   it("a tap on the frame is a tap on the prop: it names itself, chimes, counts and tells the world", () => {
     const onTap = vi.fn();
     const c = room(onTap);
-    expect(c.fx.tap(rayAt(frameMesh(c.g)))).toBe(true);
+    expect(c.fx.tap(plankFront(c.g))).toBe(true);
     expect(c.toast).toHaveBeenCalledWith("Colorful xylophone");
     expect(c.inst.taps).toBe(1);
     expect(onTap).toHaveBeenCalledTimes(1);
@@ -85,8 +86,8 @@ describe("the xylophone prop", () => {
 
   it("strike rings a bar from outside with its note and returns the pitch; a bar that is not there does nothing", () => {
     const c = room();
-    expect(c.fx.strike(c.inst, 6)).toBe(XYLO_NOTES[6]);
-    expect(tones.map((t) => t[0])).toEqual([XYLO_NOTES[6], XYLO_NOTES[6]! * 3]);
+    expect(c.fx.strike(c.inst, 3)).toBe(XYLO_NOTES[3]);
+    expect(tones.map((t) => t[0])).toEqual([XYLO_NOTES[3], XYLO_NOTES[3]! * 3]);
     tones.length = 0;
     for (const i of [-1, BAR_COUNT, 2.5]) expect(c.fx.strike(c.inst, i)).toBeNull();
     expect(tones).toHaveLength(0);

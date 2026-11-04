@@ -5,12 +5,14 @@ import { BAR_COUNT, BAR_RING_S, BAR_SPACING, XYLO_COLORS, XYLO_NOTES, barIndexOf
 const box = (o: THREE.Object3D) => { o.updateMatrixWorld(true); return new THREE.Box3().setFromObject(o); };
 
 describe("the notes and colours", () => {
-  it("are a rising C major scale, eight bars, eight different colours", () => {
+  it("are a rising C major pentatonic scale (C D E G A), five bars, five different colours", () => {
+    expect(BAR_COUNT).toBe(5);                                                          // few enough that each bar is wide enough for a small finger on a phone
+    expect(XYLO_NOTES).toEqual([262, 294, 330, 392, 440]);
     expect(XYLO_NOTES).toHaveLength(BAR_COUNT);
     expect(XYLO_COLORS).toHaveLength(BAR_COUNT);
     for (let i = 1; i < BAR_COUNT; i++) expect(XYLO_NOTES[i]!).toBeGreaterThan(XYLO_NOTES[i - 1]!);
-    expect(XYLO_NOTES[0]).toBe(262);
-    expect(XYLO_NOTES.at(-1)!).toBeCloseTo(XYLO_NOTES[0]! * 2, -1);                     // the last bar is the octave
+    const semis = XYLO_NOTES.map((f) => Math.round(12 * Math.log2(f / XYLO_NOTES[0]!)));
+    expect(semis).toEqual([0, 2, 4, 7, 9]);                                             // no F and no B: nothing clashes, whatever order a child taps
     expect(new Set(XYLO_COLORS).size).toBe(BAR_COUNT);
     for (const c of XYLO_COLORS) expect(c).toMatch(/^#[0-9a-f]{6}$/i);
   });
@@ -109,9 +111,9 @@ describe("buildXylophone", () => {
 
   it("tapPart on a bar's mesh rings that bar and returns its pitch; on the frame it returns null and rings nothing", () => {
     const g = buildXylophone(0, 0);
-    const bar = g.userData.bars[5] as THREE.Group;
+    const bar = g.userData.bars[3] as THREE.Group;
     const mesh = bar.children[0]!;
-    expect(g.userData.tapPart(mesh)).toBe(XYLO_NOTES[5]);
+    expect(g.userData.tapPart(mesh)).toBe(XYLO_NOTES[3]);
     g.userData.tick(1);
     g.userData.tick(1.04);
     expect(bar.rotation.x !== 0 || bar.position.y !== 0.04).toBe(true);
@@ -168,7 +170,7 @@ describe("the base plank", () => {
     expect(b.min.y).toBeCloseTo(0, 2);
   });
   it("is wider than the rack and the legs, and reaches out in front of them where a finger can land", () => {
-    const rackWidth = 3.7 + 0.24;
+    const rackWidth = 2 * 1.68 + 0.12;                                       // the end rails, outer edge to outer edge
     expect(PLANK.w).toBeGreaterThan(rackWidth + 0.3);
     const b = box(plank);
     expect(b.max.z - g.position.z).toBeGreaterThan(0.6);                   // out beyond the front legs (z = 0.35)
@@ -182,5 +184,21 @@ describe("the base plank", () => {
     for (const l of legs) expect(box(l).min.y).toBeCloseTo(top, 2);
     for (const bar of g.userData.bars as THREE.Group[]) expect(box(bar).min.y).toBeGreaterThan(top + 0.5);
     for (const m of (g.userData.mallets as THREE.Group).children) expect(box(m).min.y).toBeGreaterThanOrEqual(top - 1e-6);
+  });
+});
+
+describe("a bar is big enough for a small finger on a phone", () => {
+  // Measured in the real game (headless Chrome, 390 x 844 CSS px, the Toy Room, 2026-11-04): a world unit along the xylophone is 62.5 CSS px on screen (bars 0.42 apart were 26.3 px apart and 24 px wide).
+  const PX_PER_UNIT = 62.5;
+  it("the bars are at least ~34 px wide and ~38 px apart on a 390 px phone (eight bars were 24 and 26: about half a fingertip, so taps landed on the neighbouring note)", () => {
+    const g = buildXylophone(0, 0);
+    g.updateMatrixWorld(true);
+    const boxes = (g.userData.bars as THREE.Group[]).map((b) => new THREE.Box3().setFromObject(b.children[0]!));
+    for (const b of boxes) expect(b.max.x - b.min.x, "bar width in units").toBeGreaterThan(34 / PX_PER_UNIT);
+    for (let i = 1; i < boxes.length; i++) expect((boxes[i]!.min.x + boxes[i]!.max.x) / 2 - (boxes[i - 1]!.min.x + boxes[i - 1]!.max.x) / 2, "bar pitch in units").toBeGreaterThan(38 / PX_PER_UNIT);
+  });
+  it("and the whole thing still fits the screen with room to spare (the plank is under 5 units, about 290 px of 390)", () => {
+    expect(PLANK.w * PX_PER_UNIT).toBeLessThan(300);
+    expect(BAR_COUNT * BAR_SPACING).toBeLessThan(PLANK.w);                    // the bars sit on the plank
   });
 });

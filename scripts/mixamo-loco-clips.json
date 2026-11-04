@@ -1,0 +1,33 @@
+[
+  {
+    "id": "loco_idle",
+    "glb": "public/kip/mixamo/Xbot.glb",
+    "clip": "idle",
+    "label": "Idle (Mixamo Xbot)",
+    "group": "loco",
+    "loop": true,
+    "inPlace": true,
+    "plant": false
+  },
+  {
+    "id": "loco_walk",
+    "glb": "public/kip/mixamo/Xbot.glb",
+    "clip": "walk",
+    "label": "Walk (Mixamo Xbot)",
+    "group": "loco",
+    "loop": true,
+    "inPlace": true,
+    "plant": false
+  },
+  {
+    "id": "loco_run",
+    "glb": "public/kip/mixamo/Xbot.glb",
+    "clip": "run",
+    "label": "Run (Mixamo Xbot)",
+    "group": "loco",
+    "loop": true,
+    "inPlace": true,
+    "closeLoop": 0.12,
+    "plant": false
+  }
+]

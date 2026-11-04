@@ -1,8 +1,8 @@
-import { readFileSync, statSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import * as THREE from "three";
 import { describe, expect, it, vi } from "vitest";
-import { BACKDROPS, GARDEN_BACKDROP, TUCK, createBackdrop, disposeArtCache, layerX, layoutLayer, visibleSlice, type ArtCache, type ArtLoader } from "../src/features/game/world/runtime/backdrop";
+import { BACKDROPS, GARDEN_BACKDROP, TUCK, backdropFor, createBackdrop, disposeArtCache, layerX, layoutLayer, visibleSlice, type ArtCache, type ArtLoader } from "../src/features/game/world/runtime/backdrop";
 
 // The Garden's parallax backdrop (docs/specs/parallax-backdrops-spec.md). The geometry is checked against numbers worked out by hand in the spec (its table
 // of the visible band at the mockup's camera) and against plain trigonometry, not against the code's own unprojection.
@@ -129,7 +129,7 @@ describe("parallax: layers follow the camera by their scroll factor", () => {
   });
 });
 
-describe("the Garden backdrop is configured as approved, and only the Garden has one", () => {
+describe("the Garden backdrop is configured as approved (at night)", () => {
   it("has the far band at z -34 and the mid cut-out at z -22, both behind the lane props (z >= -6), far opaque and mid a cut-out", () => {
     const [far, mid] = GARDEN_BACKDROP.layers;
     expect([far!.id, mid!.id]).toEqual(["far", "mid"]);
@@ -141,8 +141,81 @@ describe("the Garden backdrop is configured as approved, and only the Garden has
     expect(GARDEN_BACKDROP.groundEdgeZ).toBe(-10);
     expect([GARDEN_BACKDROP.laneLo, GARDEN_BACKDROP.laneHi]).toEqual([3, 41]);
   });
-  it("is the only world with a backdrop: the Toy Room keeps its flat wall and its 3D props, as decided in the mockup review", () => {
-    expect(Object.keys(BACKDROPS)).toEqual(["garden"]);
+  it("is the Garden's night backdrop, unchanged: the day one is new", () => {
+    expect(BACKDROPS.garden!.night).toBe(GARDEN_BACKDROP);
+    expect(BACKDROPS.garden!.day).not.toBe(GARDEN_BACKDROP);
+  });
+});
+
+/** Width and height of a WebP file from its header (lossy, lossless or extended), or null. */
+function webpSize(file: string): { w: number; h: number; alpha: boolean } | null {
+  const b = readFileSync(file);
+  if (b.length < 30 || b.toString("ascii", 0, 4) !== "RIFF" || b.toString("ascii", 8, 12) !== "WEBP") return null;
+  const kind = b.toString("ascii", 12, 16);
+  if (kind === "VP8X") return { w: 1 + b.readUIntLE(24, 3), h: 1 + b.readUIntLE(27, 3), alpha: (b[20]! & 0x10) !== 0 };
+  if (kind === "VP8 ") return { w: b.readUInt16LE(26) & 0x3fff, h: b.readUInt16LE(28) & 0x3fff, alpha: false };
+  if (kind === "VP8L") { const v = b.readUInt32LE(21); return { w: (v & 0x3fff) + 1, h: ((v >> 14) & 0x3fff) + 1, alpha: true }; }
+  return null;
+}
+const ROOT = process.cwd();
+/** The file behind an imported `?url` (vitest gives the path inside the project). */
+const fileOf = (url: string) => join(ROOT, url.replace(/^\/@fs/, "").replace(/\?.*$/, "").replace(/^\//, ""));
+
+describe("every outdoor world has a day and a night backdrop (docs/specs/environment-spec.md)", () => {
+  const WORLDS = ["garden", "sky", "beach", "snow", "junk"];
+  it("exactly the five outdoor worlds have one, each in both looks (the Toy Room keeps its flat wall and its 3D props, as decided in the mockup review)", () => {
+    expect(Object.keys(BACKDROPS).sort()).toEqual([...WORLDS].sort());
+    for (const w of WORLDS) expect(Object.keys(BACKDROPS[w]!).sort(), w).toEqual(["day", "night"]);
+    expect(BACKDROPS.room).toBeUndefined();
+  });
+  it("is laid out like the approved Garden everywhere: far band and mid cut-out behind the lane, far opaque and mid a cut-out, the same lane and ground line", () => {
+    for (const w of WORLDS) for (const look of ["day", "night"] as const) {
+      const b = BACKDROPS[w]![look];
+      expect(b.layers.map((l) => l.id), `${w} ${look}`).toEqual(["far", "mid"]);
+      const [far, mid] = b.layers;
+      expect(far!.z).toBe(-34); expect(mid!.z).toBe(-22);
+      expect(far!.f).toBe(0.85); expect(mid!.f).toBe(0.65);
+      expect(far!.alpha).toBe(false); expect(mid!.alpha).toBe(true);
+      expect(far!.fitFrac).toBe(1);
+      expect(mid!.fitFrac).toBeGreaterThan(0.3); expect(mid!.fitFrac).toBeLessThanOrEqual(1);
+      expect([b.laneLo, b.laneHi, b.groundEdgeZ]).toEqual([3, 41, -10]);
+    }
+  });
+  it("a world's day and night differ in the far band (a different picture), and share one mid cut-out lit differently: white by day, cooler by night", () => {
+    for (const w of WORLDS) {
+      const { day, night } = BACKDROPS[w]!;
+      expect(day.layers[0]!.url, `${w} far`).not.toBe(night.layers[0]!.url);
+      expect(day.layers[1]!.url, `${w} mid`).toBe(night.layers[1]!.url);
+      expect(day.layers[1]!.tint, `${w} day tint`).toBe(0xffffff);
+      const t = night.layers[1]!.tint;
+      expect(t, `${w} night tint`).not.toBe(0xffffff);
+      expect(t & 255, `${w} night tint: blue stays high`).toBeGreaterThan((t >> 16) & 255);        // cooler: more blue than red
+    }
+    expect(BACKDROPS.garden!.night.layers[1]!.tint).toBe(0xbfc8ff);                              // the approved Garden mid, as it was
+    expect(BACKDROPS.garden!.day.layers[1]!.url).toBe(BACKDROPS.garden!.night.layers[1]!.url);
+  });
+  it("no two worlds share a far picture", () => {
+    const urls = WORLDS.flatMap((w) => ["day", "night"].map((l) => BACKDROPS[w]![l as "day"]!.layers[0]!.url));
+    expect(new Set(urls).size).toBe(urls.length);
+  });
+  it("every picture exists, the far bands are 8:1 and at most 4096 wide (the widest texture every phone GPU takes), and the mids are real cut-outs with an alpha channel", () => {
+    for (const w of WORLDS) for (const look of ["day", "night"] as const) {
+      const [far, mid] = BACKDROPS[w]![look].layers;
+      const ff = fileOf(far!.url), mf = fileOf(mid!.url);
+      expect(existsSync(ff), `${w} ${look} far: ${ff}`).toBe(true);
+      expect(existsSync(mf), `${w} mid: ${mf}`).toBe(true);
+      const fs = webpSize(ff)!, ms = webpSize(mf)!;
+      expect(fs.w, `${w} ${look} far width`).toBeLessThanOrEqual(4096);
+      expect(fs.w / fs.h, `${w} ${look} far shape`).toBeGreaterThan(7);
+      expect(fs.w / fs.h).toBeLessThan(8.5);
+      expect(ms.alpha, `${w} mid alpha`).toBe(true);
+      expect(ms.w, `${w} mid width`).toBeLessThanOrEqual(4096 + 512);
+      expect(ms.w / ms.h, `${w} mid shape`).toBeGreaterThan(3);
+    }
+  });
+  it("backdropFor gives the world's backdrop in the look asked for, and nothing for the Toy Room, an unknown world or a world with no look", () => {
+    for (const w of WORLDS) { expect(backdropFor(w, "day")).toBe(BACKDROPS[w]!.day); expect(backdropFor(w, "night")).toBe(BACKDROPS[w]!.night); }
+    for (const [t, l] of [["room", "day"], ["room", "night"], ["volcano", "day"], ["garden", ""], ["garden", "dusk"], ["garden", "DAY"], ["", "day"], ["toString", "day"], ["__proto__", "night"]] as const) expect(backdropFor(t, l), `${t}/${l}`).toBeNull();
   });
 });
 
@@ -383,7 +456,7 @@ describe("the baked art is within budget", () => {
   });
 });
 
-describe("world.ts wiring (the Garden only, with the old hills as the fallback)", () => {
+describe("world.ts wiring (the outdoor worlds in the look they are built in, with the old hills as the fallback)", () => {
   const world = read("src/features/game/world/runtime/world.ts");
   it("shares one art cache per runtime, hands the live camera in for an immediate layout, and frees the cache with the runtime", () => {
     expect(world).toMatch(/var bdArt: ArtCache=new Map\(\)/);
@@ -392,7 +465,8 @@ describe("world.ts wiring (the Garden only, with the old hills as the fallback)"
   });
   it("builds a backdrop for a world that has one, and keeps the old hills until the images are in", () => {
     expect(world).toMatch(/from "\.\/backdrop"/);
-    expect(world).toMatch(/BACKDROPS\[/);
+    expect(world).toContain('var bd=backdropFor(R.theme||id,R.look||"");if(bd){');
+    expect(world).not.toMatch(/BACKDROPS\[/);
     expect(world).toMatch(/createBackdrop\(/);
     expect(world).toMatch(/onReady/);
   });

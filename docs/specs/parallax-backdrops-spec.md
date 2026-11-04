@@ -1,10 +1,13 @@
 # Parallax image backdrops (draft, mockup-first)
 
-> Status: **The Garden's backdrop is in the real game (2026-11-03, §7).**
+> Status: **Every outdoor world has its backdrop in the real game, in a day and a
+> night look that follow the player's clock (2026-11-04, §8; the Garden's was
+> first, 2026-11-03, §7).**
 > Dan approved the mockup's look ("perfect"; the indoor themes use the Toy
 > Room technique instead of image layers, §2b) and asked for the Garden and
-> the Toy Room first. The other worlds, a day Garden, a near strip and
-> real art for them are not done. (Original status: draft, mockup v5 built,
+> the Toy Room first, then (2026-11-04) "do them all, and for outdoor do day
+> and night based on the user's time". A near strip, a mirror-extended mid and
+> phone performance are not done. (Original status: draft, mockup v5 built,
 > nothing ships until the mockup is approved, decided 2026-11-02.)
 > Mockup: `docs/mockups/parallax/` (`sh docs/mockups/parallax/serve.sh`,
 > then `http://127.0.0.1:8765/index.html`; `?cam=16&explode=0&motion=0`
@@ -547,3 +550,33 @@ city, say) would be new work, not a port.
 
 **Commands.** Rebake the art: `python3 scripts/make-backdrops.py` (Pillow with WebP and numpy; not `python3 -I`). Unit tests: `npx vitest run tests/backdrop.test.ts`.
 Real game: `node scripts/e2e-backdrop.mjs` (real GPU; screenshots go to `E2E_SHOTS`, default the OS temp folder).
+
+## 8. The other worlds, and day and night (built 2026-11-04)
+
+Dan (2026-11-04): "do them all and for outdoor do day and night based on the user's time". The Garden's backdrop (§7) is now one of ten: every outdoor world (Garden, Sky Meadow, Beach, Snow
+Peak, Junkyard) has a **day** and a **night** backdrop, and the world is built in the one the player's own clock says (`src/lib/timeOfDay.ts`: 07:00 to 18:59 is day, the device's clock, so it
+follows the player when they travel; a grown-up can pin Day or Night in the Grown-ups sheet, which also re-skins a world that is up). The Toy Room has none, as decided: indoors it is the same at
+any hour. Labs take their theme's look (Lab 1 a Garden, Lab 5 a Sky); a generated level that names its own `mood` keeps it.
+
+**The art** (`scripts/gen-backdrops.mjs`, Muse Image, 12 calls, 8 to 23 s each, about 17k input and 1.2k output tokens per image; raw outputs in `docs/mockups/generated-backdrops/worlds/` with the
+verbatim prompts in `manifest.json`: the service takes no seed, so these are the art of record and a job whose file exists is skipped, never re-spent): a far band for each world and look
+(8:1, 4480 x 560, baked to 4096 x 512 WebP, 26 to 123 KB) and ONE mid cut-out per world (painted on pure black and keyed off by `scripts/make-backdrops.py worlds`, the same flood fill as the
+Garden's). The Garden's day band is the approved mockup's generated `far-day.webp`; its night band and mid are untouched (`make-backdrops.py` without arguments is the only thing that writes them).
+Sky Meadow: a cloud meadow with tiny floating islands, a sun by day, a moon and stars by night, a bank of pink and white clouds with two islands as the mid. Beach: a turquoise sea, dunes and palm
+silhouettes, a moon and sailboats with lit windows by night, dunes with palms and a hut as the mid. Snow Peak: soft white mountains and tiny pines, northern lights by night, hills with pines and an
+igloo as the mid. Junkyard: scrap, tyres and cranes under a blue sky, the same silhouettes against a purple and orange sunset by night, piles of tyres, barrels, crates and a crane as the mid.
+The mid is lit by the look: as painted by day, tinted cool (`0x9aa6e0`; the Garden's is the approved `0xbfc8ff`) by night.
+
+**The look** (`runtime/worldLook.ts`, pure): each world was painted for ONE time of day (the Garden, the Junkyard and Snow Peak at night, Sky Meadow and the Beach by day) and keeps that painting,
+and its own tuned light rig, at that time of day. For the other one it wears a **skin**: the sky, fog, ground, hills, sun or moon and extras that make a time of day (a green day Garden with no
+fireflies, a starry Sky Meadow, a Beach under the moon with fireflies, a bright Snow Peak with no aurora, a Junkyard in daylight), plus the `mood` that makes `lighting.ts` swap to the day or night rig
+(`moodRig`, which already existed for generated levels). The ground texture is tinted per look (`GROUND_LOOK` in `world.ts`: a lighter gravel in the day Junkyard, the cloud floor and the sand cooled
+at night) and the sea is dark at night. **Lanterns are lit at night and dark by day** (`fx.setLights`, called once the world is final: a prop's brightness is read at the moment it is switched off).
+A world is built in the look of the moment; the clock passing 19:00 under a child does not rebuild it (the next world load does), but pinning the other look while a world is up does, when the toy is free.
+`backdropFor(theme, look)` picks the backdrop; everything about the layout (depths, scroll factors, the lane, the ground line, the live-camera maths of §7) is the Garden's.
+
+**Checked:** 36 + 41 + 5 unit tests (the skins, the backdrop table, the art on disk with its dimensions and alpha, the lanterns; 22 mutants, all killed bar one that behaves identically), `scripts/e2e-daynight.mjs`
+in real Chrome (every outdoor world in both looks, the light rig's fog, the lanterns, the art loaded and shown, day and night bands different, the Toy Room unchanged, pinning the other look while up,
+Auto), screenshots reviewed (the first pass found the Sky floor and the Beach sea still bright at night and the Junkyard ground still dark by day: fixed). The older e2es now pin Night (the look they were
+written for) so the clock cannot change what they see. **Not done:** the Junkyard's mid is a compact cluster rather than a strip (it sits in the middle of the lane; a mirror-extended or wider piece is
+the next art), a near strip, a gradual dusk (the spec's continuous look is post-hackathon), and phone performance of ten more textures (one far and one mid are alive at a time, cached for the session).

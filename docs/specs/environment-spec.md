@@ -12,7 +12,8 @@ hackathon** (Dan, 2026-11-03).
 - **Indoor scenes are identical** at night and during the day.
 - **The 3D worlds** use the day and night **mid and far backgrounds** from the
   parallax spec (parallax-backdrops-spec.md), with a day and a night lighting
-  rig; lamps and lanterns are lit at night.
+  rig; lamps and lanterns are lit at night. **Built 2026-11-04** (parallax
+  spec section 8): all five outdoor worlds, both looks, from this one clock.
 - **The day version is the one a child plays first.**
 - **Build the map's day and night now.**
 
@@ -24,7 +25,7 @@ own clock**, so it is the user's local time and follows them when they travel.
 (The grown-up's timezone setting is saved once and can go stale, so the look
 does not use it; play-time limits and quiet hours still do.) A grown-up can pin Auto, Day or
 Night on the device (`tvTimeOfDay:v1`); the pin also makes either look easy to
-show. The map, the Garage and, later, the 3D worlds all read this one function.
+show. The map, the Garage and the 3D worlds all read this one function (the 3D worlds since 2026-11-04).
 
 ## Stretch goal (post hackathon): a continuous look, and weather
 

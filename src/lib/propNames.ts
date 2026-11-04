@@ -52,6 +52,10 @@ export const NOUN_KEYS = [
   "apple", "pear", "orange", "lemon", "cherries", "banana", "plum", "strawberry", "blueberries", "coconut", "pumpkin",
   // Things to play with outside (runtime/playthings.ts): the snow angel, the flower bed, the bunny, the picnic blanket and the swing.
   "snowangel", "flowers", "bunny", "picnic", "swing",
+  // Trees, palms and bushes named for what grows on them (treeKinds.ts `kindNoun`): a pear tree says "pear tree", not just "tree".
+  "appletree", "peartree", "orangetree", "cherrytree", "plumtree", "lemontree", "coconutpalm", "bananapalm", "strawberrybush", "blueberrybush",
+  // The fruit basket (runtime/basket.ts).
+  "basket",
 ] as const;
 export type NounKey = (typeof NOUN_KEYS)[number];
 
@@ -71,6 +75,8 @@ const NOUNS: Record<LangCode, Record<NounKey, Noun>> = {
     apple: m("apple"), pear: m("pear"), orange: m("orange"), lemon: m("lemon"), cherries: mp("cherries"), banana: m("banana"), plum: m("plum"),
     strawberry: m("strawberry"), blueberries: mp("blueberries"), coconut: m("coconut"), pumpkin: m("pumpkin"),
     snowangel: m("snow angel"), flowers: mp("flowers"), bunny: m("bunny"), picnic: m("picnic blanket"), swing: m("swing"),
+    appletree: m("apple tree"), peartree: m("pear tree"), orangetree: m("orange tree"), cherrytree: m("cherry tree"), plumtree: m("plum tree"), lemontree: m("lemon tree"), coconutpalm: m("coconut palm"), bananapalm: m("banana palm"), strawberrybush: m("strawberry bush"), blueberrybush: m("blueberry bush"),
+    basket: m("basket"),
   },
   es: {
     light: f("luz"), lamp: f("lámpara"), house: f("casa"), tree: m("árbol"), bushes: mp("arbustos"), cloud: f("nube"), island: f("isla"),
@@ -80,6 +86,8 @@ const NOUNS: Record<LangCode, Record<NounKey, Noun>> = {
     apple: f("manzana"), pear: f("pera"), orange: f("naranja"), lemon: m("limón"), cherries: fp("cerezas"), banana: m("plátano"), plum: f("ciruela"),
     strawberry: f("fresa"), blueberries: mp("arándanos"), coconut: m("coco"), pumpkin: f("calabaza"),
     snowangel: m("ángel de nieve"), flowers: fp("flores"), bunny: m("conejito"), picnic: f("manta de picnic"), swing: m("columpio"),
+    appletree: m("manzano"), peartree: m("peral"), orangetree: m("naranjo"), cherrytree: m("cerezo"), plumtree: m("ciruelo"), lemontree: m("limonero"), coconutpalm: m("cocotero"), bananapalm: m("platanero"), strawberrybush: f("planta de fresa"), blueberrybush: m("arbusto de arándanos"),
+    basket: f("cesta"),
   },
   fr: {
     light: f("lumière"), lamp: f("lampe"), house: f("maison"), tree: m("arbre"), bushes: mp("buissons"), cloud: m("nuage"), island: f("île"),
@@ -89,6 +97,8 @@ const NOUNS: Record<LangCode, Record<NounKey, Noun>> = {
     apple: f("pomme"), pear: f("poire"), orange: f("orange"), lemon: m("citron"), cherries: fp("cerises"), banana: f("banane"), plum: f("prune"),
     strawberry: f("fraise"), blueberries: fp("myrtilles"), coconut: f("noix de coco"), pumpkin: f("citrouille"),
     snowangel: m("ange de neige"), flowers: fp("fleurs"), bunny: m("lapin"), picnic: f("nappe de pique-nique"), swing: f("balançoire"),
+    appletree: m("pommier"), peartree: m("poirier"), orangetree: m("oranger"), cherrytree: m("cerisier"), plumtree: m("prunier"), lemontree: m("citronnier"), coconutpalm: m("cocotier"), bananapalm: m("bananier"), strawberrybush: m("fraisier"), blueberrybush: m("myrtillier"),
+    basket: m("panier"),
   },
   de: {
     light: n("Licht"), lamp: f("Lampe"), house: n("Haus"), tree: m("Baum"), bushes: np("Büsche"), cloud: f("Wolke"), island: f("Insel"),
@@ -98,6 +108,8 @@ const NOUNS: Record<LangCode, Record<NounKey, Noun>> = {
     apple: m("Apfel"), pear: f("Birne"), orange: f("Orange"), lemon: f("Zitrone"), cherries: np("Kirschen"), banana: f("Banane"), plum: f("Pflaume"),
     strawberry: f("Erdbeere"), blueberries: np("Blaubeeren"), coconut: f("Kokosnuss"), pumpkin: m("Kürbis"),
     snowangel: m("Schneeengel"), flowers: fp("Blumen"), bunny: m("Hase"), picnic: f("Picknickdecke"), swing: f("Schaukel"),
+    appletree: m("Apfelbaum"), peartree: m("Birnbaum"), orangetree: m("Orangenbaum"), cherrytree: m("Kirschbaum"), plumtree: m("Pflaumenbaum"), lemontree: m("Zitronenbaum"), coconutpalm: f("Kokospalme"), bananapalm: f("Bananenpalme"), strawberrybush: m("Erdbeerstrauch"), blueberrybush: m("Heidelbeerstrauch"),
+    basket: m("Korb"),
   },
   it: {
     light: f("luce"), lamp: f("lampada"), house: f("casa"), tree: m("albero"), bushes: mp("cespugli"), cloud: f("nuvola"), island: f("isola"),
@@ -107,6 +119,8 @@ const NOUNS: Record<LangCode, Record<NounKey, Noun>> = {
     apple: f("mela"), pear: f("pera"), orange: f("arancia"), lemon: m("limone"), cherries: fp("ciliegie"), banana: f("banana"), plum: f("prugna"),
     strawberry: f("fragola"), blueberries: mp("mirtilli"), coconut: f("noce di cocco"), pumpkin: f("zucca"),
     snowangel: m("angelo di neve"), flowers: mp("fiori"), bunny: m("coniglietto"), picnic: f("coperta da picnic"), swing: f("altalena"),
+    appletree: m("melo"), peartree: m("pero"), orangetree: m("arancio"), cherrytree: m("ciliegio"), plumtree: m("susino"), lemontree: m("limone"), coconutpalm: f("palma da cocco"), bananapalm: m("banano"), strawberrybush: f("pianta di fragole"), blueberrybush: m("cespuglio di mirtilli"),
+    basket: m("cesto"),
   },
   pt: {
     light: f("luz"), lamp: f("luminária"), house: f("casa"), tree: f("árvore"), bushes: mp("arbustos"), cloud: f("nuvem"), island: f("ilha"),
@@ -116,6 +130,8 @@ const NOUNS: Record<LangCode, Record<NounKey, Noun>> = {
     apple: f("maçã"), pear: f("pera"), orange: f("laranja"), lemon: m("limão"), cherries: fp("cerejas"), banana: f("banana"), plum: f("ameixa"),
     strawberry: m("morango"), blueberries: mp("mirtilos"), coconut: m("coco"), pumpkin: f("abóbora"),
     snowangel: m("anjo de neve"), flowers: fp("flores"), bunny: m("coelhinho"), picnic: f("toalha de piquenique"), swing: m("balanço"),
+    appletree: f("macieira"), peartree: f("pereira"), orangetree: f("laranjeira"), cherrytree: f("cerejeira"), plumtree: f("ameixeira"), lemontree: m("limoeiro"), coconutpalm: m("coqueiro"), bananapalm: f("bananeira"), strawberrybush: m("morangueiro"), blueberrybush: m("arbusto de mirtilos"),
+    basket: f("cesta"),
   },
   tr: {
     light: m("ışık"), lamp: m("lamba"), house: m("ev"), tree: m("ağaç"), bushes: mp("çalılar"), cloud: m("bulut"), island: m("ada"),
@@ -125,6 +141,8 @@ const NOUNS: Record<LangCode, Record<NounKey, Noun>> = {
     apple: m("elma"), pear: m("armut"), orange: m("portakal"), lemon: m("limon"), cherries: mp("kirazlar"), banana: m("muz"), plum: m("erik"),
     strawberry: m("çilek"), blueberries: mp("yaban mersinleri"), coconut: m("hindistan cevizi"), pumpkin: m("balkabağı"),
     snowangel: m("kar meleği"), flowers: mp("çiçekler"), bunny: m("tavşan"), picnic: m("piknik örtüsü"), swing: m("salıncak"),
+    appletree: m("elma ağacı"), peartree: m("armut ağacı"), orangetree: m("portakal ağacı"), cherrytree: m("kiraz ağacı"), plumtree: m("erik ağacı"), lemontree: m("limon ağacı"), coconutpalm: m("hindistan cevizi palmiyesi"), bananapalm: m("muz palmiyesi"), strawberrybush: m("çilek çalısı"), blueberrybush: m("yaban mersini çalısı"),
+    basket: m("sepet"),
   },
 };
 

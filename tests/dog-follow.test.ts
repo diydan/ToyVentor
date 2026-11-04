@@ -9,14 +9,15 @@ const gapOk = (gap: number) => expect(Math.abs(gap - FOLLOW_GAP)).toBeLessThanOr
 
 function world(opts: { dog?: number | null; toy?: number } = {}) {
   const none = opts.dog === null;
-  const s = { dog: opts.dog ?? 20, toy: opts.toy ?? 2, still: true, allowed: true, occupied: (_x: number) => false };
+  const s = { dog: opts.dog ?? 20, toy: opts.toy ?? 2, still: true, allowed: true, props: [] as Array<{ x: number; half: number }> };
   const log: string[] = [];
+  const asked: number[] = [];
   const moves: Array<{ x: number; dir: number }> = [];
   const f = createFollow({
     dogX: () => (none ? null : s.dog),
     toyX: () => s.toy,
     toyStill: () => s.still,
-    occupied: (x) => s.occupied(x),
+    clearance: (x) => { asked.push(x); return s.props.reduce((m, p) => Math.min(m, Math.abs(p.x - x) - (p.half + 0.6)), Infinity); },
     moveDog: (x, dir) => { s.dog = x; moves.push({ x, dir }); },
     cue: (n) => { log.push(n); },
     allowed: () => s.allowed,
@@ -28,7 +29,7 @@ function world(opts: { dog?: number | null; toy?: number } = {}) {
     for (let k = 0; k < 6000 && Math.abs(s.toy - x) > 1e-6; k++) { const d = x - s.toy; s.toy += Math.sign(d) * Math.min(Math.abs(d), speed / 60); f.update(1 / 60); }
     s.still = true;
   };
-  return { s, f, log, moves, run, walkTo };
+  return { s, f, log, moves, run, walkTo, asked };
 }
 
 describe("meeting the dog", () => {
@@ -83,10 +84,10 @@ describe("the places it chooses", () => {
     expect(furthest).toBeLessThan(FOLLOW_START - 0.3);
     expect(FOLLOW_GAP).toBeLessThan(furthest + 1e-9);
   });
-  it("the dog that has run out of places settles at the last one and stays: one trot, no cycling", () => {
+  it("the dog that finds every place taken settles at one of them and stays: one trot, no cycling", () => {
     const w = world({ dog: 30, toy: 28.5 });
     w.run(0.1);
-    w.s.occupied = () => true;
+    for (const o of [2.2, -2.2, 3.8, -3.8]) w.s.props.push({ x: 25 + o, half: 0.5 });
     w.s.toy = 25;
     w.run(30);
     expect(w.log.filter((c) => c === "run")).toHaveLength(1);
@@ -216,9 +217,9 @@ describe("trotting after Kip", () => {
     expect(ahead.s.dog).toBeLessThan(30);
   });
 
-  it("when a prop stands where it would stop it tries the other side of Kip", () => {
+  it("when a prop stands where it would stop it goes to the other side of Kip", () => {
     const w = meet();
-    w.s.occupied = (x) => Math.abs(x - (5 + FOLLOW_GAP)) < 1;            // a prop where it would stand (to Kip's right)
+    w.s.props.push({ x: 5 + FOLLOW_GAP, half: 0.4 });                    // a prop where it would stand (to Kip's right)
     w.walkTo(5);
     w.run(10);
     gapOk(5 - w.s.dog);                                                  // it is on Kip's left instead
@@ -227,29 +228,78 @@ describe("trotting after Kip", () => {
   });
   it("with props on both sides it stands a little further out, on the first side that is free", () => {
     const w = meet();
-    w.s.occupied = (x) => Math.abs(x - (5 + FOLLOW_GAP)) < 1 || Math.abs(x - (5 - FOLLOW_GAP)) < 1;
+    w.s.props.push({ x: 5 + FOLLOW_GAP, half: 0.4 }, { x: 5 - FOLLOW_GAP, half: 0.4 });
     w.walkTo(5);
     w.run(15);
     expect(Math.abs(w.s.dog - 5 - (FOLLOW_GAP + SPOT_STEP))).toBeLessThanOrEqual(ARRIVE + 1e-6);   // behind Kip (to its right) but one step further out
     expect(w.f.phase === "standing" || w.f.phase === "sitting").toBe(true);
   });
-  it("the choices of place go behind, in front, behind further out, in front further out, and so on; the last is taken without asking", () => {
+  it("it goes straight to the free place: it never goes round to the other side of Kip on the way (the old way walked to each taken place in turn)", () => {
+    const w = meet();
+    w.s.props.push({ x: 5 + FOLLOW_GAP, half: 0.4 }, { x: 5 - FOLLOW_GAP, half: 0.4 });
+    let lowest = Infinity;
+    w.s.toy = 5;
+    for (let k = 0; k < 60 * 12; k++) { w.f.update(1 / 60); lowest = Math.min(lowest, w.s.dog); }
+    expect(lowest).toBeGreaterThan(5 + FOLLOW_GAP - 0.4);                 // it came down to its first choice and went on to the free one, never past Kip
+    expect(Math.abs(w.s.dog - 5 - (FOLLOW_GAP + SPOT_STEP))).toBeLessThanOrEqual(ARRIVE + 1e-6);
+  });
+  it("when every place has a prop in it, it takes the one with the most room (the least inside a prop), not just the last one", () => {
     const w = world({ dog: 30, toy: 28.5 });
     w.run(0.1);
-    const asked: number[] = [];
-    w.s.occupied = (x) => { asked.push(+(x - 25).toFixed(1)); return true; };
-    w.s.toy = 25;                                                         // Kip moves left (all at once, so the places do not shift under it): behind it is to its right
-    w.run(40);
-    const seq = asked.filter((v, i) => i === 0 || v !== asked[i - 1]);
-    expect(seq).toHaveLength(SPOT_COUNT - 1);
-    expect(seq.map((v) => Math.sign(v))).toEqual([1, -1, 1]);
-    for (let k = 2; k < seq.length; k++) expect(Math.abs(seq[k]!)).toBeGreaterThan(Math.abs(seq[k - 2]!));
-    expect(w.s.dog - 25).toBeCloseTo(-(FOLLOW_GAP + SPOT_STEP), 0);      // and it ended at the last place: in front of Kip, furthest out, and settled there (it did not set off again)
-    expect(w.f.phase === "standing" || w.f.phase === "sitting").toBe(true);
+    const halves = [1.0, 0.2, 0.8, 0.6];                                 // the second choice (in front of Kip) is the shallowest
+    [2.2, -2.2, 3.8, -3.8].forEach((o, i) => w.s.props.push({ x: 25 + o, half: halves[i]! }));
+    w.s.toy = 25;
+    w.run(20);
+    expect(Math.abs(w.s.dog - (25 - FOLLOW_GAP))).toBeLessThanOrEqual(ARRIVE + 1e-6);
+    expect(w.log.filter((c) => c === "run")).toHaveLength(1);
   });
-  it("every trot gets its own go at the choices: a prop in the way the second time is avoided too", () => {
+  it("a place with a little room to spare counts as free, and so does one just touching (clearance 0): it does not move on", () => {
+    for (const room of [0.2, 0]) {
+      const w = world({ dog: 30, toy: 28.5 });
+      w.run(0.1);
+      w.s.props.push({ x: 25 + 2.2 + 0.5 + 0.6 + room, half: 0.5 });                // the nearest prop is `room` clear of the dog's first choice
+      w.s.toy = 25;
+      w.run(20);
+      expect(Math.abs(w.s.dog - (25 + FOLLOW_GAP)), `room ${room}`).toBeLessThanOrEqual(ARRIVE + 1e-6);
+    }
+  });
+  it("a place just inside a prop (clearance below 0) is not free", () => {
+    const w = world({ dog: 30, toy: 28.5 });
+    w.run(0.1);
+    w.s.props.push({ x: 25 + 2.2 + 0.5 + 0.6 - 0.05, half: 0.5 });
+    w.s.toy = 25;
+    w.run(20);
+    expect(Math.abs(w.s.dog - (25 + FOLLOW_GAP))).toBeGreaterThan(0.5);
+  });
+  it("it is only ever asked about places inside the room (a choice off the end is moved back in first)", () => {
+    const w = world({ dog: 20, toy: 18.5 });
+    w.run(0.1);
+    w.s.props.push({ x: 2 + FOLLOW_GAP, half: 0.5 });                       // the first choice (to Kip's right) is taken, so it looks at the others, one of which is off the left end of the room
+    w.walkTo(2);
+    w.run(10);
+    expect(w.asked.length).toBeGreaterThan(0);
+    for (const x of w.asked) { expect(x).toBeGreaterThanOrEqual(DOG_BOUNDS[0] - 1e-9); expect(x).toBeLessThanOrEqual(DOG_BOUNDS[1] + 1e-9); }
+    expect(w.asked.some((x) => Math.abs(x - DOG_BOUNDS[0]) < 1e-9)).toBe(true);   // and the one off the end was asked about at the edge instead
+  });
+  it("a tie goes to the earlier choice (behind Kip)", () => {
+    const w = world({ dog: 30, toy: 28.5 });
+    w.run(0.1);
+    for (const o of [2.2, -2.2, 3.8, -3.8]) w.s.props.push({ x: 25 + o, half: 0.5 });
+    w.s.toy = 25;
+    w.run(20);
+    expect(Math.abs(w.s.dog - (25 + FOLLOW_GAP))).toBeLessThanOrEqual(ARRIVE + 1e-6);
+  });
+  it("the first free choice wins even if a later one has more room", () => {
+    const w = world({ dog: 30, toy: 28.5 });
+    w.run(0.1);
+    w.s.props.push({ x: 25 + 2.2, half: 0.5 }, { x: 25 - 2.2 - 6, half: 0.1 });   // behind is taken; in front is free (the nearest prop is well away)
+    w.s.toy = 25;
+    w.run(20);
+    expect(Math.abs(w.s.dog - (25 - FOLLOW_GAP))).toBeLessThanOrEqual(ARRIVE + 1e-6);
+  });
+  it("every trot gets its own look at the choices: a prop in the way the second time is avoided too", () => {
     const w = meet();
-    w.s.occupied = (x) => Math.abs(x - (5 + FOLLOW_GAP)) < 1 || Math.abs(x - (25 - FOLLOW_GAP)) < 1;
+    w.s.props.push({ x: 5 + FOLLOW_GAP, half: 0.4 }, { x: 25 - FOLLOW_GAP, half: 0.4 });
     w.walkTo(5);
     w.run(10);
     gapOk(5 - w.s.dog);                                                  // first trot: Kip's left
@@ -257,9 +307,9 @@ describe("trotting after Kip", () => {
     w.run(10);
     gapOk(w.s.dog - 25);                                                 // second trot: its place (Kip's left) has a prop, so it is on Kip's right
   });
-  it("it does not go back and forth when every place has a prop: it runs out of choices and stays at the last", () => {
+  it("it does not go back and forth: it looks once, goes there, and stays", () => {
     const w = meet();
-    w.s.occupied = () => true;
+    for (const o of [2.2, -2.2, 3.8, -3.8]) w.s.props.push({ x: 5 + o, half: 0.5 });
     w.walkTo(5);
     w.run(40);
     expect(w.f.phase === "standing" || w.f.phase === "sitting").toBe(true);
@@ -367,7 +417,7 @@ describe("the wiring in the world", () => {
   const world = readFileSync(join(new URL("..", import.meta.url).pathname, "src/features/game/world/runtime/world.ts"), "utf8");
   it("the follow is made from the dog, Kip and the busy states; it is updated every frame, reset with the world and on the dev handle", () => {
     expect(world).toContain('import { createFollow } from "./dogFollow";');
-    expect(world).toContain("var FOLLOW=createFollow({dogX:function(){var d=theDog();return d?d.base.px:null},toyX:function(){return P.pos.x},toyStill:function(){return P.speed<.1&&!P.target},occupied:function(x: number){var d=theDog();return PFX.list().some(function(p: any){return p.type!==\"dog\"&&p.type!==\"ball\"&&(!d||Math.abs(p.base.pz-d.base.pz)<1.5)&&Math.abs(p.base.px-x)<p.size.x/2+.6})}");
+    expect(world).toContain("var FOLLOW=createFollow({dogX:function(){var d=theDog();return d?d.base.px:null},toyX:function(){return P.pos.x},toyStill:function(){return P.speed<.1&&!P.target},clearance:function(x: number){var d=theDog(),r=Infinity;PFX.list().forEach(function(p: any){if(p.type!==\"dog\"&&p.type!==\"ball\"&&(!d||Math.abs(p.base.pz-d.base.pz)<1.5))r=Math.min(r,Math.abs(p.base.px-x)-(p.size.x/2+.6))});return r}");
     expect(world).toContain("DOGF.update(dt);BUBBLES.update(dt);FOLLOW.update(dt);");
     expect(world).toContain("BUBBLES.reset();HELD.release();FOLLOW.reset();");
     expect(world).toContain("fetch:DOGF,follow:FOLLOW,");

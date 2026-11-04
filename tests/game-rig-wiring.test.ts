@@ -22,10 +22,12 @@ describe("joint data is opt-in, so nobody's clip changes by accident", () => {
     // the direction channels are the same either way (they are the fallback for a rig that cannot bend)
     for (const k of ["hips", "body", "head", "armL", "armR", "legL", "legR"] as const) expect(Array.from(full[k])).toEqual(Array.from(plain[k]));
   });
-  it("the jump and the shove (gameMoves.ts, the toy room's) do not ask for joints: they keep the clips and the lift setting they were made with", () => {
+  it("the jump, the shove and the idle, walk and run (gameMoves.ts) ask for them too: the toy bends its elbows and knees for every move it makes, and none of them is cut or sped up", () => {
     const f = "src/features/game/world/runtime/gameMoves.ts";
     if (!existsSync(join(root, f))) return; // not in this tree
-    expect(read(f)).not.toMatch(/joints\s*:\s*true/);
+    const src = read(f);
+    expect(src.match(/jointClipToGame\([^)]*\{ joints: true \}\)/g)?.length).toBeGreaterThanOrEqual(3);          // jump, shove, and the loop over the three cycles
+    expect(src).not.toMatch(/cutClip|joinClips|easeSeam|SHOVE_RATE/);
   });
   it("the party's dances and the idle clips do ask for them", () => {
     expect(read("src/features/game/world/runtime/gameDances.ts")).toContain("jointClipToGame(joint, id, { joints: true })");

@@ -82,7 +82,7 @@ const clearToast = (cdp) => cdp.ev(`(() => { const t = document.querySelector("#
 const props = (cdp, expr) => cdp.ev(`(() => { const fx = window.__tvWorld && window.__tvWorld.props; if (!fx) return null; return ${expr}; })()`);
 
 async function loadApp(cdp, lang) {
-  const source = `try { ${lang === undefined ? 'localStorage.removeItem("toyforge:prop-lang:v1");' : `localStorage.setItem("toyforge:prop-lang:v1", ${JSON.stringify(lang)});`} } catch (e) {}`;
+  const source = `try { localStorage.setItem("tvTimeOfDay:v1", "night"); } catch (e) {} try { ${lang === undefined ? 'localStorage.removeItem("toyforge:prop-lang:v1");' : `localStorage.setItem("toyforge:prop-lang:v1", ${JSON.stringify(lang)});`} } catch (e) {}`;
   const { identifier } = await cdp.send("Page.addScriptToEvaluateOnNewDocument", { source });
   try {
     await cdp.send("Page.navigate", { url: APP });
@@ -160,7 +160,7 @@ async function main() {
       const apples = await props(cdp, `fx.list().find((p) => p.type === "tree" && p.holder.position.x >= 3 && p.holder.position.x <= 41).slots.filter((s) => s.mesh).length`);
       check("tree: starts with apples hanging", before === 3, String(before));
       check("tree: a tap shakes two apples loose", apples === 1 && (await props(cdp, `fx.fallerCount()`)) === 2, `hanging=${apples}`);
-      check("tree: says 'Green tree' (English default)", (await toastText(cdp)) === "Green tree", String(await toastText(cdp)));
+      check("tree: says 'Green apple tree' (English default: the first Garden tree is the apple tree)", (await toastText(cdp)) === "Green apple tree", String(await toastText(cdp)));
       check("tree: asks for the English clip for exactly this object", cdp.voiceUrls.includes("/api/voice?lang=en&n=tree&c=green"), JSON.stringify(cdp.voiceUrls));
       const targetAfter = await cdp.ev(`JSON.stringify(window.__tvWorld.P.target && window.__tvWorld.P.target.x)`);
       check("tree: tapping it does not send the toy walking", targetBefore === targetAfter, `${targetBefore} -> ${targetAfter}`);
@@ -237,7 +237,7 @@ async function main() {
       await clearToast(cdp); cdp.voiceUrls.length = 0;
       await sleep(1000); // past the repeat-word guard
       await cdp.tapAt(tree2.x, tree2.y); await sleep(500);
-      check("language: now the tree says 'Árbol verde'", (await toastText(cdp)) === "Árbol verde", String(await toastText(cdp)));
+      check("language: now the tree says 'Manzano verde'", (await toastText(cdp)) === "Manzano verde", String(await toastText(cdp)));
       check("language: and asks for the Spanish clip", cdp.voiceUrls.includes("/api/voice?lang=es&n=tree&c=green"), JSON.stringify(cdp.voiceUrls));
     }
 
@@ -263,7 +263,7 @@ async function main() {
     if (t3) {
       await clearToast(cdp); cdp.voiceUrls.length = 0;
       await cdp.tapAt(t3.x, t3.y); await sleep(500);
-      check("persist: after a reload the saved language still applies", (await toastText(cdp)) === "Árbol verde", String(await toastText(cdp)));
+      check("persist: after a reload the saved language still applies", (await toastText(cdp)) === "Manzano verde", String(await toastText(cdp)));
     }
     await loadApp(cdp, "off");
     const t4 = await bringIntoView(cdp, "tree");

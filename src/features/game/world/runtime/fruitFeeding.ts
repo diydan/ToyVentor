@@ -22,6 +22,11 @@ export interface FeedAdapter<F> {
   overToy(x: number, y: number): boolean;
   /** A tap (no drag) on a fruit: say its name. */
   tap(fruit: F): void;
+  /**
+   * Is this fruit lying on the ground close enough to the toy that a plain tap should FEED it (the tap-to-feed fallback for the youngest, who find a drag hard)? Absent: a tap only names the fruit.
+   * A fruit still hanging on a tree is never near enough: a tap on it plucks it.
+   */
+  nearToy?(fruit: F): boolean;
   /** The carry begins: take the fruit out of the ground physics. */
   pickUp(fruit: F): void;
   /** Show the fruit at the finger. */
@@ -43,6 +48,7 @@ export const REACTION_SECONDS: Readonly<Record<Reaction, number>> = {
   belly_pat: PROCEDURAL_CLIPS.belly_pat!.duration,
   crunch: 1.0,
   decline: 1.0,
+  heavy: 1.0,
 };
 
 /** The gap between the end of the first reaction and the belly pat that follows the fruit which filled the toy. */
@@ -60,7 +66,13 @@ export function createFeeding<F>(a: FeedAdapter<F>, opts: { thresholdPx?: number
   const hooks: DragHooks<F> = {
     pick: (x, y) => a.pick(x, y),
     overToy: (x, y) => a.overToy(x, y),
-    tap: (f) => a.tap(f),
+    tap: (f) => {
+      a.tap(f);                                                                           // it is named (and hops) either way
+      if (!a.nearToy?.(f)) return;
+      a.pickUp(f);                                                                        // a tap on a fruit at the toy's feet is a drag of nought pixels: carried, offered, eaten or refused
+      const verdict = appetite.offer(a.kindOf(f), a.eater());
+      if (verdict.fed) a.eat(f, verdict); else a.refuse(f, verdict);
+    },
     pickUp: (f) => a.pickUp(f),
     carry: (f, x, y) => a.carry(f, x, y),
     hover: (over, f) => a.lean(over, f),

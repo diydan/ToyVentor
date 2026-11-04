@@ -4,6 +4,7 @@
 // off the tree's group (`userData.treeKind`) to hang, drop and regrow THAT kind's fruit, `slots` of them. `orchardKind(world, i)` picks the kind of the i-th tree in a world so a row of trees
 // is mixed and the first is always the apple tree the Garden had before there were kinds. Pure data plus a few pure functions, so the choices (a pear tree really bears pears; the first tree
 // stays what it was; blossoms sit on the crown) are tested in node. Palms and bushes are listed here too (the Beach and the berry bushes have their own builders and are NOT wired to kinds yet).
+import type { NounKey } from "../../../../lib/propNames";
 import type { FruitKind } from "./propReactions";
 
 /** How the crown is built. "round", "tall" and "wide" are lumpy blob crowns (`CROWN_BLOBS`); "palm" is fronds on a bent trunk and "bush" is a low mound; the builder owns those two. */
@@ -32,12 +33,16 @@ export const TREE_KINDS: ReadonlyArray<TreeKind> = [
   { id: "pear", crown: "tall", leaf: "#e2ff9e", trunk: 3.4, fruit: "pear", slots: 3, blossom: "#fff6ea", worlds: ["garden"] },
   { id: "orange", crown: "round", leaf: "#b8f0c8", trunk: 3.2, fruit: "orange", slots: 3, blossom: "#fff6ea", worlds: ["garden"] },
   { id: "cherry", crown: "wide", leaf: "#ffe2e8", trunk: 3.5, fruit: "cherry", slots: 3, blossom: "#ffb3c8", worlds: ["garden", "sky"] },
+  // The same tree with green apples (a colour variant): a lighter leaf, and the fruit says "green apple".
+  { id: "greenapple", crown: "round", leaf: "#e6ffb8", trunk: 3.6, fruit: "greenapple", slots: 3, blossom: "#ff9db0", worlds: ["garden"] },
   { id: "plum", crown: "wide", leaf: "#d9c8ff", trunk: 3.3, fruit: "plum", slots: 3, blossom: "#e7c8ff", worlds: ["garden"] },
   { id: "lemon", crown: "round", leaf: "#f6ffb0", trunk: 3.0, fruit: "lemon", slots: 3, blossom: "#fff6ea", worlds: ["garden"] },
   { id: "coconut", crown: "palm", leaf: "#ffffff", trunk: 4.2, fruit: "coconut", slots: 2, blossom: null, worlds: ["beach"] },
   { id: "banana", crown: "palm", leaf: "#e2ff9e", trunk: 3.6, fruit: "banana", slots: 3, blossom: null, worlds: ["beach"] },
   { id: "strawberry", crown: "bush", leaf: "#ffffff", trunk: 0, fruit: "strawberry", slots: 4, blossom: "#fff6ea", worlds: ["garden"] },
   { id: "blueberry", crown: "bush", leaf: "#d8f0ff", trunk: 0, fruit: "blueberry", slots: 4, blossom: "#fff6ea", worlds: ["garden"] },
+  // The pumpkin patch (outdoorProps.ts `buildPumpkinPatch`): grows in no world by itself, so a row of bushes never turns into pumpkins; the patch names its own kind.
+  { id: "pumpkin", crown: "bush", leaf: "#ffffff", trunk: 0, fruit: "pumpkin", slots: 3, blossom: null, worlds: [] },
 ];
 
 /** The blobs of a lumpy crown: [x, y, z, radius, seed], relative to the trunk foot. "round" is the apple tree's six blobs exactly as `tree()` in world.ts has them. */
@@ -98,7 +103,7 @@ export function kindsFor(world: string): TreeKind[] {
 }
 
 /** Which crowns each kind of prop can grow: a `tree` prop the blob crowns, a `palm` the palm crown, a `bushes` prop the bush crown. A kind on the wrong prop is ignored (a pear on a bush is not a thing). */
-export const CROWNS_FOR_PROP: Readonly<Record<string, ReadonlyArray<CrownShape>>> = { tree: ["round", "tall", "wide"], palm: ["palm"], bushes: ["bush"] };
+export const CROWNS_FOR_PROP: Readonly<Record<string, ReadonlyArray<CrownShape>>> = { tree: ["round", "tall", "wide"], palm: ["palm"], bushes: ["bush"], pumpkins: ["bush"] };
 export const kindFits = (propType: string, kind: TreeKind): boolean => !!CROWNS_FOR_PROP[propType]?.includes(kind.crown);
 
 /** Where a palm's fruit hang, relative to the top of its trunk where the fronds meet: under the fronds and in front of the trunk, so the camera sees them. The first `slots` of these are used. */
@@ -129,3 +134,10 @@ export function kindFor(world: string, propType: string, index: number): TreeKin
 export const orchardKind = (world: string, index: number) => kindFor(world, "tree", index);
 export const palmKind = (world: string, index: number) => kindFor(world, "palm", index);
 export const bushKind = (world: string, index: number) => kindFor(world, "bushes", index);
+
+/** What a tapped tree, palm or bush of this kind is called ("pear tree", "banana palm", "strawberry bush"), as a vocabulary noun in all seven languages. */
+export const KIND_NOUN: Readonly<Record<string, NounKey>> = {
+  apple: "appletree", greenapple: "appletree", pear: "peartree", orange: "orangetree", cherry: "cherrytree", plum: "plumtree", lemon: "lemontree",
+  coconut: "coconutpalm", banana: "bananapalm", strawberry: "strawberrybush", blueberry: "blueberrybush", pumpkin: "pumpkin",
+};
+export const kindNoun = (k: TreeKind | undefined | null): NounKey | null => (k ? KIND_NOUN[k.id] ?? null : null);

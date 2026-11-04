@@ -165,7 +165,7 @@ describe("the blocks prop", () => {
 describe("the wiring in the world", () => {
   const world = readFileSync(join(root, "src/features/game/world/runtime/world.ts"), "utf8");
   it("the blocks prop is built by buildBlockTower with the lettered block material, and the old fixed pile is gone", () => {
-    expect(world).toContain('import { buildBlockTower } from "./blockTower";');
+    expect(world).toContain('import { BLOCK_CHEER_AT, buildBlockTower } from "./blockTower";');
     expect(world).toContain("blocks:function(x,z){return add(buildBlockTower(x,z,blockMat))}");
     expect(world).not.toContain("function toyBlocks(");
     expect(world).not.toContain("blocks:toyBlocks");

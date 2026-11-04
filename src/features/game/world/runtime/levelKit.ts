@@ -149,6 +149,15 @@ function sanitizePinned(pinned: readonly LevelPropRef[] | undefined): LevelPropR
   return out;
 }
 
+/** Where a bed may stand (the bed is about 4 units long), and how far it keeps from a hiding spot, a station and any other prop in the lane. */
+export const BED_CANDIDATES: readonly number[] = Array.from({ length: 83 }, (_, i) => 3 + i * 0.5);        // 3 to 44 in half units
+export const BED_HOME = 13;
+export const BED_ROOM_SPOT = 3.2;
+export const BED_ROOM_STATION = 3.5;
+export const BED_ROOM_PROP = 2.9;
+/** The distances (from a hiding spot, a station, a prop) tried in turn: the roomy ones first. */
+export const BED_MARGINS: ReadonlyArray<readonly [number, number, number]> = [[BED_ROOM_SPOT, BED_ROOM_STATION, BED_ROOM_PROP], [2.6, 2.8, 2.2], [2.6, 0, 0]];
+
 export function composeLevel(opts: ComposeOptions): ComposedLevel {
   const r = rng(opts.seed);
   const theme = opts.theme && CLUSTERS[opts.theme] ? opts.theme : pick(r, THEME_IDS);
@@ -229,6 +238,20 @@ export function composeLevel(opts: ComposeOptions): ComposedLevel {
         break;
       }
     }
+  }
+
+  // 6. A generated Toy Room always has a bed to put Kip to sleep in (docs/specs/playful-interactions-spec.md section 6): a level whose glow spot already hides under one has it, any other gets a bed prop in the
+  // first clear stretch of the lane. It draws nothing from the random stream, so every other choice a seed makes is unchanged; a room built round photographed props is left as the photo shows it.
+  if (theme === "room" && !pinned.length && !spots.some((sp) => sp.hide === "bed")) {
+    const clearAt = (x: number, spot: number, station: number, prop: number) => spots.every((sp) => Math.abs(sp.x - x) >= spot) && missions.every((m) => Math.abs(m.x - x) >= station)
+      && props.every((p) => (PROPS[p.type]?.z ?? 0) <= -3 || p.z != null && p.z <= -3 || Math.abs(p.x - x) >= prop);
+    let best: number | undefined;
+    // the clear place nearest where the default room keeps its bed; in a crowded lane the margins shrink a step at a time (the last step keeps only clear of the hiding spots)
+    for (const [spot, station, prop] of BED_MARGINS) {
+      for (const x of BED_CANDIDATES) if (clearAt(x, spot, station, prop) && (best === undefined || Math.abs(x - BED_HOME) < Math.abs(best - BED_HOME))) best = x;
+      if (best !== undefined) break;
+    }
+    if (best !== undefined) props.push({ type: "bed", x: best });
   }
 
   const code = seedToCode(opts.seed);

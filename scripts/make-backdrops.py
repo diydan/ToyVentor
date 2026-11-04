@@ -13,7 +13,13 @@ src/features/game/world/runtime/assets/ (imported by runtime/backdrop.ts, so Vit
         the transparent pixels get the colour of the nearest art pixel (so linear filtering never fades to a dark halo) and the alpha edge is
         softened by one pixel (so the silhouette is not jagged on a phone).
 
-Run from the repo root:   python3 scripts/make-backdrops.py      (needs Pillow with WebP and numpy; not `python3 -I`, which hides the user site)
+The other outdoor worlds (Sky Meadow, Beach, Snow Peak, Junkyard) and the Garden's day band come from `scripts/gen-backdrops.mjs` (raw Muse Image output in docs/mockups/generated-backdrops/worlds/,
+the art of record: the service takes no seed). `python3 scripts/make-backdrops.py worlds` bakes those the same way: each far band resized to 4096 px wide, each mid strip keyed off its black
+surround into an RGBA cut-out. The Garden's own two files are baked only by the plain command below, so adding a world never touches the approved Garden pixels.
+
+Run from the repo root:   python3 scripts/make-backdrops.py          the Garden (far night + mid)
+                          python3 scripts/make-backdrops.py worlds   the other worlds (needs the files gen-backdrops.mjs wrote)
+Needs Pillow with WebP and numpy; not `python3 -I`, which hides the user site.
 """
 from __future__ import annotations
 
@@ -32,11 +38,20 @@ DARK_SEED = 24      # a pixel this dark (max channel) on the border starts the s
 DARK_FRINGE = 80    # a pixel this dark next to the surround is fringe, eaten for two rings
 
 
-def bake_far() -> str:
-    im = Image.open(os.path.join(SRC, "far-night.png")).convert("RGB")
+GEN = os.path.join(ROOT, "docs", "mockups", "generated-backdrops")
+WORLD_ART = os.path.join(GEN, "worlds")
+
+# (output name, source) for the worlds. The Garden's day band is the approved mockup's generated `far-day.webp`.
+WORLD_FARS = [("garden-far-day", os.path.join(GEN, "far-day.webp"))] + [
+    (f"{w}-far-{t}", os.path.join(WORLD_ART, f"{w}-far-{t}.webp")) for w in ("sky", "beach", "snow", "junk") for t in ("day", "night")]
+WORLD_MIDS = [(f"{w}-mid", os.path.join(WORLD_ART, f"{w}-mid.webp")) for w in ("sky", "beach", "snow", "junk")]
+
+
+def bake_far(src: str | None = None, name: str = "garden-far-night") -> str:
+    im = Image.open(src or os.path.join(SRC, "far-night.png")).convert("RGB")
     w, h = im.size
     out = im.resize((FAR_WIDTH, round(h * FAR_WIDTH / w)), Image.LANCZOS)
-    path = os.path.join(OUT, "garden-far-night.webp")
+    path = os.path.join(OUT, f"{name}.webp")
     out.save(path, "WEBP", quality=84, method=6)
     return f"{path}  {out.size[0]}x{out.size[1]}  {os.path.getsize(path) // 1024} KB"
 
@@ -76,8 +91,8 @@ def bleed_colour(rgb: np.ndarray, opaque: np.ndarray, rings: int = 6) -> np.ndar
     return out.clip(0, 255).astype(np.uint8)
 
 
-def bake_mid() -> str:
-    rgb = np.asarray(Image.open(os.path.join(SRC, "mid-garden.png")).convert("RGB"))
+def bake_mid(src: str | None = None, name: str = "garden-mid") -> str:
+    rgb = np.asarray(Image.open(src or os.path.join(SRC, "mid-garden.png")).convert("RGB"))
     bg = surround_mask(rgb)
     ys, xs = np.nonzero(~bg)
     x0, x1, y0, y1 = xs.min(), xs.max(), ys.min(), ys.max()
@@ -86,7 +101,7 @@ def bake_mid() -> str:
     alpha = Image.fromarray(np.where(opaque, 255, 0).astype(np.uint8)).filter(ImageFilter.GaussianBlur(0.8))
     out = np.dstack([colour, np.asarray(alpha)])
     im = Image.fromarray(out)
-    path = os.path.join(OUT, "garden-mid.webp")
+    path = os.path.join(OUT, f"{name}.webp")
     im.save(path, "WEBP", quality=86, method=6, alpha_quality=100)
     solid = float(opaque.mean())
     return f"{path}  {im.size[0]}x{im.size[1]}  {os.path.getsize(path) // 1024} KB  ({solid:.0%} opaque)"
@@ -94,6 +109,14 @@ def bake_mid() -> str:
 
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
-    for name, fn in (("far", bake_far), ("mid", bake_mid)):
-        print(f"{name}: {fn()}")
+    if sys.argv[1:] == ["worlds"]:
+        for name, src in WORLD_FARS:
+            print(f"{name}: {bake_far(src, name)}")
+        for name, src in WORLD_MIDS:
+            print(f"{name}: {bake_mid(src, name)}")
+    elif not sys.argv[1:]:
+        for name, fn in (("far", bake_far), ("mid", bake_mid)):
+            print(f"{name}: {fn()}")
+    else:
+        print("usage: make-backdrops.py [worlds]"); sys.exit(2)
     sys.exit(0)

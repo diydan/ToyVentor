@@ -15,6 +15,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import * as THREE from "three";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { retargetMixamoClipToKip } from "../parts/kip/viewer/kip-mixamo-retarget.js";
 import { HIP_Y, LEG_RIG, REST_LEGS, limitHands, plantBakedClip } from "../parts/kip/viewer/kip-clips.js";
 import { BAKED_JOINTS, checkBaked, clipToBaked, closeLoop, removeHipsDrift, trimClip } from "../parts/kip/viewer/kip-baked-clips.js";
@@ -88,26 +89,36 @@ function loadFbx(file) {
   return obj;
 }
 
-export function bakeOne(cfg, inDir) {
-  const file = path.join(inDir, cfg.file);
-  const obj = loadFbx(file);
-  let clip = obj.animations[0];
+/** A clip of a Mixamo character that ships in the repo as a GLB (public/kip/mixamo/Xbot.glb: idle, walk, run): `{ glb, clip }` in the config. The GLB has no textures, so it parses in node. */
+async function loadGlb(file) {
+  const buf = fs.readFileSync(file);
+  const gltf = await new Promise((res, rej) => new GLTFLoader().parse(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength), "", res, rej));
+  const obj = gltf.scene;
+  obj.animations = gltf.animations;
+  return obj;
+}
+
+export async function bakeOne(cfg, inDir) {
+  const file = path.join(inDir, cfg.file ?? "");
+  const obj = cfg.glb ? await loadGlb(path.join(root, cfg.glb)) : loadFbx(file);
+  let clip = cfg.clip ? obj.animations.find((a) => a.name === cfg.clip) : obj.animations[0];
+  if (!clip) throw new Error(`no clip "${cfg.clip}" in ${cfg.glb}`);
   const srcDuration = clip.duration;
   if (cfg.trim) clip = trimClip(THREE, clip, cfg.trim[0], cfg.trim[1]);
   const drift = removeHipsDrift(THREE, clip, { highpassSeconds: cfg.highpass ?? 0 });
-  const kip = retargetMixamoClipToKip(THREE, clip, obj, { name: cfg.id, inPlace: false });
+  const kip = retargetMixamoClipToKip(THREE, clip, obj, { name: cfg.id, inPlace: cfg.inPlace ?? false });
   if (!kip) throw new Error("retarget failed: no Hips bone");
   if (cfg.closeLoop) closeLoop(THREE, kip, cfg.closeLoop);
   if (cfg.hands !== false) limitHands(THREE, kip);
   if (cfg.plant !== false) plantBakedClip(THREE, kip);
-  const baked = clipToBaked(THREE, kip, { id: cfg.id, label: cfg.label, group: cfg.group, source: `Mixamo "${path.basename(cfg.file, ".fbx")}"`, beats: cfg.beats, planted: cfg.plant !== false });
+  const baked = clipToBaked(THREE, kip, { id: cfg.id, label: cfg.label, group: cfg.group, source: cfg.glb ? `Mixamo Xbot "${cfg.clip}"` : `Mixamo "${path.basename(cfg.file, ".fbx")}"`, beats: cfg.beats, planted: cfg.plant !== false });
   const problems = checkBaked(baked, { loop: Boolean(cfg.loop) });
   return { baked, problems, drift, srcDuration, metrics: measure(baked) };
 }
 
 // ---- main ------------------------------------------------------------------------------------------------------------------------------
 
-function main() {
+async function main() {
   const args = parseArgs(process.argv.slice(2));
   const list = JSON.parse(fs.readFileSync(args.config, "utf8"));
   const todo = args.only ? list.filter((c) => args.only.includes(c.id)) : list;
@@ -117,7 +128,7 @@ function main() {
   let failed = 0;
   for (const cfg of todo) {
     try {
-      const { baked, problems, drift, srcDuration, metrics: m } = bakeOne(cfg, args.in);
+      const { baked, problems, drift, srcDuration, metrics: m } = await bakeOne(cfg, args.in);
       const tag = problems.length ? "PROBLEMS" : "ok";
       console.log(`${tag.padEnd(8)} ${cfg.id.padEnd(16)} ${baked.dur.toFixed(2)} s${cfg.trim ? ` (of ${srcDuration.toFixed(1)})` : ""}, ${baked.frames} frames` +
         `${baked.bpm ? `, ${baked.beats} beats = ${baked.bpm} bpm` : ""} | seam ${m.seam.toFixed(1)} deg, slide ${m.slide.toFixed(1)} mm, ankle ${m.lowestAnkle.toFixed(1)} mm, ` +

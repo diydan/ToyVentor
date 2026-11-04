@@ -9,8 +9,8 @@
 import { FRUIT, type FruitKind } from "./propReactions";
 
 export type EaterKind = "character" | "robot" | "vehicle";
-/** `eat`, `sour` and `belly_pat` are clips; `crunch` (a robot's chew with a spark) and `decline` (a vehicle's honk and shake) are transforms. */
-export type Reaction = "eat" | "sour" | "crunch" | "decline" | "belly_pat";
+/** `eat`, `sour` and `belly_pat` are clips; `crunch` (a robot's chew with a spark), `decline` (a vehicle's honk and shake) and `heavy` (a pumpkin: "oof, too big", a shake and a low groan) are transforms. */
+export type Reaction = "eat" | "sour" | "crunch" | "decline" | "belly_pat" | "heavy";
 
 export interface Verdict {
   /** True when the toy took the fruit (it is eaten); false when the fruit goes back to the ground. */
@@ -36,6 +36,7 @@ export function createAppetite(now: () => number) {
     offer(kind: FruitKind, eater: EaterKind): Verdict {
       const t = now();
       if (!FRUIT[kind]?.noun) return { fed: false, reaction: eater === "vehicle" ? "decline" : "belly_pat", full: false };
+      if (kind === "pumpkin") return { fed: false, reaction: "heavy", full: false };               // too big to eat: the toy groans, the pumpkin stays a pumpkin (it never counts towards being full)
       if (t < fullUntil) return { fed: false, reaction: "belly_pat", full: true };
       if (eater === "vehicle") return { fed: false, reaction: "decline", full: false };
       recent = recent.filter((x) => t - x < FULL_WINDOW_S);

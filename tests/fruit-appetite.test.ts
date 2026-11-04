@@ -4,7 +4,8 @@ import { FRUIT, type FruitKind } from "../src/features/game/world/runtime/propRe
 
 // What a toy does with a fruit it is given: the rules behind drag-to-feed (docs/specs/playful-interactions-spec.md section 4).
 function clock(start = 1000) { let t = start; return { now: () => t, advance: (s: number) => { t += s; } }; }
-const foods = (Object.keys(FRUIT) as FruitKind[]).filter((k) => FRUIT[k].noun);
+// (the pumpkin is named but too big to eat: it has its own test below)
+const foods = (Object.keys(FRUIT) as FruitKind[]).filter((k) => FRUIT[k].noun && k !== "pumpkin");
 
 describe("each kind of toy reacts in its own way", () => {
   it("a character eats", () => {
@@ -26,7 +27,7 @@ describe("each kind of toy reacts in its own way", () => {
     for (const k of ["snow", "rain"] as const) for (const e of ["character", "robot", "vehicle"] as const) expect(createAppetite(clock().now).offer(k, e).fed, `${k}/${e}`).toBe(false);
   });
   it("every named fruit can be eaten by a character and a robot", () => {
-    expect(foods.length).toBeGreaterThanOrEqual(11);
+    expect(foods.length).toBeGreaterThanOrEqual(11);                       // (eleven with the green apple, the pumpkin left out)
     for (const k of foods) for (const e of ["character", "robot"] as const) expect(createAppetite(clock().now).offer(k, e).fed, `${k}/${e}`).toBe(true);
   });
 });
@@ -72,5 +73,14 @@ describe("full: a rhythm, not a spam button", () => {
     a.reset();
     expect(a.isFull).toBe(false);
     expect(a.offer("apple", "character").fed).toBe(true);
+  });
+});
+
+describe("a pumpkin is too big to eat", () => {
+  it("every toy groans at it (a 'heavy' reaction), it is never fed, and it never counts towards being full", () => {
+    const c = clock(), a = createAppetite(c.now);
+    for (const e of ["character", "robot", "vehicle"] as const) expect(a.offer("pumpkin", e)).toEqual({ fed: false, reaction: "heavy", full: false });
+    for (let i = 0; i < 6; i++) a.offer("pumpkin", "character");
+    expect(a.isFull).toBe(false);
   });
 });

@@ -115,7 +115,7 @@ async function stage(cdp, type, dx = 1.9) {
 
 async function loadApp(cdp, { reduced = false } = {}) {
   await cdp.send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-motion", value: reduced ? "reduce" : "no-preference" }] });
-  const source = `try { localStorage.setItem("toyforge:prop-lang:v1", "en"); } catch (e) {}`;
+  const source = `try { localStorage.setItem("tvTimeOfDay:v1", "night"); } catch (e) {} try { localStorage.setItem("toyforge:prop-lang:v1", "en"); } catch (e) {}`;
   const { identifier } = await cdp.send("Page.addScriptToEvaluateOnNewDocument", { source });
   try {
     await cdp.send("Page.navigate", { url: APP });

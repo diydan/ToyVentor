@@ -16,6 +16,8 @@ export const MAX_LAYERS = 7;
 /** What stands when the room loads (and after a crash): the pair and one on top, the old pile. */
 export const START_LAYERS = 2;
 export const BLOCK_COUNT = MAX_LAYERS + 1;
+/** From this many layers up the tower is a tall one: Kip cheers when a block lands on it (and startles when it all comes down). */
+export const BLOCK_CHEER_AT = 5;
 export const BLOCK_LETTERS = "ABCDEFGH";
 export const BLOCK_COLORS: readonly string[] = ["#ff5a4d", "#52b7ff", "#ffd24d", "#5af0b0", "#c07aff", "#ff9d5c", "#ff7ac0", "#7a7cff"];
 /** A C major scale: the note a block makes as it lands is `TOWER_NOTES[layers - 1]`. */

@@ -14,8 +14,11 @@ export interface FollowAdapter {
   toyX(): number;
   /** Is Kip standing still (not walking)? */
   toyStill(): boolean;
-  /** Is there a prop (not the dog) standing at this place along the floor? */
-  occupied(x: number): boolean;
+  /**
+   * How much room there is for the dog to stand at this place along the floor: the distance to the nearest prop (not the dog) beyond what the dog needs, so 0 or more is a free place and
+   * less than 0 is standing that far inside a prop. Infinity when there is nothing near.
+   */
+  clearance(x: number): number;
   /** Place the dog along the floor, facing right (+1) or left (-1). */
   moveDog(x: number, dir: 1 | -1): void;
   /** What the dog is doing, for its animation. */
@@ -31,8 +34,9 @@ export const FOLLOW_START = 4.2;
 /** It stops this far from Kip, behind it. */
 export const FOLLOW_GAP = 2.2;
 /**
- * If a prop is in the way it tries the other side of Kip at the same distance, then both sides a little further out, up to SPOT_COUNT places in all (the last is taken without asking). Even the
- * furthest must be well inside FOLLOW_START: a dog standing where Kip counts as "far" would set off again at once and never settle.
+ * Its choices of place, best first: behind Kip, the other side of Kip at the same distance, then both sides a little further out, SPOT_COUNT in all. When it arrives at the first it looks at all
+ * of them and goes to the first that is free, or, if every one has a prop in it (a crowded room), the one with the most room, so it never ends up standing inside a toy it could have avoided.
+ * Even the furthest must be well inside FOLLOW_START: a dog standing where Kip counts as "far" would set off again at once and never settle.
  */
 export const SPOT_STEP = 1.6;
 export const SPOT_COUNT = 4;
@@ -52,14 +56,25 @@ export function createFollow(a: FollowAdapter) {
   let phase: FollowPhase = "home";
   let x = 0;                                                   // where the dog is while it trots (the adapter is told, not asked, so the dog moves at a steady speed)
   let behind: 1 | -1 = -1;                                     // which side of Kip is "behind" it for this trot
-  let spot = 0;                                                // which of its choices of place it is making for (the next one when a prop is in the way)
+  let spot = 0;                                                // which of its choices of place it is making for
+  let chosen = false;                                          // it has looked at all its choices and picked (once per trot, so it never goes back and forth)
   let heading: 1 | -1 = 1;                                     // the way Kip last walked
   let lastToy: number | null = null;
   let stillFor = 0;
   let wasAllowed = true;
 
+  /** The first choice of place with nothing in it, or if there is none the one with the most room (the earlier choice wins a tie). */
+  const bestSpot = (toy: number): number => {
+    let best = 0, bestRoom = -Infinity;
+    for (let k = 0; k < SPOT_COUNT; k++) {
+      const room = a.clearance(clamp(toy + spotOffset(k, behind)));
+      if (room >= 0) return k;
+      if (room > bestRoom) { best = k; bestRoom = room; }
+    }
+    return best;
+  };
   const faceKip = (dx: number) => { a.moveDog(dx, sign(a.toyX() - dx)); };
-  const startTrot = (dx: number) => { x = dx; behind = heading === 1 ? -1 : 1; spot = 0; a.cue("run"); phase = "trotting"; stillFor = 0; };
+  const startTrot = (dx: number) => { x = dx; behind = heading === 1 ? -1 : 1; spot = 0; chosen = false; a.cue("run"); phase = "trotting"; stillFor = 0; };
 
   return {
     get phase(): FollowPhase { return phase; },
@@ -93,7 +108,11 @@ export function createFollow(a: FollowAdapter) {
         const move = Math.min(Math.abs(d), speed * Math.max(0, dt));
         if (Math.abs(d) > 1e-9) { x += Math.sign(d) * move; a.moveDog(x, sign(d)); }
         if (Math.abs(target - x) <= ARRIVE) {
-          if (spot < SPOT_COUNT - 1 && a.occupied(x)) { spot++; return; }                              // a prop is standing there: try the next place
+          if (!chosen) {
+            chosen = true;
+            const best = bestSpot(toy);
+            if (best !== spot) { spot = best; return; }                                                // a better place than this one: go there instead
+          }
           phase = "standing"; stillFor = 0; a.cue("idle"); faceKip(x);
         }
         return;

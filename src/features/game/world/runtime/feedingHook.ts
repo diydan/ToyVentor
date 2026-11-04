@@ -20,6 +20,8 @@ export interface ToyFx {
   hop(height: number, seconds: number): void;
   /** A quick side-to-side shake (a vehicle saying no). */
   wobble(): void;
+  /** A finger carrying a fruit came over the toy (`over`) or left it: the toy turns to the fruit (which is at world x `towardX`) and steps in a little, then eases back. Absent: the toy stays as it is. */
+  lean?(over: boolean, towardX: number): void;
   /** A beep: frequency, delay, duration, wave, volume, slide-to frequency. */
   tone(freq: number, delay: number, dur: number, type: OscillatorType, vol: number, slideTo?: number): void;
   /** A small burst of sparks (a robot crunching). */
@@ -27,7 +29,7 @@ export interface ToyFx {
 }
 
 export interface FeedWorld {
-  fx: Pick<PropFx, "pickFruit" | "tapFruitRef" | "liftFruit" | "carryFruit" | "dropFruit" | "eatFruit">;
+  fx: Pick<PropFx, "pickFruit" | "tapFruitRef" | "liftFruit" | "carryFruit" | "dropFruit" | "eatFruit"> & Partial<Pick<PropFx, "looseFruitX" | "basketAt" | "stashFruit">>;
   canvas: HTMLElement;
   camera(): THREE.Camera;
   /** Point the world's ray at a client position and return it. */
@@ -48,6 +50,8 @@ export const TOY_MARGIN_PX = 48;
 /** Where along the toy's height its mouth is, from the feet: the fruit flies there. */
 export const MOUTH_HEIGHT = 0.8;
 /** How long the fruit takes to reach the mouth; the character's `eat` clip brings its hand up at the same moment. */
+/** A fallen fruit within this far of the toy (world units, along x) is fed by a plain tap. */
+export const TAP_FEED_RANGE = 2.4;
 export const BITE_SECONDS = 0.35;
 /** A carried fruit never goes below this height, so it is never dragged into the ground. */
 export const CARRY_MIN_Y = 0.35;
@@ -95,7 +99,11 @@ export function createFeedHook(w: FeedWorld) {
   function react(r: Reaction, at: THREE.Vector3) {
     const toy = w.toy;
     if (w.eater() === "character" && (r === "eat" || r === "sour" || r === "belly_pat") && toy.clip(r)) return;
-    if (r === "decline") {                         // a vehicle: shake and honk twice, politely
+    if (r === "heavy") {                           // a pumpkin: "oof", a shake of the head and a low groan
+      toy.wobble();
+      toy.tone(150, 0, 0.35, "sine", 0.07, 80);
+      toy.tone(120, 0.3, 0.25, "sine", 0.05, 70);
+    } else if (r === "decline") {                  // a vehicle: shake and honk twice, politely
       toy.wobble();
       toy.tone(300, 0, 0.16, "sawtooth", 0.05, 200);
       toy.tone(240, 0.2, 0.2, "sawtooth", 0.05, 150);
@@ -123,10 +131,19 @@ export function createFeedHook(w: FeedWorld) {
       return !!box && inRect(toyScreenRect(box, w.camera(), w.canvas.getBoundingClientRect()), x, y);
     },
     tap: (f) => w.fx.tapFruitRef(f),
+    nearToy: (f) => {
+      const x = w.fx.looseFruitX ? w.fx.looseFruitX(f) : null;
+      const box = w.toyBox();
+      return x !== null && !!box && Math.abs(x - (box.min.x + box.max.x) / 2) <= TAP_FEED_RANGE;
+    },
     pickUp: (f) => { w.fx.liftFruit(f); },
     carry: (f, x, y) => { const p = carryPoint(x, y); if (p) w.fx.carryFruit(f, p); },
-    lean: () => { /* the toy does not lean yet; the hover is reported so it can */ },
-    drop: (f) => w.fx.dropFruit(f),
+    lean: (over, f) => { if (w.toy.lean) w.toy.lean(over, f.mesh.getWorldPosition(new THREE.Vector3()).x); },
+    drop: (f, x, y) => {
+      const basket = w.fx.basketAt ? w.fx.basketAt(w.rayAt(x, y)) : null;                 // let go over a basket: it drops in and is counted (a full basket does not take it: the fruit falls as usual)
+      if (basket && w.fx.stashFruit && w.fx.stashFruit(f, basket)) return;
+      w.fx.dropFruit(f);
+    },
     eat: (f, v: Verdict) => {
       const box = w.toyBox();
       const mouth = box ? mouthOf(box) : new THREE.Vector3();

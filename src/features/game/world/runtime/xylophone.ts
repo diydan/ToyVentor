@@ -4,17 +4,20 @@
 import { T, M, rbox, plastic } from "./worldScene";
 import type * as THREE from "three";
 
-export const BAR_COUNT = 8;
-/** A C major scale, low C to high C. */
-export const XYLO_NOTES: readonly number[] = [262, 294, 330, 349, 392, 440, 494, 523];
-export const XYLO_COLORS: readonly string[] = ["#ff5a4d", "#ff9d5c", "#ffd24d", "#5af0b0", "#52b7ff", "#7a7cff", "#c07aff", "#ff7ac0"];
-export const BAR_SPACING = 0.42;
+export const BAR_COUNT = 5;
+/**
+ * A C major pentatonic scale (C D E G A): five bars, so each is wide enough for a small finger on a phone (about 40 px of a 390 px screen: eight bars were 24 px, half a fingertip), and
+ * any tap, in any order, sounds pleasant (no clashing notes).
+ */
+export const XYLO_NOTES: readonly number[] = [262, 294, 330, 392, 440];
+export const XYLO_COLORS: readonly string[] = ["#ff5a4d", "#ffd24d", "#5af0b0", "#52b7ff", "#c07aff"];
+export const BAR_SPACING = 0.66;
 /** How long a struck bar rings (dips and wobbles), in seconds. */
 export const BAR_RING_S = 0.6;
 /** The bars are laid on a rack tilted so their top faces point up and towards the camera (+z), which sees them face on. */
 export const RACK_TILT = 0.85;
 /** The base plank the legs stand on: wide and deep, so there is a big, plain, visible target for "play me" that is not a bar. Its size, and how far it lifts everything above it. */
-export const PLANK = { w: 4.4, h: 0.14, d: 1.9, z: 0.2 } as const;
+export const PLANK = { w: 3.9, h: 0.14, d: 1.9, z: 0.2 } as const;
 
 /** A mallet: a thin wooden stick with a pink head, standing along +y from its handle end (y = 0) to the head. */
 export const MALLET_LENGTH = 0.7;
@@ -28,7 +31,7 @@ export function buildMalletMesh(): THREE.Group {
 /** Where bar i is along x, relative to the middle of the xylophone. */
 export const barX = (i: number) => (i - (BAR_COUNT - 1) / 2) * BAR_SPACING;
 /** How long bar i is: the low notes are the long bars. */
-export const barLength = (i: number) => 1.3 - i * 0.085;
+export const barLength = (i: number) => 1.3 - i * 0.12;
 
 export interface BarPose { dy: number; rx: number }
 /** How a bar sits `age` seconds after it was struck: it is pushed down at once, springs back and wobbles away. Before it was struck (age < 0) or once it has settled it is at rest. */
@@ -53,14 +56,14 @@ export function buildXylophone(x: number, z: number): THREE.Group {
   const plank = M(rbox(PLANK.w, PLANK.h, PLANK.d, 0.05), plastic("#fff0d2", { roughness: 0.55 }), 0, PLANK.h / 2, PLANK.z);
   plank.name = "plank";
   g.add(plank);
-  for (const lx of [-1.55, 1.55]) for (const lz of [-0.35, 0.35]) g.add(M(new T.CylinderGeometry(0.07, 0.08, 0.7, 10), wood, lx, PLANK.h + 0.35, lz));
+  for (const lx of [-1.4, 1.4]) for (const lz of [-0.35, 0.35]) g.add(M(new T.CylinderGeometry(0.07, 0.08, 0.7, 10), wood, lx, PLANK.h + 0.35, lz));
   const rack = new T.Group();
   rack.position.set(0, PLANK.h + 1.05, 0);
   rack.rotation.x = RACK_TILT;
   g.add(rack);
-  for (const rz of [-0.36, 0.36]) rack.add(M(rbox(3.7, 0.1, 0.12, 0.04), wood, 0, -0.04, rz));
-  rack.add(M(rbox(0.12, 0.1, 0.95, 0.04), wood, -1.82, -0.04, 0));
-  rack.add(M(rbox(0.12, 0.1, 0.95, 0.04), wood, 1.82, -0.04, 0));
+  for (const rz of [-0.36, 0.36]) rack.add(M(rbox(3.5, 0.1, 0.12, 0.04), wood, 0, -0.04, rz));
+  rack.add(M(rbox(0.12, 0.1, 0.95, 0.04), wood, -1.68, -0.04, 0));
+  rack.add(M(rbox(0.12, 0.1, 0.95, 0.04), wood, 1.68, -0.04, 0));
   const bars: THREE.Group[] = [];
   for (let i = 0; i < BAR_COUNT; i++) {
     const bar = new T.Group();

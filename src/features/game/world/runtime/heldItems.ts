@@ -8,9 +8,10 @@ import { buildMalletMesh } from "./xylophone";
 import { buildMopMesh } from "./mop";
 import { buildSpongeMesh, buildVacuumMesh } from "./cleanScene";
 import { buildSpatulaMesh } from "./cookScene";
+import { buildBouquetMesh, buildCanMesh, buildCarrotMesh, buildSandwichMesh } from "./outdoorProps";
 import type * as THREE from "three";
 
-export type HeldItem = "book" | "guitar" | "wand" | "mallets" | "mop" | "vacuum" | "sponge" | "spatula";
+export type HeldItem = "book" | "guitar" | "wand" | "mallets" | "mop" | "vacuum" | "sponge" | "spatula" | "can" | "carrot" | "bouquet" | "sandwich";
 
 /** A small hardback book: a coloured cover, cream pages and a spine, flat, about 0.7 by 0.5. */
 export function buildBookMesh(): THREE.Group {
@@ -48,6 +49,12 @@ export const HELD: Readonly<Record<HeldItem, HeldSpec>> = {
   sponge: { parent: "model", position: [0.95, 0.02, 0.05], rotation: [0, 0, 0.62], scale: 1, build: buildSpongeMesh },
   // The cooking level's spatula, held the same way (cookScene.ts).
   spatula: { parent: "model", position: [0.95, 0.02, 0.05], rotation: [0, 0, 0.62], scale: 1, build: buildSpatulaMesh },
+  // The outdoor things (playthings.ts), all in the right hand. The watering can is turned a quarter so it is upright and its spout points ahead while the arm is out level (it is only picked up once the arm is out);
+  // the carrot points along the arm (its tip towards the bunny); the bouquet and the sandwich are held at the fist.
+  can: { parent: "armR", position: [0, -0.5, 0.05], rotation: [0, 0, -Math.PI / 2], scale: 1.1, build: buildCanMesh },
+  carrot: { parent: "armR", position: [0, -0.5, 0.06], rotation: [0, 0, 0], scale: 1.7, build: buildCarrotMesh },
+  bouquet: { parent: "armR", position: [0, -0.4, 0.05], rotation: [0, 0, Math.PI], scale: 1, build: buildBouquetMesh },
+  sandwich: { parent: "armR", position: [0, -0.42, 0.08], rotation: [0, 0, 0], scale: 1, build: buildSandwichMesh },
 };
 
 export function createHeld() {

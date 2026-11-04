@@ -30,7 +30,7 @@ describe("TREE_KINDS", () => {
       expect(k.leaf, `${k.id} leaf`).toMatch(/^#[0-9a-f]{6}$/i);
       if (k.blossom !== null) expect(k.blossom, `${k.id} blossom`).toMatch(/^#[0-9a-f]{6}$/i);
       if (k.crown === "bush") expect(k.trunk).toBe(0); else expect(k.trunk).toBeGreaterThanOrEqual(2.5);
-      expect(k.worlds.length, `${k.id} grows nowhere`).toBeGreaterThan(0);
+      if (k.id !== "pumpkin") expect(k.worlds.length, `${k.id} grows nowhere`).toBeGreaterThan(0);        // (the pumpkin patch names its own kind and grows in no row of bushes)
     }
   });
 

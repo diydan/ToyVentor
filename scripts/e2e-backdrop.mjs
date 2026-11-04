@@ -132,6 +132,8 @@ const bandDiff = async (cdp, a, b) => JSON.parse(await evA(cdp, `(async () => {
 })()`));
 
 async function loadApp(cdp) {
+  // The Garden follows the clock now (day or night, docs/specs/environment-spec.md); this test is about the night art the Garden was approved in, so it pins Night the way the Grown-ups sheet does.
+  await cdp.send("Page.addScriptToEvaluateOnNewDocument", { source: 'try { localStorage.setItem("tvTimeOfDay:v1", "night"); } catch (e) {}' });
   await cdp.send("Page.navigate", { url: APP_URL });
   await waitFor(() => cdp.ev(`!!document.querySelector("canvas") && !!(window.__tvWorld && window.__tvWorld.props) && !!window.__tvDebug`), { label: "stage + dev handles" });
   await sleep(2000);

@@ -5,6 +5,7 @@ import { FULL_AFTER, FULL_FOR_S } from "../src/features/game/world/runtime/fruit
 import { BITE_SECONDS, CARRY_MIN_Y, TOY_MARGIN_PX, createFeedHook, inRect, mouthOf, toyScreenRect, type FeedWorld, type ToyFx } from "../src/features/game/world/runtime/feedingHook";
 import { REACTION_SECONDS } from "../src/features/game/world/runtime/fruitFeeding";
 import { FRUIT, createPropFx } from "../src/features/game/world/runtime/propReactions";
+import { buildBasket } from "../src/features/game/world/runtime/basket";
 import { PROP_LANG_KEY } from "../src/lib/propSpeech";
 import { resetVoiceBackoff } from "../src/lib/propVoice";
 
@@ -17,7 +18,7 @@ beforeEach(() => {
 
 const CANVAS = { left: 0, top: 0, width: 800, height: 400 };
 
-function game(opts: { eater?: "character" | "robot" | "vehicle"; clips?: boolean; allowed?: boolean; kind?: "lemon" | "pear" | "snow" } = {}) {
+function game(opts: { eater?: "character" | "robot" | "vehicle"; clips?: boolean; allowed?: boolean; kind?: "lemon" | "pear" | "snow"; lean?: boolean; tapFeed?: boolean; basket?: boolean } = {}) {
   const root = new THREE.Group();
   const toast = vi.fn();
   const camera = new THREE.PerspectiveCamera(36, 2, 0.1, 200);
@@ -35,6 +36,10 @@ function game(opts: { eater?: "character" | "robot" | "vehicle"; clips?: boolean
   const inst = fx.register("tree", [tree])!;
   tree.updateMatrixWorld(true);
 
+  const basketGroup = opts.basket ? buildBasket(2.5, 0) : null;
+  if (basketGroup) { root.add(basketGroup); }
+  const basketInst = basketGroup ? fx.register("basket", [basketGroup])! : null;
+  basketGroup?.updateMatrixWorld(true);
   const s = { eater: opts.eater ?? "character", clips: opts.clips ?? true, allowed: opts.allowed ?? true };
   const toyBox = new THREE.Box3(new THREE.Vector3(7.2, 0, -0.5), new THREE.Vector3(9, 2.2, 0.5));
   const ray = new THREE.Raycaster();
@@ -45,10 +50,13 @@ function game(opts: { eater?: "character" | "robot" | "vehicle"; clips?: boolean
     wobble: () => calls.push("wobble"),
     tone: (f) => calls.push(`tone:${f}`),
     spark: () => calls.push("spark"),
+    ...(opts.lean ? { lean: (over: boolean, x: number) => calls.push(`lean:${over}:${x.toFixed(1)}`) } : {}),
   };
   // The trees here only grow apples, so a test that needs another fruit relabels what the finger picked (the world's own tap would see the same kind from the mesh).
   const facade: FeedWorld["fx"] = {
     pickFruit: (r) => { const ref = fx.pickFruit(r); if (ref && opts.kind) ref.kind = opts.kind; return ref; },
+    ...(opts.tapFeed ? { looseFruitX: (r: Parameters<typeof fx.looseFruitX>[0]) => fx.looseFruitX(r) } : {}),
+    ...(opts.basket ? { basketAt: (r: THREE.Raycaster) => fx.basketAt(r), stashFruit: (r: Parameters<typeof fx.stashFruit>[0], b: Parameters<typeof fx.stashFruit>[1]) => fx.stashFruit(r, b) } : {}),
     tapFruitRef: (r) => fx.tapFruitRef(r), liftFruit: (r) => fx.liftFruit(r), carryFruit: (r, p) => fx.carryFruit(r, p), dropFruit: (r) => fx.dropFruit(r), eatFruit: (r, to, secs) => fx.eatFruit(r, to, secs),
   };
   const world: FeedWorld = {
@@ -75,7 +83,7 @@ function game(opts: { eater?: "character" | "robot" | "vehicle"; clips?: boolean
   let now = 0;
   const frames = (seconds: number, dt = 1 / 60) => { for (let t = 0; t < seconds - 1e-9; t += dt) { now += dt; fx.update(dt, now); hook.update(dt); } };
   const hangingCount = () => inst.slots.filter((sl) => sl.mesh).length;
-  return { fx, hook, world, s, toast, inst, calls, appleAt, toyCentre, px, ev, drag, frames, hangingCount, camera, canvas, toyBox };
+  return { fx, hook, world, s, toast, inst, calls, basketGroup, basketInst, appleAt, toyCentre, px, ev, drag, frames, hangingCount, camera, canvas, toyBox };
 }
 
 describe("toyScreenRect, inRect and mouthOf", () => {
@@ -315,5 +323,143 @@ describe("interruptions", () => {
     expect(g.hook.move(g.ev(a.x + 40, a.y, 2))).toBe(false);
     expect(g.hook.up(g.ev(a.x + 40, a.y, 2))).toBe(false);
     expect(g.hook.state).toBe("pressed");
+  });
+});
+
+describe("the toy leans toward a fruit held over it", () => {
+  it("when the finger carrying the apple comes over the toy it is told to lean toward the apple's own x, and again when the finger leaves", () => {
+    const g = game({ lean: true });
+    const a = g.appleAt();
+    expect(g.hook.down(g.ev(a.x, a.y))).toBe(true);
+    const c = g.toyCentre();
+    for (const k of [0.3, 0.6, 1]) g.hook.move(g.ev(a.x + (c.x - a.x) * k, a.y + (c.y - a.y) * k));
+    const leanIn = g.calls.filter((x) => x.startsWith("lean:"));
+    expect(leanIn).toHaveLength(1);
+    expect(leanIn[0]).toMatch(/^lean:true:\d+\.\d$/);
+    const x = Number(leanIn[0]!.split(":")[2]);
+    expect(x).toBeGreaterThan(5.5);                                                // it is the carried apple's own x (the toy is at 8, the tree it hung on at 5), not a fixed number
+    expect(x).toBeLessThan(9);
+    g.hook.move(g.ev(a.x, a.y - 40));                                              // away again: it looks away
+    expect(g.calls.filter((y) => y.startsWith("lean:"))).toEqual([leanIn[0], expect.stringMatching(/^lean:false:/)]);
+    g.hook.up(g.ev(a.x, a.y - 40));
+  });
+  it("a toy with no lean at all just takes the fruit as before", () => {
+    const g = game();
+    const a = g.appleAt(), c = g.toyCentre();
+    g.drag(a, c);
+    g.frames(0.6);
+    expect(g.calls.some((x) => x.startsWith("lean:"))).toBe(false);
+    expect(g.calls.some((x) => x.startsWith("clip:eat"))).toBe(true);
+  });
+});
+
+describe("tap to feed: a fruit lying at the toy's feet is eaten by a plain tap", () => {
+  /** An apple lying on the ground at world x, at rest. */
+  function lie(g: ReturnType<typeof game>, x: number, slot = 1) {
+    const a = g.appleAt(slot);
+    const ref = g.fx.pickFruit(g.world.rayAt(a.x, a.y))!;
+    expect(g.fx.looseFruitX(ref), "a hanging fruit is not loose").toBeNull();
+    expect(g.fx.liftFruit(ref)).toBe(true);
+    expect(g.fx.looseFruitX(ref), "a carried fruit is not loose").toBeNull();
+    ref.mesh.position.set(x, 0.2, 0);
+    g.fx.dropFruit(ref);
+    g.frames(2);
+    return ref;
+  }
+  const tapAt = (g: ReturnType<typeof game>, ref: { mesh: THREE.Object3D }) => {
+    const p = g.px(ref.mesh.getWorldPosition(new THREE.Vector3()));
+    expect(g.hook.down(g.ev(p.x, p.y))).toBe(true);
+    g.hook.up(g.ev(p.x, p.y));
+  };
+  it("near the toy (the toy is at x 8): the tap names it AND the toy eats it: the bite clip plays and the fruit is gone", () => {
+    const g = game({ tapFeed: true });
+    const ref = lie(g, 7.0);
+    g.calls.length = 0;
+    tapAt(g, ref);
+    g.frames(0.6);
+    expect(g.calls).toContain("clip:eat");
+    expect(g.toast).toHaveBeenCalled();                                            // the name is shown as for any tap
+    expect(g.fx.looseFruitX(ref)).toBeNull();                                      // eaten: no longer on the ground
+  });
+  it("far from the toy it only names the fruit, as before", () => {
+    const g = game({ tapFeed: true });
+    const ref = lie(g, 2.0);
+    g.calls.length = 0;
+    tapAt(g, ref);
+    g.frames(0.6);
+    expect(g.calls.some((c) => c.startsWith("clip:"))).toBe(false);
+    expect(g.fx.looseFruitX(ref)).not.toBeNull();
+  });
+  it("a hanging fruit is never fed by a tap (a tap on it plucks it)", () => {
+    const g = game({ tapFeed: true });
+    const a = g.appleAt();
+    expect(g.hook.down(g.ev(a.x, a.y))).toBe(true);
+    g.hook.up(g.ev(a.x, a.y));
+    g.frames(0.6);
+    expect(g.calls.some((c) => c.startsWith("clip:"))).toBe(false);
+  });
+  it("the third fruit in a row is eaten and fills the toy; the fourth tap is refused with a belly pat (the same rules as a drag)", () => {
+    const g = game({ tapFeed: true });
+    g.calls.length = 0;
+    for (let i = 0; i < FULL_AFTER; i++) { const ref = lie(g, 7.2 + i * 0.1, i); tapAt(g, ref); g.frames(REACTION_SECONDS.eat + 1.2); }
+    expect(g.calls.filter((c) => c === "clip:eat").length).toBe(FULL_AFTER);
+    expect(g.calls).toContain("clip:belly_pat");
+    const slot = g.inst.slots.findIndex((sl) => sl.mesh);
+    expect(slot, "a slot has regrown by now").toBeGreaterThanOrEqual(0);
+    const refused = lie(g, 7.4, slot);
+    g.calls.length = 0;
+    tapAt(g, refused);
+    g.frames(0.5);
+    expect(g.calls).not.toContain("clip:eat");
+    expect(g.fx.looseFruitX(refused)).not.toBeNull();                              // back on the ground
+  });
+  it("without the hook's fx supporting it (an older world), a tap near the toy just names the fruit", () => {
+    const g = game();
+    const ref = lie(g, 7.0);
+    g.calls.length = 0;
+    tapAt(g, ref);
+    g.frames(0.6);
+    expect(g.calls.some((c) => c.startsWith("clip:"))).toBe(false);
+  });
+});
+
+describe("the fruit basket takes fruit let go over it", () => {
+  const basketPx = (g: ReturnType<typeof game>) => g.px(new THREE.Vector3(2.5, 0.4, 0));
+  it("an apple dragged onto the basket and let go drops in and is counted; the toy does not eat it", () => {
+    const g = game({ basket: true });
+    g.calls.length = 0;
+    g.drag(g.appleAt(), basketPx(g));
+    g.frames(0.6);
+    expect(g.basketGroup!.userData.count()).toBe(1);
+    expect(g.calls.some((c) => c.startsWith("clip:"))).toBe(false);
+    expect(g.hangingCount()).toBe(2);                                              // it came off the tree and did not fall to the ground
+    expect(g.basketGroup!.userData.held[0].mesh.parent).toBe(g.basketGroup);
+  });
+  it("each fruit makes its own note, the count goes up, and a seventh is not taken: the sixth fills it, which then empties itself and starts again", () => {
+    const g = game({ basket: true });
+    const notes: number[] = [];
+    for (let i = 0; i < 3; i++) {
+      g.drag(g.appleAt(i), basketPx(g));
+      g.frames(0.4);
+      notes.push(g.basketGroup!.userData.lastNote);
+    }
+    expect(g.basketGroup!.userData.count()).toBe(3);
+    expect(notes).toEqual([262, 294, 330]);
+    for (const h of g.basketGroup!.userData.held) expect(h.mesh.scale.x).toBeGreaterThan(0.5);
+  });
+  it("a fruit let go next to the basket falls as usual", () => {
+    const g = game({ basket: true });
+    const p = basketPx(g);
+    g.drag(g.appleAt(), { x: p.x + 160, y: p.y });
+    g.frames(0.6);
+    expect(g.basketGroup!.userData.count()).toBe(0);
+  });
+  it("a toy that was fed rather than a basket: released over the toy still feeds it", () => {
+    const g = game({ basket: true });
+    g.calls.length = 0;
+    g.drag(g.appleAt(), g.toyCentre());
+    g.frames(0.6);
+    expect(g.calls).toContain("clip:eat");
+    expect(g.basketGroup!.userData.count()).toBe(0);
   });
 });

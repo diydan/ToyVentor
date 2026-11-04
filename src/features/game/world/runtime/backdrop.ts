@@ -16,7 +16,20 @@
 // refuses) and the world is exactly what it was.
 import * as THREE from "three";
 import gardenFar from "./assets/garden-far-night.webp?url";
+import gardenFarDay from "./assets/garden-far-day.webp?url";
 import gardenMid from "./assets/garden-mid.webp?url";
+import skyFarDay from "./assets/sky-far-day.webp?url";
+import skyFarNight from "./assets/sky-far-night.webp?url";
+import skyMid from "./assets/sky-mid.webp?url";
+import beachFarDay from "./assets/beach-far-day.webp?url";
+import beachFarNight from "./assets/beach-far-night.webp?url";
+import beachMid from "./assets/beach-mid.webp?url";
+import snowFarDay from "./assets/snow-far-day.webp?url";
+import snowFarNight from "./assets/snow-far-night.webp?url";
+import snowMid from "./assets/snow-mid.webp?url";
+import junkFarDay from "./assets/junk-far-day.webp?url";
+import junkFarNight from "./assets/junk-far-night.webp?url";
+import junkMid from "./assets/junk-mid.webp?url";
 
 export interface LayerSpec {
   id: "far" | "mid";
@@ -49,8 +62,34 @@ export const GARDEN_BACKDROP: BackdropSpec = {
     { id: "mid", url: gardenMid, z: -22, f: 0.65, fitFrac: 0.86, tint: 0xbfc8ff, alpha: true },
   ],
 };
-/** World id (or theme) to its backdrop. A world with no entry keeps whatever it has: the Toy Room, for one, is a flat wall by design. */
-export const BACKDROPS: Record<string, BackdropSpec> = { garden: GARDEN_BACKDROP };
+export type Look = "day" | "night";
+
+/**
+ * One backdrop per outdoor world and look (docs/specs/environment-spec.md: two looks, day and night; worldLook.ts says which one a world is in). Every world has its own far band for each look
+ * and ONE mid cut-out, lit by the look: left as painted by day, tinted cool by night (the Garden's already was: Dan approved it that way). Sky Meadow's mid is a bank of clouds with two tiny
+ * islands, the Beach's dunes with palms and a hut, Snow Peak's hills with pines and an igloo, the Junkyard's piles of tyres, barrels and a crane (art: scripts/gen-backdrops.mjs). The lane, the
+ * ground line and the depths are the same everywhere (every world's ground slab is the same), so a world differs only in its pictures and how much of the slice its mid fills.
+ */
+const worldBackdrop = (far: string, mid: string, midTint: number, midFit: number): BackdropSpec => ({
+  laneLo: 3, laneHi: 41, groundEdgeZ: -10,
+  layers: [
+    { id: "far", url: far, z: -34, f: 0.85, fitFrac: 1.0, tint: 0xffffff, alpha: false },
+    { id: "mid", url: mid, z: -22, f: 0.65, fitFrac: midFit, tint: midTint, alpha: true },
+  ],
+});
+const NIGHT_MID = 0x9aa6e0;
+export const BACKDROPS: Record<string, Record<Look, BackdropSpec>> = {
+  garden: { night: GARDEN_BACKDROP, day: worldBackdrop(gardenFarDay, gardenMid, 0xffffff, 0.86) },
+  sky: { day: worldBackdrop(skyFarDay, skyMid, 0xffffff, 0.5), night: worldBackdrop(skyFarNight, skyMid, NIGHT_MID, 0.5) },
+  beach: { day: worldBackdrop(beachFarDay, beachMid, 0xffffff, 0.55), night: worldBackdrop(beachFarNight, beachMid, NIGHT_MID, 0.55) },
+  snow: { day: worldBackdrop(snowFarDay, snowMid, 0xffffff, 0.55), night: worldBackdrop(snowFarNight, snowMid, NIGHT_MID, 0.55) },
+  junk: { day: worldBackdrop(junkFarDay, junkMid, 0xffffff, 0.42), night: worldBackdrop(junkFarNight, junkMid, NIGHT_MID, 0.42) },
+};
+/** The backdrop of a world (its id or theme) in a look, or null: a world with no entry keeps whatever it has (the Toy Room is a flat wall by design), and so does a world with no look. */
+export function backdropFor(theme: string, look: string): BackdropSpec | null {
+  if (!Object.prototype.hasOwnProperty.call(BACKDROPS, theme)) return null;                  // (not the Object prototype's "toString" and friends)
+  return look === "day" || look === "night" ? BACKDROPS[theme]![look] : null;
+}
 
 /** How far a layer's base hides below the ground line, so no hairline gap can show between the layer and the slab in front of it. */
 export const TUCK = 0.12;

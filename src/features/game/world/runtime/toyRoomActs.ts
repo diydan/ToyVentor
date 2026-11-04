@@ -9,11 +9,17 @@ import { BLOW_PUFFS_S, HUG_SQUEEZE_S, KICK_CONTACT_S, MALLET_COUNT, MALLET_EVERY
 import { barX } from "./xylophone";
 import type { PropInst } from "./propReactions";
 import type { P3 } from "./sleepRoutine";
+import { createPlaythings, type ThingKind } from "./playthings";
+import type { PlayAction } from "./playClips";
+import type { HeldItem } from "./heldItems";
 import { createVisitor, type Visit, type VisitAdapter, type VisitPhase } from "./visitRoutine";
 
-export type ActKind = "hug" | "kick" | "jump" | "read" | "play" | "blow" | "pet" | "mallet" | "spill" | "dump" | "scrub" | "cook";
+export type ActKind = "hug" | "kick" | "jump" | "read" | "play" | "blow" | "pet" | "mallet" | "spill" | "dump" | "scrub" | "cook" | ThingKind;
+const THING_KINDS: ReadonlySet<string> = new Set<ThingKind>(["roll", "angel", "water", "feed", "picnic", "ride"]);
 /** Which prop type starts which act. */
-export const ACT_FOR_PROP: Readonly<Record<string, ActKind>> = { teddy: "hug", ball: "kick", cushions: "jump", books: "read", guitar: "play", bubbles: "blow", dog: "pet", xylophone: "mallet", cup: "spill", toybox: "dump", cleancart: "scrub", hob: "cook" };
+export const ACT_FOR_PROP: Readonly<Record<string, ActKind>> = { teddy: "hug", ball: "kick", cushions: "jump", books: "read", guitar: "play", bubbles: "blow", dog: "pet", xylophone: "mallet", cup: "spill", toybox: "dump", cleancart: "scrub", hob: "cook",
+  // the outdoor worlds (playthings.ts): a puffy cloud is bounced on like the cushions, a tire is pushed, the snow patch gets an angel, the flower bed is watered, the bunny is fed, the picnic eaten, the swing ridden
+  puffcloud: "jump", tire: "roll", angelpatch: "angel", flowerbed: "water", bunny: "feed", picnic: "picnic", swing: "ride" };
 
 /** How far from the prop's centre the toy stands, in x. */
 export const HUG_STAND = 1.05;
@@ -54,8 +60,11 @@ export const BUBBLES_PER_PUFF = 4;
 /** The tune Kip strums: the pitch of each of the STRUM_COUNT strums (C major pentatonic). An even strum is a downstroke (a three-note chord), an odd one an upstroke (one high note). */
 export const RIFF: readonly number[] = [392, 330, 392, 523, 440, 392, 330, 262, 330, 392, 440, 392, 330, 262];
 export const MALLET_STAND = 1.9;
-/** The tune Kip plays on the xylophone: which bar on each of the MALLET_COUNT strokes ("Twinkle, twinkle, little star"). */
-export const TUNE: readonly number[] = [0, 0, 4, 4, 5, 5, 4, 3, 3, 2, 2, 1, 1, 0];
+/**
+ * The tune Kip plays on the xylophone: which bar (C D E G A = 0 to 4) on each of the MALLET_COUNT strokes. "Mary had a little lamb" (E D C D E E E, D D D, E G G) and home to C: it
+ * only uses the notes the five bars have.
+ */
+export const TUNE: readonly number[] = [2, 1, 0, 1, 2, 2, 2, 1, 1, 1, 2, 3, 3, 0];
 export const MALLET_S = MALLET_START_S + MALLET_COUNT * MALLET_EVERY_S + 0.3;
 export const HEART_RISE_S = 1.6;
 export const HEART_RISE = 1.3;
@@ -91,9 +100,9 @@ export interface ActsWorld extends Omit<VisitAdapter, "onPhase"> {
   /** False while an act must not start (paused, a showcase, a mission cinematic, the editor, asleep, an ability running). */
   allowed(): boolean;
   /** Play a character clip; false if it cannot (reduced motion, not loaded). */
-  clip(action: "hug" | "kick" | "cheer" | "read" | "strum" | "blow" | "pet" | "mallet"): boolean;
+  clip(action: "hug" | "kick" | "cheer" | "read" | "strum" | "blow" | "pet" | "mallet" | "jump" | "shove" | PlayAction): boolean;
   /** Put something in Kip's hands (a book, the guitar, the bubble wand) and take it away again (safe to call when it holds nothing). */
-  hold(item: "book" | "guitar" | "wand" | "mallets"): void;
+  hold(item: "book" | "guitar" | "wand" | "mallets" | Extract<HeldItem, "can" | "carrot" | "bouquet" | "sandwich">): void;
   release(): void;
   /** Where Kip's mouth is while it faces `dir`. */
   mouth(dir: 1 | -1): P3;
@@ -126,10 +135,11 @@ export interface ActsWorld extends Omit<VisitAdapter, "onPhase"> {
   };
 }
 
-type Glyph = "heart" | "note";
+type Glyph = "heart" | "note" | "flake";
 const GLYPH: Record<Glyph, { ch: string; fill: string; glow: string; color: number }> = {
   heart: { ch: "\u2665", fill: "#ff6f9c", glow: "rgba(255,120,170,0.9)", color: 0xff7aa8 },
   note: { ch: "\u266A", fill: "#ffe27a", glow: "rgba(255,210,90,0.9)", color: 0xffd24d },
+  flake: { ch: "\u2744", fill: "#e4f3ff", glow: "rgba(170,210,255,0.95)", color: 0xcfe6ff },
 };
 const glyphMaterial = (() => {
   const cache = new Map<Glyph, THREE.SpriteMaterial>();
@@ -183,6 +193,7 @@ export function createActs(w: ActsWorld) {
     hearts.push({ sprite, glyph, t: 0, from: at.clone(), size, sway: hearts.length % 2 ? 1 : -1 });
   }
   const heart = (at: THREE.Vector3, size = 0.4) => floater("heart", at, size);
+  const things = createPlaythings(w, { heart, note: (at, size = 0.4) => floater("note", at, size), flake: (at, size = 0.34) => floater("flake", at, size), follow: (inst, dir) => { following = { inst, dir }; } });
   function clearHearts() {
     for (const h of hearts) { h.sprite.parent?.remove(h.sprite); h.sprite.material.dispose(); }
     hearts.length = 0;
@@ -214,13 +225,13 @@ export function createActs(w: ActsWorld) {
   }
 
   function jumpVisit(inst: PropInst): Visit {
-    const plan: JumpPlan = { standX: inst.base.px - JUMP_STAND, cushX: inst.base.px, topY: CUSHION_TOP, z0: 0, zTop: inst.base.pz + 0.35 };
+    const plan: JumpPlan = { standX: inst.base.px - JUMP_STAND, cushX: inst.base.px, topY: (inst.holder?.userData?.topY as number | undefined) ?? CUSHION_TOP, z0: 0, zTop: inst.base.pz + 0.35 };
     let landed = 0;
     const boing = (n: number) => { w.fx.squish(inst); w.tone(300 + n * 90, 0, 0.16, "sine", 0.08, 160 + n * 60); };
     const cue = (at: number, n: number) => ({ at, fn: () => boing(n) });
     return {
       standX: plan.standX, face: 1, seconds: JUMP_DOWN_S,
-      begin: () => { plan.z0 = w.position().z; landed = 0; w.tone(380, 0, 0.1, "triangle", 0.05, 560); },
+      begin: () => { plan.z0 = w.position().z; landed = 0; w.tone(380, 0, 0.1, "triangle", 0.05, 560); w.clip("jump"); },       // (the Mixamo jump for the pose: the path below lifts Kip, the clip does not)
       tick: (t) => { const p = jumpPath(t, plan); w.setPosition(p.x, p.y, p.z); },
       cues: [
         { at: JUMP_UP_S, fn: () => { boing(landed++); w.clip("cheer"); } },
@@ -318,7 +329,7 @@ export function createActs(w: ActsWorld) {
       const kind = ACT_FOR_PROP[inst.type];
       if (!kind || !w.allowed() || w.eater() !== "character") return false;                // (an act already under way refuses a second start itself)
       following = null;
-      const visit = kind === "spill" || kind === "dump" ? w.mess?.visitFor(kind, inst) ?? null : kind === "scrub" || kind === "cook" ? w.activity?.visitFor(kind, inst) ?? null : { hug: hugVisit, kick: kickVisit, jump: jumpVisit, read: readVisit, play: playVisit, blow: blowVisit, pet: petVisit, mallet: malletVisit }[kind](inst);
+      const visit = THING_KINDS.has(kind) ? things.visitFor(kind as ThingKind, inst) : kind === "spill" || kind === "dump" ? w.mess?.visitFor(kind, inst) ?? null : kind === "scrub" || kind === "cook" ? w.activity?.visitFor(kind, inst) ?? null : { hug: hugVisit, kick: kickVisit, jump: jumpVisit, read: readVisit, play: playVisit, blow: blowVisit, pet: petVisit, mallet: malletVisit }[kind as "hug" | "kick" | "jump" | "read" | "play" | "blow" | "pet" | "mallet"](inst);
       return visit ? visitor.start(visit) : false;
     },
     /** Start a visit that is not a tap on a prop (the Clean button): false (and nothing happens) if one is already under way or an act is not allowed now. */
@@ -327,6 +338,7 @@ export function createActs(w: ActsWorld) {
     consume(): boolean { return visitor.busy ? visitor.tapElsewhere() : false; },
     update(dt: number): void {
       visitor.update(dt);
+      things.update(dt);
       if (following && !visitor.busy) {
         const f = following;
         if (!w.allowed()) following = null;
@@ -347,7 +359,7 @@ export function createActs(w: ActsWorld) {
       }
     },
     /** A world change or a new toy: drop whatever is happening (an action in progress is put right) and remove the hearts. */
-    reset(): void { visitor.cancel(); clearHearts(); following = null; },
+    reset(): void { visitor.cancel(); clearHearts(); things.reset(); following = null; },
   };
 }
 
