@@ -8,8 +8,9 @@
 //            E2E_ONLY (comma-separated scenario names, e.g. garage-weekend).
 //
 // Guards, in the real React overlay (unit tests cannot see these):
-//   - which view the Map opens in by age (carousel for 2-6 and unset, trail
-//     map from the 7-9 band up) and that each is one tap from the other;
+//   - the Map is one screen at every age: the trail map with a card strip (a
+//     mini carousel, one screenshot per level) along its bottom, starting at
+//     the left edge, with big touch targets for ages 2-4 and no Cards chip;
 //   - the trail map is full screen and covers the dock;
 //   - travel is two-step: tap a place and the toy hops there (HUD names it),
 //     tap it again or press the big button to go in; arrow keys walk the roads;
@@ -243,21 +244,16 @@ async function openMap(cdp) {
   );
   await waitFor(() => cdp.evaluate(`!!document.querySelector(".tv-more-menu")`), { label: "more menu" });
   await clickButton(cdp, ".tv-more-menu [role=menuitem]", "Map");
-  await waitFor(() => cdp.evaluate(`!!document.querySelector(".tv-sheet-map, .tv-trail-full")`), { label: "map" });
+  await waitFor(() => cdp.evaluate(`!!document.querySelector(".tv-trail-full .tv-map-track")`), { label: "map" });
   await sleep(400);
 }
 
 const hasTrail = (cdp) => cdp.evaluate(`!!document.querySelector(".tv-trail-full")`);
-const hasCarousel = (cdp) => cdp.evaluate(`!!document.querySelector(".tv-sheet-map")`);
+const hasStrip = (cdp) => cdp.evaluate(`!!document.querySelector(".tv-trail-full .tv-trail-strip .tv-map-card-btn")`);
 
-/** Open the Map and make sure it is the trail map. */
+/** Open the Map (it is always the trail map, with the strip). */
 async function openTrail(cdp) {
   await openMap(cdp);
-  if (!(await hasTrail(cdp))) {
-    await clickButton(cdp, ".tv-sheet-map button", "Trail map");
-    await waitFor(() => hasTrail(cdp), { label: "trail view" });
-    await sleep(400);
-  }
 }
 
 /** Wait for the toy to be standing on a place, hop finished. */
@@ -288,42 +284,37 @@ const seenOf = (cdp) =>
 const animCount = (cdp) =>
   cdp.evaluate(`document.querySelectorAll(".tv-trail-node-new,.tv-trail-draw,.tv-trail-fade,.tv-trail-open").length`);
 
-// Age 3-4: the carousel opens first; the trail map is one tap away and back.
+// Age 3-4: the Map is the trail map with the card strip along the bottom, both at once.
 async function scenarioYoung(cdp) {
   await loadApp(cdp, { version: 1, totalXp: 0, ageBand: 1 });
   await openMap(cdp);
-  check("age 3-4: Map opens as the carousel", (await hasCarousel(cdp)) && !(await hasTrail(cdp)));
-  await clickButton(cdp, ".tv-sheet-map button", "Trail map");
-  await waitFor(() => hasTrail(cdp), { label: "trail view" });
-  check("age 3-4: Trail map button opens the trail map", (await hasTrail(cdp)) && !(await hasCarousel(cdp)));
-  await clickButton(cdp, ".tv-trail-hud button", "Cards");
-  await waitFor(() => hasCarousel(cdp), { label: "carousel back" });
-  check("age 3-4: Cards button returns to the carousel", !(await hasTrail(cdp)));
-  // Closing and reopening starts from the age's default again, not the last view.
-  await clickButton(cdp, ".tv-sheet-map button", "Trail map");
-  await waitFor(() => hasTrail(cdp), { label: "trail again" });
+  check("age 3-4: Map opens as the trail map with the card strip", (await hasTrail(cdp)) && (await hasStrip(cdp)));
+  const geo = await cdp.evaluate(`(()=>{const t=document.querySelector(".tv-map-track");const tr=t.getBoundingClientRect();const cards=[...t.querySelectorAll(".tv-map-card-btn")].map((b)=>{const r=b.getBoundingClientRect();return {l:Math.round(r.left),w:Math.round(r.width),h:Math.round(r.height)}});return {tl:Math.round(tr.left),scroll:t.scrollLeft,cards,hud:[...document.querySelectorAll(".tv-trail-hud-btns button")].map((b)=>({t:b.textContent.trim(),h:Math.round(b.getBoundingClientRect().height)}))}})()`);
+  check("age 3-4: the strip starts at the left edge, no empty gap before the first card", geo.cards[0].l - geo.tl <= 16 && geo.scroll <= 1, JSON.stringify(geo.cards[0]) + " scroll " + geo.scroll);
+  check("age 3-4: every strip card is at least 96 px each way", geo.cards.every((c) => c.w >= 96 && c.h >= 96), JSON.stringify(geo.cards.map((c) => [c.w, c.h])));
+  check("age 3-4: the top buttons are Songs, Age and Home, all 48 px tall, and there is no Cards chip", geo.hud.map((b) => b.t.replace("🎵 ", "")).join("|").startsWith("Songs|Age") && geo.hud.every((b) => b.h >= 48) && !geo.hud.some((b) => b.t === "Cards"), JSON.stringify(geo.hud));
   await clickButton(cdp, ".tv-trail-hud button", "Home");
   await sleep(300);
   await openMap(cdp);
-  check("age 3-4: reopening the Map starts on the carousel again", (await hasCarousel(cdp)) && !(await hasTrail(cdp)));
+  check("age 3-4: reopening the Map shows the trail and the strip again", (await hasTrail(cdp)) && (await hasStrip(cdp)));
 }
 
 // Age 7-9 fresh save: trail map by default, full screen, fog, two-step travel.
 async function scenarioOlder(cdp) {
   await loadApp(cdp, { version: 1, totalXp: 0, ageBand: 3 });
   await openMap(cdp);
-  check("age 7-9: Map opens as the trail map", (await hasTrail(cdp)) && !(await hasCarousel(cdp)));
+  check("age 7-9: Map opens as the trail map", (await hasTrail(cdp)) && (await hasStrip(cdp)));
 
   // Full screen, over the dock.
   const fs = await cdp.evaluate(
-    `(()=>{const r=document.querySelector(".tv-trail-full").getBoundingClientRect();const d=document.querySelector(".tv-dock").getBoundingClientRect();const el=document.elementFromPoint(d.x+d.width/2,d.y+d.height/2);return {x:r.x,y:r.y,w:r.width,h:r.height,vw:innerWidth,vh:innerHeight,overDock:!!el?.closest(".tv-trail-full")}})()`,
+    `(()=>{const r=document.querySelector(".tv-trail-full").getBoundingClientRect();const d=document.querySelector(".tv-dock").getBoundingClientRect();const el=document.elementFromPoint(d.x+d.width/2,d.y+d.height/2);return {x:r.x,y:r.y,w:r.width,h:r.height,vw:innerWidth,vh:innerHeight,overDock:!!el?.closest(".tv-trail-full"),hit:el?(el.tagName+"."+String(el.className).slice(0,40)):null,dock:[Math.round(d.x),Math.round(d.y),Math.round(d.width),Math.round(d.height)]}})()`,
   );
   check(
     "trail map fills the whole screen",
     fs.x === 0 && fs.y === 0 && fs.w === fs.vw && fs.h === fs.vh,
     JSON.stringify(fs),
   );
-  check("trail map covers the dock", fs.overDock === true);
+  check("trail map covers the dock", fs.overDock === true, JSON.stringify(fs));
 
   // Fog is drawing only.
   const fog = await cdp.evaluate(
@@ -398,13 +389,8 @@ async function scenarioOlder(cdp) {
     writeFileSync(path.join(SHOTS, "trail-map.png"), Buffer.from(shot.data, "base64"));
   }
 
-  // Cards <-> Trail map from the trail side.
-  await clickButton(cdp, ".tv-trail-hud button", "Cards");
-  await waitFor(() => hasCarousel(cdp), { label: "carousel" });
-  check("Cards button swaps to the carousel", !(await hasTrail(cdp)));
-  await clickButton(cdp, ".tv-sheet-map button", "Trail map");
-  await waitFor(() => hasTrail(cdp), { label: "trail" });
-  check("Trail map button swaps back", !(await hasCarousel(cdp)));
+  // The strip is part of this screen: same places as cards, no switch to another view.
+  check("older ages: the card strip is on the trail map, and there is no Cards chip", (await hasStrip(cdp)) && !(await cdp.evaluate(`[...document.querySelectorAll(".tv-trail-hud button")].some((b)=>b.textContent.trim()==="Cards")`)));
 }
 
 // Sandbox-open so the Bridges ladder offers several rungs (opens the RungSheet).
@@ -427,9 +413,9 @@ async function scenarioPlay(cdp) {
   check("Play on Bridges opens the rung sheet over the map", sheet === true);
   if (sheet) {
     const sheetTop = await cdp.evaluate(
-      `(()=>{const r=document.querySelector(".tv-trail-full .tv-sheet-rungs").getBoundingClientRect();const el=document.elementFromPoint(r.x+r.width/2,r.y+20);return !!el?.closest(".tv-sheet-rungs")})()`,
+      `(()=>{const r=document.querySelector(".tv-trail-full .tv-sheet-rungs").getBoundingClientRect();const el=document.elementFromPoint(r.x+r.width/2,r.y+20);return !!el?.closest(".tv-sheet-rungs")||("hit "+(el?el.tagName+"."+String(el.className).slice(0,40):null)+" sheet "+[r.x,r.y,r.width,r.height].map(Math.round).join(","))})()`,
     );
-    check("the rung sheet is on top of the map, not hidden behind it", sheetTop === true);
+    check("the rung sheet is on top of the map, not hidden behind it", sheetTop === true, String(sheetTop));
     await clickButton(cdp, ".tv-sheet-rungs .tv-ctl", "");
     await sleep(300);
     const after = await cdp.evaluate(

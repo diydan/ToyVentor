@@ -10,6 +10,7 @@ import type { Placement } from "../../../../shared/build";
 import { buildSignature } from "../../../../shared/reveal";
 import { isBuiltInToy, type Toy } from "../../../../shared/toy";
 import { loadToyPortrait, PORTRAIT_PX, saveToyPortrait } from "../../../lib/toyPortrait";
+import { BANDS } from "../../../lib/age";
 import {
   completeGarage,
   completeGarageHousehold,
@@ -113,15 +114,10 @@ import { HouseholdConfirm, useHouseholdPictures } from "./HouseholdWeekend";
 import { householdDropForWeekend } from "../../../lib/garageHouseholdData";
 import { GrownUpsSheet } from "./GrownUpsSheet";
 import { composeRoomPhotoLevel } from "./runtime/roomPhoto";
-import {
-  buildExplorerGraph,
-  defaultMapView,
-  PHONE_LANDSCAPE_QUERY,
-} from "../../../lib/explorerMap";
+import { buildExplorerGraph } from "../../../lib/explorerMap";
 import { planFor } from "../../../lib/learn";
 import { buildMapCards } from "../../../lib/mapCards";
 import { ExplorerMap } from "./ExplorerMap";
-import { MapCarousel } from "./MapCarousel";
 import { MissionPanel } from "./MissionPanel";
 import { MyToySheet } from "./MyToySheet";
 import { isPackClaimedToday, PackOverlay } from "./PackOverlay";
@@ -243,7 +239,6 @@ export function GameCanvas({
     return () => mq.removeEventListener("change", sync);
   }, []);
   const [mapOpen, setMapOpen] = useState(false);
-  const [mapView, setMapView] = useState<"cards" | "trail">("cards");
   const [worldsOpen, setWorldsOpen] = useState(false);
   const [demoMode, setDemoMode] = useState<boolean>(() => loadDemoMode());
   const [skinTick, setSkinTick] = useState(0);
@@ -456,34 +451,33 @@ export function GameCanvas({
     }
   }, []);
 
-  // The Map opens in the view that suits the player's age and how the phone
-  // is held: the carousel for the youngest (and an unset age), the trail map
-  // from the 7-9 band up, and the trail map on a phone held sideways (the
-  // carousel cards need a taller screen). Each is one tap from the other.
+  // The Menu button and the Toy Box wear the same little picture of the toy as the Map's
+  // token. It is taken once the 3D rig has loaded (polled, the rig loads after the first
+  // frame) and again when the toy, its outfit or a sheet changes, so a new hat is a new
+  // picture. Until then, and for a scanned toy, the plain icon shows.
+  useEffect(() => {
+    if (titleOpen) return;
+    refreshPortrait();
+    let tries = 0;
+    const id = window.setInterval(() => {
+      tries += 1;
+      if (engineRef.current?.portraitSig() || tries > 40) {
+        refreshPortrait();
+        window.clearInterval(id);
+      }
+    }, 500);
+    return () => window.clearInterval(id);
+  }, [refreshPortrait, titleOpen, toy.id, skinTick, menuOpen, toySheetOpen]);
+
+  // The Map is one screen: the trail map with the card strip (a mini carousel
+  // with a screenshot of every level) along the bottom, so a child can walk
+  // the trail or just tap a card, at any age and in either orientation.
   const openMap = useCallback(() => {
     songRef.current?.party.stop("stopped"); // a party does not follow the child onto the Map
     setSongsOpen(false); // the Map always opens on its places, not on a Songs sheet left open
     refreshPortrait();
-    setMapView(
-      defaultMapView(
-        progressionRef.current.ageBand,
-        typeof window.matchMedia === "function" &&
-          window.matchMedia(PHONE_LANDSCAPE_QUERY).matches,
-      ),
-    );
     setMapOpen(true);
   }, [refreshPortrait]);
-
-  // Turning the phone while the Map is open re-picks the view for the new
-  // orientation, so a child can spin it to switch between carousel and trail.
-  useEffect(() => {
-    if (!mapOpen || typeof window.matchMedia !== "function") return;
-    const mq = window.matchMedia(PHONE_LANDSCAPE_QUERY);
-    const onTurn = () =>
-      setMapView(defaultMapView(progressionRef.current.ageBand, mq.matches));
-    mq.addEventListener("change", onTurn);
-    return () => mq.removeEventListener("change", onTurn);
-  }, [mapOpen]);
 
   // Sync Play Time settings + today's ledger on boot.
   useEffect(() => {
@@ -1133,6 +1127,17 @@ export function GameCanvas({
       ? "Grown-up settings (Demo Mode active, hold 1.2s)"
       : "Grown-up settings (hold 1.2s)";
 
+  // The Map's cards: the trail map's places and the strip along its bottom are the same list.
+  const mapCards = mapOpen
+    ? buildMapCards({
+        ageBand: progression.ageBand ?? null,
+        prog: progression,
+        found: new Set(state.foundKeys),
+        missionsDone: new Set(state.missionsDoneKeys),
+        garage: { weekend: garage.isWeekend && garage.dropEnabled, done: garage.done, trophies: garageTrophies.gold, hollow: garageTrophies.hollow, household: garage.kind === "household" },
+      })
+    : [];
+
   return (
     <div
       ref={hostRef}
@@ -1157,7 +1162,11 @@ export function GameCanvas({
             setMoreOpen(false);
           }}
         >
-          <ToyMiniIcon toy={toy} accentColor={toyColor} skinVersion={skinTick} size="tile" />
+          {portrait ? (
+            <img className="tv-kip-fab-portrait" src={portrait} alt="" draggable={false} />
+          ) : (
+            <ToyMiniIcon toy={toy} accentColor={toyColor} skinVersion={skinTick} size="tile" />
+          )}
           {(!packClaimed || liveStatus.listening || liveStatus.playing) && <span className="tv-kip-fab-dot" aria-hidden="true" />}
         </button>
       )}
@@ -1192,11 +1201,17 @@ export function GameCanvas({
             setToySheetOpen(true);
           }}
         >
-          <ToyMiniIcon
-            toy={toy}
-            accentColor={toyColor}
-            skinVersion={skinTick}
-          />
+          {portrait ? (
+            <span className="tv-toy-mini-icon" aria-hidden="true">
+              <img className="tv-toy-mini-img" src={portrait} alt="" draggable={false} />
+            </span>
+          ) : (
+            <ToyMiniIcon
+              toy={toy}
+              accentColor={toyColor}
+              skinVersion={skinTick}
+            />
+          )}
           <span className="tv-toy-pill-name">Toy Box</span>
           <span
             className="tv-rank-pip"
@@ -1921,16 +1936,10 @@ export function GameCanvas({
           onEquipped={(next) => onPlacementsChange(next)}
         />
 
-        {mapOpen && !sleepActive && !songsOpen && mapView === "trail" && (
+        {mapOpen && !sleepActive && !songsOpen && (
           <ExplorerMap
             graph={buildExplorerGraph({
-              cards: buildMapCards({
-                ageBand: progression.ageBand ?? null,
-                prog: progression,
-                found: new Set(state.foundKeys),
-                missionsDone: new Set(state.missionsDoneKeys),
-                garage: { weekend: garage.isWeekend && garage.dropEnabled, done: garage.done, trophies: garageTrophies.gold, hollow: garageTrophies.hollow, household: garage.kind === "household" },
-              }),
+              cards: mapCards,
               visited: new Set(progression.explorerVisited ?? []),
               currentId: state.world,
               openAll: progression.sandboxUnlockAll,
@@ -1960,7 +1969,9 @@ export function GameCanvas({
               )
             }
             onClose={() => setMapOpen(false)}
-            onShowCards={() => setMapView("cards")}
+            cards={mapCards}
+            guideName={label}
+            ageLabel={progression.ageBand == null ? "Age: ask a grown-up" : `Age ${BANDS[progression.ageBand]?.label ?? ""}`}
             onOpenSongs={openSongs}
             onOpenGarage={openGarage}
             onAskAge={() => openGrownUps(false)}
@@ -2011,49 +2022,6 @@ export function GameCanvas({
             onMake={(idea) => startFromSheet(() => void getSong().flow.start(idea, "prompt"))}
             onDance={(song) => startFromSheet(() => void getSong().flow.playKept(song))}
             onClose={() => setSongsOpen(false)}
-          />
-        )}
-
-        {mapOpen && !sleepActive && !songsOpen && mapView === "cards" && (
-          <MapCarousel
-            cards={buildMapCards({
-              ageBand: progression.ageBand ?? null,
-              prog: progression,
-              found: new Set(state.foundKeys),
-              missionsDone: new Set(state.missionsDoneKeys),
-              garage: { weekend: garage.isWeekend && garage.dropEnabled, done: garage.done, trophies: garageTrophies.gold, hollow: garageTrophies.hollow, household: garage.kind === "household" },
-            })}
-            ageBand={progression.ageBand ?? null}
-            guide={
-              <ToyMiniIcon toy={toy} accentColor={toyColor} skinVersion={skinTick} />
-            }
-            guideName={label}
-            onClose={() => setMapOpen(false)}
-            onAskAge={() => openGrownUps(false)}
-            onGoWorld={(worldId) => {
-              setMapOpen(false);
-              engine()?.goWorld(worldId);
-            }}
-            onStartLearn={(track, plan) => {
-              closeEngineSheets();
-              closeReactOverlays();
-              engine()?.startLearnRun(
-                track,
-                plan,
-                (progressionRef.current.ageBand ?? 99) <= 1,
-              );
-            }}
-            planForRung={(track, rung) =>
-              planFor(
-                track,
-                progressionRef.current.ageBand ?? null,
-                progressionRef.current,
-                rung,
-              ) ?? [rung]
-            }
-            onShowExplorer={() => setMapView("trail")}
-            onOpenGarage={openGarage}
-            onOpenSongs={openSongs}
           />
         )}
 

@@ -2090,14 +2090,22 @@ a.cta {
 
 /* The Map's Songs sheet (SongStudioSheet.tsx): idea chips, one short text box, one big button, and the songs already made. Targets are 56 px or more. */
 .tv-sheet-songs { max-height: 78%; }
-/* The Map's Songs button: bigger and gold, so a child can find it (the other header buttons are the usual 36 px). */
-.tv-ctl.tv-map-songs {
+/* Every button in the Map's top row (Songs, Age, Home) is built like the Songs one: tall,
+   solid and bright, so a child can find them (the usual .tv-ctl is a 36 px outline). Songs
+   keeps gold; the others are sky blue. */
+.tv-ctl.tv-map-btn {
   min-height: 48px;
-  padding: 0 14px;
-  background: var(--gold, #ffd24d);
-  border-color: rgba(255, 255, 255, 0.85);
-  color: #2b1d00;
+  padding: 0 16px;
+  background: linear-gradient(#eaf6ff, #a9d8ff);
+  border-color: rgba(255, 255, 255, 0.9);
+  color: #0d2a52;
   font-weight: 800;
+  box-shadow: 0 3px 0 rgba(8, 20, 60, 0.45), 0 8px 16px rgba(2, 6, 28, 0.3);
+}
+.tv-ctl.tv-map-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(8, 20, 60, 0.45); }
+.tv-ctl.tv-map-songs {
+  background: linear-gradient(#ffe48a, var(--gold, #ffd24d));
+  color: #2b1d00;
 }
 .tv-songs-lead { margin: 2px 0 0; font-size: 16px; font-weight: 800; }
 .tv-songs-ideas { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -2980,19 +2988,19 @@ button.tv-badge-pill:hover {
 
 /* --- Map carousel + rung sheet (carousel spec §7) --- */
 
-.tv-sheet-map {
-  max-height: 72%;
-}
-
+/* The card strip along the bottom of the trail map. It starts at the left edge (the same
+   12 px gutter as the buttons), so there is no empty gap before the first card. */
 .tv-map-track {
-  --cw: 148px;
+  --cw: 141px;
   display: flex;
-  gap: 12px;
-  margin: 0 -14px;
-  padding: 26px calc(50% - var(--cw) / 2) 8px;
+  gap: 10px;
+  margin: 0;
+  padding: 10px 12px 8px;
   list-style: none;
   overflow-x: auto;
-  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scroll-padding-left: 12px;
   scrollbar-width: none;
 }
 
@@ -3004,9 +3012,47 @@ button.tv-badge-pill:hover {
   position: relative;
   flex: none;
   width: var(--cw);
-  scroll-snap-align: center;
-  transform: scale(calc(1 - 0.12 * var(--d, 1)));
-  opacity: calc(1 - 0.35 * var(--d, 1));
+  scroll-snap-align: start;
+}
+
+/* The place to go next: a white ring (the cards' own colours are mint, blue and orange). */
+.tv-map-card-next .tv-map-card-btn {
+  box-shadow: 0 0 0 3px #fff, 0 0 18px rgba(255, 255, 255, 0.55);
+}
+
+/* The player's toy marks the suggested card: a small round badge on its picture. */
+.tv-map-guide {
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  z-index: 2;
+  display: flex;
+  width: 44px;
+  height: 44px;
+  overflow: hidden;
+  border-radius: 50%;
+  border: 2px solid var(--gold, #ffd24d);
+  background: #fff;
+  pointer-events: none;
+}
+
+.tv-map-guide > * {
+  width: 100%;
+  height: 100%;
+}
+
+.tv-map-guide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tv-map-guide-name {
+  display: none;
+}
+
+.tv-map-card-btn {
+  box-shadow: 0 0 0 3px rgba(139, 247, 203, 0.85), 0 0 18px rgba(139, 247, 203, 0.45);
 }
 
 .tv-map-guide {
@@ -3030,6 +3076,7 @@ button.tv-badge-pill:hover {
   display: flex;
   flex-direction: column;
   width: 100%;
+  height: 100%;
   padding: 0;
   overflow: hidden;
   text-align: left;
@@ -3050,7 +3097,7 @@ button.tv-badge-pill:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 84px;
+  height: 80px;
   color: var(--accent, #52b7ff);
   background: rgb(var(--night-rgb) / 0.85);
 }
@@ -3058,6 +3105,16 @@ button.tv-badge-pill:hover {
 .tv-map-glyph {
   font-size: 44px;
   line-height: 1;
+}
+
+/* A screenshot of the level fills the card's picture; the glyph shows until it loads. */
+.tv-map-shot {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: rgb(var(--night-rgb) / 0.85);
 }
 
 .tv-map-done {
@@ -3082,9 +3139,24 @@ button.tv-badge-pill:hover {
   padding: 8px 10px 10px;
 }
 
-.tv-map-kind {
-  font: 700 11px var(--fb, sans-serif);
-  color: var(--mut, #bfcaf5);
+/* What kind of place the card goes to (World, Lab, Learn ...), written on its picture so it reads before the title does. */
+.tv-map-tag {
+  position: absolute;
+  left: 6px;
+  bottom: 5px;
+  padding: 1px 7px 2px;
+  border-radius: 999px;
+  background: rgb(var(--night-rgb) / 0.82);
+  border: 1.5px solid var(--accent, #52b7ff);
+  color: #fff;
+  font: 800 10px/1.3 var(--fb, sans-serif);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tv-map-card-hot .tv-map-tag,
+.tv-map-card-next .tv-map-tag {
+  border-color: #fff;
 }
 
 .tv-map-title {
@@ -3095,7 +3167,7 @@ button.tv-badge-pill:hover {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
-  min-height: 22px;
+  min-height: 21px;
   margin-top: 4px;
 }
 
@@ -3103,17 +3175,23 @@ button.tv-badge-pill:hover {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
+  width: 21px;
+  height: 21px;
   border-radius: 50%;
   border: 2px solid rgba(255, 255, 255, 0.25);
   color: var(--mut, #bfcaf5);
-  font: 700 10px var(--fb, sans-serif);
+  font: 700 12px/1 var(--fb, sans-serif);
   font-style: normal;
 }
 
 .tv-map-pip.sil {
   border-style: dashed;
+}
+
+/* A hidden part shows what it looks like (a flower, a crown); it is dim until it is found. */
+.tv-map-pip.sil:not(.on) {
+  opacity: 0.6;
+  filter: grayscale(0.7);
 }
 
 .tv-map-pip.on {
@@ -3172,34 +3250,28 @@ button.tv-badge-pill:hover {
   outline-offset: 3px;
 }
 
-/* Phone held sideways (keep in step with PHONE_LANDSCAPE_QUERY in
-   src/lib/explorerMap.ts): the Map opens as the trail map, but Cards stays one
-   tap away, so shrink the carousel until the whole card fits. Cards stay at or
-   above the 96 px touch preset. */
+/* Phone held sideways (wide and short): the stage must shrink to the screen, and the card
+   strip gets compact cards that stay at or above the 96 px touch preset. */
 @media (orientation: landscape) and (max-height: 500px) {
   /* The stage's 440 px floor is taller than a sideways phone (390 px minus the
-     top bar), and the host clips it, so the bottom of the stage (carousel,
-     controls, mission panel) was cut off. Let it shrink to the screen. */
+     top bar), and the host clips it, so the bottom of the stage (controls,
+     mission panel) was cut off. Let it shrink to the screen. */
   .tv-stage {
     min-height: 0;
   }
 
-  .tv-sheet-map {
-    max-height: 90%;
-    gap: 4px;
+  .tv-map-track {
+    --cw: 167px;
+    padding-top: 6px;
+    padding-bottom: 6px;
   }
 
-  .tv-sheet-map .kicker-label {
+  .tv-map-guide {
     display: none;
   }
 
-  .tv-map-track {
-    --cw: 176px;
-    padding-bottom: 4px;
-  }
-
   .tv-map-scene {
-    height: 44px;
+    height: 57px;
   }
 
   .tv-map-glyph {
@@ -3211,11 +3283,6 @@ button.tv-badge-pill:hover {
     right: 6px;
     width: 22px;
     height: 22px;
-  }
-
-  .tv-map-kind,
-  .tv-map-guide-name {
-    display: none;
   }
 
   .tv-map-foot {
@@ -3234,6 +3301,7 @@ button.tv-badge-pill:hover {
   .tv-map-pip {
     width: 18px;
     height: 18px;
+    font-size: 10px;
   }
 }
 
@@ -3646,8 +3714,9 @@ button.tv-badge-pill:hover {
   z-index: 4;
   display: flex;
   align-items: flex-start;
+  flex-wrap: wrap;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px 10px;
   padding: max(10px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 0 max(12px, env(safe-area-inset-left));
   pointer-events: none;
 }
@@ -3680,12 +3749,26 @@ button.tv-badge-pill:hover {
   overflow-wrap: anywhere;
 }
 
-.tv-trail-hud-btns { display: flex; gap: 8px; }
+.tv-trail-hud-btns { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-left: auto; }
+
+/* The mini carousel: the same places as the trail, one swipeable row along the bottom. */
+.tv-trail-strip {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  padding-bottom: max(6px, env(safe-area-inset-bottom));
+  background: linear-gradient(to top, rgb(var(--night-rgb) / 0.94) 55%, rgb(var(--night-rgb) / 0));
+}
+
+/* Leave room under the map for the strip, so the last places can scroll above it. */
+.tv-trail-full .tv-trail-scroll { padding-bottom: var(--strip-h, 0px); }
 
 /* Same .tv-ctl as the dock and sheets, just bigger for a map you play with. */
 .tv-trail-ctl {
   min-width: 56px;
-  min-height: 46px;
+  min-height: 48px;
   padding: 0 16px;
   font-size: 15px;
   box-shadow: 0 3px 0 var(--line-soft), 0 8px 16px rgba(2, 6, 28, 0.3);
@@ -3695,7 +3778,7 @@ button.tv-badge-pill:hover {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: max(18px, env(safe-area-inset-bottom));
+  bottom: calc(var(--strip-h, 0px) + 12px);
   z-index: 4;
   display: flex;
   justify-content: center;
@@ -3727,7 +3810,7 @@ button.tv-badge-pill:hover {
 .tv-trail-notice {
   position: absolute;
   left: 50%;
-  bottom: calc(max(18px, env(safe-area-inset-bottom)) + 76px);
+  bottom: calc(var(--strip-h, 0px) + 12px + 70px);
   z-index: 4;
   max-width: min(86%, 420px);
   margin: 0;
@@ -4941,5 +5024,21 @@ button.tv-badge-pill:hover {
       opacity: 1;
       transform: none;
     }
+  }
+}
+
+/* Sideways phone: Play sits at the right, just above the strip, instead of in the middle.
+   Kept after the trail rules above so it wins. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .tv-trail-play-wrap {
+    left: auto;
+    right: max(12px, env(safe-area-inset-right));
+  }
+
+  .tv-trail-play {
+    min-width: 140px;
+    min-height: 52px;
+    padding: 0 22px;
+    font-size: 19px;
   }
 }
