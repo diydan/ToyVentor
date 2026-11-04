@@ -102,7 +102,7 @@ export function createDanceLibrary(deps: DanceLibraryDeps): DanceLibrary {
         if (!joint || joint.id !== id || joint.group !== "dance") return false;
         if (joint.bpm !== undefined && Math.abs(joint.bpm - have.bpm) > 0.01) return false;
         if (joint.beats !== undefined && joint.beats !== have.beats) return false;
-        const clip = jointClipToGame(joint, id);
+        const clip = jointClipToGame(joint, id, { joints: true }); // with the bench's joint rotations: the party's dances bend at the elbow and the knee too (runtime/snapFlex.ts)
         deps.addClips({ [id]: clip });
         have.hit = beatHit(clip, have.beats).offset;
         have.loaded = true;

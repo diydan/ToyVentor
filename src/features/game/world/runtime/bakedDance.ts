@@ -36,6 +36,8 @@ export interface JointClip {
   /** Local joint rotations per frame (x, y, z, w): frames x 4 each. */
   q: Record<KipJoint, Float32Array>;
   loop: boolean;
+  /** The bake planted the feet (scripts/mixamo-bake.mjs `planted`). */
+  planted: boolean;
   bpm?: number;
   beats?: number;
 }
@@ -68,7 +70,7 @@ export function parseJointClip(raw: unknown): JointClip | null {
     for (let i = 0; i < frames; i++) { const n = Math.hypot(a[i * 4]!, a[i * 4 + 1]!, a[i * 4 + 2]!, a[i * 4 + 3]!); if (n < 0.9 || n > 1.1) return null; }
     q[j] = a;
   }
-  const out: JointClip = { id: r.id, group: r.group, fps: r.fps, frames, dur: r.dur, hips, q, loop: true };
+  const out: JointClip = { id: r.id, group: r.group, fps: r.fps, frames, dur: r.dur, hips, q, loop: true, planted: r.planted === true };
   if (finite(r.bpm) && r.bpm > 0) out.bpm = r.bpm;
   if (Number.isInteger(r.beats) && (r.beats as number) > 0) out.beats = r.beats as number;
   return out;
@@ -83,14 +85,27 @@ const _b = new THREE.Vector3();
 const DOWN = new THREE.Vector3(0, -1, 0);
 const readQ = (arr: Float32Array, i: number, out: THREE.Quaternion) => out.set(arr[i * 4]!, arr[i * 4 + 1]!, arr[i * 4 + 2]!, arr[i * 4 + 3]!).normalize();
 
-/** Forward kinematics of a whole clip into the game's per-frame channels. `name` is the bank name it will be played under. */
-export function jointClipToGame(c: JointClip, name: string): BakedClip {
+/**
+ * Forward kinematics of a whole clip into the game's per-frame channels. `name` is the bank name it will be played under.
+ * `opts.joints` (off by default, so every existing caller keeps exactly the clip it always had) also hands over the bench's own joint rotations and the hips' absolute position, which lets the
+ * Snap rig bend its elbows and knees as the bench's figure does (runtime/snapFlex.ts, runtime/mixamo.ts `applyJoints`); the direction channels are made either way, as the fallback.
+ */
+export function jointClipToGame(c: JointClip, name: string, opts: { joints?: boolean } = {}): BakedClip {
   const n = c.frames;
   const out: BakedClip = {
     name, duration: c.dur, loop: true, pose: false, frames: n,
     hips: new Float32Array(n * 3), body: new Float32Array(n * 4), head: new Float32Array(n * 4),
     armL: new Float32Array(n * 3), armR: new Float32Array(n * 3), legL: new Float32Array(n * 3), legR: new Float32Array(n * 3),
   };
+  if (opts.joints) {
+    // the bench's own rotations, untouched: the Snap rig bends its elbows and knees from these, so the direction channels above are only the fallback for a rig that cannot
+    out.joints = {
+      shoulderL: c.q.LeftArm, shoulderR: c.q.RightArm, elbowL: c.q.LeftForeArm, elbowR: c.q.RightForeArm, wristL: c.q.LeftHand, wristR: c.q.RightHand,
+      hipL: c.q.LeftUpLeg, hipR: c.q.RightUpLeg, kneeL: c.q.LeftLeg, kneeR: c.q.RightLeg, ankleL: c.q.LeftFoot, ankleR: c.q.RightFoot,
+      hipsMm: c.hips,
+    };
+    out.planted = c.planted;
+  }
   const x0 = c.hips[0]!, z0 = c.hips[2]!;
   let minY = Infinity;
   for (let i = 0; i < n; i++) minY = Math.min(minY, c.hips[i * 3 + 1]!);

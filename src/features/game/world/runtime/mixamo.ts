@@ -11,6 +11,7 @@
 // Baking is pure (an Object3D + clips in, typed arrays out) so it runs in vitest without a browser.
 import * as THREE from "three";
 import type { ToyRig } from "./playerRig";
+import { FLEX_ASSEMBLED, followHand, newSnapArmSolution, newSnapLegSolution, releaseHand, resetSnapRig, solveSnapArm, solveSnapLeg, type SnapRigHandles } from "./snapFlex";
 
 const FPS = 30;
 const DOWN = new THREE.Vector3(0, -1, 0);
@@ -36,7 +37,22 @@ export interface BakedClip {
   armR: Float32Array;
   legL: Float32Array;
   legR: Float32Array;
+  /**
+   * The Kip bench's own joint rotations, when the clip was made from its baked JSON (runtime/bakedDance.ts). With them the Snap rig's elbows, knees, wrists and ankles bend exactly as in the
+   * bench (runtime/snapFlex.ts); a clip without them (the Xbot's idle and walk) keeps driving the rigid limbs by direction, as it always did.
+   */
+  joints?: ClipJoints;
+  /** The bake planted the feet (the stance foot stays put in the rig): the driver may stand the lowest sole on the floor while this clip plays. */
+  planted?: boolean;
 }
+/** Per-frame joint rotations (x, y, z, w; frames * 4 each), local, in the CAD frame: Hips > shoulder > elbow > wrist, Hips > hip > knee > ankle; and the hips' position in rig mm (frames * 3, absolute: standing is about (0, 61.5, 0)). */
+export interface ClipJoints {
+  shoulderL: Float32Array; shoulderR: Float32Array; elbowL: Float32Array; elbowR: Float32Array; wristL: Float32Array; wristR: Float32Array;
+  hipL: Float32Array; hipR: Float32Array; kneeL: Float32Array; kneeR: Float32Array; ankleL: Float32Array; ankleR: Float32Array;
+  hipsMm: Float32Array;
+}
+export const CLIP_JOINT_KEYS = ["shoulderL", "shoulderR", "elbowL", "elbowR", "wristL", "wristR", "hipL", "hipR", "kneeL", "kneeR", "ankleL", "ankleR"] as const;
+export type ClipJointKey = (typeof CLIP_JOINT_KEYS)[number];
 export type ClipBank = Record<string, BakedClip>;
 
 export interface Pose {
@@ -47,9 +63,21 @@ export interface Pose {
   armR: THREE.Vector3;
   legL: THREE.Vector3;
   legR: THREE.Vector3;
+  /** 0 to 1: how much of this pose is the bench's exact joint rotations (`j`) rather than limb directions. 0 for a clip without them; blends with the clips mixed in. */
+  jw: number;
+  /** 0 to 1: how much the lowest sole is stood on the floor (a planted clip). */
+  gw: number;
+  j: PoseJoints;
+}
+export type PoseJoints = Record<ClipJointKey, THREE.Quaternion> & { hipsMm: THREE.Vector3 };
+function newPoseJoints(): PoseJoints {
+  const j = { hipsMm: new THREE.Vector3(0, 61.5, 0) } as PoseJoints;
+  for (const k of CLIP_JOINT_KEYS) j[k] = new THREE.Quaternion();
+  return j;
 }
 export function newPose(): Pose {
   return {
+    jw: 0, gw: 0, j: newPoseJoints(),
     hips: new THREE.Vector3(),
     body: new THREE.Quaternion(),
     head: new THREE.Quaternion(),
@@ -256,6 +284,16 @@ export function sampleClip(c: BakedClip, time: number, out: Pose): void {
   sampleVec(c.armR, i0, i1, f, out.armR, true);
   sampleVec(c.legL, i0, i1, f, out.legL, true);
   sampleVec(c.legR, i0, i1, f, out.legR, true);
+  const J = c.joints;
+  if (J) {
+    for (const k of CLIP_JOINT_KEYS) sampleQuat(J[k], i0, i1, f, out.j[k]);
+    sampleVec(J.hipsMm, i0, i1, f, out.j.hipsMm, false);
+    out.jw = 1;
+    out.gw = c.planted ? 1 : 0;
+  } else {
+    out.jw = 0;
+    out.gw = 0;
+  }
 }
 
 /** into = lerp(into, other, w) per channel. */
@@ -268,6 +306,16 @@ export function mixPose(into: Pose, other: Pose, w: number): void {
   into.armR.lerp(other.armR, w).normalize();
   into.legL.lerp(other.legL, w).normalize();
   into.legR.lerp(other.legR, w).normalize();
+  // the exact joint rotations, where either side has them: each side counts in proportion to how much of its own pose is exact
+  const ow = other.jw, iw = into.jw;
+  if (ow > 0 || iw > 0) {
+    const a = w * ow, b = (1 - w) * iw;
+    const t = a + b > 1e-9 ? a / (a + b) : 0;
+    if (iw <= 0) { for (const k of CLIP_JOINT_KEYS) into.j[k].copy(other.j[k]); into.j.hipsMm.copy(other.j.hipsMm); }
+    else if (t > 0) { for (const k of CLIP_JOINT_KEYS) into.j[k].slerp(other.j[k], t); into.j.hipsMm.lerp(other.j.hipsMm, t); }
+    into.gw += (other.gw - into.gw) * w;
+    into.jw = iw + (ow - iw) * w;
+  }
 }
 
 /* ---------- driving the rig ---------- */
@@ -282,7 +330,13 @@ interface Joints {
   hips: [THREE.Object3D, THREE.Object3D] | null;
   /** Hip height in stage units, for scaling the hips bob. */
   hipY: number;
+  /** The Snap Kip's bendable limbs (runtime/snapFlex.ts), when this rig has them. */
+  snap: SnapRigHandles | null;
 }
+/** Kip's standing hip height in rig mm (stlRigLoader's KIP_HIP_MM: tests/snap-flex-rig.test.ts keeps the two equal). Stage units per rig mm = hipY / this. */
+export const KIP_HIP_REST_MM = 61.5;
+/** Points on the sole of the boot (mm, from the boot's origin: across, then along), for standing the lowest one on the floor. */
+const SOLE_PROBES: ReadonlyArray<readonly [number, number]> = [[-7, -9], [7, -9], [-7, 15], [7, 15]];
 
 /** Find the joints a rig exposes. The STL Kip rig tags its leg pivots with `userData.hip`; procedural rigs just have fewer. */
 export function jointsOf(rig: ToyRig): Joints | null {
@@ -293,7 +347,7 @@ export function jointsOf(rig: ToyRig): Joints | null {
   const hips = h0 && h1 ? ([h0, h1] as [THREE.Object3D, THREE.Object3D]) : null;
   const head = (rig.head as THREE.Object3D | undefined) ?? null;
   if (!arms && !hips && !head) return null;
-  return { g: rig.g, head, arms, hips, hipY: (rig.mixHipY as number | undefined) ?? 1.14 };
+  return { g: rig.g, head, arms, hips, hipY: (rig.mixHipY as number | undefined) ?? 1.14, snap: (rig.snap as SnapRigHandles | undefined) ?? null };
 }
 
 /** Secondary head motion the engine still owns: a glance when something is hidden nearby, and the start/stop lean spring. */
@@ -349,7 +403,7 @@ export class MixamoDriver {
   /** A pose that stays until releaseHold(): w eases 0 to 1 while it is held and back to 0 while it is leaving. */
   private held: { clip: BakedClip; t: number; w: number; leaving: boolean } | null = null;
   /** A dance locked to a SONG clock (the dance party): sampled at whatever time `time()` answers each frame, not at a clock of its own, so it cannot drift from the sound. */
-  private beat: { source: BeatSource; w: number; leaving: boolean; cur: BakedClip | null; curTime: number; prev: { clip: BakedClip; time: number; xf: number } | null } | null = null;
+  private beat: { source: BeatSource; label?: string; w: number; leaving: boolean; cur: BakedClip | null; curTime: number; prev: { clip: BakedClip; time: number; xf: number } | null } | null = null;
   private readonly p = newPose();
   private readonly a = newPose();
   private readonly b = newPose();
@@ -357,6 +411,15 @@ export class MixamoDriver {
   private readonly q2 = new THREE.Quaternion();
   private readonly qe = new THREE.Quaternion();
   private readonly v = new THREE.Vector3();
+  // the Snap rig's joint mode (applyJoints)
+  private snapOn = false;
+  private readonly sa = newSnapArmSolution();
+  private readonly sl = newSnapLegSolution();
+  private readonly q3 = new THREE.Quaternion();
+  private readonly qw = new THREE.Quaternion();
+  private readonly qx = new THREE.Quaternion();
+  private readonly v2 = new THREE.Vector3();
+  private readonly inv = new THREE.Matrix4();
 
   constructor(private readonly bank: ClipBank, private readonly tuning: DriverTuning = DEFAULT_TUNING) {}
 
@@ -373,8 +436,8 @@ export class MixamoDriver {
     return true;
   }
 
-  /** The name of the gesture or beat dance in progress. A beat dance reports itself as `dance` whichever clip it is on, so the camera push and the face-the-camera turn that a celebration gets apply to a party too. */
-  get busyAction(): string | null { return this.beat && !this.beat.leaving ? "dance" : this.action ? this.action.clip.name : null; }
+  /** The name of the gesture or beat dance in progress. A beat dance reports itself as `dance` whichever clip it is on (unless its starter gave it a `label`: the character's own idle waves and dances say `idle`, so nothing mistakes them for a party), so the camera push and the face-the-camera turn that a celebration gets apply to a party too. */
+  get busyAction(): string | null { return this.beat && !this.beat.leaving ? (this.beat.label ?? "dance") : this.action ? this.action.clip.name : null; }
 
   /** Add clips to the bank after the driver was made (the dance party loads its dances on demand). A name already in the bank is replaced. */
   addClips(clips: Record<string, BakedClip>): void { Object.assign(this.bank, clips); }
@@ -385,11 +448,11 @@ export class MixamoDriver {
    * Start a dance that follows a song's clock: every frame `source` says which clip and how far into it (in seconds, looped by the clip); a change of clip is a short cross-fade.
    * It eases in over half a second, replaces a one-shot in progress, and walking pulls the toy out of it (the song goes on). Returns false if the source's first clip is not in the bank or is a one-frame pose.
    */
-  startBeatSource(source: BeatSource): boolean {
+  startBeatSource(source: BeatSource, label?: string): boolean {
     const first = source();
     const clip = first ? this.bank[first.name] : undefined;
     if (!first || !clip || clip.pose) return false;
-    this.beat = { source, w: this.beat && !this.beat.leaving ? this.beat.w : 0, leaving: false, cur: clip, curTime: first.time, prev: null };
+    this.beat = { source, label, w: this.beat && !this.beat.leaving ? this.beat.w : 0, leaving: false, cur: clip, curTime: first.time, prev: null };
     this.action = null;
     return true;
   }
@@ -403,6 +466,8 @@ export class MixamoDriver {
   get beatDancing(): boolean { return !!this.beat && !this.beat.leaving; }
   /** The bank name of the clip the beat dance is on now, or null. */
   get beatClip(): string | null { return this.beat && !this.beat.leaving && this.beat.cur ? this.beat.cur.name : null; }
+  /** The source of the beat dance in progress (and not being eased out), or null: so whoever started one can tell that it is still theirs and not another's (the party's) that replaced it. */
+  get beatSourceFn(): BeatSource | null { return this.beat && !this.beat.leaving ? this.beat.source : null; }
 
   /**
    * Take a pose and keep it (looping) until releaseHold(): the toy lies down and sleeps until it is woken. Eases in, replaces any one-shot, and (unlike
@@ -493,6 +558,7 @@ export class MixamoDriver {
       if (bd.leaving && bd.w <= 0) this.beat = null;
     }
     this.apply(j, p);
+    this.applyJoints(j, p);
   }
 
   /** Release the rig back to its rest pose (called when the driver is swapped out). */
@@ -504,6 +570,8 @@ export class MixamoDriver {
     j.head?.quaternion.identity();
     j.arms?.forEach((o) => o.quaternion.identity());
     j.hips?.forEach((o) => o.quaternion.identity());
+    if (j.snap) resetSnapRig(j.snap);
+    this.snapOn = false;
     this.held = null;
     this.beat = null;
     this.j = null;
@@ -535,6 +603,91 @@ export class MixamoDriver {
       j.hips[0].quaternion.setFromUnitVectors(DOWN, this.toStageDir(p.legL));
       j.hips[1].quaternion.setFromUnitVectors(DOWN, this.toStageDir(p.legR));
     }
+  }
+
+  /**
+   * The Snap rig's fake rigging, in joint mode (runtime/snapFlex.ts). `apply` has already posed the whole rig from the limb DIRECTIONS; where the pose also carries the bench's exact joint
+   * rotations (`p.jw` > 0, a baked dance or gesture) this puts those on top, by that weight: the body turns about the HIPS (not about the feet) and lowers with them, the head and the shoulders
+   * and hips take the exact rotations, the one-piece sleeves bend at the elbow and the knee, the hands and the boots ride the bent ends, and a planted clip has its lowest sole put on the floor.
+   * With no joint data (`jw` 0) and the limbs already at rest it does nothing at all, so the Xbot clips drive the figure exactly as before.
+   */
+  private applyJoints(j: Joints, p: Pose): void {
+    const sn = j.snap;
+    if (!sn || !j.arms || !j.hips) return;
+    const jw0 = Math.max(0, Math.min(1, p.jw));
+    if (jw0 < 0.001 && !this.snapOn) return;
+    const on = jw0 >= 0.001;
+    this.snapOn = on;
+    const jw = on ? jw0 : 0; // the frame the pose has faded out: put the limbs back at EXACTLY rest, not at a thousandth of the bend
+    const t = this.tuning;
+    const S = j.hipY / KIP_HIP_REST_MM; // stage units per rig mm
+    if (on) {
+      // the body: the clip's whole rotation (its own tuning, not a toy's exaggeration), about the hips
+      this.q.identity().slerp(p.body, t.bodyGain + (1 - t.bodyGain) * jw);
+      this.q2.copy(CAD_TO_STAGE).multiply(this.q).multiply(STAGE_TO_CAD);
+      j.g.quaternion.copy(this.q2);
+      // where the hips are, in stage units, from where they stand (0, 61.5, 0), plus what keeps the hip joint still while the body turns about it
+      this.v.set(p.j.hipsMm.x, p.j.hipsMm.y - KIP_HIP_REST_MM, p.j.hipsMm.z).multiplyScalar(S).applyQuaternion(CAD_TO_STAGE);
+      this.v2.set(0, j.hipY, 0);
+      this.v.add(this.v2).sub(this.v2.applyQuaternion(this.q2));
+      j.g.position.lerp(this.v, jw);
+      // the head, local to the hips
+      if (j.head) {
+        this.qw.copy(p.body).invert().multiply(p.head);
+        if (this.extras.headYaw !== 0) this.qw.premultiply(this.qe.setFromAxisAngle(AXIS_Y, this.extras.headYaw));
+        if (this.extras.headPitch !== 0) this.qw.premultiply(this.qe.setFromAxisAngle(AXIS_X, this.extras.headPitch));
+        j.head.quaternion.slerp(this.qw, jw);
+      }
+    }
+    // the limbs: elbows, wrists, knees and ankles ease in with the exact pose; at jw 0 these are all identity and the flex is 0, which is the rigid limb at rest
+    const flex = FLEX_ASSEMBLED * jw;
+    const armKeys = [["shoulderL", "elbowL", "wristL"], ["shoulderR", "elbowR", "wristR"]] as const;
+    const legKeys = [["hipL", "kneeL", "ankleL"], ["hipR", "kneeR", "ankleR"]] as const;
+    for (let i = 0; i < 2; i++) {
+      const a = armKeys[i]!;
+      this.q3.identity().slerp(p.j[a[1]], jw);
+      this.qw.identity().slerp(p.j[a[2]], jw);
+      solveSnapArm(p.j[a[0]], this.q3, this.qw, flex, this.sa);
+      if (on) j.arms[i]!.quaternion.slerp(this.qx.copy(CAD_TO_STAGE).multiply(this.sa.shoulder).multiply(STAGE_TO_CAD), jw);
+      const h = sn.arms[i]!;
+      h.flex.deform(this.sa.flex);
+      h.fore.position.copy(this.sa.cuffPos);
+      h.fore.quaternion.copy(this.sa.cuffQ);
+      h.hand.position.copy(this.sa.handPos);
+      h.hand.quaternion.copy(this.sa.handQ);
+      // what Kip holds goes with the bent hand (the holder moves, the sleeve is held where it is); on the faded-out frame the holder is exactly home
+      if (on) followHand(h, j.arms[i]!.quaternion);
+      else releaseHand(h);
+      const l = legKeys[i]!;
+      this.q3.identity().slerp(p.j[l[1]], jw);
+      this.qw.identity().slerp(p.j[l[2]], jw);
+      solveSnapLeg(p.j[l[0]], this.q3, this.qw, flex, this.sl);
+      if (on) j.hips[i]!.quaternion.slerp(this.qx.copy(CAD_TO_STAGE).multiply(this.sl.hip).multiply(STAGE_TO_CAD), jw);
+      const g = sn.legs[i]!;
+      g.flex.deform(this.sl.flex);
+      g.lower.position.copy(this.sl.anklePos);
+      g.lower.quaternion.copy(this.sl.ankleQ);
+      g.foot.position.copy(this.sl.footPos);
+      g.foot.quaternion.copy(this.sl.footQ);
+    }
+    if (on && p.gw * jw > 0.001) this.ground(j, sn, p.gw * jw);
+  }
+
+  /** Stand the lowest sole on the floor (the floor is y = 0 in the frame the rig hangs in), by `w`. The bench's own grounder does this for every planted clip. */
+  private ground(j: Joints, sn: SnapRigHandles, w: number): void {
+    const parent = j.g.parent;
+    if (!parent) return;
+    parent.updateWorldMatrix(true, false);
+    this.inv.copy(parent.matrixWorld).invert();
+    let lowest = Infinity;
+    for (const leg of sn.legs) {
+      leg.foot.updateWorldMatrix(true, false);
+      for (const [dx, dz] of SOLE_PROBES) {
+        this.v.set(leg.boot.position.x + dx, leg.boot.position.y, leg.boot.position.z + dz).applyMatrix4(leg.foot.matrixWorld).applyMatrix4(this.inv);
+        if (this.v.y < lowest) lowest = this.v.y;
+      }
+    }
+    if (Number.isFinite(lowest)) j.g.position.y -= lowest * w;
   }
 
   private toStageDir(d: THREE.Vector3): THREE.Vector3 {

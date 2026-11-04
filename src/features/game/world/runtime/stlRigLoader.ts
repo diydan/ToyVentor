@@ -12,6 +12,7 @@ import {
   toCreasedNormals,
 } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import type { RigColors, RigSel, ToyRig } from "./playerRig";
+import { SNAP_ARM_FLEX, SNAP_CUFF_Q, SNAP_LEG_FLEX, makeFlexLimb, makeHandFollow, type SnapArmHandles, type SnapLegHandles, type SnapRigHandles } from "./snapFlex";
 import {
   GLASS,
   glowMat,
@@ -682,6 +683,8 @@ function applyCharacterStlRig(
   rig.mixHipY = KIP_HIP_MM * KIP_MM_SCALE;
 
   // Articulated arms in stage-aligned holders so world.ts walk swing (rotation.z) swings forward/back along +X!
+  const snapArms: SnapArmHandles[] = [];
+  const snapLegs: SnapLegHandles[] = [];
   for (const side of [1, -1] as const) {
     const swingHolder = new T.Group();
     swingHolder.position.set(0, 95 * KIP_MM_SCALE, -side * 18.2 * KIP_MM_SCALE);
@@ -690,18 +693,34 @@ function applyCharacterStlRig(
     const armCad = new T.Group();
     armCad.rotation.y = Math.PI / 2;
     armCad.scale.setScalar(KIP_MM_SCALE);
-    const armMesh = scadMesh(geos.snapArm!, shellMat);
-    armMesh.position.y = -34.6;
+    // The Snap fake rigging (runtime/snapFlex.ts, ported from the Kip bench): the one-piece sleeve bends at the elbow when a clip says so, and the hand rides the end of the
+    // bent sleeve. At rest nothing is bent, so this is the rigid arm it always was. The flex mesh carries its own upright pose and placement (no rotation, no offset here).
+    const flexArm = makeFlexLimb(geos.snapArm!, SNAP_ARM_FLEX.offsetY, SNAP_ARM_FLEX.midY, SNAP_ARM_FLEX.midZ, SNAP_ARM_FLEX.band);
+    const armMesh = new T.Mesh(flexArm.geometry, shellMat);
+    armMesh.castShadow = true;
+    armMesh.receiveShadow = true;
     armCad.add(armMesh);
 
+    const foreJoint = new T.Group(); // the bent sleeve's end
+    foreJoint.position.set(0, -35.0, 3.8);
+    foreJoint.quaternion.copy(SNAP_CUFF_Q);
+    armCad.add(foreJoint);
+    const handJoint = new T.Group();
+    handJoint.position.set(0, -0.5, 0);
+    foreJoint.add(handJoint);
+    const handRest = new T.Group();
+    handRest.rotation.y = -side * (Math.PI / 2);
+    handJoint.add(handRest);
     const handWrap = new T.Group();
-    handWrap.position.set(0, -35.8, 3.6);
-    handWrap.rotation.y = -side * (Math.PI / 2);
+    handWrap.position.y = -0.8;
     handWrap.rotation.z = Math.PI;
     handWrap.add(scadMesh(side === 1 ? geos.handL! : geos.handR!, shellMat));
-    armCad.add(handWrap);
-
-    swingHolder.add(armCad);
+    handRest.add(handWrap);
+    // Between the holder and the sleeve: nothing at rest. When a clip bends the elbow the holder goes with the hand (so what Kip holds goes with it) and this undoes that for the sleeve.
+    const handCounter = new T.Group();
+    handCounter.add(armCad);
+    swingHolder.add(handCounter);
+    snapArms.push({ flex: flexArm, fore: foreJoint, hand: handJoint, follow: makeHandFollow(swingHolder, handCounter, handJoint) });
     rig.arms.push(swingHolder);
   }
 
@@ -723,17 +742,33 @@ function applyCharacterStlRig(
     legCad.scale.setScalar(KIP_MM_SCALE);
     legCad.position.y = -KIP_HIP_MM * KIP_MM_SCALE;
 
-    const legMesh = scadMesh(geos.snapLeg!, c2Mat);
-    legMesh.position.set(0, 61.5 - 38.6, 0);
-    legCad.add(legMesh);
+    // The Snap fake rigging again (runtime/snapFlex.ts): `hipCad` is the bench's upLeg frame (the hip pivot), the one-piece trouser leg bends at the knee, and the foot rides the end
+    // of the bent leg. At rest nothing is bent: the boot sits where it always did, on the floor under the hip (hip-relative (0, -61.5, 2)).
+    const hipCad = new T.Group();
+    hipCad.position.y = KIP_HIP_MM;
+    legCad.add(hipCad);
+    const flexLeg = makeFlexLimb(geos.snapLeg!, SNAP_LEG_FLEX.offsetY, SNAP_LEG_FLEX.midY, SNAP_LEG_FLEX.midZ, SNAP_LEG_FLEX.band);
+    const legMesh = new T.Mesh(flexLeg.geometry, c2Mat);
+    legMesh.castShadow = true;
+    legMesh.receiveShadow = true;
+    hipCad.add(legMesh);
 
+    const lowerJoint = new T.Group(); // the bent leg's end
+    lowerJoint.position.set(0, -39.2, 0);
+    hipCad.add(lowerJoint);
+    const footJoint = new T.Group();
+    footJoint.position.set(0, -0.4, -1.5);
+    lowerJoint.add(footJoint);
     const bootMesh = scadMesh(geos.boot!, sparkMat);
-    bootMesh.position.set(0, 0, 2.0);
-    legCad.add(bootMesh);
+    bootMesh.position.set(0, -KIP_HIP_MM + 39.6, 2.0 + 1.5); // = (0, -21.9, 3.5): puts the boot's origin at (0, -61.5, 2) from the hip at rest
+    footJoint.add(bootMesh);
+    snapLegs.push({ flex: flexLeg, lower: lowerJoint, foot: footJoint, boot: bootMesh });
 
     hipHolder.add(legCad);
     rig.feet.push(footHolder);
   }
+  // the handles the Mixamo driver poses the Snap limbs with (left first, as rig.arms and rig.feet)
+  rig.snap = { arms: [snapArms[0]!, snapArms[1]!], legs: [snapLegs[0]!, snapLegs[1]!] } satisfies SnapRigHandles;
   if (sel.boots === "robot.legs.hover") {
     rig.hover = true;
   }
