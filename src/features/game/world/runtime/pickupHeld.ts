@@ -144,6 +144,8 @@ interface Wanted {
   item: HeldItem | null;
   card: { group: THREE.Group; texture: THREE.Texture; geometry: THREE.BufferGeometry; material: THREE.Material } | null;
   bornMs: number;
+  /** A belt tool or toy that is simply in the hand (`take`): no "put it away" chip, and a tap on Kip leaves it be. */
+  quiet?: boolean;
 }
 
 /** The cut-out on a canvas with a thin white edge all round (the silhouette drawn in a ring of offsets, then the picture on top), or a plain sticker with the word when there is none. */
@@ -200,7 +202,12 @@ export function createPickupHeld(opts: PickupHeldOptions) {
   const { held } = opts;
   const doc: Document | null = opts.host?.ownerDocument ?? (typeof document !== "undefined" ? document : null);
   let wanted: Wanted | null = null;
+  /** What Kip holds when the camera has brought nothing: the tool or toy picked on the belt (`take`). A pick-up takes the hand first, and the belt's item comes back when it is put away. */
+  let base: Wanted | null = null;
   let mounted: THREE.Object3D[] | null = null;
+  /** Which of `wanted` and `base` the meshes on the arm belong to (a different one means they are replaced). */
+  let mountedFor: Wanted | null = null;
+  const current = (): Wanted | null => wanted ?? base;
   let chip: HTMLButtonElement | null = null;
   let loadId = 0;
   let disposed = false;
@@ -232,6 +239,7 @@ export function createPickupHeld(opts: PickupHeldOptions) {
   function detach(): void {
     if (mounted) for (const m of mounted) m.parent?.remove(m);
     mounted = null;
+    mountedFor = null;
     showChip(false);
   }
 
@@ -248,15 +256,16 @@ export function createPickupHeld(opts: PickupHeldOptions) {
 
   /** Put it on Kip if there is something to put on, an arm to put it on and nothing else in Kip's hands. True when it is on. */
   function carry(): boolean {
-    if (!wanted || disposed) return false;
+    const w = current();
+    if (!w || disposed) return false;
     if (held.item !== null) return false; // an act has Kip's hands
     const rig = opts.rig();
     if (!rig || !rig.armR) return false; // no rig yet, or a vehicle (no arms): it waits, and comes back with the character
-    if (wanted.item) {
-      const spec = HELD_SPECS[wanted.item];
+    if (w.item) {
+      const spec = HELD_SPECS[w.item];
       const parents = spec.parent === "arms" ? [rig.armR, rig.armL] : [spec.parent === "armR" ? rig.armR : rig.model];
       if (parents.some((p) => !p)) return false;
-      if (mounted && mounted.length === parents.length && mounted.every((m, i) => m.parent === parents[i])) return true;
+      if (mountedFor === w && mounted && mounted.length === parents.length && mounted.every((m, i) => m.parent === parents[i])) return true;
       detach();
       mounted = parents.map((p) => {
         const mesh = spec.build();
@@ -264,21 +273,23 @@ export function createPickupHeld(opts: PickupHeldOptions) {
         p!.add(mesh);
         return mesh;
       });
-      showChip(true);
+      mountedFor = w;
+      showChip(!w.quiet);
       return true;
     }
-    if (wanted.card) {
+    if (w.card) {
       const arm = rig.armR;
       if (!arm) return false;
-      if (mounted && mounted[0]!.parent === arm) return true;
+      if (mountedFor === w && mounted && mounted[0]!.parent === arm) return true;
       detach();
-      const g = wanted.card.group;
+      const g = w.card.group;
       g.scale.setScalar(opts.reduced?.() ? 1 : 0.01); // it pops in (tick grows it)
-      wanted.bornMs = nowMs();
+      w.bornMs = nowMs();
       arm.add(g);
       place(g, rig.model); // right now, so not even one frame shows it unturned
       mounted = [g];
-      showChip(true);
+      mountedFor = w;
+      showChip(!w.quiet);
       return true;
     }
     return false; // a cut-out that is still loading
@@ -302,6 +313,7 @@ export function createPickupHeld(opts: PickupHeldOptions) {
     detach();
     freeCard(wanted);
     wanted = null;
+    carry(); // the belt's tool or toy, if one is picked, comes back to the hand
     if (announce && label) opts.toast?.(`${label} put away.`);
   }
 
@@ -348,9 +360,21 @@ export function createPickupHeld(opts: PickupHeldOptions) {
       return true;
     },
     putAway: () => putAway(false),
+    /**
+     * The belt's pick: Kip holds `item` (a belt tool, or a toy such as the guitar) until another is picked or `null` is passed. It is the hand's second choice: a camera pick-up replaces it while
+     * it lasts, an act takes the hands from it and gives them back, and there is no chip for it. Passing the item that is already held changes nothing.
+     */
+    take(item: HeldItem | null, label = ""): void {
+      if (disposed) return;
+      if (base && base.item === item) return;
+      const old = base;
+      base = item ? { info: { word: label || item, kind: "workshop", id: item, label: label || item, coloured: false, colours: [], cutout: null }, item, card: null, bornMs: 0, quiet: true } : null;
+      if (old && mountedFor === old) detach();
+      carry();
+    },
     /** Tap on Kip: when the ray hits the player while something is held, put it away. True when it did (the tap is used up). */
     tap(ray: THREE.Raycaster): boolean {
-      if (!mounted) return false;
+      if (!mounted || !wanted) return false;   // (a belt tool is not put away by a tap on Kip: the belt changes it)
       const root = opts.playerRoot?.();
       if (!root) return false;
       if (ray.intersectObject(root, true).length === 0) return false;
@@ -359,15 +383,16 @@ export function createPickupHeld(opts: PickupHeldOptions) {
     },
     /** Every frame, just before drawing: put it back on a rebuilt arm, grow the pop-in, and keep a card upright and facing the camera. */
     tick(): void {
-      if (!wanted || disposed) return;
+      const w = current();
+      if (!w || disposed) return;
       carry(); // cheap and idempotent: puts it back on a rebuilt rig or after a vehicle turns back into a character
-      if (wanted.item && mounted) { const r = opts.rig(); if (r) followHandsMesh(mounted[0]!, HELD_SPECS[wanted.item], r.model, [r.armL, r.armR]); }   // a tool or a book keeps its handle in the hands
-      const card = wanted?.card;
+      if (w.item && mounted) { const r = opts.rig(); if (r) followHandsMesh(mounted[0]!, HELD_SPECS[w.item], r.model, [r.armL, r.armR]); }   // a tool or a book keeps its handle in the hands
+      const card = w.card;
       if (!card || !mounted) return;
       const g = card.group;
       const model = opts.rig()?.model;
       if (g.parent && model) place(g, model);
-      const age = (nowMs() - wanted.bornMs) / 240;
+      const age = (nowMs() - w.bornMs) / 240;
       if (age < 1) {
         const e = 1 - Math.pow(1 - Math.max(0.01, age), 3);
         g.scale.setScalar(Math.max(0.01, e * (1 + 0.12 * Math.sin(Math.PI * Math.min(1, age)))));
@@ -377,10 +402,13 @@ export function createPickupHeld(opts: PickupHeldOptions) {
     get state() {
       return { wanted: wanted ? { id: wanted.info.id, kind: wanted.info.kind, label: wanted.info.label, item: wanted.item, card: Boolean(wanted.card) } : null, onKip: Boolean(mounted), chipShowing: Boolean(chip && !chip.hidden) };
     },
+    /** What the belt has Kip holding (a tool or a toy), or null. For tests and the page. */
+    get belt(): HeldItem | null { return base ? base.item : null; },
     /** The card group while it is on Kip, for tests. */
     get cardGroup(): THREE.Group | null { return wanted?.card && mounted ? wanted.card.group : null; },
     dispose(): void {
       if (disposed) return;
+      base = null;                      // nothing may come back after this
       putAway();
       disposed = true;
       held.hold = origHold;

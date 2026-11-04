@@ -10,9 +10,10 @@ import { buildSpongeMesh, buildVacuumMesh } from "./cleanScene";
 import { buildSpatulaMesh } from "./cookScene";
 import { buildBouquetMesh, buildCanMesh, buildCarrotMesh, buildSandwichMesh } from "./outdoorProps";
 import { buildSmallBallMesh } from "./smallBall";
+import { TOOL_GRIP, buildDrillMesh, buildHammerMesh, buildScrewdriverMesh, buildSpannerMesh } from "./toolMeshes";
 import type * as THREE from "three";
 
-export type HeldItem = "book" | "guitar" | "wand" | "mallets" | "mop" | "vacuum" | "sponge" | "spatula" | "can" | "carrot" | "bouquet" | "sandwich" | "smallball";
+export type HeldItem = "book" | "guitar" | "wand" | "mallets" | "mop" | "vacuum" | "sponge" | "spatula" | "can" | "carrot" | "bouquet" | "sandwich" | "smallball" | "screwdriver" | "spanner" | "hammer" | "drill";
 
 /** A small hardback book: a coloured cover, cream pages and a spine, flat, about 0.7 by 0.5. */
 export function buildBookMesh(): THREE.Group {
@@ -49,6 +50,11 @@ export const ARM_FIST: readonly [number, number, number] = [0.125, -0.845, 0];
  * z across; the origin is where the fist closes), so an item sits in the hand in every pose. Dan, 2026-11-04: "holding props is often in the wrong orientation": they used to hang off the arm
  * 0.4 to 0.5 down it, the middle of the one-piece Snap sleeve (the fist is 0.85 down), so the can, the carrot and the sandwich were round the forearm and the mop and the book missed the hands.
  */
+/**
+ * The turn that points a belt tool forward and a little up from the fist: a quarter turn about z puts the tool's +y on the fist's +x (forward), 0.35 rad less lifts it. The ARM points along its own
+ * -y (the wand's half turn puts its ring end down the arm), so up is +y here.
+ */
+export const TOOL_TURN = -Math.PI / 2 + 0.35;
 export const HELD: Readonly<Record<HeldItem, HeldSpec>> = {
   // Held open between the two hands, tilted up a little so the reader and the camera can see the cover (the hands are 0.8 apart: the book is that wide).
   book: { parent: "model", position: [0.55, 1.2, 0], rotation: [0, 0, 0.55], scale: 1.45, build: buildBookMesh, hands: { grip: [0, 0.035, 0], both: true } },
@@ -73,6 +79,12 @@ export const HELD: Readonly<Record<HeldItem, HeldSpec>> = {
   sandwich: { parent: "armR", position: [0, 0, 0], rotation: [0, 0, 0], scale: 1, build: buildSandwichMesh },
   // The small ball, in the right fist (the throw: toyRoomActs.ts `throwVisit`).
   smallball: { parent: "armR", position: [0, 0, 0], rotation: [0, 0, 0], scale: 1, build: buildSmallBallMesh },
+  // The belt's four tools (toolMeshes.ts), in the right fist: the handle is gripped in the middle (`at`) and the working end points forward and a little up from the fist (the arm's +x is forward and
+  // the arm points down its own -y, so a quarter turn puts the tool's +y on +x, and a bit less lifts it), where the camera and the child can see what it is.
+  screwdriver: { parent: "armR", position: [0, 0, 0], rotation: [0, 0, TOOL_TURN], scale: 1, build: buildScrewdriverMesh, at: TOOL_GRIP.screwdriver },
+  spanner: { parent: "armR", position: [0, 0, 0], rotation: [0, 0, TOOL_TURN], scale: 1, build: buildSpannerMesh, at: TOOL_GRIP.spanner },
+  hammer: { parent: "armR", position: [0, 0, 0], rotation: [0, 0, TOOL_TURN], scale: 1, build: buildHammerMesh, at: TOOL_GRIP.hammer },
+  drill: { parent: "armR", position: [0, 0, 0], rotation: [0, 0, TOOL_TURN], scale: 1, build: buildDrillMesh, at: TOOL_GRIP.drill },
 };
 
 export function createHeld() {

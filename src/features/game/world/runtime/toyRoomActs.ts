@@ -44,6 +44,9 @@ export const JUMP_DOWN_S = 2.35;
 export const JUMP_UP_HEIGHT = 1.1;
 export const JUMP_DOWN_HEIGHT = 0.8;
 export const READ_STAND = 1.4;
+/** The toys that can be played from the tool belt once found (Dan, 2026-11-04 night): the acts that need no prop to stand at. */
+export type BeltToy = "guitar" | "wand";
+export const BELT_TOYS: readonly BeltToy[] = ["guitar", "wand"];
 export const PLAY_STAND = 1.25;
 export const BLOW_STAND = 1.15;
 export const PET_STAND = 1.9;
@@ -104,6 +107,8 @@ export interface ActsWorld extends Omit<VisitAdapter, "onPhase"> {
   /** Put something in Kip's hands (a book, the guitar, the bubble wand) and take it away again (safe to call when it holds nothing). */
   hold(item: "book" | "guitar" | "wand" | "mallets" | Extract<HeldItem, "can" | "carrot" | "bouquet" | "sandwich" | "smallball">): void;
   release(): void;
+  /** A toy the child has just played at its prop for the first time or again (the guitar, the bubble wand): the page keeps it in the belt's Toys row. Absent: nothing is kept. */
+  found?(toy: BeltToy): void;
   /** Where the thing Kip holds is in the world right now (its middle): a throw lets go from there. Absent, or nothing held: null. */
   heldAt?(): { x: number; y: number } | null;
   /** Where Kip's mouth is while it faces `dir`. */
@@ -265,8 +270,9 @@ export function createActs(w: ActsWorld) {
     };
   }
 
-  function playVisit(inst: PropInst): Visit {
-    const x = inst.base.px, z = inst.base.pz;
+  function playVisit(inst: PropInst): Visit { return strumVisit(inst.base.px - PLAY_STAND, inst.base.px, inst.base.pz, inst); }
+  /** The guitar act. At the prop (`inst`) Kip walks to `standX` and the guitar leaves its stand while he plays; from the belt there is no prop, he plays where he is (`x` is where the prop would be). */
+  function strumVisit(standX: number, x: number, z: number, inst: PropInst | null): Visit {
     const cues = Array.from({ length: STRUM_COUNT }, (_, i) => {
       const f = RIFF[i % RIFF.length]!;
       return {
@@ -279,18 +285,19 @@ export function createActs(w: ActsWorld) {
       };
     });
     return {
-      standX: x - PLAY_STAND, face: 1, seconds: PLAY_S,
-      begin: () => { w.fx.setVisible(inst, false); w.hold("guitar"); w.clip("strum"); },
+      standX, face: 1, seconds: PLAY_S,
+      begin: () => { if (inst) w.fx.setVisible(inst, false); w.hold("guitar"); w.clip("strum"); w.found?.("guitar"); },
       cues,
-      end: () => { w.release(); w.fx.setVisible(inst, true); },                // the guitar is back on its stand, even if it was cut short
+      end: () => { w.release(); if (inst) w.fx.setVisible(inst, true); },     // the guitar is back on its stand, even if it was cut short
     };
   }
 
-  function blowVisit(inst: PropInst): Visit {
-    const x = inst.base.px;
+  function blowVisit(inst: PropInst): Visit { return wandVisit(inst.base.px - BLOW_STAND); }
+  /** The bubble act, from `standX` (at the bubble set, or right where Kip is when it comes from the belt). */
+  function wandVisit(standX: number): Visit {
     return {
-      standX: x - BLOW_STAND, face: 1, seconds: BLOW_S,
-      begin: () => { w.hold("wand"); w.clip("blow"); },
+      standX, face: 1, seconds: BLOW_S,
+      begin: () => { w.hold("wand"); w.clip("blow"); w.found?.("wand"); },
       cues: BLOW_PUFFS_S.map((at) => ({ at, fn: () => w.bubbles.blow(w.mouth(1), 1, BUBBLES_PER_PUFF) })),
       end: () => { w.release(); },
     };
@@ -342,6 +349,16 @@ export function createActs(w: ActsWorld) {
       const started = visit ? visitor.start(visit) : false;
       if (started && kind === "pet") w.fx.placeProp?.(inst, inst.base.px, { z: w.position().z });   // the dog steps onto Kip's lane while he walks over, so they stand side by side, not one behind the other
       return started;
+    },
+    /**
+     * A toy picked from the tool belt (Dan, 2026-11-04 night): Kip plays it right where he stands, the same act as at its prop (the guitar strum with its chords and notes, the bubble puffs).
+     * False (and nothing happens) when an act is already under way or one is not allowed now.
+     */
+    toy(kind: BeltToy): boolean {
+      if (!w.allowed() || w.eater() !== "character") return false;
+      following = null;
+      const here = w.position();
+      return visitor.start(kind === "guitar" ? strumVisit(here.x, here.x + PLAY_STAND, here.z, null) : wandVisit(here.x));
     },
     /** Start a visit that is not a tap on a prop (the Clean button): false (and nothing happens) if one is already under way or an act is not allowed now. */
     run(visit: Visit): boolean { return w.allowed() && w.eater() === "character" ? visitor.start(visit) : false; },

@@ -18,7 +18,7 @@ describe("the book", () => {
 
 describe("HELD", () => {
   it("describes every item: where it goes, how it sits and how big, and each builds a real mesh", () => {
-    expect(Object.keys(HELD).sort()).toEqual(["book", "bouquet", "can", "carrot", "guitar", "mallets", "mop", "sandwich", "smallball", "spatula", "sponge", "vacuum", "wand"]);
+    expect(Object.keys(HELD).sort()).toEqual(["book", "bouquet", "can", "carrot", "drill", "guitar", "hammer", "mallets", "mop", "sandwich", "screwdriver", "smallball", "spanner", "spatula", "sponge", "vacuum", "wand"]);   // (the four belt tools: toolMeshes.ts)
     for (const [name, spec] of Object.entries(HELD)) {
       expect(["model", "armR", "arms"], name).toContain(spec.parent);
       for (const v of [...spec.position, ...spec.rotation, spec.scale]) expect(Number.isFinite(v), name).toBe(true);
