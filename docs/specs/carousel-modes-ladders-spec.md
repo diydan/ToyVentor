@@ -1000,15 +1000,41 @@ check rides with the C3 gate (§13.3).
 
 Two presentation items, neither blocking C3–C5:
 
-1. **Title menu + turntable.** Boot currently skips the title state
-   (`P.title = true` then immediate `startPlay(false)` in
-   `world.ts`). Restore a real main menu on the existing factory
-   turntable (spinning meshing cogs already animate in showcase
-   mode): equipped toy on the turntable, Play / Build / Create
-   entries, then the same world boot as today. The trimmed title
-   markup is recoverable from git history (`stageDom.ts` before
-   `296de10`); reimplement as React chrome over the live stage, not
-   as stage DOM.
+1. **Title menu + turntable. Built 2026-11-04.** The game was booting
+   straight into play (`P.title = true` then an immediate
+   `startPlay(false)` in `world.ts`) since `296de10` (2026-11-02) dropped
+   the old title markup as dead HTML; a deploy on 2026-11-04 made the gap
+   visible. It is back as React chrome over the live stage
+   (`TitleMenu.tsx`, with the entries and the show rule in
+   `titleEntries.ts`): the toy stands on the factory turntable in the
+   middle, the two gears turn (the world's own showcase scene, which never
+   went away), the name and tagline ("Build it. Play it. Make it real.")
+   are above, and **Play / Build / Create a world** below (stacked on a
+   phone held upright, a column at the bottom right on a phone held
+   sideways). Only the three buttons take touches; the dock and the
+   world's ability bar are hidden while it is up and come back on Play.
+   The world boots on its title when `createEngine` is given
+   `title: true` (`WorldRuntimeOptions.title`) and waits for `start`;
+   Build and Create use the engine's existing from-the-title paths, and a
+   deep link that opens a panel leaves the menu by itself (the page polls
+   `engine.isTitle()`). **`?title=0` goes straight in**, and every script
+   that expects the game already playing (13 e2es) now opens
+   `/?title=0`: a new game e2e must do the same or it will sit on the
+   menu. Not restored from the old title: the "STEM Playground" and
+   "Level editor" links (the Level Editor is in the dock's More menu and
+   the STEM labs are in the worlds picker under "STEM Labs"), and the
+   toy-name tag only when a link brought a toy (here the name of the toy
+   on the turntable is always shown). Checked: 15 unit tests (the
+   show rule run on broken versions too, the entries, the component
+   rendered, the wiring, and a mutation pass of 12 deliberate breakages,
+   all caught), and `scripts/e2e-title-menu.mjs`, **24 checks in real
+   Chrome** on a phone upright, sideways and a laptop window: the toy is
+   in the middle and its feet clear of the buttons, both gears and the
+   turntable turn, Play / Build / Create each leave the menu into the
+   right place, Enter on the focused Play goes in, `?title=0` skips it,
+   no page errors. Not checked: a real phone, Safari, a screen reader,
+   and whether the menu is what Dan remembers (his word was "cogs
+   background, Build, Play, the character on a turntable").
 2. **Parallax image backdrops.** Replace far backdrop geometry
    (hill spheres) with generated-image planes on stepped depths,
    keeping all gameplay geometry 3D. Approach, measured layer

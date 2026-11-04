@@ -4665,3 +4665,154 @@ button.tv-badge-pill:hover {
     animation: none !important;
   }
 }
+
+/* ---- The main menu (src/features/game/world/titleEntries.ts, TitleMenu.tsx) ----------------------------------------------------------------------------------------
+   Laid over the live stage while the world is on its title: the toy on the turntable (the world's own showcase scene) is in the middle, the name and the three
+   entries are above and below it. Only the buttons take touches. While it is up the dock and the other stage overlays are hidden: they come back when the
+   child presses Play, Build or Create. */
+.tv-host--titled .tv-dock {
+  display: none;
+}
+
+.tv-host--titled .tv-stage > :not(.tv-stage-canvas-host):not(.tv-title) {
+  display: none;
+}
+
+/* the world's own ability bar (the Dash, Whirl, Glow pulse and Shove buttons, in #tray) lives inside the canvas host, so the rule above does not reach it */
+.tv-host--titled .tv-stage-canvas-host #tray {
+  display: none;
+}
+
+.tv-title {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: max(18px, env(safe-area-inset-top)) 16px max(22px, env(safe-area-inset-bottom));
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(5, 8, 32, 0.62) 0%,
+    rgba(5, 8, 32, 0) 34%,
+    rgba(5, 8, 32, 0) 62%,
+    rgba(5, 8, 32, 0.7) 100%
+  );
+}
+
+.tv-title-head {
+  text-align: center;
+}
+
+.tv-title-logo {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(34px, 9vw, 64px);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  color: var(--gold);
+  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.35), 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+
+.tv-title-tag {
+  margin: 8px 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(14px, 3.6vw, 20px);
+  font-weight: 700;
+  color: var(--ink);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
+}
+
+.tv-title-toy {
+  display: inline-block;
+  margin: 10px 0 0;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 2px solid var(--line);
+  background: rgb(var(--surface-rgb) / 0.85);
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.tv-title-btns {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  max-width: 560px;
+  pointer-events: auto;
+}
+
+.tv-title-btn {
+  min-height: 56px;
+  padding: 0 22px;
+  border-radius: 16px;
+  font-size: 18px;
+}
+
+.tv-title-btn.tv-ctl-primary {
+  min-width: 150px;
+  font-size: 22px;
+}
+
+@media (max-width: 420px) {
+  .tv-title-btns {
+    flex-direction: column;
+    align-items: stretch;
+    width: min(320px, 100%);
+  }
+}
+
+/* a phone held sideways: the name stays on top, the three buttons stand in a column at the bottom right, so the toy and the front of the turntable are clear */
+@media (max-height: 480px) {
+  .tv-title {
+    padding-top: max(10px, env(safe-area-inset-top));
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+  .tv-title-logo {
+    font-size: 30px;
+  }
+  .tv-title-tag,
+  .tv-title-toy {
+    display: none;
+  }
+  .tv-title-btns {
+    position: absolute;
+    right: max(16px, env(safe-area-inset-right));
+    bottom: max(12px, env(safe-area-inset-bottom));
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    width: 210px;
+  }
+  .tv-title-btn {
+    min-height: 48px;
+    font-size: 16px;
+  }
+  .tv-title-btn.tv-ctl-primary {
+    min-width: 0;
+    font-size: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .tv-title-head,
+  .tv-title-btns {
+    animation: tv-title-in 420ms ease-out both;
+  }
+  @keyframes tv-title-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}

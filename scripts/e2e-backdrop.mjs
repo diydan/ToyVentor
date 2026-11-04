@@ -82,7 +82,7 @@ mkdirSync(SHOTS, { recursive: true });
 const results = [];
 const check = (name, pass, detail = "") => results.push({ name, pass: Boolean(pass), detail });
 const VIEWS = { portrait: { w: 390, h: 844, dsf: 2, mobile: true }, landscape: { w: 1280, h: 720, dsf: 1, mobile: false } };
-const APP_URL = `http://localhost:${DEV_PORT}/`;
+const APP_URL = `http://localhost:${DEV_PORT}/?title=0`; // ?title=0: straight into the world, not the main menu (src/features/game/world/titleEntries.ts)
 
 const evA = async (cdp, expr) => {
   const r = await cdp.send("Runtime.evaluate", { expression: expr, returnByValue: true, awaitPromise: true });

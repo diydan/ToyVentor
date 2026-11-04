@@ -59,7 +59,7 @@ const DEBUG_PORT = Number(process.env.E2E_DEBUG_PORT ?? 9335);
 const PROFILE =
   process.env.E2E_PROFILE ?? path.join(os.tmpdir(), "toyforge-e2e-trail-profile");
 const SHOTS = process.env.E2E_SHOTS;
-const APP_URL = `http://localhost:${DEV_PORT}/`;
+const APP_URL = `http://localhost:${DEV_PORT}/?title=0`; // ?title=0: straight into the world, not the main menu (src/features/game/world/titleEntries.ts)
 const VIEWPORT = { width: 390, height: 844, deviceScaleFactor: 2, mobile: true };
 const STORAGE_KEY = "toyforge:progression:v1";
 
