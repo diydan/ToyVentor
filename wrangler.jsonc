@@ -31,6 +31,9 @@
 			"migrations_dir": "migrations"
 		}
 	],
+	// Finished songs (worker/themeSong.ts copies each one to songs/<device>/<task>.mp3 so it outlives the song provider's 30-day link). Private bucket; only the Worker reads it.
+	// Photos and voice recordings are never stored, by design, so nothing else goes here yet.
+	"r2_buckets": [{ "binding": "UPLOADS", "bucket_name": "toyventor-uploads" }],
 	// Workers AI binding: /api/voice speaks "green tree" with google/gemini-3.8-flash-lite-tts (worker/voice.ts). Third-party
 	// models bill through AI Gateway Unified Billing, so there is no provider key to store. The binding is remote-only: it
 	// reaches Cloudflare (and bills) even under `wrangler dev`.

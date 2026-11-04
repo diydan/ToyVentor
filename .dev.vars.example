@@ -8,7 +8,7 @@ MUREKA_API_KEY=
 # Theme songs (worker/themeSong.ts): a name and a sung song for a build, written by the text model and sung by Mureka. OFF unless this is exactly "on".
 # Each song costs one text-model call and about $0.04 at Mureka (measured 2026-11-03). It is METERED: 5 new songs a week per device (a grown-up can lower it or switch songs off),
 # and SONG_MONTHLY_BUDGET songs a month across everyone, kept in D1 (shared/songQuota.ts, worker/songStore.ts). Metering needs the D1 binding; SONG_MONTHLY_BUDGET unset means
-# NO song is made (fails closed). An R2 bucket bound as SONGS keeps finished songs past Mureka's 30-day link (optional; see docs/product/deploy-checklist.md).
+# NO song is made (fails closed). An R2 bucket bound as UPLOADS (toyventor-uploads, bound in wrangler.jsonc) keeps finished songs past Mureka's 30-day link (optional; see docs/product/deploy-checklist.md).
 THEME_SONG=
 SONG_MONTHLY_BUDGET=
 # THEME_SONG_QUOTA=off runs the route UNMETERED for local probes only (no D1, no device id): never set it in production. THEME_SONG_MAX_STARTS caps songs per Worker instance when set.
