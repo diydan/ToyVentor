@@ -237,13 +237,11 @@ const clickButton = (cdp, scope, text) =>
     `(()=>{const b=[...document.querySelectorAll(${JSON.stringify(scope)})].find(x=>(x.textContent||"").trim().startsWith(${JSON.stringify(text)}));if(!b)return false;b.click();return true})()`,
   );
 
-/** Dock ⋯ -> Map. Opens in the view that suits the saved age. */
+/** The strip's own Map button -> the Map. The drawer's Map entry is gone (the strip carries it, so there is one way to the Map), and the Map is always the trail map with the card strip along the bottom. */
 async function openMap(cdp) {
   await cdp.evaluate(
-    `(()=>{const b=[...document.querySelectorAll(".tv-dock-right button")].find(x=>(x.textContent||"").includes("⋯"));b&&b.click()})()`,
+    `(()=>{const b=document.querySelector('.tv-navstrip-btn[data-nav="map"]');if(!b)return false;b.click();return true})()`,
   );
-  await waitFor(() => cdp.evaluate(`!!document.querySelector(".tv-more-menu")`), { label: "more menu" });
-  await clickButton(cdp, ".tv-more-menu [role=menuitem]", "Map");
   await waitFor(() => cdp.evaluate(`!!document.querySelector(".tv-trail-full .tv-map-track")`), { label: "map" });
   await sleep(400);
 }
