@@ -12,7 +12,7 @@ import {
   toCreasedNormals,
 } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import type { RigColors, RigSel, ToyRig } from "./playerRig";
-import { FACEPLATE_HOLDER, KID_CROWN_Y, KIP_DEFAULT_HAIR_HEX, kipBodyColors, kipHairUrl, resolveKipTop, type KipTop } from "./kipLook";
+import { FACEPLATE_HOLDER, KID_CROWN_Y, KIP_DEFAULT_HAIR_HEX, KIP_WIG_LIFT_MM, kipBodyColors, kipHairUrl, resolveKipTop, type KipTop } from "./kipLook";
 import { coverMesh } from "./kipCover";
 import { buildFaceDecalGeometry, kipFaceMaterial } from "./kipFacePlate";
 import { lightenShadow } from "./shadowProxy";
@@ -927,7 +927,7 @@ function applyCharacterStlRig(
     // The demo seats a wig with its hem at `seatY` from the head's stud plane (kip-bench.js: hairAnchor.position.y = headCrownY, each wig at its HAIR_OPTIONS seatY).
     const hairMat = plastic(col.hair || KIP_DEFAULT_HAIR_HEX, { roughness: 0.42, clearcoat: 0.22 });
     const wig = scadMesh(geos.hair, hairMat);
-    wig.position.y = KID_CROWN_Y + top.hair.seatY;
+    wig.position.y = KID_CROWN_Y + top.hair.seatY + KIP_WIG_LIFT_MM; // lifted with the plate's seat: see KIP_WIG_LIFT_MM
     wig.userData.kipHair = true;
     headPivot.add(wig);
   }
@@ -954,7 +954,7 @@ function applyCharacterStlRig(
     budsMat.polygonOffsetUnits = -2;
     const buds = scadMesh(geos.crownBuds, budsMat);
     buds.scale.set(1.006, 1.01, 1.006);
-    buds.position.y = KID_CROWN_Y + top.hair.topH;   // on the wig's studs (the demo sets hairCrownBuds.position.y = topH above the head's stud plane)
+    buds.position.y = KID_CROWN_Y + top.hair.topH + KIP_WIG_LIFT_MM;   // on the wig's studs (the demo sets hairCrownBuds.position.y = topH above the head's stud plane)
     buds.userData.kipBuds = true;
     headPivot.add(buds);
   }
@@ -968,7 +968,7 @@ function applyCharacterStlRig(
     hatCad.userData.hatCad = true;
     hatCad.scale.setScalar(KIP_MM_SCALE);
     // on a hat-ready wig the hat stacks on the wig's studs (kip-bench.js: crownAnchor.position.y = headCrownY + topH)
-    const hatLift = top && top.kind === "hat" && top.hair ? top.hair.topH : 0;
+    const hatLift = top && top.kind === "hat" && top.hair ? top.hair.topH + KIP_WIG_LIFT_MM : 0;
     hatCad.position.set(0, (108.0 + crownHeightMm - 9.5 + hatLift) * KIP_MM_SCALE, 0);
     hatCad.add(scadMesh(geos.hat, sel.hat === "crown" ? metal("#ffd24d") : sparkMat));
     hatSlot.add(hatCad);

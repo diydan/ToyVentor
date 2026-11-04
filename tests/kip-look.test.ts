@@ -19,6 +19,7 @@ import {
   FACE_DECAL,
   FACE_STEM_MM,
   KID_CROWN_Y,
+  KIP_WIG_LIFT_MM,
   KIP_BOOT_HEX,
   KIP_DEFAULT_CHARACTER,
   KIP_DEFAULT_COL,
@@ -329,7 +330,7 @@ describe("the rig wears it", () => {
     const bm = (buds as unknown as THREE.Mesh).material as THREE.MeshPhysicalMaterial;
     expect(bm.color.getHexString()).toBe(plastic(KIP_BOOT_HEX).color.getHexString());
     expect(bm.polygonOffset).toBe(true);
-    expect((buds as unknown as THREE.Mesh).position.y).toBeCloseTo(KID_CROWN_Y + 4.8, 9);
+    expect((buds as unknown as THREE.Mesh).position.y).toBeCloseTo(KID_CROWN_Y + 4.8 + KIP_WIG_LIFT_MM, 9);
     // no canvas in a unit test: the plate is plain skin (the face is added in a browser)
     expect(typeof document).toBe("undefined");
     expect((holder as unknown as THREE.Object3D).children).toHaveLength(1);

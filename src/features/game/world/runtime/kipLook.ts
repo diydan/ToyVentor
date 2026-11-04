@@ -78,6 +78,13 @@ export const KID_FACE_Y = 12.5;
 export const FACEPLATE_HOLDER = { y: KID_FACE_Y - 2.5 + FACEPLATE_SEAT_MM.raise, z: FACE_STEM_MM - FACEPLATE_SEAT_MM.sink } as const;
 /** Where the two orange crown studs sit on the kid head (kip-vehicles-wardrobe.js WARDROBE_HEADS 'kid' `crownY`, the head's top_studs plane; the bench puts `altCrownBuds.position.y` there). */
 export const KID_CROWN_Y = 30.97;
+/**
+ * How much higher than the demo's own numbers a wig sits in the GAME (mm). The face plate was moved DOWN by 4.69 mm to the head's real `faceY` (KID_FACE_Y above), which put the brow where the wig's fringe
+ * already was: the wig covered the upper face and the area under it read dark (Dan, 2026-11-04 night: "the game does not have the same face as the kip in Kip-Demo.html"; side by side, the demo's Swept
+ * wig stops above the eyes and the game's came down over them). Measured by lifting the wig live in the game and comparing against the demo's Kip with the same wig: about 5 mm clears the eyes like the demo.
+ * Applied to the wig, to the buds on a hat-ready wig and to a hat resting on one, so they stay together.
+ */
+export const KIP_WIG_LIFT_MM = 4.69;
 /** The decal plane the face is drawn on, over the plate (kip-vehicles-wardrobe.js `buildConformalFaceplateDecalGeo` defaults). */
 export const FACE_DECAL = { width: 23.6, height: 10.1, centerY: 5.25, segX: 56, segY: 28, lift: 0.22, fallbackZ: 2.65, fallbackK: 0.002 } as const;
 

@@ -17,7 +17,7 @@ import {
   resolveKipTop,
 } from "../src/features/game/world/runtime/kipLook";
 import { buildToy, resolveStlHeroRecipe, upgradeRigWithStl, type RigSel } from "../src/features/game/world/runtime/playerRig";
-import { KID_CROWN_Y } from "../src/features/game/world/runtime/kipLook";
+import { KID_CROWN_Y, KIP_WIG_LIFT_MM } from "../src/features/game/world/runtime/kipLook";
 import { plastic } from "../src/features/game/world/runtime/worldScene";
 
 const keys = (r: { parts: { key: string }[] }) => r.parts.map((p) => p.key);
@@ -112,8 +112,8 @@ describe("the built rig", () => {
     const wig = found.kipHair!;
     expect(wig).toBeDefined();
     expect((wig.material as THREE.MeshStandardMaterial).color.getHexString()).toBe(plastic(KIP_DEFAULT_HAIR_HEX).color.getHexString());
-    expect(wig.position.y).toBeCloseTo(KID_CROWN_Y - 16.5, 9);
-    expect(found.kipBuds!.position.y).toBeCloseTo(KID_CROWN_Y + 4.8, 9);
+    expect(wig.position.y).toBeCloseTo(KID_CROWN_Y - 16.5 + KIP_WIG_LIFT_MM, 9);
+    expect(found.kipBuds!.position.y).toBeCloseTo(KID_CROWN_Y + 4.8 + KIP_WIG_LIFT_MM, 9);
     expect(col.skin).toBeTruthy();
   });
   it("a chosen hair tone paints the wig", async () => {
