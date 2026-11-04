@@ -13,6 +13,7 @@
 //   the start of a carry .................... "<n> things to put away. Tap one."  (built inside world.ts: the one line this file has to copy)
 // tests/scene-prompts.test.ts reads world.ts and fails when its call sites are not the ones listed above, so a new spoken line cannot slip past this file.
 import { LEARN_RUNGS, learnRungDef } from "../../src/features/game/world/runtime/learnRungs";
+import { MESS_PROMPT_LINES } from "../../src/features/game/world/runtime/messLines";
 import { LEVEL2_RECIPES } from "../../src/features/game/world/runtime/level2Recipes";
 import {
   arriveScene,
@@ -111,6 +112,8 @@ export function enumeratePrompts(): Map<string, string[]> {
     if (!text) return;
     (found.get(text) ?? found.set(text, new Set()).get(text)!).add(from);
   };
+  // What Kip says in the Toy Room's mess mini-interactions (runtime/mess.ts): "Oh no, oh no!", "Clean?", "All clean! Hooray!". They are not Carousel scenes, so they are added by name.
+  for (const line of MESS_PROMPT_LINES) add(line, "mess:toy-room");
   const ids = new Set<string>([...LEARN_RUNGS.map((r) => r.missionId), ...LEVEL2_RECIPES.map((r) => r.id)]);
   for (const id of [...ids].sort()) {
     carryLines(id, add);

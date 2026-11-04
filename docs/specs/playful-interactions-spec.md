@@ -213,3 +213,33 @@ Also: when nothing is close, say so honestly ("I do not have a tractor yet, here
 ## 10. Not in scope
 
 Hunger or health meters; anything the child can lose; a cooking system (the frying pan and spatula are Kip hand props, a separate lane); changing physics or missions; real brand-name foods.
+
+## 11. Spill and clean up, make a mess and tidy it; the cleaning and cooking levels (2026-11-04)
+
+Dan (2026-11-03): "spilling a drink can be mopped up", "make mess level ... like the pile in the Kip demo ... Oh no, oh no ... followed by clean? Clean", and separate levels on cooking and cleaning (he dropped "each activity unlocks a printable part").
+Section 10's "a cooking system" exclusion is superseded: [dance-party-spec.md](dance-party-spec.md) 5.3 is the cooking and clean-up design.
+
+**Built (Toy Room, uncommitted at the time of writing; real-browser e2e `scripts/e2e-game-mess.mjs`, 53 checks):**
+
+- **The juice cup.** A little blue table with an orange cup and a straw. A tap names it ("orange cup", seven languages) and sends Kip to its left, at the front of the lane. Kip reaches for it, the cup tips over towards the camera at 0.4 s,
+  a stream runs off the table edge and a puddle spreads in front of the table (an ease-out with a 5% overshoot that settles), Kip gasps with both hands up (the `oops` clip) and says "Oh no, oh no!", then "Clean?" with one 60 px "Clean" button.
+  Clean: Kip walks to the puddle, takes a mop (a new held item) and mops in six strokes (the `mop` clip); the puddle is exactly one sixth smaller after each; the cup stands up; Kip cheers: "All clean! Hooray!".
+- **The toy box.** A blue box with six toys (a cube, a ball, a car, a star, a duck, a ring). A tap sends Kip to tip it: the box leans forward and the toys tumble out one after another into a heap in front of it (the ring lands on the cube), "Oh no, oh no!", "Clean?" and the button.
+  Clean: the box rights itself first, then the toys fly back one by one, each with a rising note and a count ("1 toy home!" ... "All 6 toys home!"), the `tidy` clip, a cheer.
+- **Safe by construction.** No timer, score, wrong tool or failure; a mess waits as long as it takes; one mess at a time; a cleaning cut short (a new toy) leaves what is left and asks again, and the next Clean finishes only what is left; a world change puts everything right.
+  The Clean card stays up if Kip's walk is interrupted. Only a character cleans (a vehicle or a robot is not sent).
+- **Less motion, no sound.** With prefers-reduced-motion the mess appears finished, the puddle goes in six steps and the toys change places without flying; the voice is a no-op when muted but every line is also shown as text (a toast, and "Clean?" on the card).
+- **Where.** `runtime/mess.ts` (the state machine), `messModel.ts` (every number and timeline, pure), `messScene.ts` (the meshes), `messPrompt.ts` (the card, a real button, inline-styled), `messLines.ts` (the three lines), `mop.ts`, the three clips in `proceduralClips.ts`,
+  `ActsWorld.mess` and `acts.run()` in `toyRoomActs.ts`, `Visit.standZ` in `visitRoutine.ts` (a visit can now stand at a depth, not only an x).
+- **The three spoken lines are in the closed list** (`src/lib/scenePrompts.json`, via `scripts/lib/scene-prompts-enum.ts`): "Oh no, oh no!", "Clean?", "All clean! Hooray!". The counts are shown, not spoken.
+- **Room layout.** The Toy Room is crowded and its hiding places (the bed at 13, the bookshelf at 28.9 ...) stand in the lane, so the two props sit where nothing else is: the toy box at x 32.6 and the cup at x 40, which **replaces the second book stack** (the first stays).
+  A test keeps both clear of every prop and every hiding place.
+
+**Not built (scoped, in this order):**
+
+1. **A cleaning level** from the existing `clean` mission (vacuum, mop, sponge; crumbs, puddle, jam; the wrong-tool lines in `CWHY`) using the approved `scrub` primitive ([play-design-spec.md](play-design-spec.md)): drag a finger along the mess, Kip plays the held tool's clip while the finger moves.
+   Reuse: `mop.ts` and the held-item path, the `mop` clip, the card and the three lines. New: the `scrub` primitive, a vacuum and a sponge clip, a tool pick.
+2. **A cooking level** (dance-party-spec.md 5.3: crack the egg, count one to three pancakes into the pan, a grown-up taps "hot", flip, serve) on the spatula and frying-pan props. New: the pan, the egg and the pancake meshes, the flip swipe, the counting rung.
+3. **The Map entry** for both levels (today they are reachable only in the Toy Room and the `clean` mission) and the `daily.clean` / `daily.cook` ladder rungs pointing at them.
+
+**Paid step (needs Dan):** the new voice clips: 14 names (cup and toy box in seven languages, `docs/review/spoken-names.md` is regenerated) and 3 English lines. `scripts/prewarm-voice.ts` makes them; until then each is made on first use.
