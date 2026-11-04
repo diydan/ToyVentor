@@ -309,6 +309,8 @@ export function GameCanvas({
           return { channels: Array.from({ length: buf.numberOfChannels }, (_, c) => buf.getChannelData(c)), sampleRate: buf.sampleRate };
         },
         startParty: (song) => party.start(song),
+        pauseParty: () => party.pause(),
+        resumeParty: () => party.resume(),
         onState: setSongFlow,
         storage: (() => { try { return window.localStorage; } catch { return null; } })(),
       });
@@ -359,7 +361,12 @@ export function GameCanvas({
     begin();
   }, []);
   const stopSongParty = useCallback(() => { songRef.current?.party.stop("stopped"); }, []);
+  const pauseSong = useCallback(() => { songRef.current?.flow.pause(); }, []);
+  const resumeSong = useCallback(() => { noteGesture(); songRef.current?.flow.resume(); }, []);
+  /** Where the listener is in the song (seconds, counting on across loops, still while paused): the karaoke reads this a few times a second. */
+  const songPlayhead = useCallback(() => songRef.current?.party.state().songTime ?? 0, []);
   const danceAgain = useCallback(() => { noteGesture(); void songRef.current?.flow.again(); }, []);
+  const newWords = useCallback(() => { noteGesture(); songRef.current?.party.stop("stopped"); void songRef.current?.flow.redo(); }, []); // new words = a fresh song; this tap is the audio gesture for it
   const closeSong = useCallback(() => {
     songRef.current?.party.stop("stopped");
     songRef.current?.flow.cancel();
@@ -1680,7 +1687,11 @@ export function GameCanvas({
             onMake={makeSong}
             onDismissOffer={() => setSongOffer(null)}
             onStopParty={stopSongParty}
+            onPause={pauseSong}
+            onResume={resumeSong}
+            playhead={songPlayhead}
             onAgain={danceAgain}
+            onNewWords={newWords}
             onClose={closeSong}
           />
         )}

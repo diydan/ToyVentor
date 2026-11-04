@@ -133,7 +133,7 @@ function fakes(over: Partial<GamePartyHost> & { decode?: () => Promise<unknown>;
   const log: string[] = [];
   const asked: string[][] = [];
   const timers: Array<{ fn: () => void; ms: number; id: number }> = [];
-  const source = { buffer: null as unknown, loop: false, loopStart: 0, loopEnd: 0, startedAt: -1, stopped: false, connect: () => {}, disconnect: () => {}, start(at: number) { source.startedAt = at; }, stop() { source.stopped = true; } };
+  const source = { buffer: null as unknown, loop: false, loopStart: 0, loopEnd: 0, startedAt: -1, offset: -1, starts: 0, stopped: false, connect: () => {}, disconnect: () => {}, start(at: number, offset?: number) { source.startedAt = at; source.offset = offset ?? 0; source.starts++; source.stopped = false; }, stop() { source.stopped = true; } };
   const gain = { gain: { value: 0, setTargetAtTime: () => {} }, connect: () => {}, disconnect: () => {} };
   const ctx = { currentTime: 5, baseLatency: 0, outputLatency: 0, destination: {}, decodeAudioData: over.decode ?? (async () => ({ duration: ENTRY.dur })), createBufferSource: () => source, createGain: () => gain };
   const known: GameDance[] = (over.known ?? [SAMBA]).map((d) => ({ ...d }));
@@ -278,6 +278,94 @@ describe("the game party", () => {
 });
 
 // ---- dance variety: the mix of every dance that fits the song's tempo -------------------------------------------------------------------------------------
+describe("pause and play (the dock's transport)", () => {
+  /** A party with a clock the test moves: `clock` is the page clock in ms, `ctx.currentTime` the audio clock in seconds. */
+  async function running() {
+    const clock = { ms: 0 };
+    const f = fakes({ perfNow: () => clock.ms });
+    const ends: string[] = [];
+    const party = createGameParty({ ...f.host, onEnd: (r) => ends.push(r) });
+    await party.start(song());
+    const t0 = f.source.startedAt; // song time 0 sounds here on the audio clock
+    return { f, party, clock, ends, t0 };
+  }
+  it("pause holds the song where it was: the sound stops, the dancer stands still, the song time stops counting, the world's music stays ducked", async () => {
+    const { f, party, t0 } = await running();
+    f.ctx.currentTime = t0 + 3;
+    expect(party.pause()).toBe(true);
+    expect(f.source.stopped).toBe(true);
+    expect(f.log).toEqual(["prepare", "duck", "startDance", "stopDance"]);
+    expect(party.state()).toMatchObject({ on: true, paused: true });
+    expect(party.state().songTime).toBeCloseTo(3, 6);
+    f.ctx.currentTime = t0 + 90; // a long wait: the song time does not move
+    expect(party.state().songTime).toBeCloseTo(3, 6);
+    expect(party.state().loopSeconds).toBeCloseTo(ENTRY.dur, 6);
+  });
+  it("play carries on from the same spot of the song: it starts at the held offset and the song time continues from it", async () => {
+    const { f, party } = await running();
+    f.ctx.currentTime = f.source.startedAt + 3;
+    party.pause();
+    f.ctx.currentTime = 100;
+    expect(party.resume()).toBe(true);
+    expect(f.source.stopped).toBe(false);
+    expect(f.source.offset).toBeCloseTo(3, 6);
+    expect(f.source.startedAt).toBeCloseTo(100.12, 6);
+    expect(f.log.filter((x) => x === "startDance")).toHaveLength(2); // the dance is handed back the same clock
+    expect(party.state()).toMatchObject({ on: true, paused: false });
+    f.ctx.currentTime = 100.12 + 1; // one second after the sound began
+    expect(party.state().songTime).toBeCloseTo(4, 6);
+  });
+  it("a pause after the song has looped resumes at the right place in the loop, and the song time keeps counting across loops", async () => {
+    const { f, party, t0 } = await running();
+    f.ctx.currentTime = t0 + ENTRY.dur * 2 + 2; // two loops and two seconds in
+    party.pause();
+    f.ctx.currentTime = 500;
+    party.resume();
+    expect(f.source.offset).toBeCloseTo(2, 5);
+    f.ctx.currentTime = 500.12;
+    expect(party.state().songTime).toBeCloseTo(ENTRY.dur * 2 + 2, 5);
+  });
+  it("the party's time limit holds while paused: what is left carries on after play", async () => {
+    const { f, party, clock, t0 } = await running();
+    clock.ms = 40_000;
+    f.ctx.currentTime = t0 + 40;
+    party.pause();
+    expect(f.timers.find((x) => x.ms === GAME_PARTY_SECONDS * 1000)).toBeUndefined(); // the limit's timer is gone
+    clock.ms = 400_000; // the child wandered off for a while
+    party.resume();
+    expect(f.timers.some((x) => x.ms === GAME_PARTY_SECONDS * 1000 - 40_000)).toBe(true);
+  });
+  it("stop works while paused: it ends the party once, un-ducks the music, and there is nothing left to play", async () => {
+    const { f, party, ends } = await running();
+    party.pause();
+    party.stop();
+    expect(ends).toEqual(["stopped"]);
+    expect(f.log.at(-1)).toBe("unduck");
+    expect(party.state()).toMatchObject({ on: false, paused: false, ended: "stopped", loopSeconds: 0 });
+    expect(party.resume()).toBe(false);
+  });
+  it("says no when there is nothing to pause, or nothing paused", async () => {
+    const f = fakes();
+    const party = createGameParty(f.host);
+    expect(party.pause()).toBe(false);
+    expect(party.resume()).toBe(false);
+    await party.start(song());
+    expect(party.resume()).toBe(false); // playing, not paused
+    expect(party.pause()).toBe(true);
+    expect(party.pause()).toBe(false); // already paused
+  });
+  it("a music-only party (no dance fits) pauses and plays too, without asking the character to stop or start", async () => {
+    const f = fakes();
+    const party = createGameParty(f.host);
+    await party.start(song({ ...ENTRY, bpm: 160, dur: (60 * 76) / 160 })); // a tempo no dance fits
+    f.log.length = 0;
+    party.pause();
+    party.resume();
+    expect(f.log).toEqual([]);
+    expect(party.state().paused).toBe(false);
+  });
+});
+
 describe("the dance mix", () => {
   const ALL = [SAMBA, HIPHOP, SILLY, SWING];
   it("asks for every dance that fits the tempo, the one nearest its natural speed first, and starts on that one", async () => {

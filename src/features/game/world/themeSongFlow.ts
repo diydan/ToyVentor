@@ -14,6 +14,7 @@
 //
 // DEPENDENCIES ARE INJECTED so every step is tested without a browser or a network.
 import { analyseTheme, cutToWav, themeIndexEntry } from "../../../../shared/themeParty";
+import { cleanLines, lyricsForCut, type CutLine, type LyricLine } from "../../../../shared/songKaraoke";
 
 export type FlowPhase = "idle" | "writing" | "making" | "ready" | "dancing" | "over" | "failed";
 export type FlowKind = "build" | "level" | "prompt";
@@ -40,6 +41,12 @@ export interface FlowState {
   fallbackUrl: string;
   /** Songs left this week, once the route has said. */
   quota: SongQuota | null;
+  /** True while the party is held (paused) and can carry on. */
+  paused: boolean;
+  /** The words with their times on the cut the party loops, for the karaoke. Empty when the provider gave no times (the card then shows the words only). */
+  karaoke: CutLine[];
+  /** Seconds of one loop of the cut (0 until the song is measured). */
+  loop: number;
 }
 
 export interface FlowDeps {
@@ -48,6 +55,9 @@ export interface FlowDeps {
   decode(bytes: ArrayBuffer): Promise<{ channels: ArrayLike<number>[]; sampleRate: number }>;
   /** Start the party with the checked entry and the WAV cut; resolves how it went. */
   startParty(song: { entry: unknown; wav: ArrayBuffer; title: string }): Promise<{ ok: boolean; dancing?: boolean; reason?: string }>;
+  /** Hold the party where it is / carry on (false when there is no party to hold). */
+  pauseParty?(): boolean;
+  resumeParty?(): boolean;
   onState(state: FlowState): void;
   storage?: Pick<Storage, "getItem" | "setItem"> | null;
   /** Headers every request carries: the device id and the family's time zone (the week turns on its own Monday). */
@@ -90,7 +100,7 @@ export function levelDescription(missionType: string): string {
   return `I finished ${LEVEL_WORDS[missionType] ?? "a game level"} with my toy.`.slice(0, MAX_DESCRIPTION);
 }
 
-const EMPTY: FlowState = { phase: "idle", name: "", verse: [], chorus: [], note: "", fallbackUrl: "", quota: null };
+const EMPTY: FlowState = { phase: "idle", name: "", verse: [], chorus: [], note: "", fallbackUrl: "", quota: null, paused: false, karaoke: [], loop: 0 };
 
 export interface KeptSong {
   name: string;
@@ -100,6 +110,8 @@ export interface KeptSong {
   url: string;
   task: string;
   madeAt: string;
+  /** The provider's timed lines, kept so a song played again later still has its karaoke (the Kip bench ignores the field). */
+  lines?: LyricLine[];
 }
 /** Keep a finished song in this browser's list (newest first, at most 20). Never throws: blocked storage means the song plays this visit only. */
 export function keepSong(storage: FlowDeps["storage"], song: KeptSong): void {
@@ -120,7 +132,10 @@ export function readKeptSongs(storage: FlowDeps["storage"]): KeptSong[] {
     if (!Array.isArray(raw)) return [];
     return (raw as KeptSong[])
       .filter((s) => s && typeof s.name === "string" && typeof s.url === "string" && typeof s.task === "string" && /^\d{6,24}$/.test(s.task))
-      .map((s) => ({ ...s, verse: Array.isArray(s.verse) ? s.verse.map(String) : [], chorus: Array.isArray(s.chorus) ? s.chorus.map(String) : [], mood: typeof s.mood === "string" ? s.mood : "" }))
+      .map((s) => {
+        const lines = cleanLines(s.lines);
+        return { ...s, verse: Array.isArray(s.verse) ? s.verse.map(String) : [], chorus: Array.isArray(s.chorus) ? s.chorus.map(String) : [], mood: typeof s.mood === "string" ? s.mood : "", ...(lines.length ? { lines } : { lines: undefined }) };
+      })
       .slice(0, MAX_KEPT);
   } catch { return []; }
 }
@@ -145,6 +160,11 @@ export interface ThemeSongFlow {
   again(): Promise<boolean>;
   /** Dance to a song kept in this browser (the Songs sheet's list): its audio is fetched again through the route's relay, measured and cut, then the party starts. */
   playKept(song: KeptSong): Promise<boolean>;
+  /** Hold the party where it is (the song and the dance wait), and carry on from the same spot. False when there is nothing to hold / nothing held. */
+  pause(): boolean;
+  resume(): boolean;
+  /** Ask again for the same thing with NEW words: a fresh song (a new slot of the week, a new key), the one being made is let go. False when there is nothing to ask again. */
+  redo(): Promise<boolean>;
   /** Stop everything and clear the card. */
   cancel(): void;
   state(): FlowState;
@@ -167,6 +187,8 @@ export function createThemeSongFlow(deps: FlowDeps): ThemeSongFlow {
   let lastQuota: SongQuota | null = null;
   let cut: { entry: unknown; wav: ArrayBuffer; title: string } | null = null;
   let moodOf = ""; // the mood card the song writer chose for this song
+  let lastAsk: { description: string; kind: FlowKind } | null = null; // what the child asked for, so "new words" can ask again
+  let pausedNote = ""; // the line the card showed before a pause, put back on play
 
   const set = (patch: Partial<FlowState>) => { st = { ...st, ...patch }; deps.onState(st); };
   const clearTimer = () => { if (timer !== null) { clearT(timer); timer = null; } };
@@ -207,13 +229,13 @@ export function createThemeSongFlow(deps: FlowDeps): ThemeSongFlow {
     if (!cut) return false;
     const r = await deps.startParty(cut);
     if (mine !== run) return false;
-    if (r.ok) { set({ phase: "dancing", note: r.dancing === false ? "Your song is playing!" : "Dance party!" }); return true; }
+    if (r.ok) { set({ phase: "dancing", paused: false, note: r.dancing === false ? "Your song is playing!" : "Dance party!" }); return true; }
     set({ phase: "ready", note: r.reason ? `The party could not start (${r.reason}).` : "The party could not start." });
     return false;
   }
 
   /** The song is finished: fetch it, measure it, cut it, dance. */
-  async function finish(mine: number, task: string, link: string, keep = true): Promise<void> {
+  async function finish(mine: number, task: string, link: string, keep = true, timed: LyricLine[] = []): Promise<void> {
     set({ phase: "ready", note: keep ? "Your song is ready! Getting the party ready…" : "Getting the party ready…" });
     let bytes: ArrayBuffer;
     try {
@@ -225,7 +247,7 @@ export function createThemeSongFlow(deps: FlowDeps): ThemeSongFlow {
       return;
     }
     if (mine !== run) return;
-    if (keep) keepSong(deps.storage, { name: st.name, verse: st.verse, chorus: st.chorus, mood: moodOf, url: link, task, madeAt: new Date(now()).toISOString() });
+    if (keep) keepSong(deps.storage, { name: st.name, verse: st.verse, chorus: st.chorus, mood: moodOf, url: link, task, madeAt: new Date(now()).toISOString(), ...(timed.length ? { lines: timed } : {}) });
     let planned: ReturnType<typeof analyseTheme>;
     let decoded: { channels: ArrayLike<number>[]; sampleRate: number };
     try {
@@ -242,6 +264,8 @@ export function createThemeSongFlow(deps: FlowDeps): ThemeSongFlow {
       wav: cutToWav(decoded.channels, decoded.sampleRate, planned.cut),
       title: st.name,
     };
+    // the provider's times, moved onto the cut the party loops (nothing guessed: no times, no karaoke)
+    set({ karaoke: lyricsForCut(timed, planned.cut.startSec, planned.cut.lengthSec), loop: planned.cut.lengthSec });
     await startParty(mine);
   }
 
@@ -250,7 +274,7 @@ export function createThemeSongFlow(deps: FlowDeps): ThemeSongFlow {
     for (;;) {
       await sleep(pollMs);
       if (mine !== run) return;
-      let answer = null as { status?: unknown; url?: unknown } | null;
+      let answer = null as { status?: unknown; url?: unknown; lines?: unknown } | null;
       try {
         const res = await get(`${url}?id=${encodeURIComponent(task)}`);
         if (res.status === 429) continue; // told to slow down: one more turn, not a failure
@@ -263,7 +287,7 @@ export function createThemeSongFlow(deps: FlowDeps): ThemeSongFlow {
       }
       if (mine !== run) return;
       fails = 0;
-      if (answer?.status === "ready" && typeof answer.url === "string") { await finish(mine, task, answer.url); return; }
+      if (answer?.status === "ready" && typeof answer.url === "string") { await finish(mine, task, answer.url, true, cleanLines(answer.lines)); return; }
       if (answer?.status === "failed") { set({ phase: "failed", note: "The song could not be finished this time. The name and the words are still yours." }); return; }
       if (now() - startedAt > maxWaitMs) { set({ phase: "failed", note: "The song is taking too long. The name and the words are still yours." }); return; }
     }
@@ -275,6 +299,8 @@ export function createThemeSongFlow(deps: FlowDeps): ThemeSongFlow {
     warm,
     canMake,
     async start(description, kind = "level") {
+      const asked = String(description ?? "").trim().slice(0, MAX_DESCRIPTION);
+      if (asked) lastAsk = { description: asked, kind };
       const mine = ++run;
       clearTimer();
       cut = null;
@@ -318,7 +344,20 @@ export function createThemeSongFlow(deps: FlowDeps): ThemeSongFlow {
     },
     partyEnded(reason) {
       if (st.phase !== "dancing") return;
-      set({ phase: "over", note: reason === "time" ? "That was a great party!" : "Party's over!" });
+      set({ phase: "over", paused: false, note: reason === "time" ? "That was a great party!" : "Party's over!" });
+    },
+    pause() {
+      if (st.phase !== "dancing" || st.paused) return false;
+      if (!deps.pauseParty?.()) return false;
+      pausedNote = st.note;
+      set({ paused: true, note: "Paused. Tap play to carry on!" });
+      return true;
+    },
+    resume() {
+      if (st.phase !== "dancing" || !st.paused) return false;
+      if (!deps.resumeParty?.()) return false;
+      set({ paused: false, note: pausedNote || "Dance party!" });
+      return true;
     },
     async playKept(song) {
       const mine = ++run;
@@ -328,8 +367,21 @@ export function createThemeSongFlow(deps: FlowDeps): ThemeSongFlow {
       st = { ...EMPTY };
       if (!/^\d{6,24}$/.test(song.task)) return false;
       set({ phase: "ready", name: song.name, verse: song.verse, chorus: song.chorus, note: "Getting the party ready…" });
-      await finish(mine, song.task, song.url, false);
+      let timed = song.lines ?? [];
+      if (!timed.length) {
+        // a song kept before the karaoke existed: ask the route once for its times (best effort; none is fine)
+        try {
+          const res = await get(`${url}?id=${encodeURIComponent(song.task)}`);
+          if (res.ok) timed = cleanLines(((await res.json()) as { lines?: unknown }).lines);
+        } catch { /* no karaoke for this one */ }
+        if (mine !== run) return false;
+      }
+      await finish(mine, song.task, song.url, false, timed);
       return mine === run && st.phase === "dancing";
+    },
+    async redo() {
+      if (!lastAsk) return false;
+      return this.start(lastAsk.description, lastAsk.kind);
     },
     async again() {
       if (!cut || st.phase === "dancing") return false;

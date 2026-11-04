@@ -25,6 +25,7 @@ import { askText, resolveBackend } from "./modelBackend";
 import { SAFETY, firstJsonObject, kidSafeText, scrubContactDetails, type MuseEnv } from "./muse";
 import { INSTRUMENTS, MOODS, TEMPOS } from "../shared/songCards";
 import { parseThemeReply, type ThemeSong } from "../shared/songLyrics";
+import { parseLyricSections, type LyricLine } from "../shared/songKaraoke";
 import { verifyParentProofFromRequest, type ParentEnv } from "./parent";
 import { attachSong, commitSong, markStored, parseSongSettingsUpdate, readSongSettings, refundSong, reservationOfTask, reserveSong, statusFor, writeSongSettings, type SongDb, type SongStatus } from "./songStore";
 
@@ -318,7 +319,7 @@ export function audioUrlOk(value: unknown, env: ThemeSongEnv): value is string {
 }
 
 /** The finished song's provider link, or the reason there is none. */
-async function finishedLink(env: ThemeSongEnv, id: string): Promise<{ ok: true; url: string; durationMs: number | null } | { ok: false; status: "making" | "failed" | "error"; code?: number | null }> {
+async function finishedLink(env: ThemeSongEnv, id: string): Promise<{ ok: true; url: string; durationMs: number | null; lines: LyricLine[] } | { ok: false; status: "making" | "failed" | "error"; code?: number | null }> {
   const got = await mureka(env, "GET", `/v1/song/query/${id}`);
   if (!got.ok) return { ok: false, status: "error", code: got.status };
   const task = isRecord(got.data) ? got.data : {};
@@ -326,7 +327,8 @@ async function finishedLink(env: ThemeSongEnv, id: string): Promise<{ ok: true; 
   if (status === "succeeded") {
     const choice = Array.isArray(task.choices) && isRecord(task.choices[0]) ? task.choices[0] : null;
     if (!choice || !audioUrlOk(choice.url, env)) return { ok: false, status: "failed" };
-    return { ok: true, url: choice.url, durationMs: typeof choice.duration === "number" ? choice.duration : null };
+    // the provider times every line it sings: kept (compact) so the game can light up the line being sung; none is fine, the card then shows the words without a karaoke
+    return { ok: true, url: choice.url, durationMs: typeof choice.duration === "number" ? choice.duration : null, lines: parseLyricSections(choice.lyrics_sections) };
   }
   if (status === "failed" || status === "timeouted" || status === "cancelled") return { ok: false, status: "failed" };
   return { ok: false, status: "making" };
@@ -400,7 +402,7 @@ async function handleStatus(request: Request, env: ThemeSongEnv, id: string): Pr
       try { if (owner.state === "reserved") await commitSong(db(env), owner.key, Date.now()); } catch { /* committed on the next look */ }
       if (env.UPLOADS && !owner.stored) { const bytes = await fetchAudio(link.url); if (bytes) await keepCopy(env, owner, id, bytes); }
     }
-    return json({ status: "ready", url: link.url, durationMs: link.durationMs });
+    return json({ status: "ready", url: link.url, durationMs: link.durationMs, ...(link.lines.length ? { lines: link.lines } : {}) });
   }
   if (link.status === "error") return json({ error: link.code === null ? "the song studio did not answer" : `the song studio returned ${link.code}` }, 502);
   if (link.status === "failed" && owner && owner.state === "reserved") { try { await refundSong(db(env), owner.key, "provider_failed", Date.now()); } catch { /* it expires by itself */ } } // the provider could not sing it: the child's slot comes back

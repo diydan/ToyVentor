@@ -117,3 +117,41 @@ describe("our own song-writing model is woken before a song is asked for", () =>
     expect(read2("worker/index.ts")).toContain("return handleThemeSong(request, env, ctx);");
   });
 });
+
+describe("the song card's player: stop and play, a mini karaoke, and a dock", () => {
+  const card = read("src/features/game/world/ThemeSongCard.tsx");
+  const canvas = read("src/features/game/world/GameCanvas.tsx");
+  const css = read("src/index.css");
+  it("has a pause/play button and a stop button in the card and in the dock, each at least 56 px", () => {
+    expect(card).toContain('data-testid="song-pause"');
+    expect(card).toContain('data-testid="song-play"');
+    expect(card).toContain('data-testid="song-stop"');
+    expect(card).toMatch(/aria-label="Stop the party"/);
+    expect(css).toMatch(/\.tv-dock-btn \{[^}]*width: 56px;[^}]*height: 56px;/);
+  });
+  it("docks itself when a party starts and opens again when a song begins, ends or fails", () => {
+    expect(card).toMatch(/if \(phase === "dancing"\) setDocked\(true\);/);
+    expect(card).toMatch(/phase === "writing" \|\| phase === "over" \|\| phase === "failed"/);
+    expect(card).toContain('data-docked="true"');
+    expect(card).toContain('data-testid="song-dock"');
+    expect(card).toContain('data-testid="song-open"');
+  });
+  it("shows the karaoke only when the song has times, and keeps 'The words' for a song that has none", () => {
+    expect(card).toMatch(/const hasKaraoke = f\.karaoke\.length > 0 && f\.loop > 0;/);
+    expect(card).toMatch(/const showWords = \(f\.verse\.length > 0 \|\| f\.chorus\.length > 0\) && !\(phase === "dancing" && hasKaraoke\);/);
+  });
+  it("offers new words, with the songs left this week, only while a song is left", () => {
+    expect(card).toMatch(/\(f\.quota === null \|\| f\.quota\.left > 0\)/);
+    expect(card).toContain("New words");
+  });
+  it("reads the playhead from the party and pauses and plays through the flow", () => {
+    expect(canvas).toContain("pauseParty: () => party.pause()");
+    expect(canvas).toContain("resumeParty: () => party.resume()");
+    expect(canvas).toMatch(/const songPlayhead = useCallback\(\(\) => songRef\.current\?\.party\.state\(\)\.songTime \?\? 0, \[\]\);/);
+    expect(canvas).toMatch(/const resumeSong = useCallback\(\(\) => \{ noteGesture\(\);/);
+    expect(canvas).toContain("playhead={songPlayhead}");
+  });
+  it("lights the karaoke without motion when the child prefers none", () => {
+    expect(css).toMatch(/prefers-reduced-motion: reduce\) \{[\s\S]*?\.tv-kara-big \.tv-kara-line \{ animation: none; \}/);
+  });
+});

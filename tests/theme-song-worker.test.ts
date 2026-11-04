@@ -206,6 +206,13 @@ describe("GET ?id: where is the song", () => {
     stub([GOOD], { queryAs: { status: "failed" } });
     expect(await (await handleThemeSong(get("?id=123456789"), ENV)).json()).toEqual({ status: "failed" });
   });
+  it("passes on the provider's timed lines, compact, for the game's karaoke, and sends none when the provider gave none", async () => {
+    const sections = [{ section_type: "verse", start: 1000, end: 9000, lines: [{ start: 2000, end: 4000, text: "Little cat naps", words: [{ start: 2000, text: "Little " }, { start: 2600, text: "cat " }, { start: 3300, text: "naps" }] }] }];
+    stub([GOOD], { queryAs: { status: "succeeded", choices: [{ url: "https://cdn.mureka.example/a.mp3", duration: 61000, lyrics_sections: sections }] } });
+    expect(await (await handleThemeSong(get("?id=123456789"), ENV)).json()).toEqual({ status: "ready", url: "https://cdn.mureka.example/a.mp3", durationMs: 61000, lines: [{ s: 2000, e: 4000, t: "Little cat naps", w: [2000, 2600, 3300] }] });
+    stub([GOOD], { queryAs: { status: "succeeded", choices: [{ url: "https://cdn.mureka.example/a.mp3", duration: 61000, lyrics_sections: "not a list" }] } });
+    expect(await (await handleThemeSong(get("?id=123456789"), ENV)).json()).toEqual({ status: "ready", url: "https://cdn.mureka.example/a.mp3", durationMs: 61000 });
+  });
   it("never passes on a link that is not https, or not on the provider's own file host", async () => {
     stub([GOOD], { queryAs: { status: "succeeded", choices: [{ url: "https://evil.example/a.mp3" }] } });
     expect(await (await handleThemeSong(get("?id=123456789"), ENV)).json()).toEqual({ status: "failed" });
