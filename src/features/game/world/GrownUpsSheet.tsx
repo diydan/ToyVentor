@@ -907,41 +907,25 @@ export function GrownUpsSheet({
 
       {step === "unlocked" && (
         <div className="tv-parent-body">
-          {/* 1. Today's Ledger Summary */}
-          <div className="tv-parent-ledger">
-            <div className="tv-parent-stats">
-              <div>
-                <span className="tv-parent-stat-k">Used today</span>
-                <strong className="tv-parent-stat-v">{usedMinutes}m</strong>
-              </div>
-              <div>
-                <span className="tv-parent-stat-k">STEM earned</span>
-                <strong className="tv-parent-stat-v" style={{ color: "var(--mint)" }}>
-                  +{status.earnedMinutes}m / {maxEarnable}m
-                </strong>
-              </div>
-              <div>
-                <span className="tv-parent-stat-k">Today&apos;s budget</span>
-                <strong className="tv-parent-stat-v">
-                  {settings.enabled ? `${totalCapToday}m` : "Off"}
-                </strong>
-              </div>
-            </div>
+          {statusNote && (
+            <p className="tv-moves" style={{ margin: 0, color: "var(--mint)" }} role="status">
+              {statusNote}
+            </p>
+          )}
 
+          {/* The front screen is what a grown-up opens this for: today's time, how much play time, who is playing. Everything else is one tap down, in a closed group that says where it stands. */}
+          <div className="tv-parent-ledger">
+            <div className="tv-parent-row-head" style={{ marginBottom: 0 }}>
+              <b>Today</b>
+              <strong className="tv-parent-stat-v">
+                {settings.enabled ? `${usedMinutes}m of ${totalCapToday}m` : `${usedMinutes}m · no limit`}
+              </strong>
+            </div>
             {settings.enabled && (
               <div className="theme-progress" aria-hidden="true">
-                <div
-                  className="theme-progress-fill"
-                  style={{ width: `${meterPct}%` }}
-                />
+                <div className="theme-progress-fill" style={{ width: `${meterPct}%` }} />
               </div>
             )}
-
-            <p className="tv-moves" style={{ margin: 0, fontSize: 12 }}>
-              {status.completedCount}{" "}
-              {status.completedCount === 1 ? "STEM mission" : "STEM missions"} finished today · Resets at midnight ({settings.timezone}) · No rollover.
-            </p>
-
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               <button
                 type="button"
@@ -964,457 +948,9 @@ export function GrownUpsSheet({
             </div>
           </div>
 
-          {/* Demo Mode v1 (default Off) */}
-          <div className="tv-parent-ledger">
-            <div className="tv-parent-row-head" style={{ marginBottom: 0 }}>
-              <div>
-                <span className="kicker-label" style={{ margin: 0, display: "block" }}>
-                  Showcase &amp; Developer
-                </span>
-                <b>Demo Mode</b>
-              </div>
-              <button
-                type="button"
-                className={demoMode ? "tv-ctl tv-ctl-sky" : "tv-ctl"}
-                aria-pressed={demoMode}
-                onClick={() => onToggleDemoMode?.(!demoMode)}
-              >
-                {demoMode ? "Demo Mode: On" : "Demo Mode: Off"}
-              </button>
-            </div>
-            <p className="tv-moves" style={{ margin: 0, fontSize: 12 }}>
-              {demoMode
-                ? "Full 12-world / Lab 1-6 bar, Level Editor, Kip 3D Rig, Seed Demo Save, and sandbox unlock-all active (earned XP stays untouched)."
-                : "Default Off: boots straight onto a clean stage with a compact Worlds selector."}
-            </p>
-
-            {demoMode && (
-              <div className="tv-demo-tools">
-                {onToggleParentControls && (
-                  <div style={{ marginBottom: 8 }}>
-                    {parentControlsSource === "build" ? (
-                      <p className="tv-moves" style={{ fontSize: 12 }}>
-                        This showcase build has the grown-up checks and play-time limits switched off. They cannot be turned back on here.
-                      </p>
-                    ) : (
-                      <>
-                        <button
-                          type="button"
-                          className={controlsMode === "off" ? "tv-ctl tv-ctl-sky" : "tv-ctl"}
-                          aria-pressed={controlsMode === "off"}
-                          onClick={() => {
-                            const stored = onToggleParentControls(controlsMode !== "off");
-                            if (stored === false) setStatusNote("This browser would not remember the switch, so nothing changed.");
-                          }}
-                        >
-                          {controlsMode === "off" ? "Grown-up checks and limits: Off" : "Grown-up checks and limits: On"}
-                        </button>
-                        <p className="tv-moves" style={{ fontSize: 12 }}>
-                          Off, for this tab only: no play-time limit or Sleep Curtain, no grown-up question on this sheet, and Workshop downloads work. Saved settings and
-                          today&apos;s time are not changed. Photo uploads (Smart face, room scan) still need a grown-up. Closing the tab, or turning Demo Mode off, puts the
-                          checks back on.
-                        </p>
-                      </>
-                    )}
-                  </div>
-                )}
-                {onToggleGaragePreview && (
-                  <div style={{ marginBottom: 8 }}>
-                    <button
-                      type="button"
-                      className={garagePreview ? "tv-ctl tv-ctl-sky" : "tv-ctl"}
-                      aria-pressed={garagePreview}
-                      onClick={onToggleGaragePreview}
-                    >
-                      {garagePreview ? "Preview weekend: On" : "Preview weekend: Off"}
-                    </button>
-                    <p className="tv-moves" style={{ fontSize: 12 }}>
-                      Shows the Garage&apos;s weekend drop (the next one) on any day, so the
-                      animation and the mission can be shown on a weekday.
-                    </p>
-                  </div>
-                )}
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                  {onSeedDemoSave && (
-                    <button
-                      type="button"
-                      className="tv-ctl tv-ctl-primary"
-                      onClick={() => {
-                        onSeedDemoSave();
-                        setStatusNote(
-                          "Demo save seeded in Garden (blueprints & parts stocked; earned XP unchanged).",
-                        );
-                      }}
-                    >
-                      Seed Demo Save
-                    </button>
-                  )}
-                  {onOpenEditor && (
-                    <button
-                      type="button"
-                      className="tv-ctl"
-                      onClick={() => {
-                        onClose();
-                        onOpenEditor();
-                      }}
-                    >
-                      Level Editor
-                    </button>
-                  )}
-                  {onRoomPhoto && (
-                    <label className="tv-ctl" style={{ cursor: roomBusy ? "wait" : "pointer" }}>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        capture="environment"
-                        aria-label="Room photo for a level"
-                        disabled={roomBusy}
-                        onChange={onRoomPhotoFile}
-                        style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none" }}
-                      />
-                      {roomBusy ? "Reading photo…" : "Room Photo Level"}
-                    </label>
-                  )}
-                  <a
-                    className="tv-ctl"
-                    href={effectiveKipUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Kip 3D Rig
-                  </a>
-                  {progression && onToggleSandbox && (
-                    <button
-                      type="button"
-                      className="tv-ctl"
-                      aria-pressed={progression.sandboxUnlockAll}
-                      onClick={onToggleSandbox}
-                    >
-                      {progression.sandboxUnlockAll
-                        ? "Sandbox: all unlocked (on)"
-                        : "Sandbox: unlock everything"}
-                    </button>
-                  )}
-                </div>
-
-                {progression && onSetAgeBand && (
-                  <div>
-                    <span className="tv-parent-stat-k" style={{ marginBottom: 4 }}>
-                      Who is playing? (Map age)
-                    </span>
-                    <div className="tv-chips" role="group" aria-label="Age band">
-                      {BANDS.map((band, i) => (
-                        <button
-                          key={band.id}
-                          type="button"
-                          className="tv-sc"
-                          aria-pressed={progression.ageBand === i}
-                          aria-label={`Ages ${band.label}`}
-                          onClick={() => onSetAgeBand(i)}
-                        >
-                          {band.label}
-                        </button>
-                      ))}
-                      {progression.ageBand !== undefined && (
-                        <button
-                          type="button"
-                          className="tv-sc"
-                          onClick={() => onSetAgeBand(null)}
-                        >
-                          Clear age
-                        </button>
-                      )}
-                    </div>
-                    <p className="tv-moves" style={{ fontSize: 12 }}>
-                      The age picks which Learn levels the Map shows. Changing it
-                      never removes stars or XP.
-                    </p>
-                    {onOpenMap && (
-                      <button type="button" className="tv-ctl" onClick={onOpenMap}>
-                        Levels: open the Map
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                {onSetTimeOfDayMode && (
-                  <div>
-                    <span className="tv-parent-stat-k" style={{ marginBottom: 4 }}>
-                      Map look
-                    </span>
-                    <div className="tv-chips" role="group" aria-label="Map look">
-                      {(
-                        [
-                          ["auto", "Auto"],
-                          ["day", "Day"],
-                          ["night", "Night"],
-                        ] as const
-                      ).map(([mode, label]) => (
-                        <button
-                          key={mode}
-                          type="button"
-                          className="tv-sc"
-                          aria-pressed={(timeOfDayMode ?? "auto") === mode}
-                          onClick={() => onSetTimeOfDayMode(mode)}
-                        >
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-                    <p className="tv-moves" style={{ fontSize: 12 }}>
-                      Auto shows the day look from 7 am to 7 pm and the night look
-                      after that, on this device&apos;s clock. Day or Night keeps one
-                      look all the time.
-                    </p>
-                  </div>
-                )}
-
-                {onJumpWorld && (
-                  <div>
-                    <span className="tv-parent-stat-k" style={{ marginBottom: 4 }}>
-                      Quick-jump Worlds &amp; STEM Labs
-                    </span>
-                    <div className="tv-chips">
-                      {WORLDS.map((w) => (
-                        <button
-                          key={w.id}
-                          type="button"
-                          className="tv-sc"
-                          aria-pressed={currentWorld === w.id}
-                          onClick={() => {
-                            onJumpWorld(w.id);
-                            onClose();
-                          }}
-                        >
-                          {w.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {progression && (
-            <div className="tv-parent-ledger">
-              <span
-                className="kicker-label"
-                style={{ marginBottom: 6, display: "block" }}
-              >
-                STEM XP (read-only)
-              </span>
-              <div className="tv-parent-stats">
-                <div>
-                  <span className="tv-parent-stat-k">Total XP</span>
-                  <strong className="tv-parent-stat-v">
-                    {progression.totalXp}
-                  </strong>
-                </div>
-                <div>
-                  <span className="tv-parent-stat-k">Maker Rank</span>
-                  <strong className="tv-parent-stat-v">
-                    {rankFor(progression.totalXp).rank} ·{" "}
-                    {rankFor(progression.totalXp).title}
-                  </strong>
-                </div>
-                <div>
-                  <span className="tv-parent-stat-k">Workshop days</span>
-                  <strong className="tv-parent-stat-v">
-                    {workshopDaysCount(progression)}
-                  </strong>
-                </div>
-              </div>
-              <p className="tv-moves" style={{ margin: 0, fontSize: 12 }}>
-                {["lab1", "lab2", "lab3", "lab4", "lab5", "lab6"]
-                  .map(
-                    (lab) =>
-                      `${lab.replace("lab", "Lab ")} ★${familyStars(progression, lab)}`,
-                  )
-                  .join(" · ")}
-              </p>
-              <p className="tv-moves" style={{ margin: 0, fontSize: 12 }}>
-                Skills practiced: {practicedSkillsSummary(progression)}
-              </p>
-              {unlockedVehiclesFor(progression.totalXp).length > 0 && (
-                <p className="tv-moves" style={{ margin: 0, fontSize: 12 }}>
-                  Rank vehicles:{" "}
-                  {unlockedVehiclesFor(progression.totalXp).join(", ")}
-                </p>
-              )}
-              {(() => {
-                const upNext =
-                  resolvePhase4VehicleRoster(progression).lockedVehicles[0];
-                return upNext ? (
-                  <p className="tv-moves" style={{ margin: 0, fontSize: 12 }}>
-                    Up next: {upNext.entry.name} at {upNext.entry.xpThreshold}{" "}
-                    XP ({upNext.entry.recommendedLabLabel}). {upNext.guidance}
-                  </p>
-                ) : null;
-              })()}
-              <p className="tv-moves" style={{ margin: 0, fontSize: 12 }}>
-                XP lives on this device. Reset keeps scanned and saved toys
-                unlocked.
-              </p>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                <button
-                  type="button"
-                  className="tv-ctl"
-                  aria-pressed={progression.sandboxUnlockAll}
-                  onClick={onToggleSandbox}
-                >
-                  {progression.sandboxUnlockAll
-                    ? "Sandbox: all unlocked (on)"
-                    : "Sandbox: unlock everything"}
-                </button>
-                <button
-                  type="button"
-                  className="tv-ctl tv-ctl-danger"
-                  onClick={() => {
-                    if (!confirmResetXp) {
-                      setConfirmResetXp(true);
-                      return;
-                    }
-                    setConfirmResetXp(false);
-                    onResetXp?.();
-                  }}
-                >
-                  {confirmResetXp ? "Tap again to confirm Reset XP" : "Reset XP"}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {progression && (
-            <>
-            <div className="tv-parent-ledger">
-              <div className="tv-parent-row-head" style={{ marginBottom: 0 }}>
-                <div>
-                  <span
-                    className="kicker-label"
-                    style={{ margin: 0, display: "block" }}
-                  >
-                    Real Life Counts
-                  </span>
-                  <b>Real-Life Routines (+{CHORE_QUEST_XP} XP/day)</b>
-                </div>
-                <span className="tv-parent-stat-k">
-                  {(progression.enabledChoreIds ?? []).length} active
-                </span>
-              </div>
-              <p className="tv-moves" style={{ margin: 0, fontSize: 12 }}>
-                Optional offline habits shown in Toy Box. Each tap of &quot;I
-                did it!&quot; awards +{CHORE_QUEST_XP} XP once per day and
-                stamps a Workshop Day (missed days never reset progress).
-              </p>
-              <div className="tv-chips" role="group" aria-label="Real-Life Routines">
-                {allChoresWithState(localDayKey ?? "", progression).map(
-                  (chore) => (
-                    <button
-                      key={chore.id}
-                      type="button"
-                      className="tv-sc"
-                      aria-pressed={chore.enabled}
-                      title={chore.parentHint}
-                      onClick={() => onToggleChore?.(chore.id)}
-                    >
-                      {chore.enabled ? "✓ " : ""}
-                      {chore.title}
-                      {chore.completed ? " (done today)" : ""}
-                    </button>
-                  ),
-                )}
-              </div>
-            </div>
-            <div className="tv-parent-ledger">
-              <div className="tv-parent-row-head" style={{ marginBottom: 0 }}>
-                <div>
-                  <span
-                    className="kicker-label"
-                    style={{ margin: 0, display: "block" }}
-                  >
-                    Weekend Build
-                  </span>
-                  <b>Garage</b>
-                </div>
-                <button
-                  type="button"
-                  className="tv-ctl"
-                  aria-pressed={garageDropOn}
-                  onClick={() => onSetGarageDrop?.(!garageDropOn)}
-                >
-                  {garageDropOn ? "Weekend drop: On" : "Weekend drop: Off"}
-                </button>
-              </div>
-              <p className="tv-moves" style={{ margin: 0, fontSize: 12 }}>
-                The Garage itself stays open. Off hides only the weekend drop
-                card{garageSummary ? ` (“${garageSummary.title}”)` : ""}.
-              </p>
-              <div className="tv-chips" role="group" aria-label="Garage drop days">
-                {GARAGE_DAY_LABELS.map(({ dow, label }) => {
-                  const on = (garageDays ?? [0, 5, 6]).includes(dow);
-                  const last = on && (garageDays ?? [0, 5, 6]).length === 1;
-                  return (
-                    <button
-                      key={dow}
-                      type="button"
-                      className="tv-sc"
-                      aria-pressed={on}
-                      disabled={last}
-                      title={last ? "One day stays on" : `Drop live on ${label}s`}
-                      onClick={() => onToggleGarageDay?.(dow)}
-                    >
-                      {on ? "✓ " : ""}
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
-              <div className="tv-parent-row-head" style={{ marginBottom: 0 }}>
-                <div>
-                  <b>Real-life build</b>
-                </div>
-                <button
-                  type="button"
-                  className="tv-ctl"
-                  aria-pressed={garageRealLifeOn}
-                  onClick={() => onSetGarageRealLife?.(!garageRealLifeOn)}
-                >
-                  {garageRealLifeOn ? "Real-life leg: On" : "Real-life leg: Off"}
-                </button>
-              </div>
-              {garageHousehold ?? (
-                <>
-                  <p className="tv-moves" style={{ margin: 0, fontSize: 12 }}>
-                    After the in-app drop, the family rebuilds it with real parts.
-                    Confirming here stamps a Workshop Day and pays +10 XP, only
-                    when no real-life XP was earned yet today.
-                  </p>
-                  {onConfirmGarageReal && (
-                    <button
-                      type="button"
-                      className="tv-ctl tv-ctl-primary"
-                      disabled={!garageSummary?.done || !garageRealLifeOn || garageRealDone}
-                      onClick={() => setStatusNote(onConfirmGarageReal())}
-                    >
-                      {garageRealDone
-                        ? "Built it for real ★"
-                        : "We built it"}
-                    </button>
-                  )}
-                </>
-              )}
-            </div>
-            </>
-          )}
-
-          {/* The Songs section: the song maker on or off and the weekly limit (renders nothing when the song route is off here) */}
-          <SongSettingsPanel proof={activeProof} />
-
-          {/* 2. One-Tap Presets */}
           <div>
             <span className="kicker-label" style={{ marginBottom: 6, display: "block" }}>
-              Quick Presets
+              Play time
             </span>
             <div className="tv-parent-presets">
               {PARENT_PRESETS.map((preset) => {
@@ -1448,109 +984,141 @@ export function GrownUpsSheet({
             </div>
           </div>
 
-          {/* 3. Three Clear Numbers */}
-          <div className="tv-parent-controls">
+          {/* Who is playing: the Map's "a grown-up sets the age" card lands here (carousel spec 9). It used to sit inside the Demo Mode tools, so with Demo Mode off nobody could set it. */}
+          {progression && onSetAgeBand && (
             <div>
-              <div className="tv-parent-row-head">
-                <b>Base daily time</b>
-                <span>Guaranteed play today</span>
+              <span className="kicker-label" style={{ marginBottom: 6, display: "block" }}>
+                Who is playing?
+              </span>
+              <div className="tv-chips" role="group" aria-label="Age band">
+                {BANDS.map((band, i) => (
+                  <button
+                    key={band.id}
+                    type="button"
+                    className="tv-sc"
+                    aria-pressed={progression.ageBand === i}
+                    aria-label={`Ages ${band.label}`}
+                    onClick={() => onSetAgeBand(i)}
+                  >
+                    {band.label}
+                  </button>
+                ))}
+                {progression.ageBand !== undefined && (
+                  <button type="button" className="tv-sc" onClick={() => onSetAgeBand(null)}>
+                    Clear age
+                  </button>
+                )}
               </div>
-              <div className="tv-chips">
-                {BASE_OPTIONS.map((mins) => {
-                  const on = settings.enabled && settings.dailyBaseMinutes === mins;
-                  return (
-                    <button
-                      key={mins}
-                      type="button"
-                      className="tv-sc"
-                      aria-pressed={on}
-                      disabled={busy}
-                      onClick={() =>
-                        void applyPatch({
-                          enabled: true,
-                          dailyBaseMinutes: mins,
-                          dailyLimitMinutes: Math.max(settings.dailyLimitMinutes, mins),
-                        })
-                      }
-                    >
-                      {mins}m
-                    </button>
-                  );
-                })}
-              </div>
+              <p className="tv-moves" style={{ fontSize: 12 }}>
+                Picks which levels the Map shows. Never removes stars or XP.
+              </p>
             </div>
+          )}
 
-            <div>
-              <div className="tv-parent-row-head">
-                <b>Hard daily ceiling</b>
-                <span>STEM missions never exceed this</span>
-              </div>
-              <div className="tv-chips">
-                {LIMIT_OPTIONS.map((mins) => {
-                  const on = settings.enabled && settings.dailyLimitMinutes === mins;
-                  const tooLow = mins < settings.dailyBaseMinutes;
-                  return (
-                    <button
-                      key={mins}
-                      type="button"
-                      className="tv-sc"
-                      aria-pressed={on}
-                      disabled={busy || tooLow}
-                      onClick={() =>
-                        void applyPatch({
-                          enabled: true,
-                          dailyLimitMinutes: mins,
-                        })
-                      }
-                    >
-                      {mins}m
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div>
-              <div className="tv-parent-row-head">
-                <b>STEM mission bonus</b>
-                <span>Per unique lab, bridge, or lift</span>
-              </div>
-              <div className="tv-chips">
-                {BONUS_OPTIONS.map((mins) => {
-                  const on = settings.minutesPerChallenge === mins;
-                  return (
-                    <button
-                      key={mins}
-                      type="button"
-                      className="tv-sc"
-                      aria-pressed={on}
-                      disabled={busy}
-                      onClick={() =>
-                        void applyPatch({ minutesPerChallenge: mins })
-                      }
-                    >
-                      {mins === 0 ? "Off" : `+${mins}m`}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* 4. Sitting Timer, Bedtime & Gate Strictness Disclosure */}
+          {/* Time limits in detail: the three numbers the presets set, the sitting timer and bedtime. */}
           <details className="tv-disclosure">
             <summary>
-              <span>Sitting timer, Bedtime &amp; Gate</span>
+              <span>Time limits in detail</span>
               <span className="tv-disclosure-meta">
-                {settings.quietHours.enabled
-                  ? `Quiet ${settings.quietHours.start}-${settings.quietHours.end}`
-                  : settings.sessionLimitMinutes
-                    ? `${settings.sessionLimitMinutes}m sitting`
-                    : "Optional"}
+                {!settings.enabled
+                  ? "Off"
+                  : settings.quietHours.enabled
+                    ? `Quiet ${settings.quietHours.start}-${settings.quietHours.end}`
+                    : `${settings.dailyBaseMinutes}m + STEM, ${settings.dailyLimitMinutes}m cap`}
               </span>
             </summary>
-
             <div className="tv-parent-adv">
+              <p className="tv-moves" style={{ margin: 0, fontSize: 12 }}>
+                STEM earned today: +{status.earnedMinutes}m of {maxEarnable}m · {status.completedCount}{" "}
+                {status.completedCount === 1 ? "mission" : "missions"} finished · Resets at midnight ({settings.timezone}), no rollover.
+              </p>
+
+              <div>
+                <div className="tv-parent-row-head">
+                  <b>Base daily time</b>
+                  <span>Guaranteed play today</span>
+                </div>
+                <div className="tv-chips">
+                  {BASE_OPTIONS.map((mins) => {
+                    const on = settings.enabled && settings.dailyBaseMinutes === mins;
+                    return (
+                      <button
+                        key={mins}
+                        type="button"
+                        className="tv-sc"
+                        aria-pressed={on}
+                        disabled={busy}
+                        onClick={() =>
+                          void applyPatch({
+                            enabled: true,
+                            dailyBaseMinutes: mins,
+                            dailyLimitMinutes: Math.max(settings.dailyLimitMinutes, mins),
+                          })
+                        }
+                      >
+                        {mins}m
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <div className="tv-parent-row-head">
+                  <b>Hard daily ceiling</b>
+                  <span>STEM missions never exceed this</span>
+                </div>
+                <div className="tv-chips">
+                  {LIMIT_OPTIONS.map((mins) => {
+                    const on = settings.enabled && settings.dailyLimitMinutes === mins;
+                    const tooLow = mins < settings.dailyBaseMinutes;
+                    return (
+                      <button
+                        key={mins}
+                        type="button"
+                        className="tv-sc"
+                        aria-pressed={on}
+                        disabled={busy || tooLow}
+                        onClick={() =>
+                          void applyPatch({
+                            enabled: true,
+                            dailyLimitMinutes: mins,
+                          })
+                        }
+                      >
+                        {mins}m
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <div className="tv-parent-row-head">
+                  <b>STEM mission bonus</b>
+                  <span>Per unique lab, bridge, or lift</span>
+                </div>
+                <div className="tv-chips">
+                  {BONUS_OPTIONS.map((mins) => {
+                    const on = settings.minutesPerChallenge === mins;
+                    return (
+                      <button
+                        key={mins}
+                        type="button"
+                        className="tv-sc"
+                        aria-pressed={on}
+                        disabled={busy}
+                        onClick={() =>
+                          void applyPatch({ minutesPerChallenge: mins })
+                        }
+                      >
+                        {mins === 0 ? "Off" : `+${mins}m`}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               <div>
                 <div className="tv-parent-row-head">
                   <b>Sitting timer (right now)</b>
@@ -1639,7 +1207,196 @@ export function GrownUpsSheet({
                   </div>
                 )}
               </div>
+            </div>
+          </details>
 
+          {/* Progress and real-life routines (needs the game's progression). */}
+          {progression && (
+            <details className="tv-disclosure">
+              <summary>
+                <span>Progress &amp; routines</span>
+                <span className="tv-disclosure-meta">
+                  {rankFor(progression.totalXp).title} · {progression.totalXp} XP
+                </span>
+              </summary>
+              <div className="tv-parent-adv">
+                <div className="tv-parent-stats">
+                  <div>
+                    <span className="tv-parent-stat-k">Total XP</span>
+                    <strong className="tv-parent-stat-v">{progression.totalXp}</strong>
+                  </div>
+                  <div>
+                    <span className="tv-parent-stat-k">Maker Rank</span>
+                    <strong className="tv-parent-stat-v">
+                      {rankFor(progression.totalXp).rank} · {rankFor(progression.totalXp).title}
+                    </strong>
+                  </div>
+                  <div>
+                    <span className="tv-parent-stat-k">Workshop days</span>
+                    <strong className="tv-parent-stat-v">{workshopDaysCount(progression)}</strong>
+                  </div>
+                </div>
+                <p className="tv-moves" style={{ margin: 0, fontSize: 12 }}>
+                  {["lab1", "lab2", "lab3", "lab4", "lab5", "lab6"]
+                    .map((lab) => `${lab.replace("lab", "Lab ")} ★${familyStars(progression, lab)}`)
+                    .join(" · ")}
+                </p>
+                <p className="tv-moves" style={{ margin: 0, fontSize: 12 }}>
+                  Skills practiced: {practicedSkillsSummary(progression)}
+                </p>
+                {unlockedVehiclesFor(progression.totalXp).length > 0 && (
+                  <p className="tv-moves" style={{ margin: 0, fontSize: 12 }}>
+                    Rank vehicles: {unlockedVehiclesFor(progression.totalXp).join(", ")}
+                  </p>
+                )}
+                {(() => {
+                  const upNext = resolvePhase4VehicleRoster(progression).lockedVehicles[0];
+                  return upNext ? (
+                    <p className="tv-moves" style={{ margin: 0, fontSize: 12 }}>
+                      Up next: {upNext.entry.name} at {upNext.entry.xpThreshold} XP ({upNext.entry.recommendedLabLabel}). {upNext.guidance}
+                    </p>
+                  ) : null;
+                })()}
+
+                <div>
+                  <div className="tv-parent-row-head">
+                    <b>Real-life routines (+{CHORE_QUEST_XP} XP/day)</b>
+                    <span>{(progression.enabledChoreIds ?? []).length} active</span>
+                  </div>
+                  <p className="tv-moves" style={{ margin: "0 0 6px", fontSize: 12 }}>
+                    Optional offline habits shown in Toy Box. &quot;I did it!&quot; pays once a day and stamps a Workshop Day. Missed days never reset progress.
+                  </p>
+                  <div className="tv-chips" role="group" aria-label="Real-Life Routines">
+                    {allChoresWithState(localDayKey ?? "", progression).map((chore) => (
+                      <button
+                        key={chore.id}
+                        type="button"
+                        className="tv-sc"
+                        aria-pressed={chore.enabled}
+                        title={chore.parentHint}
+                        onClick={() => onToggleChore?.(chore.id)}
+                      >
+                        {chore.enabled ? "✓ " : ""}
+                        {chore.title}
+                        {chore.completed ? " (done today)" : ""}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <p className="tv-moves" style={{ margin: 0, fontSize: 12 }}>
+                  XP lives on this device. Reset keeps scanned and saved toys unlocked.
+                </p>
+                <div>
+                  <button
+                    type="button"
+                    className="tv-ctl tv-ctl-danger"
+                    onClick={() => {
+                      if (!confirmResetXp) {
+                        setConfirmResetXp(true);
+                        return;
+                      }
+                      setConfirmResetXp(false);
+                      onResetXp?.();
+                    }}
+                  >
+                    {confirmResetXp ? "Tap again to confirm Reset XP" : "Reset XP"}
+                  </button>
+                </div>
+              </div>
+            </details>
+          )}
+
+          {/* Garage weekend drop. */}
+          {progression && (
+            <details className="tv-disclosure">
+              <summary>
+                <span>Garage weekend</span>
+                <span className="tv-disclosure-meta">{garageDropOn ? "Drop on" : "Drop off"}</span>
+              </summary>
+              <div className="tv-parent-adv">
+                <div className="tv-parent-row-head" style={{ marginBottom: 0 }}>
+                  <b>Weekend drop</b>
+                  <button
+                    type="button"
+                    className="tv-ctl"
+                    aria-pressed={garageDropOn}
+                    onClick={() => onSetGarageDrop?.(!garageDropOn)}
+                  >
+                    {garageDropOn ? "Weekend drop: On" : "Weekend drop: Off"}
+                  </button>
+                </div>
+                <p className="tv-moves" style={{ margin: 0, fontSize: 12 }}>
+                  The Garage itself stays open. Off hides only the weekend drop card
+                  {garageSummary ? ` (“${garageSummary.title}”)` : ""}.
+                </p>
+                <div className="tv-chips" role="group" aria-label="Garage drop days">
+                  {GARAGE_DAY_LABELS.map(({ dow, label }) => {
+                    const on = (garageDays ?? [0, 5, 6]).includes(dow);
+                    const last = on && (garageDays ?? [0, 5, 6]).length === 1;
+                    return (
+                      <button
+                        key={dow}
+                        type="button"
+                        className="tv-sc"
+                        aria-pressed={on}
+                        disabled={last}
+                        title={last ? "One day stays on" : `Drop live on ${label}s`}
+                        onClick={() => onToggleGarageDay?.(dow)}
+                      >
+                        {on ? "✓ " : ""}
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="tv-parent-row-head" style={{ marginBottom: 0 }}>
+                  <b>Real-life build</b>
+                  <button
+                    type="button"
+                    className="tv-ctl"
+                    aria-pressed={garageRealLifeOn}
+                    onClick={() => onSetGarageRealLife?.(!garageRealLifeOn)}
+                  >
+                    {garageRealLifeOn ? "Real-life leg: On" : "Real-life leg: Off"}
+                  </button>
+                </div>
+                {garageHousehold ?? (
+                  <>
+                    <p className="tv-moves" style={{ margin: 0, fontSize: 12 }}>
+                      After the in-app drop, the family rebuilds it with real parts. Confirming here stamps a Workshop Day and pays +10 XP, only when no real-life XP
+                      was earned yet today.
+                    </p>
+                    {onConfirmGarageReal && (
+                      <div>
+                        <button
+                          type="button"
+                          className="tv-ctl tv-ctl-primary"
+                          disabled={!garageSummary?.done || !garageRealLifeOn || garageRealDone}
+                          onClick={() => setStatusNote(onConfirmGarageReal())}
+                        >
+                          {garageRealDone ? "Built it for real ★" : "We built it"}
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </details>
+          )}
+
+          {/* The Songs section: the song maker on or off and the weekly limit (renders nothing when the song route is off here) */}
+          <SongSettingsPanel proof={activeProof} />
+
+          {/* The lock: how often the gate asks, and the 4-tap PIN. */}
+          <details className="tv-disclosure">
+            <summary>
+              <span>Lock &amp; PIN</span>
+              <span className="tv-disclosure-meta">
+                {settings.pinSet ? "PIN set" : "No PIN yet"} · {settings.gateStrictness === "sitting_window" ? "5-min window" : "asks every time"}
+              </span>
+            </summary>
+            <div className="tv-parent-adv">
               <div>
                 <div className="tv-parent-row-head">
                   <b>Grown-up gate strictness</b>
@@ -1706,11 +1463,191 @@ export function GrownUpsSheet({
             </div>
           </details>
 
-          {statusNote && (
-            <p className="tv-moves" style={{ margin: 0, color: "var(--mint)" }} role="status">
-              {statusNote}
-            </p>
-          )}
+          {/* Showcase & developer: Demo Mode and its tools. Closed unless Demo Mode is on, so a parent never meets it. */}
+          <details className="tv-disclosure" open={demoMode}>
+            <summary>
+              <span>Showcase &amp; Developer</span>
+              <span className="tv-disclosure-meta">{demoMode ? "Demo Mode on" : "Off"}</span>
+            </summary>
+            <div className="tv-parent-adv">
+              <div className="tv-parent-row-head" style={{ marginBottom: 0 }}>
+                <b>Demo Mode</b>
+                <button
+                  type="button"
+                  className={demoMode ? "tv-ctl tv-ctl-sky" : "tv-ctl"}
+                  aria-pressed={demoMode}
+                  onClick={() => onToggleDemoMode?.(!demoMode)}
+                >
+                  {demoMode ? "Demo Mode: On" : "Demo Mode: Off"}
+                </button>
+              </div>
+              <p className="tv-moves" style={{ margin: 0, fontSize: 12 }}>
+                {demoMode
+                  ? "Full 12-world / Lab 1-6 bar, Level Editor, Kip 3D Rig, Seed Demo Save, and sandbox unlock-all active (earned XP stays untouched)."
+                  : "Default Off: boots straight onto a clean stage with a compact Worlds selector."}
+              </p>
+
+              {demoMode && (
+                <div className="tv-demo-tools">
+                  {onToggleParentControls && (
+                    <div style={{ marginBottom: 8 }}>
+                      {parentControlsSource === "build" ? (
+                        <p className="tv-moves" style={{ fontSize: 12 }}>
+                          This showcase build has the grown-up checks and play-time limits switched off. They cannot be turned back on here.
+                        </p>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            className={controlsMode === "off" ? "tv-ctl tv-ctl-sky" : "tv-ctl"}
+                            aria-pressed={controlsMode === "off"}
+                            onClick={() => {
+                              const stored = onToggleParentControls(controlsMode !== "off");
+                              if (stored === false) setStatusNote("This browser would not remember the switch, so nothing changed.");
+                            }}
+                          >
+                            {controlsMode === "off" ? "Grown-up checks and limits: Off" : "Grown-up checks and limits: On"}
+                          </button>
+                          <p className="tv-moves" style={{ fontSize: 12 }}>
+                            Off, for this tab only: no play-time limit or Sleep Curtain, no grown-up question on this sheet, and Workshop downloads work. Saved settings
+                            and today&apos;s time are not changed. Photo uploads (Smart face, room scan) still need a grown-up. Closing the tab, or turning Demo Mode
+                            off, puts the checks back on.
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  )}
+                  {onToggleGaragePreview && (
+                    <div style={{ marginBottom: 8 }}>
+                      <button
+                        type="button"
+                        className={garagePreview ? "tv-ctl tv-ctl-sky" : "tv-ctl"}
+                        aria-pressed={garagePreview}
+                        onClick={onToggleGaragePreview}
+                      >
+                        {garagePreview ? "Preview weekend: On" : "Preview weekend: Off"}
+                      </button>
+                      <p className="tv-moves" style={{ fontSize: 12 }}>
+                        Shows the Garage&apos;s weekend drop (the next one) on any day, so the animation and the mission can be shown on a weekday.
+                      </p>
+                    </div>
+                  )}
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                    {onSeedDemoSave && (
+                      <button
+                        type="button"
+                        className="tv-ctl tv-ctl-primary"
+                        onClick={() => {
+                          onSeedDemoSave();
+                          setStatusNote("Demo save seeded in Garden (blueprints & parts stocked; earned XP unchanged).");
+                        }}
+                      >
+                        Seed Demo Save
+                      </button>
+                    )}
+                    {onOpenEditor && (
+                      <button
+                        type="button"
+                        className="tv-ctl"
+                        onClick={() => {
+                          onClose();
+                          onOpenEditor();
+                        }}
+                      >
+                        Level Editor
+                      </button>
+                    )}
+                    {onRoomPhoto && (
+                      <label className="tv-ctl" style={{ cursor: roomBusy ? "wait" : "pointer" }}>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          aria-label="Room photo for a level"
+                          disabled={roomBusy}
+                          onChange={onRoomPhotoFile}
+                          style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none" }}
+                        />
+                        {roomBusy ? "Reading photo…" : "Room Photo Level"}
+                      </label>
+                    )}
+                    <a className="tv-ctl" href={effectiveKipUrl} target="_blank" rel="noopener noreferrer">
+                      Kip 3D Rig
+                    </a>
+                    {progression && onToggleSandbox && (
+                      <button
+                        type="button"
+                        className="tv-ctl"
+                        aria-pressed={progression.sandboxUnlockAll}
+                        onClick={onToggleSandbox}
+                      >
+                        {progression.sandboxUnlockAll ? "Sandbox: all unlocked (on)" : "Sandbox: unlock everything"}
+                      </button>
+                    )}
+                    {onOpenMap && (
+                      <button type="button" className="tv-ctl" onClick={onOpenMap}>
+                        Levels: open the Map
+                      </button>
+                    )}
+                  </div>
+
+                  {onSetTimeOfDayMode && (
+                    <div>
+                      <span className="tv-parent-stat-k" style={{ marginBottom: 4 }}>
+                        Map look
+                      </span>
+                      <div className="tv-chips" role="group" aria-label="Map look">
+                        {(
+                          [
+                            ["auto", "Auto"],
+                            ["day", "Day"],
+                            ["night", "Night"],
+                          ] as const
+                        ).map(([mode, label]) => (
+                          <button
+                            key={mode}
+                            type="button"
+                            className="tv-sc"
+                            aria-pressed={(timeOfDayMode ?? "auto") === mode}
+                            onClick={() => onSetTimeOfDayMode(mode)}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                      <p className="tv-moves" style={{ fontSize: 12 }}>
+                        Auto shows the day look from 7 am to 7 pm and the night look after that, on this device&apos;s clock. Day or Night keeps one look all the time.
+                      </p>
+                    </div>
+                  )}
+
+                  {onJumpWorld && (
+                    <div>
+                      <span className="tv-parent-stat-k" style={{ marginBottom: 4 }}>
+                        Quick-jump Worlds &amp; STEM Labs
+                      </span>
+                      <div className="tv-chips">
+                        {WORLDS.map((w) => (
+                          <button
+                            key={w.id}
+                            type="button"
+                            className="tv-sc"
+                            aria-pressed={currentWorld === w.id}
+                            onClick={() => {
+                              onJumpWorld(w.id);
+                              onClose();
+                            }}
+                          >
+                            {w.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </details>
         </div>
       )}
     </section>
