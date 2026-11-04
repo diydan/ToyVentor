@@ -202,7 +202,7 @@ async function check_xylophone(cdp) {
 const blocksState = (cdp) => cdp.ev(`(() => { const i = window.__tvWorld.props.list().find((p) => p.type === "blocks"); const b = i.holder.userData.blocks; const t = i.holder.userData.tower; return { layers: t.layers, phase: t.phase, visible: b.filter((m) => m.visible).length, ys: b.map((m) => +m.position.y.toFixed(3)), xs: b.map((m) => +m.position.x.toFixed(2)) }; })()`);
 const blockScreen = (cdp, k) => cdp.ev(`(() => { const i = window.__tvWorld.props.list().find((p) => p.type === "blocks"); const m = i.holder.userData.blocks[${k}]; const v = m.getWorldPosition(new window.__tvDebug.camera.position.constructor()).project(window.__tvDebug.camera); const r = document.querySelector("canvas").getBoundingClientRect(); return { x: r.left + (v.x * 0.5 + 0.5) * r.width, y: r.top + (-v.y * 0.5 + 0.5) * r.height, on: Math.abs(v.x) < 0.95 && Math.abs(v.y) < 0.95 }; })()`);
 async function check_blocks(cdp) {
-  await cdp.ev(`(() => { const w = window.__tvWorld; if (w.acts) w.acts.reset(); w.P.busy = false; w.P.hop = 0; return true; })()`);
+  await cdp.ev(`(() => { const w = window.__tvWorld; if (w.acts) w.acts.reset(); w.follow.reset(); w.P.busy = false; w.P.hop = 0; return true; })()`);
   check("setup: the Toy Room has blocks", Boolean(await prop(cdp, "blocks")));
   await stage(cdp, "blocks", 1.9);
   await shot(cdp, "8-blocks-pile");
@@ -258,6 +258,53 @@ async function check_blocks(cdp) {
   const back = await blocksState(cdp);
   check("blocks: then the old pile is back as it was, ready to build again", back.layers === 2 && back.visible === 3 && Math.abs(back.ys[0] - 0.45) < 0.02 && Math.abs(back.ys[2] - 1.35) < 0.02, JSON.stringify(back));
   await shot(cdp, "11-blocks-rebuilt");
+}
+
+// ---- the dog follows Kip once they have met, and sits when Kip stops ----
+const dogState = (cdp) => cdp.ev(`(() => { const w = window.__tvWorld; const d = w.props.list().find((p) => p.type === "dog"); const c = d.holder.userData.cue; return { t: performance.now() / 1000, x: +d.base.px.toFixed(2), sit: +(d.holder.userData.sitK || 0).toFixed(2), cue: c ? c.name : null, phase: w.follow.phase, engaged: w.follow.engaged, toy: +w.P.pos.x.toFixed(2), ry: +d.base.ry.toFixed(2) }; })()`);
+const dogLane = (cdp) => cdp.ev(`(() => { const w = window.__tvWorld; const d = w.props.list().find((p) => p.type === "dog"); return w.props.list().filter((p) => p.type !== "dog" && p.type !== "ball" && Math.abs(p.base.pz - d.base.pz) < 1.5).map((p) => ({ type: p.type, x: +p.base.px.toFixed(2), half: +(p.size.x / 2).toFixed(2) })); })()`);
+const walkKip = (cdp, x) => cdp.ev(`(() => { const w = window.__tvWorld; w.P.target = new w.P.pos.constructor(${x}, 0, w.P.pos.z); return true; })()`);
+async function check_dog_follow(cdp) {
+  // Kip is put near a dog that has forgotten him: out of reach to begin with
+  await cdp.ev(`(() => { const w = window.__tvWorld; w.acts.reset(); w.fetch.cancel(); w.follow.reset(); w.P.busy = false; w.P.hop = 0; w.P.target = null; const d = w.props.list().find((p) => p.type === "dog"); w.props.placeProp(d, 29, { ry: Math.PI }); w.props.cue(d, "idle"); const ball = w.props.list().find((p) => p.type === "ball"); w.props.placeProp(ball, 12, {}); w.P.pos.x = 32.6; w.P.pos.z = 0.4; return true; })()`);       // (the ball is moved out of the way: a tap near it would kick it, and the dog would fetch)
+  await sleep(800);
+  const far = await dogState(cdp);
+  check("dog follow: out of reach it stays put and has not met Kip", !far.engaged && far.phase === "home" && far.x === 29, JSON.stringify(far));
+  // Kip walks up to it: it is delighted and from then on follows
+  await walkKip(cdp, 31.4);
+  const meet = await sample(cdp, 2500, () => dogState(cdp), 50);
+  check("dog follow: when Kip walks up to it, it is delighted (happy) and has met Kip", meet.some((m) => m.cue === "happy") && meet.at(-1).engaged, JSON.stringify(meet.at(-1)));
+  check("dog follow: meeting Kip does not move it", meet.every((m) => m.x === 29), JSON.stringify([...new Set(meet.map((m) => m.x))]));
+  // Kip stands still: it sits, facing Kip
+  await waitFor(async () => (await dogState(cdp)).phase === "sitting", { timeoutMs: 8000, label: "the dog sits" });
+  await sleep(1200);
+  const seated = await dogState(cdp);
+  check("dog follow: after a while of Kip standing still it sits down (eased all the way) where it was, facing Kip", seated.sit === 1 && seated.cue === "sit" && seated.x === 29 && Math.abs(seated.ry - 3.14) > 3, JSON.stringify(seated));
+  await stage(cdp, "dog", 2.6);
+  await shot(cdp, "12-dog-sits");
+  // Kip walks away to the right, past a ball and a bubble set: it gets up and trots after Kip
+  await walkKip(cdp, 36.4);
+  const trot = await sample(cdp, 6500, () => dogState(cdp), 60);
+  check("dog follow: when Kip walks away it gets up and trots after it", trot.some((m) => m.cue === "run") && trot.some((m) => m.sit < 0.3 && m.phase === "trotting"), JSON.stringify([...new Set(trot.map((m) => `${m.phase}/${m.cue}`))]));
+  const speeds = trot.map((m, i) => (i === 0 ? 0 : Math.abs(m.x - trot[i - 1].x) / Math.max(0.001, m.t - trot[i - 1].t)));
+  check("dog follow: it never runs faster than a trot, and it does run", Math.max(...speeds) < 5.5 && Math.max(...speeds) > 2, String(Math.max(...speeds)));
+  await waitFor(async () => (await dogState(cdp)).phase === "sitting", { timeoutMs: 10000, label: "the dog sits again" });
+  await sleep(900);
+  const after = await dogState(cdp);
+  const lane = await dogLane(cdp);
+  const clear = lane.every((p) => Math.abs(p.x - after.x) >= p.half + 0.6 - 0.2);
+  check("dog follow: it settles close to Kip (a few units) and Kip stops, so it sits down again at its new place", after.sit === 1 && Math.abs(after.toy - after.x) > 1.5 && Math.abs(after.toy - after.x) <= 4.2, JSON.stringify(after));
+  check("dog follow: and it is not standing inside a prop", clear, JSON.stringify({ x: after.x, lane }));
+  await stage(cdp, "dog", 2.6);
+  await shot(cdp, "13-dog-follows");
+  // a tap on the sitting dog: it gets up and barks (Kip comes to pet it), and afterwards it sits again
+  await clearToast(cdp);
+  const on = await propScreen(cdp, "dog");
+  await cdp.tapAt(on.x, on.y);
+  const up = await sample(cdp, 900, () => dogState(cdp), 50);
+  check("dog follow: a tap on the sitting dog gets it up to bark", up.some((m) => m.cue === "bark") && up.at(-1).sit < 0.5, JSON.stringify(up.at(-1)));
+  await waitFor(async () => (await phase(cdp)) === "idle" && (await dogState(cdp)).phase === "sitting", { timeoutMs: 25000, label: "petted, and sitting again" });
+  check("dog follow: when Kip has petted it and stands still it sits again", (await dogState(cdp)).phase === "sitting");
 }
 
 async function main() {
@@ -331,9 +378,12 @@ async function main() {
     }
 
     // ---- the dog: alive on its own, barks when tapped, then Kip pets it ----
-    await stage(cdp, "dog");
+    // (Kip stays just out of reach for the idle wag: once he comes within a few units the dog has met him and hops about for a moment, which is not the idle wag)
+    await cdp.ev(`(() => { const w = window.__tvWorld; w.follow.reset(); const d = w.props.list().find((p) => p.type === "dog"); w.P.pos.x = d.base.px - 3.8; w.P.target = null; return true; })()`);
+    await sleep(400);
     const idle = await sample(cdp, 1500, async () => (await dogParts(cdp)).tail, 50);
     check("dog: it is alive: its tail wags on its own (it sweeps both ways)", Math.max(...idle) > 0.2 && Math.min(...idle) < -0.2, JSON.stringify([Math.min(...idle), Math.max(...idle)]));
+    await stage(cdp, "dog");
     await clearToast(cdp);
     await tapProp(cdp, "dog");
     const bark = await sample(cdp, 500, async () => (await dogParts(cdp)).bob, 20);           // (the first woof is in the first 0.15 s: start sampling at once)
@@ -378,9 +428,10 @@ async function main() {
     } else check("fetch: the ball is on screen to kick again", false, JSON.stringify(again));
 
     // ---- the xylophone: tap a bar to hear it; tap the frame and Kip plays a tune ----
-    await cdp.ev(`(() => { const w = window.__tvWorld; if (w.acts) w.acts.reset(); w.fetch.cancel(); w.P.busy = false; w.P.hop = 0; return true; })()`);
+    await cdp.ev(`(() => { const w = window.__tvWorld; if (w.acts) w.acts.reset(); w.fetch.cancel(); w.follow.reset(); w.P.busy = false; w.P.hop = 0; return true; })()`);       // (the dog has met Kip by now and would trot over to him: it is not what these sections are about)
     await check_xylophone(cdp);
     await check_blocks(cdp);
+    await check_dog_follow(cdp);
 
     check("no page exceptions", cdp.exceptions.length === 0, cdp.exceptions.slice(0, 3).join(" | "));
     killAll();

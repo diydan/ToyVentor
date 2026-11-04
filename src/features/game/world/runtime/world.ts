@@ -154,6 +154,7 @@ import { bushKind, kindById, orchardKind, palmFronds, palmFruitOffsets, palmKind
 import { createSleepHook } from "./sleepHook";
 import { createActs } from "./toyRoomActs";
 import { createFetch } from "./dogFetch";
+import { createFollow } from "./dogFollow";
 import { createBubbles } from "./bubbles";
 import { createHeld } from "./heldItems";
 import { buildGuitarProp } from "./guitar";
@@ -411,6 +412,8 @@ function theDog(){return PFX.list().filter(function(p: any){return p.type==="dog
 var DOGF=createFetch({dogX:function(){var d=theDog();return d?d.base.px:0},ballX:function(){return fetchBall?fetchBall.base.px:0},ballResting:function(){return !fetchBall||!fetchBall.kick},toyX:function(){return P.pos.x},moveDog:function(x: number,dir: number){var d=theDog();if(d)PFX.placeProp(d,x,{ry:dir>0?0:Math.PI})},moveBall:function(x: number,l: number){if(fetchBall)PFX.placeProp(fetchBall,x,{lift:l})},dropBall:function(){if(fetchBall){PFX.placeProp(fetchBall,fetchBall.base.px,{lift:0});PFX.kickBall(fetchBall,0,1.8)}},cue:function(n: "run"|"happy"|"idle"){var d=theDog();if(d)PFX.cue(d,n)},woof:function(){tone(300,0,.09,"sawtooth",.08,180);tone(260,.17,.1,"sawtooth",.08,160)}});
 /* Hug the teddy, jump on the cushions, kick the ball (playful-interactions spec section 6): the state machine is visitRoutine.ts, the acts toyRoomActs.ts; this says what the toy and the room are. */
 var ACTS=createActs({root:function(){return W.root},eater:function(){return S.type==="robot"?"robot":S.type==="vehicle"?"vehicle":"character"},allowed:function(){return !paused&&!P.showcase&&!P.mDrive&&!P.busy&&!ED.on&&!SLEEPH.busy},position:function(){return{x:P.pos.x,y:P.hop||0,z:P.pos.z}},targetX:function(){return P.target?P.target.x:null},walkTo:function(x: number,z: number){setTarget(x,z)},stopWalk:function(){P.target=null},face:function(d: number){P.face=P.tface=d>0?0:Math.PI},clip:function(a: "hug"|"kick"|"cheer"|"read"|"strum"|"blow"|"pet"|"mallet"){return mixGo(a)},hold:function(i: "book"|"guitar"|"wand"|"mallets"){HELD.hold(i,P.model,P.rig&&P.rig.arms&&P.rig.arms[1],P.rig&&P.rig.arms&&P.rig.arms[0])},release:function(){HELD.release()},mouth:function(d: number){var b=new T.Box3().setFromObject(P.root);return{x:d>0?b.max.x:b.min.x,y:b.min.y+(b.max.y-b.min.y)*.8,z:(b.min.z+b.max.z)/2}},bubbles:BUBBLES,mess:{visitFor:function(k: "spill"|"dump",i: any){return MESS.visitFor(k,i)}},fetch:function(ball: any){if(!theDog())return false;fetchBall=ball;DOGF.start();return true},setPosition:function(x: number,y: number,z: number){P.pos.x=x;P.pos.z=z;P.hop=y},tone:function(f: number,dl: number,du: number,ty: OscillatorType,v: number,sl?: number){tone(f,dl,du,ty,v,sl)},phase:function(p: string){P.busy=p==="acting";if(p==="acting")P.target=null;if(p!=="acting")P.hop=0},fx:PFX});
+/* The dog trots after Kip once they have met and sits when Kip stops (dogFollow.ts); a fetch, an act, sleep or the pause screen always has it first. */
+var FOLLOW=createFollow({dogX:function(){var d=theDog();return d?d.base.px:null},toyX:function(){return P.pos.x},toyStill:function(){return P.speed<.1&&!P.target},occupied:function(x: number){var d=theDog();return PFX.list().some(function(p: any){return p.type!=="dog"&&p.type!=="ball"&&(!d||Math.abs(p.base.pz-d.base.pz)<1.5)&&Math.abs(p.base.px-x)<p.size.x/2+.6})},moveDog:function(x: number,dir: number){var d=theDog();if(d)PFX.placeProp(d,x,{ry:dir>0?0:Math.PI})},cue:function(n: "run"|"sit"|"idle"|"happy"){var d=theDog();if(d)PFX.cue(d,n)},allowed:function(){return !paused&&!P.showcase&&!P.mDrive&&!ED.on&&!DOGF.busy&&!ACTS.busy&&!SLEEPH.busy}});
 /* The juice cup you can knock over and the toy box you can tip out, and the clean-up after each (mess.ts; playful-interactions spec, "Spill and clean up" and "Make a mess, clean it up"). Its lines are in the closed list (messLines.ts). */
 var MESS=createMess({root:function(){return W.root},host:function(){return hostEl},reduced:function(){return reduce},say:say,toast:function(s: string){toast(s)},tone:function(f: number,dl: number,du: number,ty: OscillatorType,v: number,sl?: number){tone(f,dl,du,ty,v,sl)},clip:function(a: "oops"|"mop"|"tidy"|"cheer"){return mixGo(a as MixAction)},hold:function(i: "mop"){HELD.hold(i,P.model,P.rig&&P.rig.arms&&P.rig.arms[1],P.rig&&P.rig.arms&&P.rig.arms[0])},release:function(){HELD.release()},run:function(v: any){return ACTS.run(v)}});
 function cottage(x: number,z: number){var g=new T.Group();g.position.set(x,0,z);g.add(M(new T.BoxGeometry(2.4,1.6,1.8),matte("#141f55"),0,.8,0));var rf=M(new T.ConeGeometry(1.9,1.2,4),matte("#101a4a"),0,2.2,0);rf.rotation.y=Math.PI/4;g.add(rf);g.add(M(new T.BoxGeometry(.4,.4,.05),glowMat("#ffd24d",2),.4,.9,.92));var cg=glowSprite("rgba(255,210,77,0.4)",2.5);cg.position.set(.4,.9,1);g.add(cg);return add(g)}
@@ -496,7 +499,7 @@ function tidyUp(ts: { id: string; x: number; label: string; g: THREE.Group; hit:
  return true;
 }
 function buildWorld(id: string){
- if(W.backdrop){W.backdrop.dispose()}if(W.root){scene.remove(W.root)}W={root:new T.Group(),blades:[],blink:[]};scene.add(W.root);PFX.reset();MESS.reset();FEED.reset();SLEEPH.reset();ACTS.reset();DOGF.cancel();BUBBLES.reset();HELD.release();spots.length=0;bolts.length=0;signHits.length=0;tidySpots.length=0;sceneCarry=null;sceneVisit=null;sceneMarks=[];
+ if(W.backdrop){W.backdrop.dispose()}if(W.root){scene.remove(W.root)}W={root:new T.Group(),blades:[],blink:[]};scene.add(W.root);PFX.reset();MESS.reset();FEED.reset();SLEEPH.reset();ACTS.reset();DOGF.cancel();BUBBLES.reset();HELD.release();FOLLOW.reset();spots.length=0;bolts.length=0;signHits.length=0;tidySpots.length=0;sceneCarry=null;sceneVisit=null;sceneMarks=[];
  var R=WORLDS[id]!;
  scene.background=canv(4,512,function(g,w,h){var gr=g.createLinearGradient(0,0,0,h);gr.addColorStop(0,R.sky[0]);gr.addColorStop(.3,R.sky[1]);gr.addColorStop(.52,R.sky[2]);gr.addColorStop(1,R.sky[2]);g.fillStyle=gr;g.fillRect(0,0,w,h)});
  applyLightRig(R,id);
@@ -739,7 +742,7 @@ function resize(){var r=hostEl.getBoundingClientRect(),w=Math.max(1,r.width),h=M
 winOn("resize",resize);
 var FR=0;var paused=false;function frame(){if(disposed)return;if(paused){timer.update();rafId=requestAnimationFrame(frame);return}FR++;timer.update();var dt=Math.min(.05,timer.getDelta())*(1);t+=dt;streetCd=Math.max(0,streetCd-dt);
  for(var i=fx.length-1;i>=0;i--){var e=fx[i]!;e.t+=dt;var k=Math.min(1,e.t/e.d);e.f(k,dt);if(k>=1){fx.splice(i,1);if(e.end)e.end()}}
- PFX.update(dt,t);MESS.update(dt);FEED.update(dt);SLEEPH.update(dt);ACTS.update(dt);DOGF.update(dt);BUBBLES.update(dt);
+ PFX.update(dt,t);MESS.update(dt);FEED.update(dt);SLEEPH.update(dt);ACTS.update(dt);DOGF.update(dt);BUBBLES.update(dt);FOLLOW.update(dt);
  var pk=activePerk(),nb0=(!ED.on&&!ED.testing)?townNeighbors(S.world):null,kLo=nb0?.2:.5,kHi=nb0?44.6:43.5;
  var sp=0,kd=(keys.r?1:0)-(keys.l?1:0),ku=((keys.u?1:0)-(keys.d?1:0)),vmax=pk?pk.vmax:(S.type==="vehicle"?5.2:3.4);
  if(kd&&!P.busy&&!P.showcase&&!P.mDrive){P.target=null;P.pos.x=Math.max(kLo,Math.min(kHi,P.pos.x+kd*vmax*dt));P.pos.z+=(0-P.pos.z)*Math.min(1,dt*1.5);P.tface=kd>0?0:Math.PI;sp=vmax}
@@ -1365,6 +1368,6 @@ dispose:function(){ if(disposed)return; disposed=true; if(W.backdrop)W.backdrop.
 // Scoped sizing: host rect via ResizeObserver with window-resize fallback (winOn above).
 resize();
 try { const ro = new ResizeObserver(() => resize()); ro.observe(hostEl); const origDispose = handle.dispose; handle.dispose = () => { try{ro.disconnect();}catch{} origDispose(); }; } catch {}
-if(import.meta.env?.DEV)(window as unknown as Record<string,unknown>).__tvWorld={handle:handle,mixGo:mixGo,getMix:function(){return mix},P:P,props:PFX,feed:FEED,sleep:SLEEPH,acts:ACTS,mess:MESS,bubbles:BUBBLES,held:HELD,fetch:DOGF,visit:function(){return sceneVisit?{at:sceneVisit.at,pending:sceneVisit.pending,done:sceneVisit.done,nudges:sceneNudges}:null}};
+if(import.meta.env?.DEV)(window as unknown as Record<string,unknown>).__tvWorld={handle:handle,mixGo:mixGo,getMix:function(){return mix},P:P,props:PFX,feed:FEED,sleep:SLEEPH,acts:ACTS,mess:MESS,bubbles:BUBBLES,held:HELD,fetch:DOGF,follow:FOLLOW,visit:function(){return sceneVisit?{at:sceneVisit.at,pending:sceneVisit.pending,done:sceneVisit.done,nudges:sceneNudges}:null}};
 return handle;
 }
