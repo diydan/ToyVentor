@@ -60,9 +60,11 @@ export interface KipBodyColors { head: string; neck: string; torso: string; arms
  * The colour of each part of the human Kip, the way the demo paints them (resolveBodyColors): head, neck, hands and, in a short-sleeved shirt, the arms are the skin; the torso is the
  * shirt; the legs are the pants. (A long-sleeved shirt would colour the arms too; the game has one shirt colour and no sleeves choice, so the arms stay bare.)
  */
-export function kipBodyColors(col: { c1: string; c2: string; skin?: string }): KipBodyColors {
+export function kipBodyColors(col: { c1: string; c2: string; skin?: string; boots?: string }): KipBodyColors {
   const skin = col.skin || KIP_DEFAULT_COL.skin;
-  return { head: skin, neck: skin, torso: col.c1, arms: skin, hands: skin, legs: col.c2, boots: KIP_BOOT_HEX };
+  // the boots are the demo's orange unless the child chose a colour ("Dress your Kip": a valid hex only)
+  const boots = typeof col.boots === "string" && /^#[0-9a-f]{6}$/i.test(col.boots) ? col.boots.toLowerCase() : KIP_BOOT_HEX;
+  return { head: skin, neck: skin, torso: col.c1, arms: skin, hands: skin, legs: col.c2, boots };
 }
 
 // ---- the face plate -----------------------------------------------------------------------------------------------------------------------------------------------

@@ -12,6 +12,8 @@ export interface RigColors {
   skin?: string;
   /** The hair tone of a human head (a hex); the stock chestnut when missing. */
   hair?: string;
+  /** The boot colour of the human Kip (a hex); the demo's orange when missing. */
+  boots?: string;
 }
 export interface RigSel {
   wheels: string;

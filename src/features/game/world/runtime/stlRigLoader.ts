@@ -12,7 +12,7 @@ import {
   toCreasedNormals,
 } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import type { RigColors, RigSel, ToyRig } from "./playerRig";
-import { FACEPLATE_HOLDER, KID_CROWN_Y, KIP_DEFAULT_HAIR_HEX, KIP_WIG_LIFT_MM, kipBodyColors, kipHairUrl, resolveKipTop, type KipTop } from "./kipLook";
+import { FACEPLATE_HOLDER, KID_CROWN_Y, KIP_BOOT_HEX, KIP_DEFAULT_HAIR_HEX, KIP_WIG_LIFT_MM, kipBodyColors, kipHairUrl, resolveKipTop, type KipTop } from "./kipLook";
 import { coverMesh } from "./kipCover";
 import { buildFaceDecalGeometry, kipFaceMaterial } from "./kipFacePlate";
 import { lightenShadow } from "./shadowProxy";
@@ -720,6 +720,8 @@ function applyCharacterStlRig(
   const body = kipBodyColors(col);
   const limbMat = human ? plastic(body.arms, { roughness: 0.55, clearcoat: 0.12 }) : shellMat;
   const neckMat = human ? plastic(body.neck, { roughness: 0.55, clearcoat: 0.12 }) : sparkMat;
+  // the boots: the shared orange spark material unless the child chose another colour ("Dress your Kip", col.boots)
+  const bootMat = human && body.boots !== KIP_BOOT_HEX ? plastic(body.boots, { roughness: 0.34, clearcoat: 0.42 }) : sparkMat;
 
   const baseSlot = rig.slots.base ?? new T.Group();
   // Stage forward is +X; CAD forward is +Z -> rotate +PI/2 on Y, scaled to stage units.
@@ -835,7 +837,7 @@ function applyCharacterStlRig(
     const footJoint = new T.Group();
     footJoint.position.set(0, -0.4, -1.5);
     lowerJoint.add(footJoint);
-    const bootMesh = scadMesh(geos.boot!, sparkMat);
+    const bootMesh = scadMesh(geos.boot!, bootMat);
     bootMesh.position.set(0, -KIP_HIP_MM + 39.6, 2.0 + 1.5); // = (0, -21.9, 3.5): puts the boot's origin at (0, -61.5, 2) from the hip at rest
     footJoint.add(bootMesh);
     snapLegs.push({ flex: flexLeg, lower: lowerJoint, foot: footJoint, boot: bootMesh });

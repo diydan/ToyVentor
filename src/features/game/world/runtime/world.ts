@@ -1161,7 +1161,7 @@ function ONBS(op: string,hex?: string){
  if(op==="pile"){
   ONBT++;var tk=ONBT;if(ONBG){if(ONBG.parent)ONBG.parent.remove(ONBG);ONBG=null}dropPhones();ONBW=true;if(hex){var cf: any=null;if(hex.charAt(0)==="{"){try{cf=JSON.parse(hex)}catch(e){cf=null}} // the whole outfit from "Dress your Kip" (a JSON object), or just the shirt colour (a hex)
    var hexOk=function(v: any){return typeof v==="string"&&/^#[0-9a-f]{6}$/i.test(v)?v:null},qq: any;
-   if(cf){if((qq=hexOk(cf.shirt)))S.col.c1=qq;if((qq=hexOk(cf.pants)))S.col.c2=qq;if((qq=hexOk(cf.skin)))S.col.skin=qq;if((qq=hexOk(cf.hairColour)))S.col.hair=qq;
+   if(cf){if((qq=hexOk(cf.shirt)))S.col.c1=qq;if((qq=hexOk(cf.pants)))S.col.c2=qq;if((qq=hexOk(cf.boots)))S.col.boots=qq;if((qq=hexOk(cf.skin)))S.col.skin=qq;if((qq=hexOk(cf.hairColour)))S.col.hair=qq;
     if(typeof cf.hair==="string")S.sel.hair=cf.hair;if(typeof cf.hat==="string")S.sel.hat=cf.hat;if(typeof cf.tail==="string")S.sel.tail=cf.tail}
    else S.col.c1=hex;
    save();buildPlayer(null)}

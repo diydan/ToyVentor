@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import {
   FAVOURITE_ANIMALS, FAVOURITE_COLOURS, FAVOURITE_FRUITS, NAME_MAX, PROFILE_KEY, buildProfile, cleanName, clearProfile, confetti, grownUpQuestion, introSlides, meetKipSlides, readProfile, saveProfile,
-  HAIR_CHOICES, HAIR_COLOUR_CHOICES, HAT_CHOICES, PANTS_COLOURS, SKIN_CHOICES, TAIL_CHOICES, cleanKipConfig, defaultKipConfig,
+  HAIR_CHOICES, HAIR_COLOUR_CHOICES, HAT_CHOICES, PANTS_COLOURS, SHOE_COLOURS, SKIN_CHOICES, TAIL_CHOICES, cleanKipConfig, defaultKipConfig,
   songIdea, stepsFor, type Draft, type Store,
 } from "../src/lib/newPlayer";
 import { PAINTS } from "../src/features/game/world/runtime/catalog";
@@ -156,7 +156,7 @@ describe("the meet-Kip cards say only what the Toy Room does", () => {
 });
 
 describe("dress your Kip", () => {
-  it("offers only what the rig draws: the demo's 19 hairstyles (plus none) and 6 hair tones, 5 skin tones, the hats and tails the character rig has models for, and NO shoe colour", () => {
+  it("offers only what the rig draws: the demo's 19 hairstyles (plus none) and 6 hair tones, 5 skin tones, the hats and tails the character rig has models for, and shoe colours (the rig paints the boots one colour, col.boots)", () => {
     expect(HAIR_CHOICES).toHaveLength(20);
     expect(HAIR_CHOICES[0]).toMatchObject({ id: "none" });
     expect(HAIR_COLOUR_CHOICES).toHaveLength(6);
@@ -167,18 +167,20 @@ describe("dress your Kip", () => {
     const catalog = readFileSync(new URL("../src/features/game/world/runtime/catalog.ts", import.meta.url), "utf8");
     for (const h of HAT_CHOICES.filter((x) => x.id !== "none")) expect(rig, h.id).toMatch(new RegExp(`["']${h.id}["']`)); // every hat has a model
     for (const t of TAIL_CHOICES.filter((x) => x.id !== "none")) expect(catalog, t.id).toContain(`["character","tail","${t.id}"`); // every tail is a part
-    expect(Object.keys(defaultKipConfig())).not.toContain("shoes");
+    expect(Object.keys(defaultKipConfig())).toContain("boots");
+    expect(SHOE_COLOURS[0]!.hex).toBe("#ff6b4a"); // the demo's own orange comes first: the stock boots
+    for (const c of SHOE_COLOURS) expect(c.hex).toMatch(/^#[0-9a-f]{6}$/);
     for (const list of [PANTS_COLOURS, SKIN_CHOICES, HAIR_COLOUR_CHOICES]) for (const c of list) expect(c.hex).toMatch(/^#[0-9a-f]{6}$/);
     for (const list of [HAIR_CHOICES, HAT_CHOICES, TAIL_CHOICES, PANTS_COLOURS, SKIN_CHOICES, HAIR_COLOUR_CHOICES]) expect(new Set(list.map((c) => c.id)).size).toBe(list.length);
   });
   it("starts as the stock Kip (the demo's skin and jeans and the chestnut Swept hair) in the favourite colour, and stays valid (with no colour given the shirt is the first swatch)", () => {
-    expect(defaultKipConfig("#52B7FF")).toEqual({ shirt: "#52b7ff", pants: "#2b4c85", skin: "#f3ba95", hair: "short_swept", hairColour: "#6e412a", hat: "none", tail: "none" });
+    expect(defaultKipConfig("#52B7FF")).toEqual({ shirt: "#52b7ff", pants: "#2b4c85", boots: "#ff6b4a", skin: "#f3ba95", hair: "short_swept", hairColour: "#6e412a", hat: "none", tail: "none" });
     expect(cleanKipConfig(defaultKipConfig("#52b7ff"))).toEqual(defaultKipConfig("#52b7ff"));
     expect(cleanKipConfig(defaultKipConfig())).not.toBeNull();
   });
   it("refuses anything that is not from the lists: another colour, an unknown hair, hat or tail, a missing field, not an object", () => {
     const ok = defaultKipConfig("#52b7ff");
-    for (const bad of [{ ...ok, shirt: "#123456" }, { ...ok, pants: "red" }, { ...ok, skin: "#ffffff" }, { ...ok, hairColour: "#000000" }, { ...ok, hair: "mullet" }, { ...ok, hat: "tophat9" }, { ...ok, tail: "<b>" }, { ...ok, shirt: undefined }, null, "x", 5, []]) expect(cleanKipConfig(bad)).toBeNull();
+    for (const bad of [{ ...ok, shirt: "#123456" }, { ...ok, pants: "red" }, { ...ok, boots: "#123456" }, { ...ok, boots: undefined }, { ...ok, skin: "#ffffff" }, { ...ok, hairColour: "#000000" }, { ...ok, hair: "mullet" }, { ...ok, hat: "tophat9" }, { ...ok, tail: "<b>" }, { ...ok, shirt: undefined }, null, "x", 5, []]) expect(cleanKipConfig(bad)).toBeNull();
     expect(cleanKipConfig({ ...ok, hair: "none", hat: "crown", tail: "dragon" })).toMatchObject({ hair: "none", hat: "crown", tail: "dragon" });
   });
 });

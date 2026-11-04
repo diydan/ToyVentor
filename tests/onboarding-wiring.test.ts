@@ -152,12 +152,14 @@ describe("dress your Kip", () => {
     expect(sheet).toContain("setCfg((c) => ({ ...c, shirt: colourOf(colour)?.hex ?? c.shirt }));");
     expect(sheet).toContain('onStage("pile", JSON.stringify(cleanKipConfig(cfg) ?? defaultKipConfig(colourOf(colour)?.hex)));');
     expect(sheet).toContain("<KipPreview cfg={cfg} />"); // a live preview, so a pick is seen at once
+    expect(sheet).toContain('<Tiles label="Shoes" items={SHOE_COLOURS}');
   });
   it("the world applies only valid hex colours and plain strings, sets the colours, hair, hat and tail on the saved character, and rebuilds him", () => {
     expect(world).toContain('if(hex.charAt(0)==="{"){try{cf=JSON.parse(hex)}catch(e){cf=null}}');
     expect(world).toContain("/^#[0-9a-f]{6}$/i.test(v)");
     expect(world).toContain("S.col.c1=qq;");
     expect(world).toContain("S.col.c2=qq;");
+    expect(world).toContain("S.col.boots=qq;");
     expect(world).toContain("S.col.skin=qq;");
     expect(world).toContain("S.col.hair=qq;");
     expect(world).toContain("S.sel.hair=cf.hair;");

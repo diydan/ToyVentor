@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import "../../../onboarding.css";
 import {
-  FAVOURITE_ANIMALS, FAVOURITE_COLOURS, FAVOURITE_FRUITS, HAIR_CHOICES, HAIR_COLOUR_CHOICES, HAT_CHOICES, NAME_PROBLEM_TEXT, PANTS_COLOURS, SKIN_CHOICES, TAIL_CHOICES, animalOf, buildProfile, cleanKipConfig, cleanName, colourOf, confetti, defaultKipConfig, fruitOf, grownUpQuestion, introSlides, meetKipSlides, saveProfile, songIdea,
+  FAVOURITE_ANIMALS, FAVOURITE_COLOURS, FAVOURITE_FRUITS, HAIR_CHOICES, HAIR_COLOUR_CHOICES, HAT_CHOICES, NAME_PROBLEM_TEXT, PANTS_COLOURS, SHOE_COLOURS, SKIN_CHOICES, TAIL_CHOICES, animalOf, buildProfile, cleanKipConfig, cleanName, colourOf, confetti, defaultKipConfig, fruitOf, grownUpQuestion, introSlides, meetKipSlides, saveProfile, songIdea,
   stepsFor, type Choice, type KipConfig, type PlayerProfile, type StepId, type Store,
 } from "../../../lib/newPlayer";
 import type { FlowState } from "./themeSongFlow";
@@ -38,7 +38,7 @@ function KipPreview({ cfg }: { cfg: KipConfig }) {
   return (
     <div className="tv-onb-preview" aria-hidden="true" data-preview>
       <i className="pv-leg pv-l" style={{ background: cfg.pants }} /><i className="pv-leg pv-r" style={{ background: cfg.pants }} />
-      <i className="pv-shoe pv-l" /><i className="pv-shoe pv-r" />
+      <i className="pv-shoe pv-l" style={{ background: cfg.boots }} /><i className="pv-shoe pv-r" style={{ background: cfg.boots }} />
       <i className="pv-arm pv-l" style={{ background: cfg.skin }} /><i className="pv-arm pv-r" style={{ background: cfg.skin }} />
       <i className="pv-torso" style={{ background: cfg.shirt }} />
       <i className="pv-head" style={{ background: cfg.skin }}><b className="pv-eye pv-l" /><b className="pv-eye pv-r" /><b className="pv-mouth" /></i>
@@ -276,6 +276,7 @@ export function OnboardingSheet({ onClose, onStage, onHold, onPickUp, onIntroSta
                   <>
                     <Tiles label="Shirt" items={FAVOURITE_COLOURS} value={idOf(FAVOURITE_COLOURS, cfg.shirt)} onPick={pickHex("shirt", FAVOURITE_COLOURS)} colour />
                     <Tiles label="Pants" items={PANTS_COLOURS} value={idOf(PANTS_COLOURS, cfg.pants)} onPick={pickHex("pants", PANTS_COLOURS)} colour />
+                    <Tiles label="Shoes" items={SHOE_COLOURS} value={idOf(SHOE_COLOURS, cfg.boots)} onPick={pickHex("boots", SHOE_COLOURS)} colour />
                     <Tiles label="Skin" items={SKIN_CHOICES} value={idOf(SKIN_CHOICES, cfg.skin)} onPick={pickHex("skin", SKIN_CHOICES)} colour />
                   </>
                 )}
