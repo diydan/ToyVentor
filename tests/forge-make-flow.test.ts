@@ -182,8 +182,8 @@ describe("makeFromText", () => {
   });
 
   it("waits out a refused call for as long as the Worker says, and says so", async () => {
-    for (let i = 0; i < 3; i++) await worker.fetch(new Request("http://local/api/forge/make", { method: "POST", headers: { "content-type": "application/json", ...gate.headers() }, body: JSON.stringify({ text: "x" }) }), env as never);
-    calls.model.length = 0; // those three spent the minute's budget
+    for (let i = 0; i < 5; i++) await worker.fetch(new Request("http://local/api/forge/make", { method: "POST", headers: { "content-type": "application/json", ...gate.headers() }, body: JSON.stringify({ text: "x" }) }), env as never);
+    calls.model.length = 0; // those five spent the minute's budget
     const r = await makeFromText(args());
     expect(r).toMatchObject({ ok: true, printable: true });
     const waiting = progress.find((p) => p.stage === "waiting");

@@ -8,7 +8,7 @@ The viewer already has a download gate, but it only works inside an iframe. `cre
 
 ## 2. What already exists (read, not guessed)
 
-- **The game's gate.** `/api/parent/gate` issues a math question (2-digit by 1-digit) or asks for the PIN, and on success returns a `proofToken` with `expiresAt`: **2 minutes** in "every time" mode, **5 minutes** in "sitting" mode (`worker/parent.ts` 32 to 34, 546 to 550). PIN tries are limited with a cooldown. `src/lib/parentTime.ts` `requestGateChallenge` / `verifyGateAnswer` is the client, and it falls back to a **local** question when offline.
+- **The game's gate.** `/api/parent/gate` issues a math question (2-digit by 1-digit) or asks for the PIN, and on success returns a `proofToken` with `expiresAt`: **5 minutes** in "every time" mode, **10 minutes** in "sitting" mode (`worker/parent.ts` 32 to 36; were 2 and 5 until 2026-11-04, Dan). PIN tries are limited with a cooldown. `src/lib/parentTime.ts` `requestGateChallenge` / `verifyGateAnswer` is the client, and it falls back to a **local** question when offline.
 - **A second gate client already lives in the viewer.** `kip-selfie-cloud.js` `createSelfieCloud` has `challenge()`, `verify()`, `hasProof()` and keeps the proof in memory only. The selfie's "Smart face" shows the question inside the bench (`#sf-gate-*`), and `e2e:kip-selfie` checks that "a grown-up who passed the gate a moment ago is not quizzed twice". The PIN set in the app applies, because the client sends the app's `x-device-id`.
 - **The Worker already has a helper for routes that need a grown-up** (`verifyParentProofFromRequest`: device-bound, fails closed with no D1 binding). It is for routes; the downloads below are built in the browser, so there is no route to protect (see section 5).
 - **File exits in the benches** (every place a file leaves the page): the print view's `download(kind)` (`pack`, `project-3mf`, `3mf`, `stickers-pdf`, `stencils-stl`, `stl-zip`, `sheet`); the photo-print panel's `<a download>` links (the plate STL and the sticker, `kip-photo-print.js` 537 to 542); the selfie's `downloadSticker()` (a PNG and an SVG made from the child's photo). The Describe tab's blob is audio, not a file.
@@ -18,7 +18,7 @@ The viewer already has a download gate, but it only works inside an iframe. `cre
 **One gate, owned by the shell, asked by every file exit.**
 
 1. **`bench-gate.js` (new, pure core + one small modal).** `createDownloadGate({ cloud, ui })` returns `{ ask(kind) -> Promise<{ ok: true } | { ok: false, reason: 'denied' | 'cancelled' | 'unavailable' }>, hasProof() }`.
-   - If `cloud.hasProof()`, `ask` resolves `ok` without a question (one correct answer covers the next downloads for 2 to 5 minutes, as the selfie does today).
+   - If `cloud.hasProof()`, `ask` resolves `ok` without a question (one correct answer covers the next downloads for 5 to 10 minutes, as the selfie does today).
    - Otherwise it opens the modal: the question or the PIN field, calm error text, a cooldown message, Cancel. One question at a time: a second `ask` while one is open shares its promise.
    - `cloud` is a `createSelfieCloud` instance (reuse, do not write a third client). `kind` is a label for the copy only and is never sent anywhere.
 2. **Shell option `downloads: true | false | 'gated'`** (today a boolean). `'gated'` makes the shell create the gate once (one proof for every bench) and pass it as `env.downloadGate`. A bench with `downloads` truthy shows its file exits; with a gate it must `await gate.ask(kind)` before delivering.
@@ -52,7 +52,7 @@ It is a **speed bump in the browser**, not a lock. The files are built client-si
 1. **Who draws the question: the shell's modal (A).** Decided. Built.
 2. **Which exits: all of them stay OFF for now, and the Grown-Ups settings get one switch per gate.** Decided in principle; the switchboard is designed in section 7a and waits on two small confirmations. The game stays mounted with `downloads: false` until then.
 3. **Offline: not supported.** Decided: the gate fails closed (built); there is no local-question fallback.
-4. **How long one answer lasts: the server's window** (2 minutes for "every time", 5 for "sitting"). Decided. Built.
+4. **How long one answer lasts: the server's window** (5 minutes for "every time", 10 for "sitting"; 2 and 5 until 2026-11-04, Dan). Decided. Built.
 5. **Scope: open.** Recommendation in 7a: every file exit a child can reach from the game, not only the in-game Workshop.
 6. **Wording and languages: English first** (the copy is one replaceable object). Decided.
 7. **Whether a parental gate is required or a courtesy: open, not assessed.** Needs whoever signs off compliance; the questions to ask them are in 7b.

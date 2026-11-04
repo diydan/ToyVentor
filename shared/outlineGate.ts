@@ -23,7 +23,7 @@
 import { type DaemonSymmetry, type GateArtifacts, type OutlineGate, type OutlineShape, type OutlineVerdict, verdictFromGateReport } from "./outlineFit";
 
 export type OutlineGateErrorKind =
-  /** 429: the Worker's per-device or per-IP budget (preview 3 a minute, poll 30 a minute) or the daemon's queue is full. */
+  /** 429: the Worker's per-device or per-IP budget (preview 5 a minute, poll 30 a minute) or the daemon's queue is full. */
   | "slow_down"
   /** 401: no live parent proof. Needs the grown-up gate again. */
   | "gate_required"

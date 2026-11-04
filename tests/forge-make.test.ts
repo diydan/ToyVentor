@@ -477,11 +477,11 @@ describe("POST /api/forge/make", () => {
     });
   });
 
-  it("shares the preview budget: the fourth call in a minute is told to rest, with when to come back", async () => {
-    for (let i = 0; i < 3; i++) expect((await make({ text: "a wizard hat" })).status).toBe(200);
+  it("shares the preview budget: the sixth call in a minute is told to rest, with when to come back", async () => {
+    for (let i = 0; i < 5; i++) expect((await make({ text: "a wizard hat" })).status).toBe(200);
     const res = await make({ text: "a wizard hat" });
     expect(res.status).toBe(429);
     expect(res.headers.get("retry-after")).toMatch(/^\d+$/);
-    expect(seen.model).toHaveLength(3); // the refused call spent no model call
+    expect(seen.model).toHaveLength(5); // the refused call spent no model call
   });
 });

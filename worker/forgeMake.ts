@@ -46,7 +46,7 @@ export type ForgeMakeEnv = ForgeOptimizerEnv &
 /**
  * Dan, 2026-11-03: the grown-up check is dropped for making and previewing (the first look and the checks) and kept for what is printed: the
  * file route (/api/forge/artifacts/) still needs the proof. What stays in front of the model call: a valid device id, the per-device and per-IP
- * rate limits (3 and 6 a minute, shared with /api/forge/preview), and intake. The durable guard on spend is a Cloudflare rate-limit rule on this
+ * rate limits (5 and 10 a minute, shared with /api/forge/preview), and intake. The durable guard on spend is a Cloudflare rate-limit rule on this
  * path (as for Muse, docs/product/spec.md); these in-isolate limits are best effort.
  */
 export const makeRequiresProof = (env: ForgeMakeEnv): boolean => env.FORGE_MAKE_REQUIRES_PROOF === "1";

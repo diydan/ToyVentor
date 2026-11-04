@@ -5,7 +5,7 @@
  *
  * The loop, one wish: ask the Worker for a part (one model call: recipe and names). The first look comes back at once and can be turned while the
  * checks run. Poll the job. If the checks fail, ask again with the recipe and the job (a repair), up to 4 calls in all (the spec's F1 budget). A refused
- * call (the Worker allows 3 a minute) is waited out for as long as `retry-after` says; an expired grown-up check is renewed. Every end is a result:
+ * call (the Worker allows 5 a minute) is waited out for as long as `retry-after` says; an expired grown-up check is renewed. Every end is a result:
  * this never throws. A part that never passes the checks still ends usefully: the best first look, marked fine on screen and not printable.
  */
 import { MAKE_MAX_CALLS, type MakeSlot } from "./forgeMakeLimits";

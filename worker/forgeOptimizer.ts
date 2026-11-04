@@ -5,8 +5,8 @@
 //    and non-loopback upstreams MUST also configure FORGE_OPTIMIZER_TOKEN.
 //  - PARENT GATE REQUIRED: every route requires a valid `x-device-id` and live HMAC
 //    `x-parent-proof` verified via `verifyParentProofFromRequest` (worker/parent.ts).
-//  - RATE LIMITED: per-device and per-IP sliding-window budgets (`preview`: 3/min/device,
-//    6/min/IP; `poll`: 30/min/device, 60/min/IP).
+//  - RATE LIMITED: per-device and per-IP sliding-window budgets (`preview`: 5/min/device,
+//    10/min/IP; `poll`: 30/min/device, 60/min/IP).
 //  - STRICT ALLOWLIST: never forwards raw client bodies. Rejects `stl_path`, `verify_preprint`,
 //    and `legalize`; rebuilds upstream JSON from validated fields only.
 //  - BOUNDED TIMEOUTS & SAFE ERRORS: upstream `fetch` uses `AbortSignal.timeout`, distinguishes
@@ -72,7 +72,7 @@ const LOOPBACK_HOSTS = new Set(["127.0.0.1", "localhost", "[::1]", "::1"]);
 
 const RATE_WINDOW_MS = 60_000;
 const LIMITS = {
-  preview: { device: 3, ip: 6 },
+  preview: { device: 5, ip: 10 }, // Dan, 2026-11-04: 5 and 10 (were 3 and 6): a photo accessory's fit takes about 4 gate calls, and Make from words shares this budget
   poll: { device: 30, ip: 60 },
   warm: { device: 2, ip: 6 }, // POST /api/forge/warm (worker/forgeMake.ts): a child opening the panel, never a make attempt, so it does not use the preview budget
 } as const;

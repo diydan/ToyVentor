@@ -159,7 +159,7 @@ describe.skipIf(!PYTHON)("Worker routes in front of the real daemon, with a reci
   });
 
   /**
-   * The parent-gate proof lasts 2 minutes (PROOF_EVERY_TIME_TTL_MS in worker/parent.ts) and a slow job can take longer, so a real client
+   * The parent-gate proof lasts 5 minutes (PROOF_EVERY_TIME_TTL_MS in worker/parent.ts; 2 until 2026-11-04) and a slow job can take longer, so a real client
    * has to ask the grown-up again; here a new proof is minted whenever the last one is over 90 seconds old.
    */
   async function freshProof(force = false): Promise<void> {

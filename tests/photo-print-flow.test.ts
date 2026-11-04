@@ -24,7 +24,7 @@ import type { OutlineShape } from "../shared/outlineFit";
 import { scanOutline, type ScanOutlineSuccess } from "../shared/outlineScan";
 import { type PhotoAccessoryOptions, preparePhotoAccessory } from "../shared/photoAccessory";
 import { applyAffine } from "../shared/photoOutline";
-import { resetForgeRateLimit } from "../worker/forgeOptimizer";
+import { forgeRateLimitWait, resetForgeRateLimit } from "../worker/forgeOptimizer";
 import worker from "../worker/index";
 import { DEVICE, fakeDaemon, forgeEnv, mintParentProof, viaWorker } from "./fixtures/forgeWorkerHarness";
 import { cropToObject, disc, rasterize, rect, union, type Inside } from "./fixtures/outlineMasks";
@@ -626,8 +626,10 @@ describe("printAccessory through the real Worker routes", () => {
     expect(r.ok && r.hints.some((h) => /sticker may not line up/.test(h))).toBe(true);
   });
 
-  it("waits out a refusal for the time the Worker names, tells the screen, and asks again: a fit of four calls finishes under a limit of three a minute", async () => {
-    // The real limiter allows 3 previews a minute a device. Three slivers then a pass is four calls, like the real spoon.
+  it("waits out a refusal for the time the Worker names, tells the screen, and asks again: a fit of four calls finishes when two earlier calls had used part of the minute's five", async () => {
+    // The real limiter allows 5 previews a minute a device (3 until 2026-11-04), shared with Make from words. Two calls were already made this minute; three slivers then a pass is four
+    // calls, like the real spoon, so the fourth is the sixth of the minute and is refused.
+    for (let i = 0; i < 2; i++) forgeRateLimitWait("preview", DEVICE, null);
     const daemon = fakeDaemon([SLIVER, SLIVER, SLIVER, PASS], { plate: { name: PLATE, bytes: plateBytes } });
     const gate = await liveGate();
     const e = events();
@@ -655,6 +657,7 @@ describe("printAccessory through the real Worker routes", () => {
   });
 
   it("does not wait for ever: after the waits it was given it says to try again in a minute", async () => {
+    for (let i = 0; i < 5; i++) forgeRateLimitWait("preview", DEVICE, null); // the minute's five are already used, so every call is refused
     fakeDaemon([SLIVER], { plate: { name: PLATE, bytes: plateBytes } });
     const gate = await liveGate();
     const slept: number[] = [];

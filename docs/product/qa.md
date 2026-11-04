@@ -109,7 +109,7 @@ Backups if a step fails (say so, do not improvise): no service: cached build; ca
 **4.2 Grown-up gate on the live Worker** (the Worker, D1 and `PARENT_GATE_SECRET` are only proven live by doing this).
 - [ ] Hold the gear 1.2 s. A fresh device gets a multiplication question first ("First-time setup"), then asks you to set a 4-tap PIN.
 - [ ] Close, reopen, hold again: now the PIN pad, not the question. A wrong PIN says how many tries remain (4 after the first wrong one on the local Worker); running out gives a cooldown.
-- [ ] Proofs last **2 minutes** (every-time mode) or **5 minutes** (sitting mode). Anything photo-related started after that says "needs a live grown-up sign-in". Re-open Grown-ups and try again.
+- [ ] Proofs last **5 minutes** (every-time mode) or **10 minutes** (sitting mode) (were 2 and 5 until 2026-11-04; they apply to proofs issued after the deploy). Anything photo-related started after that says "needs a live grown-up sign-in". Re-open Grown-ups and try again.
 
 **4.3 Room photo level** (Feature 3). Needs the gate above, Demo Mode on, the parent-controls toggle left **on** (turning it off makes the photo button refuse, by design).
 - [ ] Grown-ups, Demo Mode: On, tap **Room Photo Level**, choose a side-on photo of 3 to 6 floor items spread left to right with the floor line visible.
@@ -118,7 +118,7 @@ Backups if a step fails (say so, do not improvise): no service: cached build; ca
 - [ ] **Play it** runs. All 5 hiding spots reachable.
 - [ ] Blank wall: the sheet stays open with "I could not spot any room props in that photo".
 - [ ] Wi-Fi off mid-upload: "Could not read that photo just now".
-- [ ] Four photos inside a minute from one device: the fourth is "Too many room photos just now" (limit 3 per minute per device, 6 per IP; the limiter is per Worker isolate, so on the live site it may not trip reliably: spec question Q9).
+- [ ] Six photos inside a minute from one device: the sixth is "Too many room photos just now" (limit 5 per minute per device, 10 per IP; was 3 and 6 until 2026-11-04; the limiter is per Worker isolate, so on the live site it may not trip reliably: spec question Q9).
 - Record counts, not rates: "4 of 5 props right, order right" ([sam-physical-to-digital-spec.md](../specs/sam-physical-to-digital-spec.md) section 9).
 
 **4.4 Other Worker routes**

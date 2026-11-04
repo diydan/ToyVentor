@@ -446,7 +446,7 @@ describe("Parts asset optimization (Print STL + Web GLB + Toy-Finish Recipes)", 
       expect(timeoutRes.status).toBe(504);
       expect(((await timeoutRes.json()) as { status: string }).status).toBe("timeout");
 
-      // 5. Rate limit: 3 previews/min/device -> 4th returns 429 slow-down
+      // 5. Rate limit: 5 previews/min/device -> 6th returns 429 slow-down
       resetForgeRateLimit();
       fetchSpy.mockImplementation(async () =>
         new Response(
@@ -467,7 +467,7 @@ describe("Parts asset optimization (Print STL + Web GLB + Toy-Finish Recipes)", 
           { status: 200, headers: { "content-type": "application/json" } },
         ),
       );
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < 5; i++) {
         const okRes = await handleForgePreview(
           new Request("http://local/api/forge/preview", {
             method: "POST",
@@ -480,7 +480,7 @@ describe("Parts asset optimization (Print STL + Web GLB + Toy-Finish Recipes)", 
         const bodyText = await okRes.text();
         expect(bodyText).not.toContain("/should/be/scrubbed");
       }
-      const fourthRes = await handleForgePreview(
+      const sixthRes = await handleForgePreview(
         new Request("http://local/api/forge/preview", {
           method: "POST",
           headers: authedHeaders,
@@ -488,8 +488,8 @@ describe("Parts asset optimization (Print STL + Web GLB + Toy-Finish Recipes)", 
         }),
         baseEnv,
       );
-      expect(fourthRes.status).toBe(429);
-      expect(((await fourthRes.json()) as { status: string }).status).toBe("slow-down");
+      expect(sixthRes.status).toBe(429);
+      expect(((await sixthRes.json()) as { status: string }).status).toBe("slow-down");
     } finally {
       fetchSpy.mockRestore();
       resetForgeRateLimit();

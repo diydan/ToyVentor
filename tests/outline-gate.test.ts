@@ -591,25 +591,25 @@ describe("forgeRouteGate through the real Worker routes", () => {
     expect((await g(ring(65))).status).toBe("pass"); // and the old limit of 64 is gone
   });
 
-  it("a fourth gate call inside a minute is slow_down, and it never reaches the daemon", async () => {
+  it("a sixth gate call inside a minute is slow_down, and it never reaches the daemon", async () => {
     const daemon = fakeDaemon([REPORT_PASS]);
     const g = gate();
-    for (let i = 0; i < 3; i++) expect((await g(SHAPE)).status).toBe("pass");
+    for (let i = 0; i < 5; i++) expect((await g(SHAPE)).status).toBe("pass");
     const err = await errorOf(g(SHAPE));
     expect(err.kind).toBe("slow_down");
     expect(err.httpStatus).toBe(429);
-    expect(daemon.recipes).toHaveLength(3);
+    expect(daemon.recipes).toHaveLength(5);
   });
 
   it("a refused call counts against the window, so retrying inside it keeps the caller locked out (why the gate never retries)", () => {
     const t0 = 5_000_000;
     const at = (s: number) => t0 + s * 1000;
-    expect([0, 1, 2].map((s) => forgeRateLimited("preview", DEVICE, null, at(s)))).toEqual([false, false, false]);
-    // A caller that retries every 15 s: each try is refused, and a minute after the first three it is still refused.
+    expect([0, 1, 2, 3, 4].map((s) => forgeRateLimited("preview", DEVICE, null, at(s)))).toEqual([false, false, false, false, false]);
+    // A caller that retries every 15 s: each try is refused, and a minute after the first five it is still refused.
     expect([15, 30, 45, 61].map((s) => forgeRateLimited("preview", DEVICE, null, at(s)))).toEqual([true, true, true, true]);
     // A caller that waited the whole minute would have been let in.
     resetForgeRateLimit();
-    [0, 1, 2].forEach((s) => forgeRateLimited("preview", DEVICE, null, at(s)));
+    [0, 1, 2, 3, 4].forEach((s) => forgeRateLimited("preview", DEVICE, null, at(s)));
     expect(forgeRateLimited("preview", DEVICE, null, at(61))).toBe(false);
   });
 
@@ -625,24 +625,24 @@ describe("forgeRouteGate through the real Worker routes", () => {
       return last;
     };
 
-    it("is 0 for a call that is let in, and for the first three of a minute", () => {
-      expect([0, 1, 2].map((s) => forgeRateLimitWait("preview", DEVICE, null, at(s)))).toEqual([0, 0, 0]);
+    it("is 0 for a call that is let in, and for the first five of a minute", () => {
+      expect([0, 1, 2, 3, 4].map((s) => forgeRateLimitWait("preview", DEVICE, null, at(s)))).toEqual([0, 0, 0, 0, 0]);
     });
 
-    it("names the time the oldest hit that still counts leaves the window: a fourth call at 5 s waits until 61 s", () => {
-      replay([0, 1, 2]);
+    it("names the time the oldest hit that still counts leaves the window: a sixth call at 5 s waits until 61 s", () => {
+      replay([0, 1, 2, 3, 4]);
       expect(forgeRateLimitWait("preview", DEVICE, null, at(5))).toBe(56); // 1 s + 60 s - 5 s
     });
 
-    it("grows with each refused call, because a refused call counts: a fifth call at 10 s waits until 62 s", () => {
-      replay([0, 1, 2, 5]);
+    it("grows with each refused call, because a refused call counts: a seventh call at 10 s waits until 62 s", () => {
+      replay([0, 1, 2, 3, 4, 5]);
       expect(forgeRateLimitWait("preview", DEVICE, null, at(10))).toBe(52); // 2 s + 60 s - 10 s
     });
 
     it("is never over a window and never under a second", () => {
       for (const gap of [0, 0.001, 0.5, 30, 59.9]) {
         resetForgeRateLimit();
-        const w = replay([0, 0, 0, gap]);
+        const w = replay([0, 0, 0, 0, 0, gap]);
         expect(w).toBeGreaterThanOrEqual(1);
         expect(w).toBeLessThanOrEqual(60);
       }
@@ -653,7 +653,7 @@ describe("forgeRouteGate through the real Worker routes", () => {
       const rnd = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 2 ** 32);
       let refusals = 0;
       for (let k = 0; k < 500; k++) {
-        const n = 4 + Math.floor(rnd() * 9);
+        const n = 6 + Math.floor(rnd() * 9);
         const secs: number[] = [];
         let now = 0;
         for (let i = 0; i < n; i++) {
@@ -675,26 +675,26 @@ describe("forgeRouteGate through the real Worker routes", () => {
       expect(refusals).toBeGreaterThan(200); // guard: the patterns really did cause refusals
     });
 
-    it("counts the address's budget too: seven different devices from one address, the seventh is refused for the address's sake", () => {
-      const waits = [0, 1, 2, 3, 4, 5, 6].map((s, i) => forgeRateLimitWait("preview", DEV(i), "203.0.113.7", at(s)));
-      expect(waits.slice(0, 6)).toEqual([0, 0, 0, 0, 0, 0]);
-      expect(waits[6]).toBe(55); // the second hit (1 s) + 60 s - 6 s
+    it("counts the address's budget too: eleven different devices from one address, the eleventh is refused for the address's sake", () => {
+      const waits = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((s, i) => forgeRateLimitWait("preview", DEV(i), "203.0.113.7", at(s)));
+      expect(waits.slice(0, 10)).toEqual([0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+      expect(waits[10]).toBe(51); // the second hit (1 s) + 60 s - 10 s
     });
 
     it("when the device and the address both refuse, the longer wait is named", () => {
-      const waits = [0, 1, 2, 3, 4, 5, 6].map((s) => forgeRateLimitWait("preview", DEVICE, "203.0.113.8", at(s)));
-      // The device budget is 3, so its seventh call waits until the fifth hit (4 s) is a window old: 58 s. The address budget is 6: 55 s.
-      expect(waits[6]).toBe(58);
+      const waits = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((s) => forgeRateLimitWait("preview", DEVICE, "203.0.113.8", at(s)));
+      // The device budget is 5, so its eleventh call waits until the seventh hit (6 s) is a window old: 56 s. The address budget is 10: 51 s.
+      expect(waits[10]).toBe(56);
     });
 
     it("the boolean form says the same as the wait", () => {
-      expect([0, 1, 2, 5].map((s) => forgeRateLimited("preview", DEVICE, null, at(s)))).toEqual([false, false, false, true]);
+      expect([0, 1, 2, 3, 4, 5].map((s) => forgeRateLimited("preview", DEVICE, null, at(s)))).toEqual([false, false, false, false, false, true]);
     });
 
     it("the Worker's refusal carries it as a retry-after header, a whole number of seconds from 1 to 60, and the gate reads it", async () => {
       fakeDaemon([REPORT_PASS]);
       const g = gate();
-      for (let i = 0; i < 3; i++) await g(SHAPE);
+      for (let i = 0; i < 5; i++) await g(SHAPE);
       const err = await errorOf(g(SHAPE));
       expect(err.kind).toBe("slow_down");
       expect(Number.isInteger(err.retryAfterS)).toBe(true);
@@ -706,13 +706,13 @@ describe("forgeRouteGate through the real Worker routes", () => {
       expect(await raw.json()).toEqual({ ok: false, status: "slow-down" });
     });
 
-    it("the header is exactly the limiter's wait: three calls in two seconds and a fourth five seconds in is told 56 s", async () => {
+    it("the header is exactly the limiter's wait: five calls in four seconds and a sixth five seconds in is told 56 s", async () => {
       fakeDaemon([REPORT_PASS]);
       const t = Date.now();
       vi.useFakeTimers({ toFake: ["Date"] });
       try {
         const g = gate();
-        for (const s of [0, 1, 2]) {
+        for (const s of [0, 1, 2, 3, 4]) {
           vi.setSystemTime(t + s * 1000);
           expect((await g(SHAPE)).status).toBe("pass");
         }

@@ -35,7 +35,7 @@ export const ROOM_JOB = {
 } as const;
 
 const RATE_WINDOW_MS = 60_000;
-const RATE_LIMITS = { device: 3, ip: 6 } as const; // room jobs per minute (each fans out to <= 12 SAM calls)
+const RATE_LIMITS = { device: 5, ip: 10 } as const; // room jobs per minute (each fans out to <= 12 SAM calls). Dan, 2026-11-04: 5 and 10 (were 3 and 6), for demo retakes.
 const hits = new Map<string, number[]>();
 
 function recordHit(key: string, limit: number, now: number): boolean {

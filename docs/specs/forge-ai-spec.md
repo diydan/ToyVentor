@@ -182,7 +182,7 @@ rejected, numbers are clamped, nothing is executed.
   recipe and the object's name in seven languages (the design in "Naming and the waiting state");
   everything the model says is data. **Gate order, before any model call is spent:** model key
   present (else 503), the grown-up proof, the device, the per-device rate limit (it shares the
-  `/api/forge/preview` budget of 3 a minute, because each call ends in one preview), then intake:
+  `/api/forge/preview` budget of 5 a minute (3 until 2026-11-04), because each call ends in one preview), then intake:
   1 to 120 characters, contact details scrubbed, unsafe words and brand words refused (422
   `not-allowed`, `brand-rejected`). **The reply** is checked field by field: the recipe goes through
   the same allowlist as every Forge route (`sanitizeRecipe`: no code, no unknown keys, bounded
@@ -229,7 +229,7 @@ rejected, numbers are clamped, nothing is executed.
   Save for printing, Make another), and the **grown-up question**, now shown only to save the printable file.
   **Decision (Dan, 2026-11-03): the grown-up proof is dropped for making and previewing and kept for printing.**
   `/api/forge/make` and a new `/api/forge/make/jobs/:id` need only a valid device id and the rate limits
-  (3 a minute per device, 6 per IP, shared with preview); `/api/forge/artifacts/` (the STL) still needs the proof.
+  (5 a minute per device, 10 per IP, shared with preview; 3 and 6 until 2026-11-04); `/api/forge/artifacts/` (the STL) still needs the proof.
   `FORGE_MAKE_REQUIRES_PROOF=1` puts it back. What the in-isolate limits cannot do is cap total spend across
   isolates, so a Cloudflare rate-limit rule on `/api/forge/make` is the durable guard (as for Muse); **needs Dan to add it
   in the dashboard before a public launch.** **Wear it** hands the page the first look (a GLB) and the slot; the bench
@@ -316,7 +316,7 @@ rejected, numbers are clamped, nothing is executed.
   sessions (2 to 6 hours old, each still rendering a Kip page) had pushed the Mac's load to 190; closing them dropped it to 20.
   `scripts/lib/kip-e2e.mjs` leaves them behind when a run is killed: worth fixing. (3) Each make enqueues a background print
   check, and the daemon runs the gates one at a time (`_GATE_LOCK`), so several children at once queue. (4) The Worker's
-  in-isolate limits are 3 a minute per device and 6 per IP shared with preview, so a classroom behind one address would wait.
+  in-isolate limits are 5 a minute per device and 10 per IP shared with preview, so a classroom behind one address would wait.
   (5) "Scary" was on the shared unsafe-word list and a child's "scary monster" got a gentle refusal; **since 2026-11-04 (Dan) "scary" and its translations are allowed**, while "haunted", "horror", "nightmare", violence, weapons, drugs and alcohol are still refused; **To run it for a demo:** `npm run forge:optimizer -- --port 8791`; `.dev.vars` needs `MODEL_API_KEY` (or
   `META_MODEL_API_KEY`), `VOICE_SIGNING_KEY` (16+ characters), `FORGE_OPTIMIZER_URL=http://127.0.0.1:8791` and
   `PARENT_GATE_SECRET=<anything random>` (the last two were not in `.dev.vars`; passing them as process environment does
@@ -437,7 +437,7 @@ returns a recipe (numbers and enums that deterministic code builds and gates), p
 | Input | 120-character cap; control characters stripped; email and long digit runs replaced; an unsafe-word list; link and contact patterns; a brand list; the wish is quoted as data and never placed in the system role | `worker/forgeMake.ts` (`cleanWish`, `parseRequest`), `worker/muse.ts` (`scrubContactDetails`, `kidSafeText`), `shared/forgeMakePrompt.ts` |
 | Prompt | "A young child (ages 4 to 10) … kind and safe … no brands … no real names or personal details" | `shared/forgePrompt.ts`, `worker/muse.ts` (`SAFETY`) |
 | Output | The recipe passes an allowlist (no code, unknown keys dropped, bounded numbers), then the compiler and the print gates; the part's name and its seven-language names are filtered for unsafe terms, links, contact patterns and brands, must be letters only, and are spoken only if our Worker signed them; Create and Describe lines are replaced by a fixed safe line if they trip the filter or echo the child's words | `sanitizeRecipe`, `worker/forgeNames.ts`, `kidSafeText` |
-| Access | A device id is required; 3 a minute per device and 6 per IP (a Cloudflare rule is still to be set); printing and saving need the grown-up proof; the selfie cloud path is off by default; no client can choose the model | `gateForge`, `worker/modelBackend.ts` |
+| Access | A device id is required; 5 a minute per device and 10 per IP (a Cloudflare rule is still to be set); printing and saving need the grown-up proof; the selfie cloud path is off by default; no client can choose the model | `gateForge`, `worker/modelBackend.ts` |
 | Data | Logs carry event names and counts only; nothing the child typed is stored server-side; the worn part is kept on the device only, without any words | `logEvent`, the bench's storage rules |
 | Test | The 40-wish run includes 4 injection tries, a contact-detail wish and 3 intake refusals; all ended harmlessly on Spark and on Glimmer | "Real-stack check", "Self-hosted Glimmer replaces Spark" |
 
