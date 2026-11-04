@@ -20,7 +20,8 @@ export const CHEER_ACTION = "cheer";
 /** A copy of a baked clip as the win cheer: named `cheer`, one-shot, `seconds` long (the same frames, played faster). The original is not touched. */
 export function cheerClip(clip: BakedClip, seconds: number = CHEER_SECONDS): BakedClip {
   const dur = Number.isFinite(seconds) && seconds > 0.2 ? seconds : CHEER_SECONDS;
-  return { ...clip, name: CHEER_ACTION, duration: dur, loop: false, pose: false };
+  // planted: the bake left it unplanted, so the driver never stood the sole on the floor and every win cheer hovered (measured 2026-11-04: lowest sole a median 0.10 above it, up to 0.15)
+  return { ...clip, name: CHEER_ACTION, duration: dur, loop: false, pose: false, planted: true };
 }
 
 /** Which of the loaded cheers comes next: one that is not the last (so two wins in a row are never the same), the only one if there is one, null if none. The first pick is random. */
