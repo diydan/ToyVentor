@@ -23,6 +23,10 @@ describe("intake: only wishes the product would accept", () => {
     expect(acceptWish("call 555-123-4567")).toMatchObject({ ok: false });
   });
 
+  it("strips the JSON a model wrapped a wish in: brackets, quotes and commas", () => {
+    for (const raw of ['["un chapeau rose"]', '"un chapeau rose",', '[ "un chapeau rose" ]', "{un chapeau rose}", '“un chapeau rose”']) expect(acceptWish(raw), raw).toEqual({ ok: true, text: "un chapeau rose" });
+  });
+
   it("scrubs contact details the way the route does and strips quotes a model put around a wish", () => {
     expect(acceptWish('"a pirate hat"')).toEqual({ ok: true, text: "a pirate hat" });
     expect(acceptWish("a hat, email bob@example.com")).toMatchObject({ ok: false, reason: "not_a_wish" });
@@ -127,6 +131,10 @@ describe("the expansion prompt for the other six languages", () => {
     expect(parseWishList('Here you go:\n```json\n["a", "b c"]\n```')).toEqual(["a", "b c"]);
     expect(parseWishList("1. un sombrero rojo\n2) una cabeza de zorro\n- un gato\n")).toEqual(["un sombrero rojo", "una cabeza de zorro", "un gato"]);
     expect(parseWishList("")).toEqual([]);
+    // the shapes a model really produced on 2026-11-04: one tiny array per line, one quoted string per line, trailing commas
+    expect(parseWishList('["un chapeau de clown"]\n["un koala avec une feuille"]')).toEqual(["un chapeau de clown", "un koala avec une feuille"]);
+    expect(parseWishList('"une tête de cochon",\n"un chapeau rose"')).toEqual(["une tête de cochon", "un chapeau rose"]);
+    expect(parseWishList('["a", "b"]\n["c"]').sort()).toEqual(["a", "b", "c"].sort());
     expect(parseWishList('["ok", 5, null, {"a":1}]')).toEqual(["ok"]);
   });
 });

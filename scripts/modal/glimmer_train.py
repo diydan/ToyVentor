@@ -1,7 +1,8 @@
 """
 Fine-tune Muse Glimmer 30B (QLoRA, Unsloth) on the dataset built by scripts/tuning/build-dataset.ts: the training half of the Forge v2 candidate.
 
-STATUS: WRITTEN, NEVER RUN. Nothing here has touched a GPU. It was written on 2026-11-04 from Unsloth's Glimmer guide (unsloth.ai/docs/models/muse-glimmer/train) and its text
+STATUS: RUN AS A SMOKE ONLY (2026-11-04): 60 steps on a 172-example set, twice (smoke-1, smoke-2). It trains, saves an adapter, resumes from a checkpoint and the adapter converts and serves; no real
+run has been made yet and nothing here says a model is trained. It was written on 2026-11-04 from Unsloth's Glimmer guide (unsloth.ai/docs/models/muse-glimmer/train) and its text
 fine-tuning notebook (github.com/unslothai/notebooks, python_scripts/Muse_Glimmer_(30B)-Conversational.py). The notebook is LGPL-3.0: this file is NOT a copy of it; it uses the
 same library calls and the same documented settings and credits the source. Expect to fix small things on the first run, and read scripts/tuning/README.md before spending anything.
 
@@ -34,9 +35,17 @@ import modal
 
 APP_NAME = "toyventor-glimmer-train"
 BASE_MODEL = "unsloth/Muse-Glimmer-30B-unsloth-bnb-4bit"  # 4-bit, about 21 GB; Meta's bf16 weights are meta-models/Muse-Glimmer-30B
+# The chat template llama-server serves is Meta's (it is inside Meta's GGUF). The Unsloth copy of the model ships an OLDER template that appends a second "Reasoning strength: high." line after ours;
+# template-parity.ts caught it on the smoke run (5 of 5 prompts differed). So training renders with Meta's template, pinned to this revision of Meta's repo, and parity is re-checked after every run.
+TEMPLATE_REPO = "meta-models/Muse-Glimmer-30B"
+TEMPLATE_REVISION = "cec94fcfd6512f2cfe708138c32533b346ea4f69"
+TEMPLATE_FILE = "chat_template.jinja"
 TRANSFORMERS_PIN = "5.15.0"  # the first release that knows the Glimmer architecture (Unsloth's notebook pins it and asserts it)
-EXPECT_PROMPT_VERSION = "t1"  # shared/forgeTunePrompt.ts TUNE_PROMPT_VERSION: a dataset built with another version is refused
-GPU = "L40S"  # 48 GB. Unsloth measured a 21 GB peak at 1024 tokens, r=8, batch 1: a 24 GB card is the realistic minimum, this one has room
+EXPECT_PROMPT_VERSION = "t1"  # shared/forgeTunePrompt.ts TUNE_PROMPT_VERSION: the short prompt
+# The prompt versions a dataset may carry and the training window each needs: t1 = the short prompt (about 450 tokens an example), p1 = the full production prompt (about 3,600 tokens of prompt plus the
+# answer; scripts/tuning/lib/dataset.ts caps an example at 5,000 estimated tokens). Any other version is refused: training and serving must use the same prompt.
+PROMPT_WINDOWS = {EXPECT_PROMPT_VERSION: 1024, "p1": 4608}
+GPU = os.environ.get("TUNE_GPU", "L40S")  # TUNE_GPU=A100-80GB for the long production prompt if the L40S runs out of memory. L40S: 48 GB (44 usable). Unsloth measured a 21 GB peak at 1024 tokens, r=8, batch 1: a 24 GB card is the realistic minimum, this one has room
 MINUTES = 60
 
 # Glimmer's ATEM markers, from Unsloth's notebook. KEEP trains the answer only; SKIP also trains the choice to answer without thinking.
@@ -65,12 +74,12 @@ hf_cache = modal.Volume.from_name("toyventor-tune-hf", create_if_missing=True)
 data_vol = modal.Volume.from_name("toyventor-tune-data", create_if_missing=True)
 out_vol = modal.Volume.from_name("toyventor-tune-out", create_if_missing=True)
 
-# Unsloth first, then the transformers release that knows Glimmer, in the order Unsloth's notebook uses (installing Unsloth can pull another transformers).
+# Unsloth and the transformers release that knows Glimmer, resolved together (a second install of transformers after Unsloth worked in Unsloth's notebook, but here the two fit inside Unsloth's own bounds).
 image = (
     modal.Image.debian_slim(python_version="3.12")
     .apt_install("git")
-    .pip_install("unsloth", "datasets", "trl", "accelerate", "bitsandbytes", "huggingface_hub")
-    .pip_install(f"transformers=={TRANSFORMERS_PIN}")
+    # One install with the bounds Unsloth 2026.11.1 itself declares (torch<2.15, datasets<5, trl<=1.15, transformers<=5.17): unpinned, pip picks the newest of each and backtracks for many minutes
+    .pip_install("unsloth", "trl<=1.15.0", "datasets<5.0.0", "torch<2.15.0", "accelerate", "bitsandbytes", "huggingface_hub", f"transformers=={TRANSFORMERS_PIN}")
     .env({"HF_HOME": "/root/.cache/huggingface", "TOKENIZERS_PARALLELISM": "false"})
 )
 VOLUMES = {"/root/.cache/huggingface": hf_cache, "/data": data_vol, "/out": out_vol}
@@ -98,8 +107,8 @@ def check_dataset(root):
         raise SystemExit(f"REFUSED: the manifest says source={m.get('source')!r}. Only a dataset written by our own model (source 'self') may be trained on; a stub set is canned data for showing the format.")
     if m.get("leaks"):
         raise SystemExit(f"REFUSED: the manifest lists {len(m['leaks'])} leaked wish(es) (evaluation data or heldout wishes in the training files).")
-    if m.get("tunePromptVersion") != EXPECT_PROMPT_VERSION:
-        raise SystemExit(f"REFUSED: the dataset was built with prompt version {m.get('tunePromptVersion')!r}, this script expects {EXPECT_PROMPT_VERSION!r}. Training and serving must use the same prompt (shared/forgeTunePrompt.ts).")
+    if m.get("tunePromptVersion") not in PROMPT_WINDOWS:
+        raise SystemExit(f"REFUSED: the dataset was built with prompt version {m.get('tunePromptVersion')!r}, this script knows {sorted(PROMPT_WINDOWS)}. Training and serving must use the same prompt (shared/forgeTunePrompt.ts, or the production prompt for p1).")
     for name, rec in m.get("files", {}).items():
         path = os.path.join(root, name)
         if not os.path.exists(path):
@@ -154,6 +163,19 @@ def make_embedding_callback():
     return KeepEmbeddingOnCpu()
 
 
+def use_serving_template(tokenizer):
+    """Give the tokenizer (and the tokenizer inside a processor) Meta's chat template, the one the server renders prompts with. Returns the template's text."""
+    from huggingface_hub import hf_hub_download
+
+    with open(hf_hub_download(TEMPLATE_REPO, TEMPLATE_FILE, revision=TEMPLATE_REVISION)) as f:
+        text = f.read()
+    tokenizer.chat_template = text
+    inner = getattr(tokenizer, "tokenizer", None)
+    if inner is not None:
+        inner.chat_template = text
+    return text
+
+
 def render(tokenizer, messages):
     """The training text of one example: the model's own chat template, minus the leading begin-of-text (the tokenizer adds exactly one)."""
     text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=False)
@@ -161,17 +183,21 @@ def render(tokenizer, messages):
     return text.removeprefix(bos) if bos else text
 
 
-@app.function(image=image, gpu=GPU, timeout=4 * 60 * MINUTES, volumes=VOLUMES, retries=modal.Retries(max_retries=3, initial_delay=0.0))
+@app.function(image=image, gpu=GPU, timeout=4 * 60 * MINUTES, volumes=VOLUMES)  # no retries=: Modal re-runs a preempted container itself, and a retry on a code error just pays for the model load again (the first smoke run paid four times)
 def train_remote(dataset: str, run: str, overrides_json: str = "{}") -> str:
-    """Train an adapter. A retry (Modal's GPUs can be preempted) resumes from the newest checkpoint in the run folder."""
-    cfg = {**DEFAULTS, **json.loads(overrides_json)}
+    """Train an adapter. Run again after a preemption or a stop, it resumes from the newest checkpoint in the run folder."""
+    overrides = json.loads(overrides_json)
+    cfg = {**DEFAULTS, **overrides}
     if cfg["variant"] not in RESPONSE_PART:
         raise SystemExit(f"--variant must be one of {sorted(RESPONSE_PART)}")
     root = f"/data/{dataset}"
     manifest = check_dataset(root)
+    if "max_seq_length" not in overrides:
+        cfg["max_seq_length"] = PROMPT_WINDOWS[manifest["tunePromptVersion"]]  # the window the dataset's prompt needs, unless you chose one
     out = f"/out/{run}"
     os.makedirs(out, exist_ok=True)
 
+    import unsloth  # noqa: F401 - first, before trl / transformers / peft, or its speed patches are skipped (its own warning on the first smoke run)
     import torch
     import transformers
 
@@ -191,6 +217,11 @@ def train_remote(dataset: str, run: str, overrides_json: str = "{}") -> str:
         json.dump({"run": run, "dataset": dataset, "config": cfg, "versions": versions, "manifest": manifest, "started": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}, f, indent=2)
 
     model, tokenizer = FastModel.from_pretrained(model_name=BASE_MODEL, max_seq_length=cfg["max_seq_length"])
+    use_serving_template(tokenizer)
+    # The exact prompt text this tokenizer builds for the first heldout wishes, written NOW (the generate check takes 40 minutes) so scripts/tuning/template-parity.ts can compare it with the server's.
+    if os.path.exists(f"{root}/heldout.jsonl"):
+        with open(f"{out}/prompt_check.json", "w") as f:
+            json.dump({"results": [{"id": r["id"], "rendered_prompt": tokenizer.apply_chat_template(r["messages"], add_generation_prompt=True, tokenize=False)} for r in read_jsonl(f"{root}/heldout.jsonl")[:5]]}, f)
     model = FastModel.get_peft_model(
         model,
         finetune_vision_layers=False,  # text only
@@ -212,7 +243,7 @@ def train_remote(dataset: str, run: str, overrides_json: str = "{}") -> str:
     ckpts = f"{out}/checkpoints"
     trainer = SFTTrainer(
         model=model,
-        tokenizer=tokenizer,
+        processing_class=tokenizer,  # trl 1.x renamed `tokenizer` (a TypeError on the first smoke run, 2026-11-04)
         train_dataset=train_ds,
         eval_dataset=val_ds if len(val_ds) else None,
         args=SFTConfig(
@@ -270,7 +301,8 @@ def generate_remote(run: str, dataset: str = "dataset", n: int = 20) -> str:
     real pipeline (scripts/tuning/eval.ts) once the model is served. This is the quick check that the adapter learned the format and what it did to the thinking."""
     from unsloth import FastModel
 
-    model, tokenizer = FastModel.from_pretrained(model_name=f"/out/{run}/adapter", max_seq_length=DEFAULTS["max_seq_length"])
+    model, tokenizer = FastModel.from_pretrained(model_name=f"/out/{run}/adapter", max_seq_length=max(PROMPT_WINDOWS.values()))
+    use_serving_template(tokenizer)
     rows = read_jsonl(f"/data/{dataset}/heldout.jsonl")[:n]
     results = []
     for r in rows:
@@ -284,7 +316,9 @@ def generate_remote(run: str, dataset: str = "dataset", n: int = 20) -> str:
             valid = isinstance(parsed, dict) and "recipe" in parsed and isinstance(parsed.get("names"), dict) and len(parsed["names"]) == 7
         except ValueError:
             valid = False
-        results.append({"id": r["id"], "wish": r["wish"], "valid": valid, "thought_first": thought, "new_tokens": int(gen.shape[1] - inputs["input_ids"].shape[1]), "seconds": round(time.time() - t0, 1), "answer": answer[:1500]})
+        # the exact prompt text this tokenizer built, so scripts/tuning/template-parity.ts can compare it with what llama-server builds from the same messages
+        rendered = tokenizer.apply_chat_template(r["messages"], add_generation_prompt=True, tokenize=False) if len(results) < 5 else None
+        results.append({"id": r["id"], "wish": r["wish"], "rendered_prompt": rendered, "valid": valid, "thought_first": thought, "new_tokens": int(gen.shape[1] - inputs["input_ids"].shape[1]), "seconds": round(time.time() - t0, 1), "answer": answer[:1500]})
     summary = {"run": run, "n": len(results), "valid_json": sum(x["valid"] for x in results), "thought_first": sum(x["thought_first"] for x in results), "mean_new_tokens": round(sum(x["new_tokens"] for x in results) / max(1, len(results)), 1)}
     with open(f"/out/{run}/generate_check.json", "w") as f:
         json.dump({"summary": summary, "results": results}, f, indent=2)
@@ -299,7 +333,8 @@ def export_remote(run: str) -> str:
     folder with llama.cpp's convert_hf_to_gguf.py is the thing to try next, and it is untested: see scripts/tuning/README.md."""
     from unsloth import FastModel
 
-    model, tokenizer = FastModel.from_pretrained(model_name=f"/out/{run}/adapter", max_seq_length=DEFAULTS["max_seq_length"])
+    model, tokenizer = FastModel.from_pretrained(model_name=f"/out/{run}/adapter", max_seq_length=max(PROMPT_WINDOWS.values()))
+    use_serving_template(tokenizer)
     dest = f"/out/{run}/merged-16bit"
     model.save_pretrained_merged(dest, tokenizer)
     out_vol.commit()

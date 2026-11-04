@@ -48,7 +48,7 @@ async function run(flags: Record<string, string | true>) {
   const env = buildEnv({ url, model, key: process.env.SELF_TEXT_KEY ?? vars.SELF_TEXT_KEY, api: "chat", prompt, ...(str(flags, "reasoning") ? { reasoning: str(flags, "reasoning") } : {}), daemonUrl: str(flags, "daemon") });
   const items = loadItems(sets);
   if (items.length === 0) throw new Error("no wishes to run: build the dataset first (heldout.jsonl) or use --sets acceptance,redteam");
-  const est = estimateCost(items.length, 2);
+  const est = estimateCost(items.length, 2); // one container, two at a time
   console.log(`${label}: ${items.length} wishes (${sets.join(", ")}), prompt ${prompt}, about ${est.minutes} min and $${est.dollars} (estimate).`);
   await fetch(`${new URL(url).origin}/health`, { signal: AbortSignal.timeout(170_000) }).catch(() => undefined);
   const send = makeCaller(env);

@@ -10,6 +10,8 @@
  */
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
+import { buildMakePrompt } from "../../../shared/forgeMakePrompt";
+import { mentionsBrand } from "./brandWishes";
 import { buildTunePrompt, TUNE_PROMPT_VERSION, TUNE_SYSTEM_LINE } from "../../../shared/forgeTunePrompt";
 import { findUnsafeTerm, TERM_LANGS } from "../../../shared/kidSafeTerms";
 import { KID_BRAND_RE } from "../../../worker/forgeMake";
@@ -35,6 +37,16 @@ export type Rejection =
 
 /** A rough token count (characters over three) the training length check uses; the real tokenizer is only available on the GPU. */
 export const MAX_EXAMPLE_TOKENS = 900;
+
+/** Which prompt the user message of an example carries. "tuned" is the short prompt (shared/forgeTunePrompt.ts, version t1). "production" is the 10,000-character prompt the base model answers
+ *  with in production (shared/forgeMakePrompt.ts): the tuned model then learns to give the base model's answer, without its long thinking, under the SAME instructions and safety rules it will be
+ *  served with (SELF_TEXT_PROMPT unset). Its version is p1 and its text is pinned by a hash in tests/tuning-prompt.test.ts, because a change in the production prompt makes a trained model stale. */
+export type PromptStyle = "tuned" | "production";
+export const PRODUCTION_PROMPT_VERSION = "p1";
+export const MAX_EXAMPLE_TOKENS_PRODUCTION = 5000;
+export const promptVersionOf = (style: PromptStyle) => (style === "production" ? PRODUCTION_PROMPT_VERSION : TUNE_PROMPT_VERSION);
+export const promptFor = (style: PromptStyle, a: { text: string; slot?: string }) =>
+  style === "production" ? buildMakePrompt({ text: a.text, ...(a.slot ? { slot: a.slot as never } : {}) }) : buildTunePrompt({ text: a.text, ...(a.slot ? { slot: a.slot as never } : {}) });
 const estimateTokens = (messages: Message[]) => Math.ceil(messages.reduce((n, m) => n + m.content.length, 0) / 3);
 
 const NAME_KEYS = ["w", "g", "pl"] as const;
@@ -65,10 +77,10 @@ export function recipeHash(recipe: unknown): string {
 }
 
 function textsOf(recipe: Record<string, unknown>, names: Names): string[] {
-  return [String(recipe.name ?? ""), String(recipe.behavior ?? ""), ...Object.values(names).map((n) => n.w)];
+  return [String(recipe.name ?? ""), String(recipe.behavior ?? ""), String(recipe.id ?? "").replace(/_/g, " "), ...Object.values(names).map((n) => n.w)];
 }
 
-export function sampleToRecord(s: SampleRecord, o: { allowStub?: boolean } = {}): { ok: true; record: SftRecord } | { ok: false; reason: Rejection } {
+export function sampleToRecord(s: SampleRecord, o: { allowStub?: boolean; promptStyle?: PromptStyle } = {}): { ok: true; record: SftRecord } | { ok: false; reason: Rejection } {
   if (s.split === "heldout") return { ok: false, reason: "heldout_sample" };
   if (!s.ok || !s.recipe) return { ok: false, reason: "failed" };
   if (!s.printable) return { ok: false, reason: "not_printable" };
@@ -82,21 +94,22 @@ export function sampleToRecord(s: SampleRecord, o: { allowStub?: boolean } = {})
   if (recipe.name === "My Creation" || s.name === "My Creation") return { ok: false, reason: "generic_name" };
   for (const t of textsOf(recipe, names)) {
     if (findUnsafeTerm(t) !== null) return { ok: false, reason: "unsafe_output" };
-    if (KID_BRAND_RE.test(t)) return { ok: false, reason: "brand_output" };
+    if (KID_BRAND_RE.test(t) || mentionsBrand(t)) return { ok: false, reason: "brand_output" };
   }
+  const style = o.promptStyle ?? "tuned";
   const messages: Message[] = [
     { role: "system", content: TUNE_SYSTEM_LINE },
-    { role: "user", content: buildTunePrompt({ text: s.wish, ...(s.slot ? { slot: s.slot } : {}) }) },
+    { role: "user", content: promptFor(style, { text: s.wish, ...(s.slot ? { slot: s.slot } : {}) }) },
     { role: "assistant", content: answerJson(recipe, names) },
   ];
-  if (estimateTokens(messages) > MAX_EXAMPLE_TOKENS) return { ok: false, reason: "too_long" };
+  if (estimateTokens(messages) > (style === "production" ? MAX_EXAMPLE_TOKENS_PRODUCTION : MAX_EXAMPLE_TOKENS)) return { ok: false, reason: "too_long" };
   return {
     ok: true,
     record: {
       id: s.id,
       split: s.split === "val" ? "val" : "train",
       messages,
-      meta: { wish: s.wish, lang: s.lang, ...(s.slot ? { slot: s.slot } : {}), recipeHash: recipeHash(recipe), promptVersion: TUNE_PROMPT_VERSION, backend: s.source.backend, model: s.source.model, runId: s.source.runId },
+      meta: { wish: s.wish, lang: s.lang, ...(s.slot ? { slot: s.slot } : {}), recipeHash: recipeHash(recipe), promptVersion: promptVersionOf(style), backend: s.source.backend, model: s.source.model, runId: s.source.runId },
     },
   };
 }
@@ -106,6 +119,8 @@ export interface BuildOptions {
   perWishMax?: number;
   allowStub?: boolean;
   evals?: readonly string[];
+  /** "tuned" (default): the short prompt, version t1. "production": the full production prompt, version p1. */
+  promptStyle?: PromptStyle;
 }
 
 export interface Built {
@@ -114,6 +129,7 @@ export interface Built {
   heldout: HeldoutRecord[];
   rejected: Partial<Record<Rejection, number>>;
   leaks: string[];
+  promptStyle: PromptStyle;
 }
 
 export function buildDataset(samples: readonly SampleRecord[], wishes: readonly Wish[], o: BuildOptions = {}): Built {
@@ -126,7 +142,7 @@ export function buildDataset(samples: readonly SampleRecord[], wishes: readonly 
   const val: SftRecord[] = [];
   for (const s of samples) {
     if (isEvalLike(s.wish, evals)) { bump("eval_like_wish"); continue; }
-    const r = sampleToRecord(s, { allowStub: o.allowStub });
+    const r = sampleToRecord(s, { allowStub: o.allowStub, promptStyle: o.promptStyle });
     if (!r.ok) { bump(r.reason); continue; }
     const seen = kept.get(s.wish) ?? new Set<string>();
     if (seen.has(r.record.meta.recipeHash) || seen.size >= perWishMax) { bump("duplicate_recipe"); continue; }
@@ -139,10 +155,10 @@ export function buildDataset(samples: readonly SampleRecord[], wishes: readonly 
     wish: w.text,
     lang: w.lang,
     ...(w.slot ? { slot: w.slot } : {}),
-    messages: [{ role: "system", content: TUNE_SYSTEM_LINE }, { role: "user", content: buildTunePrompt({ text: w.text, ...(w.slot ? { slot: w.slot } : {}) }) }],
+    messages: [{ role: "system", content: TUNE_SYSTEM_LINE }, { role: "user", content: promptFor(o.promptStyle ?? "tuned", { text: w.text, ...(w.slot ? { slot: w.slot } : {}) }) }],
   }));
   const leaks = [...train, ...val].filter((r) => isEvalLike(r.meta.wish, evals) || heldout.some((h) => h.wish === r.meta.wish)).map((r) => r.meta.wish);
-  return { train, val, heldout, rejected, leaks: [...new Set(leaks)] };
+  return { train, val, heldout, rejected, leaks: [...new Set(leaks)], promptStyle: o.promptStyle ?? "tuned" };
 }
 
 // ---- datasheet --------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -172,6 +188,9 @@ export interface Manifest {
   /** "self" when every record came from our own model, "stub" when any is canned: a stub manifest must never be trained on. */
   source: "self" | "stub";
   tunePromptVersion: string;
+  /** "tuned" (short prompt) or "production" (the full production prompt); promptSha256 is the hash of that prompt for the placeholder wish "X", to compare with what is served. */
+  promptStyle: PromptStyle;
+  promptSha256: string;
   systemLine: string;
   files: Record<string, { sha256: string; records: number }>;
   counts: ReturnType<typeof stats>;
@@ -196,7 +215,9 @@ export function buildManifest(b: Built, files: Record<string, string>, now = new
     schema: 1,
     createdAt: now.toISOString(),
     source: hasStub ? "stub" : "self",
-    tunePromptVersion: TUNE_PROMPT_VERSION,
+    tunePromptVersion: promptVersionOf(b.promptStyle),
+    promptStyle: b.promptStyle,
+    promptSha256: sha256(promptFor(b.promptStyle, { text: "X" })),
     systemLine: TUNE_SYSTEM_LINE,
     files: Object.fromEntries(Object.entries(files).map(([name, content]) => [name, { sha256: sha256(content), records: content.split("\n").filter(Boolean).length }])),
     counts: stats(b),

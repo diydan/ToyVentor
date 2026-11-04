@@ -3,6 +3,7 @@
  *
  *   npx tsx scripts/tuning/sample.ts [--wishes scripts/tuning/data/wishes.jsonl] [--out scripts/tuning/data/samples.jsonl]
  *       [--per-wish 2] [--concurrency 2] [--max-calls 200] [--url https://<workspace>--toyventor-glimmer.us-east.modal.run/v1] [--model muse-glimmer-30B]
+ *       [--retry-failed]  try again the wishes whose earlier call failed (a timeout, a dropped connection)
  *       [--dry-run]     print the plan and the estimate, send nothing
  *       [--stub]        canned recipes, no model, no daemon: shows the file format only (records are marked stub and are never trainable)
  *
@@ -16,7 +17,7 @@ import { join } from "node:path";
 import { resolveBackend } from "../../worker/modelBackend";
 import { parseArgs, num, str } from "./args";
 import { buildEnv, makeCaller, readDevVars } from "./lib/inprocessWorker";
-import { appendJsonl, estimateCost, planSampling, readJsonl, requireOwnModel, runSampling, SamplingRefused, type CallFn, type SampleRecord, type SampleSource } from "./lib/sampling";
+import { appendJsonl, estimateCost, orderForSampling, planSampling, readJsonl, requireOwnModel, runSampling, SamplingRefused, type CallFn, type SampleRecord, type SampleSource } from "./lib/sampling";
 import { stubBody } from "./lib/stub";
 import type { Split, Wish } from "./lib/wishgen";
 const HERE = fileURLToPath(new URL(".", import.meta.url));
@@ -54,10 +55,10 @@ async function main() {
   if (!stub && !url) throw new SamplingRefused("no model URL: pass --url or set SELF_TEXT_URL (see scripts/modal/glimmer_server.py).");
 
   const splits: Split[] = ["train", "val"]; // never heldout
-  const plan = planSampling(wishes, { perWish, maxCalls, splits, existing: readJsonl<SampleRecord>(out) });
+  const plan = planSampling(orderForSampling(wishes), { perWish, maxCalls, splits, existing: readJsonl<SampleRecord>(out), retryFailed: flags["retry-failed"] === true });
   const est = estimateCost(plan.todo.length, concurrency);
   console.log(`${stub ? "STUB run (canned recipes, not trainable)" : "Sampling our own model"}: ${plan.todo.length} calls to make, ${plan.alreadyDone} already in ${out}${plan.cutByMaxCalls ? `, ${plan.cutByMaxCalls} more cut by --max-calls ${maxCalls}` : ""}.`);
-  if (!stub) console.log(`Estimate (12 s a call, ${Math.min(2, concurrency)} at a time, L40S at list price): about ${est.minutes} min and $${est.dollars}. An estimate, not a quote.`);
+  if (!stub) console.log(`Estimate (about 13 s of container time a call, ${Math.ceil(concurrency / 2)} container(s), L40S at list price): about ${est.minutes} min and $${est.dollars}. An estimate, not a quote.`);
   if (flags["dry-run"] === true || plan.todo.length === 0) return;
 
   if (!stub) {

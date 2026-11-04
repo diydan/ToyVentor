@@ -61,6 +61,8 @@ export function requireOwnModel(args: { mode: string; promptStyle: string; stub:
 }
 
 export interface PlanOptions {
+  /** Count a failed record as not done, so a resumed run tries it again (the old record stays in the file; the dataset builder keeps the success). */
+  retryFailed?: boolean;
   perWish: number;
   maxCalls: number;
   /** Which splits may be sampled. heldout is never in the list unless the caller asks for it by name, and the CLI does not. */
@@ -72,7 +74,7 @@ export interface Task { wish: Wish; index: number }
 
 /** What is still to do: every (wish, index) below `perWish` that has no record yet, in the allowed splits, cut at `maxCalls`. */
 export function planSampling(wishes: readonly Wish[], o: PlanOptions): { todo: Task[]; alreadyDone: number; cutByMaxCalls: number } {
-  const done = new Set(o.existing.map((r) => r.id));
+  const done = new Set(o.existing.filter((r) => r.ok || !o.retryFailed).map((r) => r.id));
   const todo: Task[] = [];
   let alreadyDone = 0;
   for (const w of wishes) {
@@ -84,6 +86,12 @@ export function planSampling(wishes: readonly Wish[], o: PlanOptions): { todo: T
   }
   const cut = Math.max(0, todo.length - o.maxCalls);
   return { todo: todo.slice(0, o.maxCalls), alreadyDone, cutByMaxCalls: cut };
+}
+
+/** A fixed pseudo-random order, so that a run cut at --max-calls samples every language and every kind of wish instead of the first ones in the file. Same seed, same order. */
+export function orderForSampling<T extends { text: string }>(wishes: readonly T[], seed = "sample-order-v1"): T[] {
+  const key = (w: T) => createHash("sha256").update(`${seed}|${normalizeWish(w.text)}`).digest("hex");
+  return [...wishes].sort((a, b) => (key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : 0));
 }
 
 export type CallFn = (task: Task) => Promise<Omit<SampleRecord, "id" | "wish" | "lang" | "slot" | "split" | "sampleIndex" | "source">>;
@@ -120,9 +128,13 @@ export function appendJsonl(file: string, row: unknown): void {
   appendFileSync(file, `${JSON.stringify(row)}\n`);
 }
 
-/** An honest estimate for the console, from the figures measured on 2026-11-04: about 12 s a call alone, two calls at once on one L40S at $1.95 an hour. Not a quote. */
+/**
+ * An honest estimate for the console, from the three 40-wish runs of 2026-11-04: with two requests in flight on one L40S a wish costs about 13 s of that container's time (13.3 s in run 2,
+ * 16.6 s in run 3), and the container costs $1.95 an hour at list price. A container holds two slots, so concurrency 4 means two containers: the same GPU-hours and cost, half the wait.
+ * (An earlier figure of 6 s a call came from solo call times and understated the cost by about half.) An estimate, not a quote.
+ */
 export function estimateCost(calls: number, concurrency: number): { minutes: number; dollars: number } {
-  const slots = Math.min(2, Math.max(1, concurrency));
-  const seconds = (calls * 12) / slots;
-  return { minutes: Math.round(seconds / 60), dollars: Math.round(((seconds / 3600) * 1.95) * 100) / 100 };
+  const containers = Math.max(1, Math.ceil(concurrency / 2));
+  const containerSeconds = calls * 13;
+  return { minutes: Math.round(containerSeconds / containers / 60), dollars: Math.round((containerSeconds / 3600) * 1.95 * 100) / 100 };
 }

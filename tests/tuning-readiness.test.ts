@@ -21,13 +21,15 @@ describe("the preparation is complete", () => {
     for (const k of ["tune:check", "tune:wishes", "tune:sample", "tune:build", "tune:eval"]) expect(scripts[k], k).toMatch(/^tsx scripts\/tuning\//);
   });
 
-  it("the runbook and the model card say plainly that nothing has been trained, and the card says what is unknown", () => {
+  it("the runbook and the model card say plainly what was and was not done: two pilots, none shipped, no safety claim", () => {
     const readme = readFileSync(join(ROOT, "scripts/tuning/README.md"), "utf8");
     const card = readFileSync(join(ROOT, "scripts/tuning/MODEL_CARD.md"), "utf8");
-    expect(readme).toContain("nothing has been trained");
-    expect(card).toContain("NOT TRAINED");
-    expect(card).toContain("**unknown**");
+    expect(readme).toContain("neither passed the decision rule");
+    expect(readme).toContain("nothing tuned is in use");
+    expect(card).toContain("NONE SHIPPED");
+    expect(card).toContain("DO NOT SHIP");
     expect(card).toContain("no claim");
+    expect(card).toContain("**no**: on the red-team seed it was worse");
     expect(readme).toContain("never a claim");
   });
 
@@ -62,11 +64,9 @@ describe("the stage list is honest", () => {
     } finally { rmSync(root, { recursive: true }); }
   });
 
-  it("in this repo today, no stage that needs our model or a GPU has been run", () => {
-    const by = Object.fromEntries(stages(ROOT).map((s) => [s.name, s.state]));
-    expect(by["dataset built from OUR model's answers"]).toBe("not_run");
-    expect(by["training run (Modal GPU)"]).toBe("not_run");
-    expect(by["tuned model evaluated"]).toBe("not_run");
-    expect(existsSync(join(ROOT, "scripts/tuning/data/adapter.fetched"))).toBe(false);
+  it("no generated data is committed: the data folder ignores everything except the labelled stub example, so a fresh checkout has run nothing and says so", () => {
+    const ignore = readFileSync(join(ROOT, "scripts/tuning/data/.gitignore"), "utf8").split("\n").map((l) => l.trim()).filter((l) => l && !l.startsWith("#"));
+    expect(ignore).toEqual(["*", "!.gitignore", "!example/", "!example/**"]);
+    expect(existsSync(join(ROOT, "scripts/tuning/data/example/dataset/manifest.json"))).toBe(true);
   });
 });

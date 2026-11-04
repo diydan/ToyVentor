@@ -1,7 +1,7 @@
 # Forge tuning runbook (the v2 candidate)
 
-**Status, 2026-11-04: the preparation is built and tested; nothing has been trained.** `npm run tune:check` prints exactly what exists and what has been run. No claim anywhere may say a
-model was trained until that command says the stage is done, and only the numbers in `eval-compare.md` may be quoted about it.
+**Status, 2026-11-04: the preparation is built and tested, and two pilot models were trained and evaluated; neither passed the decision rule (DO NOT SHIP), and nothing tuned is in use.** `npm run tune:check` prints what has been run on
+this machine (generated data is not committed). No claim anywhere may go beyond the numbers in `eval-compare.md` / `MODEL_CARD.md`, and each is quoted with its n. The first iteration's results and what they showed are in `docs/product/journal.md` (Wed Nov 4 ~09:15).
 
 ## Why tune at all
 
@@ -31,7 +31,7 @@ wishes.ts ──► sample.ts ──► build-dataset.ts ──► glimmer_train
 | Stage | Command | Needs | Time and cost (estimates, from the figures measured on 2026-11-04) |
 | --- | --- | --- | --- |
 | 1 wishes | `npm run tune:wishes -- --expand --count 600 --per-lang 120` | Modal Glimmer server, `SELF_TEXT_KEY` | about 25 model calls, minutes, cents |
-| 2 sample | `npm run tune:sample -- --max-calls 2000` | daemon on :8791, Modal Glimmer | 2,000 calls at about 12 s on two slots: about 3.5 GPU-hours, about $7 on one L40S at list price |
+| 2 sample | `npm run tune:sample -- --per-wish 1 --concurrency 4 --max-calls 1000` | daemon on :8791, Modal Glimmer | measured at about 13 s of container time per call with two in flight (runs 2 and 3 of the 40 wishes): 1,000 calls is about 3.6 container-hours, about $7 at list price, about 2 hours on two containers. 2,000 calls would be about $14 (an earlier figure of $7 for 2,000 came from solo call times and was too low by half) |
 | 3 dataset | `npm run tune:build` | nothing | seconds |
 | 4 smoke | `modal run scripts/modal/glimmer_train.py::smoke --dataset dataset --run smoke-1` | Modal, `modal volume put` of the dataset | 60 steps; the spec's estimate is under an hour, $3 to $5 |
 | 5 train | `modal run scripts/modal/glimmer_train.py::train --dataset dataset --run pilot-1` | Modal | the spec's estimate: $8 to $12 for 3,000 to 5,000 pairs on an A100; unmeasured |
@@ -62,11 +62,22 @@ Glimmer thinks on a private channel before it answers (`to=self`), then answers 
 - Worker settings for a tuned server: `MODEL_BACKEND=self` (or `TEXT_BACKEND=self`), `SELF_TEXT_URL`, `SELF_TEXT_MODEL=<its name>`, `SELF_TEXT_API=chat`, **`SELF_TEXT_PROMPT=tuned`**, and `SELF_TEXT_REASONING`
   unchanged (the training examples carry the same `Reasoning strength: low` line the Worker sends).
 
+## Where progress is tracked
+
+| What | Where | How it is kept |
+| --- | --- | --- |
+| Every evaluated run, with the decision rule's verdict | `scripts/tuning/results/pilots.md` and `pilots.json` | generated: `npm run tune:results` after each `eval.ts run`; only runs whose eval file exists are listed |
+| GPU spend, per stage, estimate then reconciled | `scripts/tuning/results/LEDGER.md` | by hand, a row BEFORE each GPU use, reconciled after |
+| What happened, in order, including the runs that died | `docs/product/journal.md` (the "Results log" entry and the status entries around it) | by hand |
+| What may be claimed | `scripts/tuning/MODEL_CARD.md` and the table below | by hand; every number cites `results/pilots.md` |
+| What is built and what has been run on this machine | `npm run tune:check` | computed from local files |
+| The plan and the open decisions | `docs/specs/forge-ai-spec.md`, "Tuning readiness" and the open questions | by hand |
+
 ## What may be said at each point
 
 | State | May say | May not say |
 | --- | --- | --- |
-| Now | "The full pipeline is built and tested: a dataset builder with safety filters and a manifest, a trainer, an evaluator, a decision rule, a red-team seed set. Nothing is trained." | that a model was tuned, or that tuning makes anything safe |
+| Now (2026-11-04) | "The full pipeline is built and was run end to end: two pilots were trained on our own model's answers, converted, served and evaluated by a decision rule, which refused both: they are faster (35% and 55% lower median seconds) but write brands into names more often and fail the first call more often." | that a model is ready, in use, or safer; that the next iteration works |
 | Dataset built from our model | the counts, the datasheet, "every example passed the production filters" | that a model learned from it |
 | Smoke run done | "an adapter trained for 60 steps: loss went from X to Y" | any quality or safety claim |
 | Pilot and heldout eval done | the table in `eval-compare.md`, verbatim, with its n | "safe for children" |
@@ -82,4 +93,4 @@ Glimmer thinks on a private channel before it answers (`to=self`), then answers 
 ## Known gaps in the preparation
 
 Failure-to-fix (repair) pairs are not generated, so a tuned model sees no repair prompts in training; the first call is what is tuned. There is no JSON Schema for constrained decoding. The red-team set
-is a seed (about 75 cases) where a release needs hundreds reviewed by native speakers. The six translated word lists have had no native read. The training script has never run.
+is a seed (about 75 cases) where a release needs hundreds reviewed by native speakers. The six translated word lists have had no native read. The training script has run for two pilots (910 examples, 456 steps) that did not pass; a second iteration (full production prompt, brand-wish examples) was prepared and its training was cut short by a compute-provider outage, so it has no results.

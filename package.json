@@ -32,6 +32,7 @@
     "tune:sample": "tsx scripts/tuning/sample.ts",
     "tune:build": "tsx scripts/tuning/build-dataset.ts",
     "tune:eval": "tsx scripts/tuning/eval.ts",
+    "tune:results": "tsx scripts/tuning/results.ts",
     "kip:plate-check": "node scripts/kip-plate-check.mjs",
     "kip:serve": "node scripts/kip-serve.mjs",
     "kip:validation-index": "node scripts/kip-validation-index.mjs",

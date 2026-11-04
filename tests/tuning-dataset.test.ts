@@ -3,11 +3,12 @@
  * the source guard (never hosted Spark's outputs, never a tuned model's) and "safe by construction" (no record whose answer carries an unsafe word, a brand or a refused wish).
  */
 import { describe, expect, it } from "vitest";
-import { answerJson, buildDataset, buildManifest, cleanNames, MAX_EXAMPLE_TOKENS, recipeHash, sampleToRecord, toJsonl } from "../scripts/tuning/lib/dataset";
-import { planSampling, requireOwnModel, runSampling, sampleId, SamplingRefused, type SampleRecord, type SampleSource } from "../scripts/tuning/lib/sampling";
+import { answerJson, buildDataset, buildManifest, cleanNames, MAX_EXAMPLE_TOKENS, PRODUCTION_PROMPT_VERSION, recipeHash, sampleToRecord, sha256, toJsonl } from "../scripts/tuning/lib/dataset";
+import { estimateCost, orderForSampling, planSampling, requireOwnModel, runSampling, sampleId, SamplingRefused, type SampleRecord, type SampleSource } from "../scripts/tuning/lib/sampling";
 import { stubBody } from "../scripts/tuning/lib/stub";
 import { finalizeWishes, seedWishes, type Wish } from "../scripts/tuning/lib/wishgen";
 import { TUNE_PROMPT_VERSION, TUNE_SYSTEM_LINE, buildTunePrompt } from "../shared/forgeTunePrompt";
+import { buildMakePrompt } from "../shared/forgeMakePrompt";
 
 const SELF: SampleSource = { backend: "self", model: "muse-glimmer-30B", promptStyle: "base", runId: "run-test", at: "2026-11-04T00:00:00Z" };
 const NAMES = { en: { w: "star hat", g: "m" }, es: { w: "sombrero de estrella", g: "m" }, fr: { w: "chapeau étoilé", g: "m" }, de: { w: "Sternenhut", g: "m" }, it: { w: "cappello stellato", g: "m" }, pt: { w: "chapéu estrelado", g: "m" }, tr: { w: "yıldızlı şapka", g: "m" } };
@@ -59,6 +60,24 @@ describe("planning and running a sampling run", () => {
     expect(p.todo.filter((t) => t.wish.text === "a one")).toEqual([{ wish: wishes[0], index: 1 }]);
   });
 
+  it("--retry-failed counts a failed record as not done, and a success as done", () => {
+    const failed = sample({ id: sampleId("a one", 0), wish: "a one", ok: false, recipe: undefined });
+    const good = sample({ id: sampleId("a four", 0), wish: "a four" });
+    const p = planSampling(wishes, { perWish: 1, maxCalls: 100, splits: ["train", "val"], existing: [failed, good], retryFailed: true });
+    expect(p.todo.map((t) => t.wish.text).sort()).toEqual(["a one", "a two"]);
+    const without = planSampling(wishes, { perWish: 1, maxCalls: 100, splits: ["train", "val"], existing: [failed, good] });
+    expect(without.todo.map((t) => t.wish.text)).toEqual(["a two"]);
+  });
+
+  it("orders wishes by a fixed pseudo-random key, so a run cut short still covers every language", () => {
+    const many: Wish[] = ["en", "es", "fr", "de", "it", "pt", "tr"].flatMap((lang) => Array.from({ length: 60 }, (_, i) => ({ text: `${lang} wish number ${i}`, lang: lang as Wish["lang"], split: "train" as const, source: "seed" as const })));
+    const a = orderForSampling(many), b = orderForSampling(many);
+    expect(a.map((w) => w.text)).toEqual(b.map((w) => w.text));
+    expect(new Set(a.map((w) => w.text))).toEqual(new Set(many.map((w) => w.text)));
+    expect(new Set(a.slice(0, 70).map((w) => w.lang)).size).toBe(7);
+    expect(orderForSampling(many, "other").map((w) => w.text)).not.toEqual(a.map((w) => w.text));
+  });
+
   it("a call that throws becomes a failed record, not a crashed run, and every task gets a record with its source", async () => {
     const plan = planSampling(wishes, { perWish: 1, maxCalls: 100, splits: ["train", "val"], existing: [] });
     const got: SampleRecord[] = [];
@@ -67,6 +86,15 @@ describe("planning and running a sampling run", () => {
     expect(got.find((r) => r.wish === "a two")).toMatchObject({ ok: false, reason: "error:boom" });
     expect(got.every((r) => r.source.model === "muse-glimmer-30B")).toBe(true);
     expect(new Set(got.map((r) => r.id)).size).toBe(3);
+  });
+});
+
+describe("the cost estimate matches what was measured", () => {
+  it("is about 13 s of container time a call, $1.95 an hour, and a container holds two slots: 1,000 calls is about $7 whatever the concurrency, and twice as fast on two containers", () => {
+    expect(estimateCost(1000, 2)).toEqual({ minutes: 217, dollars: 7.04 });
+    expect(estimateCost(1000, 4)).toEqual({ minutes: 108, dollars: 7.04 });
+    expect(estimateCost(2000, 2).dollars).toBe(14.08);
+    expect(estimateCost(0, 2)).toEqual({ minutes: 0, dollars: 0 });
   });
 });
 
@@ -102,6 +130,11 @@ describe("safe by construction: what a record may not contain", () => {
     expect(why(sample({ recipe: { ...RECIPE, behavior: "A hat made of drugs" } }))).toBe("unsafe_output");
     expect(why(sample({ names: { ...NAMES, en: { w: "Mickey hat", g: "m" } } }))).toBe("brand_output");
     expect(why(sample({ recipe: { ...RECIPE, name: "Pikachu Hat" } }))).toBe("brand_output");
+    // brands the production name filter does not know (found in the base model's own answers, 2026-11-04): rejected too, in a name, a behaviour sentence or the id
+    expect(why(sample({ names: { ...NAMES, en: { w: "Bluey Mask Head", g: "m" } } }))).toBe("brand_output");
+    expect(why(sample({ recipe: { ...RECIPE, behavior: "A Totoro hat that clicks on" } }))).toBe("brand_output");
+    expect(why(sample({ recipe: { ...RECIPE, id: "naruto_headband" } }))).toBe("brand_output");
+    expect(sampleToRecord(sample({ names: { ...NAMES, en: { w: "Leaf Village Headband", g: "m" } } })).ok).toBe(true);
     expect(why(sample({ split: "heldout" }))).toBe("heldout_sample");
   });
 
@@ -190,5 +223,35 @@ describe("the offline demonstration, end to end with canned recipes", () => {
     const j = JSON.parse(answerJson(RECIPE, cleanNames(NAMES as never)!)) as { recipe: unknown; names: Record<string, unknown> };
     expect(Object.keys(j)).toEqual(["recipe", "names"]);
     expect(Object.keys(j.names)).toHaveLength(7);
+  });
+});
+
+describe("the production-prompt dataset (version p1): the tuned model answers under the instructions it is served with", () => {
+  it("writes the full production prompt into every example and the heldout messages, under version p1, and fits it in the longer length cap", () => {
+    const r = sampleToRecord(sample(), { promptStyle: "production" });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.record.messages[1]!.content).toBe(buildMakePrompt({ text: "a sparkly seahorse hat", slot: "crown" }));
+    expect(r.record.messages[1]!.content.length).toBeGreaterThan(9000);
+    expect(r.record.meta.promptVersion).toBe(PRODUCTION_PROMPT_VERSION);
+    // the same sample is TOO LONG for the short-prompt cap if it carried the long prompt: the cap is per style
+    const built = buildDataset([sample()], [wish("a sparkly seahorse hat", "train", "crown"), wish("a heldout wish", "heldout")], { promptStyle: "production", evals: [] });
+    expect(built.train).toHaveLength(1);
+    expect(built.heldout[0]!.messages[1]!.content).toBe(buildMakePrompt({ text: "a heldout wish" }));
+    const m = buildManifest(built, { "train.jsonl": toJsonl(built.train) });
+    expect(m.tunePromptVersion).toBe("p1");
+    expect(m.promptStyle).toBe("production");
+    expect(m.promptSha256).toBe(sha256(buildMakePrompt({ text: "X" })));
+  });
+
+  it("is pinned: a change to the production prompt makes every p1 model stale, so it must fail here and say retrain", () => {
+    // the hash of buildMakePrompt({ text: "X" }) when the p1 dataset was made (2026-11-04). If this fails: the production prompt changed. Rebuild the p1 dataset, retrain and re-evaluate, THEN update the hash.
+    expect(sha256(buildMakePrompt({ text: "X" })).slice(0, 16)).toBe("440c729c8f2c94f5");
+  });
+
+  it("keeps the short prompt as the default", () => {
+    const built = buildDataset([sample()], [wish("a sparkly seahorse hat", "train", "crown")], { evals: [] });
+    expect(built.promptStyle).toBe("tuned");
+    expect(built.train[0]!.meta.promptVersion).toBe(TUNE_PROMPT_VERSION);
   });
 });

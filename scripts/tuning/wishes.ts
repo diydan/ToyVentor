@@ -3,6 +3,7 @@
  *
  *   npx tsx scripts/tuning/wishes.ts [--out scripts/tuning/data/wishes.jsonl] [--count 600] [--seed tune-v1]
  *       [--expand --per-lang 120 --url https://<workspace>--toyventor-glimmer.us-east.modal.run/v1 --model muse-glimmer-30B]
+ *       [--reclean]   re-run an existing wishes file through the intake and the splits (no model call); model-written wishes lose any slot
  *
  * Every wish passes the production intake, none is (or is near) an evaluation wish, and each is assigned train, val or heldout by a hash. The expansion talks to the Modal
  * Glimmer server directly and refuses to run against anything else (lib/sampling.ts requireOwnModel). Prints the counts, what was rejected and why, and the split sizes.
@@ -13,8 +14,8 @@ import { dirname, join } from "node:path";
 import { askText, resolveBackend } from "../../worker/modelBackend";
 import { parseArgs, num, str } from "./args";
 import { buildEnv, readDevVars } from "./lib/inprocessWorker";
-import { requireOwnModel, SamplingRefused } from "./lib/sampling";
-import { expansionPrompt, finalizeWishes, parseWishList, seedWishes, TERM_LANGS, WISH_SEED, type WishCategory } from "./lib/wishgen";
+import { readJsonl, requireOwnModel, SamplingRefused } from "./lib/sampling";
+import { expansionPrompt, finalizeWishes, parseWishList, seedWishes, TERM_LANGS, WISH_SEED, type Wish, type WishCategory } from "./lib/wishgen";
 const HERE = fileURLToPath(new URL(".", import.meta.url));
 
 async function main() {
@@ -22,7 +23,11 @@ async function main() {
   const out = str(flags, "out") ?? join(HERE, "data", "wishes.jsonl");
   const count = num(flags, "count", 600);
   const seed = str(flags, "seed") ?? WISH_SEED;
-  const candidates: Parameters<typeof finalizeWishes>[0][number][] = [...seedWishes(count)];
+  const candidates: Parameters<typeof finalizeWishes>[0][number][] = flags.reclean === true ? [] : [...seedWishes(count)];
+  if (flags.reclean === true) {
+    // repair an existing file without calling the model again: every wish goes through the intake and the splits again, and model-written wishes lose any slot they were given
+    for (const w of readJsonl<Wish>(out)) candidates.push({ text: w.text, lang: w.lang, source: w.source, ...(w.source === "seed" && w.slot ? { slot: w.slot } : {}) });
+  }
 
   if (flags.expand === true) {
     const vars = readDevVars();
@@ -43,7 +48,8 @@ async function main() {
         const seeds = seedTexts.slice((i * 8) % 50, (i * 8) % 50 + 8);
         const r = await askText(backend, expansionPrompt({ lang, category, seeds, count: perCall }), { timeoutMs: 90_000 });
         if (!r.ok) { console.error(`  ${lang} #${i + 1}: no answer (${r.status ?? "timeout"})`); continue; }
-        for (const text of parseWishList(r.text)) candidates.push({ text, lang, source: "model", ...(category === "hat" ? { slot: "crown" as const } : category === "head" ? { slot: "head" as const } : {}) });
+        // no slot: the category belongs to the PROMPT, and the model does not always write what it was asked (a head wish in a "hat" call); the child's slot choice is "any" unless the wish says
+        for (const text of parseWishList(r.text)) candidates.push({ text, lang, source: "model" });
         console.log(`  ${lang} #${i + 1}: ${parseWishList(r.text).length} wishes`);
       }
     }

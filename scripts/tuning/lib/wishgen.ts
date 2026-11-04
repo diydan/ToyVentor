@@ -45,13 +45,14 @@ export function normalizeWish(text: string): string {
   return foldText(text).replace(/[^\p{L}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim();
 }
 const tokens = (text: string): Set<string> => new Set(normalizeWish(text).split(" ").filter(Boolean));
-export function jaccard(a: string, b: string): number {
-  const x = tokens(a);
-  const y = tokens(b);
+const jaccardSets = (x: Set<string>, y: Set<string>): number => {
   if (x.size === 0 && y.size === 0) return 1;
   let inter = 0;
   for (const t of x) if (y.has(t)) inter++;
   return inter / (x.size + y.size - inter);
+};
+export function jaccard(a: string, b: string): number {
+  return jaccardSets(tokens(a), tokens(b));
 }
 
 // ---- intake -----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -60,15 +61,13 @@ export type WishRejection = "empty" | "too_long" | "unsafe" | "brand" | "not_a_w
 
 /** The production intake (worker/forgeMake.ts parseRequest, cleanWish) applied to a candidate wish. Returns the cleaned text. */
 export function acceptWish(raw: string): { ok: true; text: string } | { ok: false; reason: WishRejection } {
-  const text = scrubContactDetails(String(raw ?? ""))
-    .replace(/[\u0000-\u001f\u007f]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .replace(/^["'“”‘’`]+|["'“”‘’`]+$/g, "")
-    .trim();
+  const scrubbed = scrubContactDetails(String(raw ?? "")).replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim();
+  // a wish that carried an email address or a phone number is not training material at all (checked BEFORE the wrapping is stripped: that strips the placeholder's closing bracket)
+  const hadContact = /\[(?:email|number) removed\]/.test(scrubbed);
+  const text = scrubbed.replace(/^[\s\[\]{}"'“”‘’`,]+|[\s\[\]{}"'“”‘’`,]+$/g, "").trim(); // quotes, brackets and commas a model wrapped a wish in
   if (text.length < 1) return { ok: false, reason: "empty" };
   if (text.length > MAKE_MAX_TEXT_CHARS) return { ok: false, reason: "too_long" };
-  if (!/\p{L}{3,}/u.test(text) || text.includes("[email removed]") || text.includes("[number removed]")) return { ok: false, reason: "not_a_wish" };
+  if (hadContact || !/\p{L}{3,}/u.test(text)) return { ok: false, reason: "not_a_wish" };
   if (!kidSafeText(text) || findUnsafeTerm(text) !== null) return { ok: false, reason: "unsafe" };
   if (KID_BRAND_RE.test(text) || checkForgeRecipeBrandSafety({ name: text, slot: "crown", shape: { slices: [] } } as unknown as ForgeRecipeV1)) return { ok: false, reason: "brand" };
   return { ok: true, text };
@@ -96,9 +95,22 @@ export function evalTexts(): string[] {
   return out;
 }
 
+// The evaluation set is the same few hundred texts for every candidate: normalise and tokenise it once per array, not once per wish.
+const evalIndexCache = new WeakMap<readonly string[], { exact: Set<string>; sets: Set<string>[] }>();
+function evalIndex(evals: readonly string[]) {
+  let idx = evalIndexCache.get(evals);
+  if (!idx) {
+    idx = { exact: new Set(evals.map(normalizeWish)), sets: evals.map(tokens) };
+    evalIndexCache.set(evals, idx);
+  }
+  return idx;
+}
+
 export function isEvalLike(text: string, evals: readonly string[], threshold = NEAR_DUPLICATE): boolean {
-  const n = normalizeWish(text);
-  return evals.some((e) => normalizeWish(e) === n || jaccard(text, e) >= threshold);
+  const idx = evalIndex(evals);
+  if (idx.exact.has(normalizeWish(text))) return true;
+  const t = tokens(text);
+  return idx.sets.some((e) => jaccardSets(t, e) >= threshold);
 }
 
 /** Drops near-duplicates inside a list (keeping the first of each), by word overlap. */
@@ -205,10 +217,23 @@ export function parseWishList(answer: string): string[] {
       // fall through to lines
     }
   }
-  return answer
-    .split(/\r?\n/)
-    .map((l) => l.replace(/^\s*(?:[-*•]|\d+[.)])\s*/, "").trim())
-    .filter((l) => l && !/^[\[\]{}`]+$/.test(l) && l.length <= MAKE_MAX_TEXT_CHARS);
+  const out: string[] = [];
+  for (const raw of answer.split(/\r?\n/)) {
+    const line = raw.replace(/^\s*(?:[-*•]|\d+[.)])\s*/, "").trim().replace(/,$/, "");
+    if (!line || /^[\[\]{}`]+$/.test(line) || /^```/.test(line)) continue;
+    // a model sometimes answers with one tiny JSON array, or one quoted string, per line
+    if (/^\[.*\]$/.test(line) || /^".*"$/.test(line)) {
+      try {
+        const v: unknown = JSON.parse(line);
+        for (const x of Array.isArray(v) ? v : [v]) if (typeof x === "string" && x.trim()) out.push(x.trim());
+        continue;
+      } catch {
+        // not valid JSON: keep the line as text, acceptWish strips the wrapping
+      }
+    }
+    if (line.length <= MAKE_MAX_TEXT_CHARS) out.push(line);
+  }
+  return out;
 }
 
 export { TERM_LANGS };
