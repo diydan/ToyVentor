@@ -4,7 +4,7 @@ Written 2026-11-04 (submission day) from Dan's chore list, checked against the c
 
 This file owns the **what and in what order**. The how-to-test detail stays in [qa.md](qa.md) (deploy gates, live smoke, phone and child passes) and the run itself in [demo-script.md](demo-script.md); this file points at them and does not copy them.
 
-**States.** BUILT = committed. CODED = in the working tree, uncommitted. PREP = scaffolding only, the real step has not run. NOT BUILT. LIVE = seen working on the deployed site. The deploys of 2026-11-04 shipped the pile, voice, mess, dog, metered-song, warm-up and container-maker commits (smoke-live 19/19, cache v7); the camera pick-up, the cleaning and cooking levels, the title menu, the song player, the PWA and the outdoor worlds ship with the next one.
+**States.** BUILT = committed. CODED = in the working tree, uncommitted. PREP = scaffolding only, the real step has not run. NOT BUILT. LIVE = seen working on the deployed site. The deploys of 2026-11-04 shipped the pile, voice, mess, dog, metered-song, warm-up and container-maker commits (smoke-live 19/19, cache v7), and the last one (commit `0e35110`, cache v8) shipped the camera pick-up, the cleaning and cooking levels, the title menu, the song player, the PWA and the outdoor worlds.
 
 ---
 
@@ -79,8 +79,8 @@ My pick: the object is the chorus, the instrument matches it, and Kip plays or d
   3. *The Kip bench pick-up:* `parts/kip/viewer/` and `public/kip/` copies of `kip-pickup.js`, `kip-moment-song.js` (new), `kip-photo-print.js`, `kip-menu.js`, `kip-bench.js`, `scripts/build-kip.ts`, `public/sw.js` (v6), `scripts/e2e-kip-pickup.mjs`, `tests/kip-pickup.test.ts`, `tests/household-offer.test.ts` (one number and a note), `package.json` (one script line). **`kip-theme-song.js` is shared with another lane's karaoke and waiting-bar edits: stage only the `start(description, opts = {})` hunks (the `label` and `waiting` options).**
   4. *The game side:* `src/features/game/world/runtime/pickupHeld.ts`, `tests/pickup-held.test.ts`, `scripts/e2e-game-pickup.mjs`, `scripts/e2e-game-pickup-chain.mjs` (all new), and **`world.ts`, six hunks only**: the import (about line 163), the `PICK` creation and the window listener (418 to 420), `if(PICK.tap(ray))return;` after the bubbles check (about 748), `PICK.tick();` before the backdrop update (about 841), `PICK.dispose();` in `dispose` (about 1394) and `pick:PICK,` on the dev handle after `follow:FOLLOW,` (about 1398). The rest of `world.ts` is other lanes' work.
   5. *Installing as a web app:* `index.html`, `public/manifest.webmanifest`, `public/icon-maskable.svg`, the four PNGs, `scripts/gen-pwa-icons.mjs`.
-- [x] **`CACHE` in `public/sw.js` is `toyventor-v8`** (the live site serves v7; `public/kip/` changed again with the three new `mixamo/baked/loco_*.json` files). Do not bump it twice.
-- [ ] [qa.md](qa.md) 1.1 robot gates all green, and 1.4 the clean-export load. These are the only proof the shipped commit loads.
+- [x] **`CACHE` in `public/sw.js` is `toyventor-v8`** (the live site serves v8 as of the deploy of `0e35110`; `public/kip/` changed again with the three new `mixamo/baked/loco_*.json` files). Do not bump it twice. The next bump is v9.
+- [x] [qa.md](qa.md) 1.1 robot gates all green, and 1.4 the clean-export load. These are the only proof the shipped commit loads. (2026-11-04: validate ok, typecheck clean, 5233 tests pass, the export builds and every bench is ready - 6 benches, 975 requests, 0 not 200. The log is in qa.md part 10.)
 - [ ] Worker settings (Dan runs the writes; the auto-mode classifier blocks `wrangler secret put` for me):
   - [x] `TRANSCRIBE_BACKEND=hosted` (item 1) - set; `GET /api/transcribe` says `enabled:true` (measured 2026-11-04)
   - [ ] `VOICE_SIGNING_KEY` (spoken names for Make from words) - it is set on the Worker; the clips themselves are made on first use
@@ -88,7 +88,7 @@ My pick: the object is the chorus, the instrument matches it, and Kip plays or d
   - [ ] `MODEL_BACKEND` is **not** `self`
   - [ ] the maker: commit `5c5b383` puts it in a Cloudflare Container behind a service binding. The binding is configured and the maker Worker `toyventor-forge-maker` exists (v `7d959e1c`), and `/api/health` says `forgeOptimizerConfigured:true` (measured 2026-11-04) - but **no real wish has been made through it yet**. Make one wish through the live site. If it fails, `docs/product/demo-script.md` gives the fallback (a ready-made hat or head) and says so out loud.
   - [ ] Cloudflare dashboard rate-limit rules on `/api/forge/make` and `/api/forge/warm` (Dan's; the warm route's worst case is one container always on, about $47 a day)
-- [ ] **Deploy from the export**, not the tree ([qa.md](qa.md) part 2). Then `E2E_GPU=metal node scripts/smoke-live.mjs https://toyventor.com` and `curl /api/health`.
+- [x] **Deploy from the export**, not the tree ([qa.md](qa.md) part 2). Then `E2E_GPU=metal node scripts/smoke-live.mjs https://toyventor.com` and `curl /api/health`. Done 2026-11-04: commit `0e35110`, Worker version `b522d2c5`, cache `toyventor-v8`, smoke 19/19 (146 served files byte-identical to the commit), `/api/health` all true.
 - [ ] Open the live site in a browser that visited before: the new cache name took ([qa.md](qa.md) 4.5).
 
 ---

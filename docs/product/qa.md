@@ -34,7 +34,7 @@ npm run validate && npm run typecheck && npm test && npm run build && npm run pr
 
 **1.2 Commit what ships, nothing else.** `git status` must show no file you want in production as modified or untracked. `git archive HEAD` contains committed files only, so export after your last commit; an earlier export proves nothing about what you ship.
 
-**1.3 Cache name.** If anything under `public/kip/` changed since the last deploy, bump `CACHE` in `public/sw.js` (it is `toyventor-v4` now; next is `v5`) and commit. The service worker serves `/kip/` cache-first and those URLs do not change when their bytes do, so without the bump returning visitors keep old copies.
+**1.3 Cache name.** If anything under `public/kip/` changed since the last deploy, bump `CACHE` in `public/sw.js` (it is `toyventor-v8` now; next is `v9`) and commit. The service worker serves `/kip/` cache-first and those URLs do not change when their bytes do, so without the bump returning visitors keep old copies.
 
 **1.4 Clean export, build, load every bench** (the only proof the commit you ship loads):
 
@@ -319,22 +319,22 @@ Traps: run one browser script at a time (`e2e-chrome` launches its own Chrome an
 
 ## 10. Results log
 
-Date ____ commit ____ URL ____ tester ____
+Date 2026-11-04 commit 0e35110 URL https://toyventor.com tester mavis (an agent run; no person has done any of this)
 
 | Check | Pass / fail | Note |
 | --- | --- | --- |
-| 1.1 robot gates | | |
-| 1.4 clean export loads | | |
-| 1.5 secrets and migrations | | |
-| 3 live smoke | | |
-| 3 `/api/health` as expected | | |
-| 4.1 demo run, time ____ s | | |
-| 4.2 gate on the live Worker | | |
-| 4.3 room photo | | |
-| 4.4 other Worker routes | | |
-| 4.5 returning visitor cache | | |
-| 5 phone checks | | |
-| 6 child sessions (count ____) | | |
+| 1.1 robot gates | pass | `npm run validate` ok (5 sets), typecheck clean, `npm test` 5233 passed / 1 skipped / 0 failed (502 s), the clean export builds (exit 0). `npm run preflight` is ok except the local `.dev.vars` check: that file is gitignored and lives in the primary checkout, not in a worktree or the export, and the Worker's own secrets are set (`npx wrangler secret list`) |
+| 1.4 clean export loads | pass | `git archive 0e35110` into a fresh dir, `npm run build` exit 0, then `check-clean-export.mjs`: 6 benches, 975 requests, 0 not 200 - "clean export loads: every bench ready, no missing file" |
+| 1.5 secrets and migrations | pass | `npx wrangler d1 migrations list DB --remote`: no migrations to apply. The Worker has MODEL_API_KEY, MUREKA_API_KEY, SELFIE_CLOUD, SONG_MONTHLY_BUDGET, THEME_SONG, TRANSCRIBE_BACKEND and VOICE_SIGNING_KEY set |
+| 3 live smoke | pass | `smoke-live.mjs https://toyventor.com`: 19 passed, 0 failed, against 0e35110 - the live cache name is `toyventor-v8` and 146 served files are byte-identical to the commit |
+| 3 `/api/health` as expected | pass | `ok:true`; samConfigured, museConfigured, selfieCloud, forgeOptimizerConfigured and voiceConfigured are all true. `/api/transcribe` and `/api/theme-song` both answer `enabled:true` |
+| 4.1 demo run, time ____ s | not run | no person has run the demo |
+| 4.2 gate on the live Worker | not run | the grown-up proof, on a real phone |
+| 4.3 room photo | not run | |
+| 4.4 other Worker routes | partly | the voice and the theme-song routes answer `enabled:true`; a real song and a real wish have not been made through them |
+| 4.5 returning visitor cache | not run | needs a browser that visited before the deploy |
+| 5 phone checks | not run | |
+| 6 child sessions (count ____) | not run | never run by a person |
 
 ## Where this came from
 
