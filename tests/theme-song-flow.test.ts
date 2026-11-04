@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createThemeSongFlow, keepSong, levelDescription, readKeptSongs, type FlowState } from "../src/features/game/world/themeSongFlow";
+import { analyseTheme } from "../shared/themeParty";
 
 // A synthetic song the beat analyzer can read: a kick on every beat (louder on the 1) and a loud unsteady burst in its last 5 s, like the provider's watermark.
 function song(bpm = 106, seconds = 50, sr = 22050): Float32Array[] {
@@ -20,7 +21,7 @@ const NAMED = { contract: 1, name: "Brave Bridge Builder", mood: "bouncy", tempo
   verse: ["Planks go down one by one", "Over the river we run", "Hammer tap and bolt turn", "Look at the bridge we built"], chorus: ["Brave Bridge Builder, hooray", "We built it all today", "Brave Bridge Builder, hooray", "Cross it and play"] };
 
 interface Setup { calls: Array<{ url: string; method: string; body?: string }>; states: FlowState[]; parties: Array<{ entry: any; wav: ArrayBuffer; title: string }>; stored: Map<string, string>; flow: ReturnType<typeof createThemeSongFlow> }
-function setup(opts: { enabled?: boolean; post?: { status: number; body: unknown }; polls?: unknown[]; audioStatus?: number; decode?: () => Promise<{ channels: ArrayLike<number>[]; sampleRate: number }>; party?: { ok: boolean; dancing?: boolean; reason?: string }; probeThrows?: boolean } = {}): Setup {
+function setup(opts: { enabled?: boolean; post?: { status: number; body: unknown }; polls?: unknown[]; audioStatus?: number; decode?: () => Promise<{ channels: ArrayLike<number>[]; sampleRate: number }>; party?: { ok: boolean; dancing?: boolean; reason?: string }; probeThrows?: boolean; pauseParty?: () => boolean; resumeParty?: () => boolean } = {}): Setup {
   const calls: Setup["calls"] = [], states: FlowState[] = [], parties: Setup["parties"] = [], stored = new Map<string, string>();
   const polls = [...(opts.polls ?? [{ status: "making" }, { status: "ready", url: "https://cdn.mureka.ai/a.mp3", durationMs: 49000 }])];
   const fetchImpl = (async (input: string, init?: RequestInit) => {
@@ -36,6 +37,7 @@ function setup(opts: { enabled?: boolean; post?: { status: number; body: unknown
     fetchImpl, pollMs: 0, setTimeout: (fn) => { queueMicrotask(fn); return 1; }, clearTimeout: () => {}, now: () => 1_000,
     decode: opts.decode ?? (async () => ({ channels: song(), sampleRate: 22050 })),
     startParty: async (s) => { parties.push(s as never); return opts.party ?? { ok: true, dancing: true }; },
+    pauseParty: opts.pauseParty, resumeParty: opts.resumeParty,
     onState: (s) => states.push({ ...s }),
     storage: { getItem: (k) => stored.get(k) ?? null, setItem: (k, v) => { stored.set(k, v); } },
   });
@@ -397,5 +399,121 @@ describe("waking our own model", () => {
     expect(off.warms()).toHaveLength(0);
     const bad = warmSetup({ warmThrows: true });
     await expect(bad.flow.warm()).resolves.toBeUndefined();
+  });
+});
+
+describe("the mini karaoke's times", () => {
+  const plan = analyseTheme(song(), 22050);
+  if (!plan.ok) throw new Error("the synthetic song must be cuttable");
+  const at = (cutSeconds: number) => Math.round((plan.cut.startSec + cutSeconds) * 1000);
+  const LINES = [
+    { s: at(3), e: at(5), t: "hello little cat", w: [at(3), at(3.6), at(4.2)] },
+    { s: at(plan.cut.lengthSec + 5), e: at(plan.cut.lengthSec + 7), t: "after the end" }, // never heard: the cut is over
+  ];
+  it("moves the provider's lines onto the cut the party loops, leaves out what is not in it, and tells the card the loop's length", async () => {
+    const s = setup({ polls: [{ status: "ready", url: "https://cdn.mureka.ai/a.mp3", lines: LINES }] });
+    await s.flow.start("I finished a bridge");
+    await until(() => s.flow.state().phase === "dancing");
+    const st = s.flow.state();
+    expect(st.loop).toBeCloseTo(plan.cut.lengthSec, 6);
+    expect(st.karaoke).toHaveLength(1);
+    expect(st.karaoke[0]!.text).toBe("hello little cat");
+    expect(st.karaoke[0]!.at).toBeCloseTo(3, 2);
+    expect(st.karaoke[0]!.words.map((w) => w.at.toFixed(1))).toEqual(["3.0", "3.6", "4.2"]);
+  });
+  it("is honest when there are no times: no karaoke at all, never a guess, and the party still goes ahead", async () => {
+    const s = setup();
+    await s.flow.start("I finished a bridge");
+    await until(() => s.flow.state().phase === "dancing");
+    expect(s.flow.state().karaoke).toEqual([]);
+  });
+  it("junk in the times is dropped, not trusted", async () => {
+    const s = setup({ polls: [{ status: "ready", url: "https://cdn.mureka.ai/a.mp3", lines: [{ s: "x", e: 5, t: "bad" }, null, 4, { s: at(3), e: at(4), t: "ok" }] }] });
+    await s.flow.start("I finished a bridge");
+    await until(() => s.flow.state().phase === "dancing");
+    expect(s.flow.state().karaoke.map((l) => l.text)).toEqual(["ok"]);
+  });
+  it("keeps the times with the song, so a song danced to again later still has its karaoke without asking", async () => {
+    const s = setup({ polls: [{ status: "ready", url: "https://cdn.mureka.ai/a.mp3", lines: LINES }] });
+    await s.flow.start("I finished a bridge");
+    await until(() => s.flow.state().phase === "dancing");
+    const kept = readKeptSongs({ getItem: (k) => s.stored.get(k) ?? null, setItem: () => {} });
+    expect(kept[0]!.lines).toHaveLength(2);
+    const again = setup();
+    const before = again.calls.length;
+    await again.flow.playKept(kept[0]!);
+    expect(again.flow.state().karaoke.map((l) => l.text)).toEqual(["hello little cat"]);
+    expect(again.calls.slice(before).some((c) => c.url === `/api/theme-song?id=${TASK}` )).toBe(false); // no status call: it had them
+  });
+  it("asks the route once for the times of a song kept before they were saved, and goes ahead without them if it cannot", async () => {
+    const OLD = { name: "Old", verse: ["a"], chorus: ["b"], mood: "bouncy", url: "https://cdn.mureka.ai/old.mp3", task: "170010186285999", madeAt: "" };
+    const s = setup({ polls: [{ status: "ready", url: OLD.url, lines: LINES }] });
+    await s.flow.playKept(OLD);
+    expect(s.calls.filter((c) => c.url === `/api/theme-song?id=${OLD.task}`)).toHaveLength(1);
+    expect(s.flow.state().karaoke).toHaveLength(1);
+    const none = setup({ polls: [{ status: "making" }] });
+    expect(await none.flow.playKept(OLD)).toBe(true);
+    expect(none.flow.state().karaoke).toEqual([]);
+  });
+  it("a kept song's times are read back cleaned: junk is dropped and a song without any has no field", () => {
+    const store = (v: unknown) => ({ getItem: () => JSON.stringify(v), setItem: () => {} });
+    const good = { name: "A", url: "https://x", task: "123456", verse: [], chorus: [], mood: "", madeAt: "" };
+    const [a, b] = readKeptSongs(store([{ ...good, lines: [{ s: 1, e: 2, t: "ok" }, { s: 9, e: 1, t: "bad" }] }, { ...good, task: "654321", lines: "nope" }]));
+    expect(a!.lines).toEqual([{ s: 1, e: 2, t: "ok" }]);
+    expect(b!.lines).toBeUndefined();
+  });
+});
+
+describe("pause, play and new words", () => {
+  it("pauses and plays the party, only while it is on, and the card's line goes back", async () => {
+    const calls: string[] = [];
+    const s = setup({ pauseParty: () => { calls.push("pause"); return true; }, resumeParty: () => { calls.push("resume"); return true; } });
+    expect(s.flow.pause()).toBe(false); // nothing is dancing yet
+    await s.flow.start("I finished a bridge");
+    await until(() => s.flow.state().phase === "dancing");
+    const note = s.flow.state().note;
+    expect(s.flow.resume()).toBe(false); // not paused
+    expect(s.flow.pause()).toBe(true);
+    expect(s.flow.pause()).toBe(false); // already paused
+    expect(s.flow.state()).toMatchObject({ phase: "dancing", paused: true });
+    expect(s.flow.resume()).toBe(true);
+    expect(s.flow.state()).toMatchObject({ paused: false, note });
+    expect(calls).toEqual(["pause", "resume"]);
+  });
+  it("stays as it was when the party cannot be held, and a party that ends while paused is simply over", async () => {
+    const stuck = setup({ pauseParty: () => false });
+    await stuck.flow.start("I finished a bridge");
+    await until(() => stuck.flow.state().phase === "dancing");
+    expect(stuck.flow.pause()).toBe(false);
+    expect(stuck.flow.state().paused).toBe(false);
+    const s = setup({ pauseParty: () => true, resumeParty: () => true });
+    await s.flow.start("I finished a bridge");
+    await until(() => s.flow.state().phase === "dancing");
+    s.flow.pause();
+    s.flow.partyEnded("stopped");
+    expect(s.flow.state()).toMatchObject({ phase: "over", paused: false });
+    expect(s.flow.resume()).toBe(false);
+  });
+  it("dancing again after a party starts it playing, not paused", async () => {
+    const s = setup({ pauseParty: () => true, resumeParty: () => true });
+    await s.flow.start("I finished a bridge");
+    await until(() => s.flow.state().phase === "dancing");
+    s.flow.pause();
+    s.flow.partyEnded("stopped");
+    expect(await s.flow.again()).toBe(true);
+    expect(s.flow.state()).toMatchObject({ phase: "dancing", paused: false });
+  });
+  it("new words asks for a fresh song about the same thing: a new key, the same description and kind, the old song let go", async () => {
+    const s = setup();
+    expect(await s.flow.redo()).toBe(false); // nothing was asked yet
+    await s.flow.start("a sleepy cat", "prompt");
+    await until(() => s.flow.state().phase === "dancing");
+    expect(await s.flow.redo()).toBe(true);
+    const posts = s.calls.filter((c) => c.method === "POST").map((c) => JSON.parse(c.body!));
+    expect(posts).toHaveLength(2);
+    expect(posts[1]).toMatchObject({ description: "a sleepy cat", kind: "prompt" });
+    expect(posts[1].key).not.toBe(posts[0].key);
+    await until(() => s.states.filter((x) => x.phase === "dancing").length >= 2);
+    expect(s.flow.state().karaoke).toEqual([]); // the new song starts clean
   });
 });

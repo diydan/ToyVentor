@@ -69,13 +69,21 @@ export interface PartyState {
   dancing: boolean;
   /** Why the party ended: "stopped", "time", "error", or "" while it runs / has not run. */
   ended: string;
-  /** Song time in seconds (the audio clock minus the start), 0 when off. */
+  /** Song time in seconds (the audio clock minus the start), 0 when off. It keeps counting across loops, and holds still while paused. */
   songTime: number;
+  /** True while the party is on but paused (the song and the dance wait where they were). */
+  paused: boolean;
+  /** Seconds of one loop of the song (0 when off): `songTime % loopSeconds` is where in the cut the listener is. */
+  loopSeconds: number;
 }
 
 export interface GameParty {
   start(song: PartySong): Promise<PartyStart>;
   stop(reason?: string): void;
+  /** Hold the song and the dance where they are. False when no party is on or it is already paused. The party's own time limit stops counting too. */
+  pause(): boolean;
+  /** Carry on from the same spot of the song and the same step of the dance. False when the party is not paused. */
+  resume(): boolean;
   state(): PartyState;
 }
 
@@ -86,6 +94,14 @@ export function createGameParty(host: GamePartyHost): GameParty {
   let gain: GainNode | null = null;
   let startedAt = 0;
   let timer: number | null = null;
+  // pause: where the song was held (unbounded song time), what is left of the time limit, and what resume needs to carry on
+  let paused = false;
+  let pausedAt = 0;
+  let remainingMs = 0;
+  let deadline = 0;
+  let buffer: AudioBuffer | null = null;
+  let loopEnd = 0;
+  let danceSource: BeatSource | null = null;
   const perf = host.perfNow ?? (() => (typeof performance !== "undefined" ? performance.now() : Date.now()));
   const setT = host.setTimeout ?? ((fn: () => void, ms: number) => globalThis.setTimeout(fn, ms) as unknown as number);
   const clearT = host.clearTimeout ?? ((id: number) => globalThis.clearTimeout(id));
@@ -93,6 +109,7 @@ export function createGameParty(host: GamePartyHost): GameParty {
   /** Song time that is being HEARD, seconds: where the browser reports the output position it is that moved on to now, else the audio clock less the output latency. */
   function songTime(): number {
     if (!ctx) return 0;
+    if (paused) return pausedAt;
     const c = ctx as AudioContext & { getOutputTimestamp?: () => { contextTime?: number; performanceTime?: number } };
     const ts = typeof c.getOutputTimestamp === "function" ? c.getOutputTimestamp() : null;
     if (ts && typeof ts.performanceTime === "number" && ts.performanceTime > 0 && typeof ts.contextTime === "number" && Number.isFinite(ts.contextTime)) {
@@ -102,22 +119,47 @@ export function createGameParty(host: GamePartyHost): GameParty {
     return c.currentTime - startedAt - latency;
   }
 
+  /** Fade the sound out and let go of it (a short fade, so a stop or a pause does not click). */
+  function silence(): void {
+    if (!source) return;
+    try {
+      if (gain && ctx) gain.gain.setTargetAtTime(0.0001, ctx.currentTime, 0.04);
+      source.stop((ctx?.currentTime ?? 0) + 0.2);
+    } catch { /* already stopped */ }
+    const s = source, g = gain;
+    setT(() => { try { s.disconnect(); g?.disconnect(); } catch { /* gone */ } }, 300);
+    source = null;
+    gain = null;
+  }
+
+  /** Start the looping sound so that song time `from` (seconds, unbounded) sounds `START_DELAY_S` from now. The song's position in its loop is `from` wrapped to the loop. */
+  function sound(c: AudioContext, from: number): void {
+    const src = c.createBufferSource();
+    const g = c.createGain();
+    g.gain.value = GAME_PARTY_GAIN;
+    src.buffer = buffer;
+    src.loop = true;
+    src.loopStart = 0;
+    src.loopEnd = loopEnd;
+    src.connect(g);
+    g.connect(c.destination);
+    const when = c.currentTime + START_DELAY_S;
+    startedAt = when - from;
+    src.start(when, loopEnd > 0 ? from % loopEnd : 0);
+    source = src;
+    gain = g;
+  }
+
   function finish(reason: string): void {
     const wasOn = st.on || st.starting;
     st.on = false;
     st.starting = false;
     st.ended = reason;
+    paused = false;
+    danceSource = null;
+    buffer = null;
     if (timer !== null) { clearT(timer); timer = null; }
-    if (source) {
-      try {
-        if (gain && ctx) gain.gain.setTargetAtTime(0.0001, ctx.currentTime, 0.04); // a short fade, so a stop does not click
-        source.stop((ctx?.currentTime ?? 0) + 0.2);
-      } catch { /* already stopped */ }
-      const s = source, g = gain;
-      setT(() => { try { s.disconnect(); g?.disconnect(); } catch { /* gone */ } }, 300);
-    }
-    source = null;
-    gain = null;
+    silence();
     if (wasOn) {
       host.stopDance();
       host.duckMusic(false);
@@ -137,7 +179,7 @@ export function createGameParty(host: GamePartyHost): GameParty {
       st.starting = true;
       st.ended = "";
       try {
-        const buffer = await c.decodeAudioData(song.wav.slice(0)); // a copy: decoding takes the bytes it is given
+        const decoded = await c.decodeAudioData(song.wav.slice(0)); // a copy: decoding takes the bytes it is given
         if (!st.starting) return { ok: false, reason: "stopped before it began" };
         ctx = c;
         const map: BeatMap = songBeatMap(lib, GAME_PARTY_SECONDS + 10);
@@ -152,38 +194,33 @@ export function createGameParty(host: GamePartyHost): GameParty {
         const playable = new Map(host.dances().filter((d) => d.loaded || loadedIds.includes(d.id)).map((d) => [d.id, d]));
         const plan = planParty(lib.bpm, [...playable.values()], 0, MIX_CHOICE);
         const list = plan.mix ? plan.mix.list : plan.dance ? [plan.dance] : [];
-        const src = c.createBufferSource();
-        const g = c.createGain();
-        g.gain.value = GAME_PARTY_GAIN;
-        src.buffer = buffer;
-        src.loop = true;
-        src.loopStart = 0;
-        src.loopEnd = Math.min(buffer.duration, lib.dur);
-        src.connect(g);
-        g.connect(c.destination);
-        startedAt = c.currentTime + START_DELAY_S;
-        src.start(startedAt);
-        source = src;
-        gain = g;
+        buffer = decoded;
+        loopEnd = Math.min(decoded.duration, lib.dur);
+        paused = false;
+        pausedAt = 0;
+        sound(c, 0);
         host.duckMusic(true);
         let dancing = false;
         if (list.length) {
           const every = plan.mix?.every ?? 0;
-          dancing = host.startDance(() => {
+          danceSource = () => {
             const t = songTime();
             const pick = plan.mix ? danceForMix(list, beatAt(map, t).position, every) : list[0]!;
             const dance = playable.get(pick.clip.id);
             const dur = pick.clip.beats * (60 / pick.clip.bpm);
             return { name: pick.clip.id, time: (clipTime(map, t, pick.clip) + (dance?.hit ?? 0)) % dur };
-          });
+          };
+          dancing = host.startDance(danceSource);
         }
         st.on = true;
         st.starting = false;
         st.title = lib.title;
         st.bpm = lib.bpm;
         st.dancing = dancing;
-        timer = setT(() => finish("time"), GAME_PARTY_SECONDS * 1000);
-        return { ok: true, dancing, title: lib.title, bpm: lib.bpm, bufferSeconds: buffer.duration };
+        remainingMs = GAME_PARTY_SECONDS * 1000;
+        deadline = perf() + remainingMs;
+        timer = setT(() => finish("time"), remainingMs);
+        return { ok: true, dancing, title: lib.title, bpm: lib.bpm, bufferSeconds: decoded.duration };
       } catch (err) {
         finish("error");
         return { ok: false, reason: `the song could not be played (${String(err && (err as Error).message ? (err as Error).message : err).slice(0, 90)})` };
@@ -192,6 +229,25 @@ export function createGameParty(host: GamePartyHost): GameParty {
     stop(reason = "stopped") {
       if (st.on || st.starting) finish(reason);
     },
-    state: () => ({ on: st.on, title: st.title, bpm: st.bpm, dancing: st.dancing, ended: st.ended, songTime: st.on ? songTime() : 0 }),
+    pause() {
+      if (!st.on || paused || !ctx) return false;
+      pausedAt = Math.max(0, songTime()); // read before `paused` is set: it is the heard position now
+      paused = true;
+      if (timer !== null) { clearT(timer); timer = null; }
+      remainingMs = Math.max(0, deadline - perf());
+      silence();
+      if (danceSource) host.stopDance(); // the character stands still until the music is back
+      return true;
+    },
+    resume() {
+      if (!st.on || !paused || !ctx || !buffer) return false;
+      paused = false;
+      sound(ctx, pausedAt);
+      if (danceSource) st.dancing = host.startDance(danceSource);
+      deadline = perf() + remainingMs;
+      timer = setT(() => finish("time"), remainingMs);
+      return true;
+    },
+    state: () => ({ on: st.on, title: st.title, bpm: st.bpm, dancing: st.dancing, ended: st.ended, songTime: st.on ? songTime() : 0, paused: st.on && paused, loopSeconds: st.on ? loopEnd : 0 }),
   };
 }

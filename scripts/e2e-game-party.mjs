@@ -186,7 +186,8 @@ async function main() {
     check("the character is dancing (the driver reports the dance, so the camera pushes in)", (await world(cdp, `w.getMix().busyAction`)) === "dance" && (await world(cdp, `w.getMix().beatDancing`)) === true);
     const song = await cdp.ev(`(() => { const s = window.__songs.at(-1); return s ? { loopEnd: s.loopEnd, dur: s.dur, when: s.when, loop: true } : null; })()`);
     check("a looping song is playing on the game's audio context, cut to whole bars before the watermark", song && song.loopEnd > 30 && song.loopEnd <= 45.3 && Math.abs(song.dur - song.loopEnd) < 0.05, JSON.stringify(song));
-    check("the card says Stop the party", /Stop the party/.test(await cdp.ev(`document.querySelector(".tv-song-row")?.textContent`)));
+    // the party docks itself: a slim player with Pause and Stop (and, when the song has times, the line being sung)
+    check("the party docks itself, with Pause and Stop in the player", (await cdp.ev(`document.querySelector('[data-testid="song-card"]')?.getAttribute("data-docked")`)) === "true" && Boolean(await cdp.ev(`document.querySelector('[data-testid="song-pause"]')`)) && /Stop the party/.test((await cdp.ev(`document.querySelector('[data-testid="song-stop"]')?.getAttribute("aria-label")`)) ?? ""));
     check("the song was kept for the Kip bench's My songs", (await cdp.ev(`JSON.parse(localStorage.getItem("tv.themeSongs.v1") || "[]")[0]?.name`)) === "Brave Bridge Builder");
     await shot(cdp, "3-dancing");
 
@@ -234,7 +235,7 @@ async function main() {
 
     // ---- 5. stop: the song stops, the dance eases out ----
     console.log("\n[5] stop, and dance again");
-    const stopBtn = await centreOf(cdp, ".tv-song-btn");
+    const stopBtn = await centreOf(cdp, '[data-testid="song-stop"]');
     await cdp.tapAt(stopBtn.x, stopBtn.y);
     check("the card says the party is over", await waitFor(async () => ((await phase(cdp)) === "over" ? true : null), { timeoutMs: 5000, label: "over" }).catch(() => false));
     await sleep(900);
@@ -284,7 +285,7 @@ async function main() {
     await shot(cdp, "7b-idea-party");
 
     // dance to the OLDER kept song from the list
-    await tap(cdp, ".tv-song-btn"); // Stop the party
+    await tap(cdp, '[data-testid="song-stop"]'); // Stop the party
     await sleep(700);
     await tap(cdp, ".tv-map-fab");
     await sleep(800);
