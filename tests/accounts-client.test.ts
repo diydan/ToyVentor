@@ -1,6 +1,6 @@
 // The browser's side of the accounts routes (src/lib/accountsClient.ts): the sign-in token in the address, the sentences for every failure, and the calls it makes.
 import { describe, expect, it } from "vitest";
-import { createAccountsClient, describeFailure, deviceIsClaimed, looksLikeEmail, offerChild, signinTokenFromSearch, withoutSignin } from "../src/lib/accountsClient";
+import { PROFILE_CHANGED_EVENT, createAccountsClient, describeFailure, deviceIsClaimed, looksLikeEmail, offerChild, playAsPlan, profileFromChild, signinTokenFromSearch, withoutSignin } from "../src/lib/accountsClient";
 
 const TOKEN = "A".repeat(43);
 const reply = (status: number, body: unknown): Response => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
@@ -94,5 +94,41 @@ describe("what the signed-in screen offers", () => {
   it("knows whether this device is the family's", () => {
     expect(deviceIsClaimed(me([], ["dev-1"]), "dev-1")).toBe(true);
     expect(deviceIsClaimed(me([], ["dev-1"]), "dev-2")).toBe(false);
+  });
+});
+
+describe("Play as: a family's child becomes this device's player", () => {
+  const child = (over: Partial<{ firstName: string; under13: boolean; favourites: { colour: string; fruit: string; animal: string } }> = {}) => ({ id: "c1", firstName: "Mia", favourites: { colour: "blue", fruit: "apple", animal: "elephant" }, under13: true, ...over });
+  const local = (over: Record<string, unknown> = {}) => ({ version: 1 as const, kidName: "Mia", parentName: "Sam", under13: true, favourites: { colour: "blue", fruit: "apple", animal: "elephant" }, songConsent: true, createdAt: "2026-11-04T00:00:00Z", ...over });
+  const store = () => { const m = new Map<string, string>(); return { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => void m.set(k, v), removeItem: (k: string) => void m.delete(k) }; };
+
+  it("the profile is the child's name, favourites and age band, with NO song consent and a placeholder grown-up for the under-13s", () => {
+    const p = profileFromChild(child(), "2026-11-05T00:00:00Z")!;
+    expect(p).toEqual({ version: 1, kidName: "Mia", parentName: "Grown-up", under13: true, favourites: { colour: "blue", fruit: "apple", animal: "elephant" }, songConsent: false, createdAt: "2026-11-05T00:00:00Z" });
+    expect(profileFromChild(child({ under13: false }), "t")!.parentName).toBe("");
+    expect(profileFromChild(child({ under13: false }), "t")!.songConsent).toBe(false);
+  });
+  it("the saved profile is one the app reads back (the title greets by it), through the same store the app uses", async () => {
+    const { saveProfile, readProfile } = await import("../src/lib/newPlayer");
+    const st = store();
+    expect(saveProfile(st, profileFromChild(child({ firstName: "Zoë" }), "2026-11-05T00:00:00Z")!)).toBe(true);
+    expect(readProfile(st)).toMatchObject({ kidName: "Zoë", songConsent: false, under13: true });
+  });
+  it("a child that would not pass the setup's rules is refused instead of written (a digit, a bad pick)", () => {
+    expect(profileFromChild(child({ firstName: "Mia2" }), "t")).toBeNull();
+    expect(profileFromChild(child({ firstName: "" }), "t")).toBeNull();
+    expect(profileFromChild(child({ favourites: { colour: "blue", fruit: "<b>", animal: "elephant" } }), "t")).toBeNull();
+    expect(profileFromChild(child({ firstName: "A".repeat(21) }), "t")).toBeNull();
+  });
+  it("the plan: nobody here: set; the same child: already; the same child with other picks: set; somebody else: confirm, naming them", () => {
+    expect(playAsPlan(null, child())).toEqual({ kind: "set" });
+    expect(playAsPlan(local(), child())).toEqual({ kind: "already" });
+    expect(playAsPlan(local({ kidName: "MIA" }), child())).toEqual({ kind: "already" });
+    expect(playAsPlan(local({ favourites: { colour: "red", fruit: "apple", animal: "elephant" } }), child())).toEqual({ kind: "set" });
+    expect(playAsPlan(local({ under13: false }), child())).toEqual({ kind: "set" });
+    expect(playAsPlan(local({ kidName: "Sam" }), child())).toEqual({ kind: "confirm", current: "Sam" });
+  });
+  it("the change event has a name the page and the panel share", () => {
+    expect(PROFILE_CHANGED_EVENT).toBe("tv-profile-changed");
   });
 });

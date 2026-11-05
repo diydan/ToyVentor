@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "../../../onboarding.css";
 import "../../../accounts.css";
-import { createAccountsClient, deviceIsClaimed, looksLikeEmail, offerChild, type AccountsClient, type Result, type Role, type Standing } from "../../../lib/accountsClient";
-import { readProfile, type PlayerProfile } from "../../../lib/newPlayer";
+import { PROFILE_CHANGED_EVENT, createAccountsClient, deviceIsClaimed, looksLikeEmail, offerChild, playAsPlan, profileFromChild, type AccountChild, type AccountsClient, type PlayAs, type Result, type Role, type Standing } from "../../../lib/accountsClient";
+import { readProfile, saveProfile, type PlayerProfile } from "../../../lib/newPlayer";
 import { FORGET_ARM_MS, nextForgetTap } from "../../../lib/returningPlayer";
 import { deviceId } from "../../../lib/sync";
 
@@ -25,6 +25,18 @@ function TwoTap({ label, armedLabel, onConfirm, disabled }: { label: string; arm
   return <button type="button" className={armed ? "tv-ctl tv-ctl-danger" : "tv-ctl"} disabled={disabled} onClick={tap} aria-live="polite">{armed ? armedLabel : label}</button>;
 }
 
+/** One child of the family: their name and what "Play as" does on this device (nothing when they already play here; a second tap when it would replace a different player). */
+function ChildRow({ child, plan, onPlay, disabled }: { child: AccountChild; plan: PlayAs; onPlay: () => void; disabled: boolean }) {
+  return (
+    <li className="tv-acct-kid" data-account-child={child.firstName}>
+      <span className="tv-acct-kidname">{child.firstName}{child.under13 ? <small> · under 13</small> : null}</span>
+      {plan.kind === "already" ? <span className="tv-acct-here" data-account-here>Playing here</span> : null}
+      {plan.kind === "set" ? <button type="button" className="tv-ctl" disabled={disabled} data-account-play onClick={onPlay}>Play as {child.firstName}</button> : null}
+      {plan.kind === "confirm" ? <TwoTap label={`Play as ${child.firstName}`} armedLabel={`Tap again: ${plan.current} stops playing here`} disabled={disabled} onConfirm={onPlay} /> : null}
+    </li>
+  );
+}
+
 /**
  * The "Account" group in the Grown-Ups sheet: a grown-up (or a player who is 13 or older) signs in with an emailed link, then sees the family, adds the player saved on this device, claims this device
  * and signs out or deletes the family. It draws NOTHING unless the Worker has accounts switched on (worker/accounts.ts answers 404 "accounts are off" otherwise), so a visitor never meets it before then.
@@ -38,6 +50,7 @@ export function AccountGroup({ client }: { client?: AccountsClient }) {
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
+  const [, setSavedTick] = useState(0); // the saved player is read from this device on every draw; this re-draws after "Play as" changed it
 
   useEffect(() => {
     let live = true;
@@ -46,6 +59,16 @@ export function AccountGroup({ client }: { client?: AccountsClient }) {
   }, [api]);
 
   const refresh = useCallback(async () => setStanding(await api.standing()), [api]);
+  /** "Play as Mia": this device's player becomes the family's child (name, favourites, under 13; never the song consent). The title and the sheet re-read the saved player through the window event. */
+  const playAs = useCallback((child: AccountChild) => {
+    const made = profileFromChild(child, new Date().toISOString());
+    let saved = false;
+    try { saved = !!made && saveProfile(window.localStorage, made); } catch { saved = false; }
+    if (!made || !saved) { setNote({ ok: false, text: `${child.firstName} could not be set up on this device.` }); return; }
+    try { window.dispatchEvent(new Event(PROFILE_CHANGED_EVENT)); } catch { /* the page re-reads it on the next visit */ }
+    setSavedTick((n) => n + 1);
+    setNote({ ok: true, text: `${child.firstName} is now playing on this device.` });
+  }, []);
   /** Run one call: say what went wrong in words, or what happened, then re-read where we stand. */
   const run = useCallback(async <T,>(call: () => Promise<Result<T>>, said: string, then?: (r: T) => void) => {
     setBusy(true); setNote(null);
@@ -91,7 +114,7 @@ export function AccountGroup({ client }: { client?: AccountsClient }) {
             <p data-account-who>Signed in{signedIn.parent.role === "parent" ? " as a grown-up" : ""}. {signedIn.children.length === 0 ? "No players in the family yet." : `${signedIn.children.length} ${signedIn.children.length === 1 ? "player" : "players"} in the family.`}</p>
             {signedIn.children.length > 0 ? (
               <ul className="tv-acct-kids">
-                {signedIn.children.map((c) => <li key={c.id}>{c.firstName}{c.under13 ? <small> · under 13</small> : null}</li>)}
+                {signedIn.children.map((c) => <ChildRow key={c.id} child={c} plan={playAsPlan(profile, c)} disabled={busy} onPlay={() => playAs(c)} />)}
               </ul>
             ) : null}
             {offer ? (

@@ -1,7 +1,7 @@
 // The browser's side of the accounts routes (worker/accounts.ts): ask for an emailed sign-in link, trade the link's token for a session, read the family, add a child, claim this device, sign out,
 // delete the family. Every failure comes back as a plain sentence for a grown-up, never a status code. The routes are OFF unless the Worker has ACCOUNTS=on; then `me()` says "off" and the
 // screens that use this stay hidden, so a visitor never meets a dead feature. The session is an httpOnly cookie: this file never sees it.
-import type { Favourites, PlayerProfile } from "./newPlayer";
+import { buildProfile, type Favourites, type PlayerProfile } from "./newPlayer";
 
 export type Role = "parent" | "self";
 
@@ -91,3 +91,30 @@ export function offerChild(profile: PlayerProfile | null, me: AccountMe, max = 6
 
 /** Is this device already one of the family's? */
 export const deviceIsClaimed = (me: AccountMe, device: string): boolean => me.devices.includes(device);
+
+// ---- "Play as Mia": a family's player becomes this device's player ---------------------------------------------------------------------------------------------------------------
+
+/** The window event the page listens to so the title and the Grown-Ups sheet re-read the saved player after the Account group changed it. */
+export const PROFILE_CHANGED_EVENT = "tv-profile-changed";
+
+/**
+ * The local player profile for a child of the family: the first name, the favourites and under-13, checked again against the closed lists (the same rules as the setup), a placeholder grown-up name for the
+ * under-13s (the setup's profile has one), and NO song consent: a yes to a song is one grown-up's answer on one device about one sentence, so it is never carried over. Null when the child would not pass the setup's rules.
+ */
+export function profileFromChild(child: AccountChild, nowIso: string): PlayerProfile | null {
+  const made = buildProfile({ under13: child.under13, kidName: child.firstName, parentName: child.under13 ? "Grown-up" : "", favourites: child.favourites, songConsent: false }, nowIso);
+  return made.ok ? made.profile : null;
+}
+
+export type PlayAs =
+  | { kind: "already" }                                  // this device already plays as this child (same name, same favourites)
+  | { kind: "set" }                                      // nobody is set up here, or the same child with other favourites: write it
+  | { kind: "confirm"; current: string };                // a DIFFERENT player is set up here: replacing them takes a second tap
+
+/** What "Play as" does for this child on this device. A name matches in any case. */
+export function playAsPlan(local: PlayerProfile | null, child: AccountChild): PlayAs {
+  if (!local) return { kind: "set" };
+  if (local.kidName.toLowerCase() !== child.firstName.toLowerCase()) return { kind: "confirm", current: local.kidName };
+  const f = local.favourites, c = child.favourites;
+  return f.colour === c.colour && f.fruit === c.fruit && f.animal === c.animal && local.under13 === child.under13 ? { kind: "already" } : { kind: "set" };
+}

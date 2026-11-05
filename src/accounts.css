@@ -7,9 +7,12 @@
 .tv-acct-roles, .tv-acct-row { display: flex; flex-wrap: wrap; gap: 10px; }
 .tv-acct-roles .tv-ctl, .tv-acct-row .tv-ctl { min-height: 48px; flex: 1 1 180px; }
 .tv-acct-roles .tv-ctl[aria-pressed="true"] { background: #ffd24d; color: #2a1a12; border-color: #fff; }
-.tv-acct-kids { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 8px; }
-.tv-acct-kids li { padding: 8px 14px; border-radius: 18px; background: rgba(255, 255, 255, 0.12); font-weight: 800; }
-.tv-acct-kids small { font-weight: 600; opacity: 0.8; }
+.tv-acct-kids { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.tv-acct-kid { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 6px 6px 6px 14px; border-radius: 18px; background: rgba(255, 255, 255, 0.12); }
+.tv-acct-kidname { flex: 1 1 120px; font-weight: 800; }
+.tv-acct-kidname small { font-weight: 600; opacity: 0.8; }
+.tv-acct-kid .tv-ctl { min-height: 48px; flex: 0 1 auto; }
+.tv-acct-here { padding: 8px 14px; border-radius: 16px; background: rgba(90, 200, 120, 0.22); font-weight: 700; }
 .tv-acct-ok { padding: 8px 12px; border-radius: 12px; background: rgba(90, 200, 120, 0.22); font-weight: 700; }
 .tv-acct-bad { padding: 8px 12px; border-radius: 12px; background: rgba(255, 90, 77, 0.22); font-weight: 700; }
 .tv-signin { align-items: center; justify-content: center; }

@@ -45,6 +45,16 @@ describe("wiring", () => {
     expect(panel).toContain('className="tv-onb tv-signin"');
     expect(css).toContain(".tv-host--titled .tv-stage > :not(.tv-stage-canvas-host):not(.tv-title):not(.tv-onb)");
   });
+  it("Play as: each child has a row; replacing a different player takes two taps; the profile is written without song consent and the title is told through the window event", () => {
+    expect(panel).toContain("plan={playAsPlan(profile, c)}");
+    expect(panel).toMatch(/plan\.kind === "confirm" \? <TwoTap label=\{`Play as \$\{child\.firstName\}`\}/);
+    expect(panel).toContain("profileFromChild(child, new Date().toISOString())");
+    expect(panel).toContain("saveProfile(window.localStorage, made)");
+    expect(panel).toContain("window.dispatchEvent(new Event(PROFILE_CHANGED_EVENT))");
+    expect(canvas).toContain("window.addEventListener(PROFILE_CHANGED_EVENT, reread);");
+    expect(canvas).toContain("window.removeEventListener(PROFILE_CHANGED_EVENT, reread);");
+    expect(panel).not.toMatch(/songConsent\s*[:=]\s*true/);
+  });
   it("both screens are touched only by the pure client: no storage of the session, no token in a log", () => {
     expect(panel).not.toMatch(/localStorage\.setItem|sessionStorage|console\./);
     expect(read("../src/lib/accountsClient.ts")).not.toMatch(/localStorage|sessionStorage|console\./);

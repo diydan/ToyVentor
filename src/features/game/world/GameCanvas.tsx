@@ -13,7 +13,7 @@ import { loadToyPortrait, PORTRAIT_PX, saveToyPortrait } from "../../../lib/toyP
 import { BANDS } from "../../../lib/age";
 import { readProfile, type PlayerProfile } from "../../../lib/newPlayer";
 import { forgetPlayer } from "../../../lib/returningPlayer";
-import { signinTokenFromSearch, withoutSignin } from "../../../lib/accountsClient";
+import { PROFILE_CHANGED_EVENT, signinTokenFromSearch, withoutSignin } from "../../../lib/accountsClient";
 import { SignInLanding } from "./AccountPanel";
 import {
   completeGarage,
@@ -233,6 +233,12 @@ export function GameCanvas({
   const [onboardOpen, setOnboardOpen] = useState(() => { try { return /[?&]onboarding=1(&|$)/.test(window.location.search); } catch { return false; } });
   // The saved player (src/lib/returningPlayer.ts): the title greets them by name and offers a different player instead of the first-run setup; a grown-up can forget them in the Grown-Ups sheet.
   const [player, setPlayer] = useState<PlayerProfile | null>(() => { try { return readProfile(window.localStorage); } catch { return null; } });
+  // "Play as Mia" in Grown-Ups > Account writes this device's player: the title and the sheet read it again when it says so (AccountPanel.tsx).
+  useEffect(() => {
+    const reread = () => { try { setPlayer(readProfile(window.localStorage)); } catch { setPlayer(null); } };
+    window.addEventListener(PROFILE_CHANGED_EVENT, reread);
+    return () => window.removeEventListener(PROFILE_CHANGED_EVENT, reread);
+  }, []);
   // Opened from the emailed sign-in link (?signin=...): the token leaves the address bar at once (not kept in the history), and a card trades it for a session (AccountPanel.tsx SignInLanding).
   const [signinToken, setSigninToken] = useState<string | null>(() => { try { return signinTokenFromSearch(window.location.search); } catch { return null; } });
   useEffect(() => {
