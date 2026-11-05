@@ -1,10 +1,11 @@
 # ToyVentor
 
-Helping the next generation grow into robotics through play: scan a toy,
-build printable upgrades on it in the browser, then play with the upgraded
-toy in AR and a mini game. Started as an entry to the Meta Global AI
-Developer Hackathon (indie track), November 2026; now open source under
-Apache-2.0.
+Helping the next generation grow into robotics through play: design and build toys, robots and upgrades, then play in a seamless mix of digital, physical and AR worlds.
+
+
+Progress is modular (Snap-> Motion-> Pro) and digital and physical, a system aligned with STEM outcomes to develop coding and robotics skills through “toy invention”
+
+Build during Meta Global AI Developer Hackathon (indie track), November 2026; open source under Apache-2.0.
 
 > **Demo posture.** This build is meant to be operated by an adult and is not for
 > children's use. Making a part from words runs on our own self-hosted,
@@ -16,7 +17,7 @@ Apache-2.0.
 
 Docs: [index](docs/README.md) · [vision](docs/product/vision.md) ·
 [spec](docs/product/spec.md) · [plan](docs/product/plan.md) ·
-[wireframe (archived)](docs/archive/wireframe.md) · [Snap](docs/parts/snap.md) · [Pro](docs/parts/pro.md) ·
+[Snap](docs/parts/snap.md) · [Pro](docs/parts/pro.md) ·
 [journal](docs/product/journal.md)
 
 ## Run it
@@ -34,10 +35,25 @@ npm run bridge     # bridge verified PartSpec v2 parts from parts/partspec/ into
 Secrets for local dev go in `.dev.vars` (see `.dev.vars.example`). The
 browser never sees them; only `worker/` reads them.
 
+## Standalone Kip demos
+
+```sh
+npm run kip:serve -- --port 5180
+```
+
+Then open `http://127.0.0.1:5180/kip/Kip-Demo.html`. The sibling demos
+live next to it: `Workshop.html`, `Yard-Bench.html`,
+`Truck-Mockup.html`, `JetCar-Lab.html`.
+
+This serves the working tree with no build step. It has no Worker, so
+`/api/*` answers 404 unless you also pass
+`--api http://localhost:<your dev port>` with `npm run dev` running.
+
 ## Deploy
 
-https://toyventor.com is live. The D1 ownership binding and custom domains for
-the apex and www (workers.dev is kept as a fallback) are configured in
+https://app.toyventor.com is live. The D1 ownership binding and the custom
+domain (`app.`; the apex and www stay attached until the landing page takes the
+root, and workers.dev is kept as a fallback) are configured in
 [wrangler.jsonc](wrangler.jsonc); `MODEL_API_KEY` is stored as a Worker secret,
 never in source.
 
@@ -63,7 +79,7 @@ npm run deploy      # build + wrangler deploy
 
 ## Status (November 2026 — post-hackathon, open source)
 
-The one-stage app is live at https://toyventor.com. SAM scan with seed
+The one-stage app is live at https://app.toyventor.com. SAM scan with seed
 fallbacks, Toybox, the builder with snapping and undo, gated STL/GLB previews,
 daily Packs, Reveal with saved cards, build-driven worlds and labs, parent time
 gates, Create mode, the explorer trail map, the Garage, STEM XP and Maker
