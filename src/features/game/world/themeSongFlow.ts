@@ -120,7 +120,18 @@ export interface KeptSong {
   /** What the song was made for: "prompt" is the new player's own theme song (the title page plays it), "level" and "build" are the end-of-level and Build songs. Songs kept before this have none. */
   kind?: FlowKind;
 }
-/** Keep a finished song in this browser's list (newest first, at most 20). Never throws: blocked storage means the song plays this visit only. */
+/**
+ * The list is newest first and holds at most 20, EXCEPT that the newest welcome song (kind "prompt", the one made for the new player) is never the one that falls off: with ten songs a day a child
+ * could otherwise lose it within two days, and Dan asked for it to be kept. It stays at its place in the order when it fits, otherwise it takes the last place.
+ */
+export function capKept(list: KeptSong[], max: number = MAX_KEPT): KeptSong[] {
+  if (list.length <= max) return list;
+  const head = list.slice(0, max);
+  const welcome = list.find((s) => s.kind === "prompt");
+  if (!welcome || head.includes(welcome)) return head;
+  return [...head.slice(0, max - 1), welcome];
+}
+/** Keep a finished song in this browser's list (newest first, at most 20, the welcome song always kept). Never throws: blocked storage means the song plays this visit only. */
 export function keepSong(storage: FlowDeps["storage"], song: KeptSong): void {
   try {
     let list: KeptSong[] = [];
@@ -128,7 +139,7 @@ export function keepSong(storage: FlowDeps["storage"], song: KeptSong): void {
       const raw = JSON.parse(storage?.getItem(LIST_KEY) ?? "[]") as unknown;
       list = Array.isArray(raw) ? (raw as KeptSong[]).filter((s) => s && typeof s.name === "string" && typeof s.url === "string") : [];
     } catch { list = []; }
-    storage?.setItem(LIST_KEY, JSON.stringify([song, ...list.filter((s) => s.task !== song.task)].slice(0, MAX_KEPT)));
+    storage?.setItem(LIST_KEY, JSON.stringify(capKept([song, ...list.filter((s) => s.task !== song.task)])));
   } catch { /* blocked: this visit only */ }
 }
 
@@ -137,13 +148,14 @@ export function readKeptSongs(storage: FlowDeps["storage"]): KeptSong[] {
   try {
     const raw = JSON.parse(storage?.getItem(LIST_KEY) ?? "[]") as unknown;
     if (!Array.isArray(raw)) return [];
-    return (raw as KeptSong[])
+    const list = (raw as KeptSong[])
       .filter((s) => s && typeof s.name === "string" && typeof s.url === "string" && typeof s.task === "string" && /^\d{6,24}$/.test(s.task))
       .map((s) => {
         const lines = cleanLines(s.lines);
         return { ...s, ...(s.kind === "prompt" || s.kind === "level" || s.kind === "build" ? {} : { kind: undefined }), verse: Array.isArray(s.verse) ? s.verse.map(String) : [], chorus: Array.isArray(s.chorus) ? s.chorus.map(String) : [], mood: typeof s.mood === "string" ? s.mood : "", ...(lines.length ? { lines } : { lines: undefined }) };
       })
-      .slice(0, MAX_KEPT);
+      ;
+    return capKept(list);
   } catch { return []; }
 }
 
