@@ -302,6 +302,120 @@ describe("MixamoDriver on the Kip character rig", () => {
       expect(a.tWalk - t).toBeCloseTo((1 / 60) * Math.min(1.9, 3.4 / DEFAULT_TUNING.walkRefSpeed), 6);
     });
 
+    it("a turn on the spot in steps, on the real STL rig: the stance foot stays put, the other lifts and lands further round, the body crouches a little, and both end at the idle stance facing the new way", async () => {
+      const full = (u: string) => resolve(ROOT, "public", u.replace(/^\//, "").split("?")[0]!);
+      const fetcher = (u: string) => {
+        const f = full(u);
+        if (!existsSync(f)) return Promise.resolve(null);
+        const b = readFileSync(f);
+        return Promise.resolve(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer);
+      };
+      const sel = stockSel().character as never;
+      const col = stockCol();
+      const rig = buildToy("character", sel, col);
+      await upgradeRigWithStl(rig, { type: "character", sel, col, toyId: "kip", token: { cancelled: false }, fetcher } as never);
+      const legs = (rig as unknown as { snap: { legs: Array<{ foot: THREE.Object3D; boot: THREE.Object3D }> } }).snap.legs;
+      const root = new THREE.Group();
+      root.add(rig.g);
+      const v = new THREE.Vector3();
+      const boots = () => legs.map((l) => v.set(l.boot.position.x, l.boot.position.y, l.boot.position.z).applyMatrix4(l.foot.matrixWorld).clone());
+      const turn = (to: number, frames: number, stepsOn: boolean) => {
+        const d = new MixamoDriver(loco);
+        let face = 0;
+        const dt = 1 / 60;
+        const settle = () => { for (let i = 0; i < 60; i++) { d.update(rig, dt, 0, { ...none, gait: 0 }); } root.rotation.y = 0; root.updateMatrixWorld(true); };
+        settle();
+        const start = boots();
+        let stance = 0, maxLift = 0, minHip = 0, finite = true;
+        let prev = start;
+        for (let i = 0; i < frames; i++) {
+          const y = stepsOn ? d.stepTurnFace(dt, face, to, true) : null;
+          face = y !== null ? y : face + Math.atan2(Math.sin(to - face), Math.cos(to - face)) * Math.min(1, dt * 10);
+          root.rotation.y = face;
+          d.update(rig, dt, 0, { ...none, gait: 0 });
+          root.updateMatrixWorld(true);
+          const b = boots();
+          if (d.stepTurner.stepping) {
+            const st = 1 - d.stepTurner.swing;
+            stance += Math.hypot(b[st]!.x - prev[st]!.x, b[st]!.z - prev[st]!.z);
+            maxLift = Math.max(maxLift, b[d.stepTurner.swing]!.y - start[d.stepTurner.swing]!.y);
+          }
+          minHip = Math.min(minHip, rig.g.position.y);
+          if (b.some((p) => !Number.isFinite(p.x + p.y + p.z))) finite = false;
+          prev = b;
+        }
+        // the boots in the body's frame at the end, against the start
+        const inv = new THREE.Matrix4().copy(root.matrixWorld).invert();
+        const rel = boots().map((p) => p.clone().applyMatrix4(inv));
+        return { stance, maxLift, minHip, finite, start, rel, face, active: d.stepTurner.active };
+      };
+      for (const to of [Math.PI / 2, -Math.PI / 2, Math.PI]) {
+        const r = turn(to, 100, true);
+        expect(r.finite).toBe(true);
+        expect(Math.abs(Math.atan2(Math.sin(r.face - to), Math.cos(r.face - to)))).toBeLessThan(0.03);
+        expect(r.active).toBe(false);
+        expect(r.stance).toBeLessThan(0.1);                       // the planted foot's path over the whole turn (it was 0.3 to 1.0 with the hop)
+        expect(r.maxLift).toBeGreaterThan(0.12);                  // the swing foot really leaves the ground (the hop lifted 0.1)
+        expect(r.maxLift).toBeLessThan(0.4);
+        expect(r.minHip).toBeGreaterThan(-0.12);                  // a small crouch, not a squat
+        expect(r.minHip).toBeLessThan(-0.02);                     // but a crouch: the straight leg cannot reach a foot that stays put while the body turns
+        for (let i = 0; i < 2; i++) {                             // back at the idle stance, in the body's frame
+          const idleRel = r.start[i]!;                            // the body was at yaw 0 at the start: its frame is the world frame
+          expect(r.rel[i]!.distanceTo(idleRel)).toBeLessThan(0.04);
+        }
+      }
+      // without the steps, the same turn drags the planted foot (the thing this replaces)
+      const hop = turn(Math.PI / 2, 100, false);
+      expect(hop.stance).toBe(0);                                  // (the planner never ran, so nothing was counted as stance)
+      // a driver that never asks for steps is not touched by the overlay at all
+      const a = turn(0.2, 60, true), b = turn(0.2, 60, false);
+      for (let i = 0; i < 2; i++) expect(a.rel[i]!.distanceTo(b.rel[i]!)).toBeLessThan(0.05);
+    });
+
+    it("a turn cancelled halfway (a clip starts, a new mark, the facing set outright) leaves the feet finite, apart and level with the ground; the overlay fades out", async () => {
+      const full = (u: string) => resolve(ROOT, "public", u.replace(/^\//, "").split("?")[0]!);
+      const fetcher = (u: string) => {
+        const f = full(u);
+        if (!existsSync(f)) return Promise.resolve(null);
+        const b = readFileSync(f);
+        return Promise.resolve(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer);
+      };
+      const sel = stockSel().character as never;
+      const col = stockCol();
+      const rig = buildToy("character", sel, col);
+      await upgradeRigWithStl(rig, { type: "character", sel, col, toyId: "kip", token: { cancelled: false }, fetcher } as never);
+      const legs = (rig as unknown as { snap: { legs: Array<{ foot: THREE.Object3D; boot: THREE.Object3D }> } }).snap.legs;
+      const root = new THREE.Group();
+      root.add(rig.g);
+      const v = new THREE.Vector3();
+      const boots = () => legs.map((l) => v.set(l.boot.position.x, l.boot.position.y, l.boot.position.z).applyMatrix4(l.foot.matrixWorld).clone());
+      for (const cancelAt of [8, 20, 33]) {
+        const d = new MixamoDriver(loco);
+        let face = 0, tface = Math.PI;
+        const dt = 1 / 60;
+        let minSep = 9, finite = true;
+        for (let i = 0; i < 160; i++) {
+          const allowed = i < cancelAt;                              // the toy is stopped from turning in steps (a clip starts, a walk takes over...)
+          const y = d.stepTurnFace(dt, face, tface, allowed);
+          face = y !== null ? y : face + Math.atan2(Math.sin(tface - face), Math.cos(tface - face)) * Math.min(1, dt * 10);
+          root.rotation.y = face;
+          d.update(rig, dt, 0, { ...none, gait: 0 });
+          root.updateMatrixWorld(true);
+          const b = boots();
+          if (b.some((p) => !Number.isFinite(p.x + p.y + p.z))) finite = false;
+          minSep = Math.min(minSep, Math.hypot(b[0]!.x - b[1]!.x, b[0]!.z - b[1]!.z));
+        }
+        expect(finite).toBe(true);
+        expect(minSep).toBeGreaterThan(0.4);                         // never crossed or together
+        expect(d.stepTurner.active).toBe(false);
+        expect(d.stepTurner.w).toBe(0);
+        const b = boots();
+        expect(b[0]!.y).toBeLessThan(0.06);                          // both on the ground again
+        expect(b[1]!.y).toBeLessThan(0.06);
+        expect(Math.abs(b[0]!.y - b[1]!.y)).toBeLessThan(0.03);
+      }
+    });
+
     it("the walking stance is as wide as the idle one: the feet are no longer under the middle line (a gap of 0.3 against the hips' 0.74)", async () => {
       const full = (u: string) => resolve(ROOT, "public", u.replace(/^\//, "").split("?")[0]!);
       const fetcher = (u: string) => {

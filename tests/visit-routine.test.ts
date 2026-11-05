@@ -232,3 +232,43 @@ describe("a deep visit (foot slide: the toy walks out to its prop's depth instea
     expect(log).toEqual(["walkTo:5,-2"]);
   });
 });
+
+describe("turning to face the prop (a big turn is made in steps, so the act waits for it)", () => {
+  function facingHarness(initiallyFacing: boolean) {
+    const s = { pos: { x: 15, y: 0, z: 0 }, target: null as number | null, facing: initiallyFacing };
+    const log: string[] = [];
+    const v = createVisitor({
+      position: () => ({ ...s.pos }), targetX: () => s.target,
+      walkTo: () => { s.target = null; }, stopWalk: () => {}, face: (d) => log.push(`face:${d}`),
+      facing: () => s.facing,
+    });
+    const visit = (): Visit => ({ standX: 15, face: 1, seconds: 1, begin: () => log.push("begin"), end: (ok) => log.push(`end:${ok}`) });
+    return { v, s, log, visit, run: (sec: number) => { for (let t = 0; t < sec; t += 1 / 30) v.update(1 / 30); } };
+  }
+  it("asks for the turn on arrival and starts the act only once the toy faces the prop", () => {
+    const h = facingHarness(false);
+    h.v.start(h.visit());
+    h.run(0.5);
+    expect(h.v.phase).toBe("walking");                          // arrived, but still turning
+    expect(h.log).toContain("face:1");
+    expect(h.log).not.toContain("begin");
+    h.s.facing = true;
+    h.run(0.1);
+    expect(h.v.phase).toBe("acting");
+    expect(h.log).toContain("begin");
+  });
+  it("a toy that never gets round gives up after the walk timeout, like a walk that never arrives", () => {
+    const h = facingHarness(false);
+    h.v.start(h.visit());
+    h.run(WALK_TIMEOUT_S + 1);
+    expect(h.v.phase).toBe("idle");
+    expect(h.log).not.toContain("begin");
+  });
+  it("a toy already facing it (or an adapter with no `facing`) starts at once, as before", () => {
+    const h = facingHarness(true);
+    h.v.start(h.visit());
+    h.run(0.1);
+    expect(h.v.phase).toBe("acting");
+  });
+});
+

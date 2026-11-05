@@ -11,6 +11,8 @@
 // Baking is pure (an Object3D + clips in, typed arrays out) so it runs in vitest without a browser.
 import * as THREE from "three";
 import type { ToyRig } from "./playerRig";
+import { LEG_REACH_MM, legForward, newLegIkResult, solveLegIk } from "./legIk";
+import { StepTurner } from "./stepTurn";
 import { hingeHead, FLEX_ASSEMBLED, followHand, newSnapArmSolution, newSnapLegSolution, releaseHand, resetSnapRig, solveSnapArm, solveSnapLeg, type SnapRigHandles } from "./snapFlex";
 
 const FPS = 30;
@@ -497,6 +499,25 @@ export class MixamoDriver {
   private readonly qw = new THREE.Quaternion();
   private readonly qx = new THREE.Quaternion();
   private readonly v2 = new THREE.Vector3();
+  // the step-turn (runtime/stepTurn.ts): the planner, the legs' starting pose, and the crouch that lets the planted foot reach
+  readonly stepTurner = new StepTurner();
+  private stA0 = [new THREE.Vector3(), new THREE.Vector3()];
+  private stF0 = [new THREE.Quaternion(), new THREE.Quaternion()];
+  private stG0 = new THREE.Quaternion();                    // the body's tilt (g) in the rig frame when the turn began: a planted foot keeps its orientation against the GROUND, not against a swaying body
+  private stDrop = 0;
+  private dtLast = 1 / 60;
+  private readonly stIk = newLegIkResult();
+  /** How far each ankle was from its hip as a share of the straight leg at the last solve (debug, and the tests: above 1 the foot was out of reach). */
+  readonly stReach: [number, number] = [0, 0];
+  private readonly stPiv = [new THREE.Vector3(), new THREE.Vector3()];
+  private readonly stTgt = [new THREE.Vector3(), new THREE.Vector3()];
+  private readonly stV = new THREE.Vector3();
+  private readonly stV2 = new THREE.Vector3();
+  private readonly stV3 = new THREE.Vector3();
+  private readonly stQ = new THREE.Quaternion();
+  private readonly stQ2 = new THREE.Quaternion();
+  private readonly stQ3 = new THREE.Quaternion();
+  private readonly stGn = new THREE.Quaternion();
   private readonly qhk = new THREE.Quaternion();
   private readonly qrl = new THREE.Quaternion();
   private readonly qrr = new THREE.Quaternion();
@@ -589,6 +610,7 @@ export class MixamoDriver {
     const j = this.j;
     if (!j) return;
     this.extras = extras;
+    this.dtLast = dt > 0 ? dt : this.dtLast;
     const { bank, tuning: tn } = this;
     // the pace the ground goes by under the feet: the toy's real speed when the world measured it, else the eased `speed` (the older callers and the tests)
     const gait = typeof extras.gait === "number" && Number.isFinite(extras.gait) ? Math.max(0, extras.gait) : speed;
@@ -694,6 +716,75 @@ export class MixamoDriver {
     if (Number.isFinite(lowest) && lowest > 0.002) j.g.position.y -= lowest * Math.min(1, w);
   }
 
+  /**
+   * The yaw the body should have this frame while it turns on the spot in steps, or null when the world should ease it itself (small turn, not standing, a clip playing: `allowed` false).
+   * Call it before `update` each frame; while it returns a yaw the legs are posed by the steps (`stepLegs`). See runtime/stepTurn.ts.
+   */
+  stepTurnFace(dt: number, face: number, tface: number, allowed: boolean): number | null {
+    return this.stepTurner.update(dt, face, tface, allowed);
+  }
+  /** True while the toy is held still for a turn in steps: the world must not walk it. */
+  get stepTurning(): boolean { return this.stepTurner.stepping; }
+
+  /**
+   * The legs of a turn in steps: each foot is where the planner puts it (planted at the yaw it landed at, or swinging round to the next one), and a two-bone IK turns that into hip, knee
+   * and ankle rotations on top of whatever the clip gave (the idle), weighted by the planner's fade. The body crouches just enough for the planted foot to reach.
+   * Called inside applyJoints, after the body's own place for this frame is final and before the limbs are solved.
+   */
+  private stepLegs(j: Joints, p: Pose, S: number): void {
+    const st = this.stepTurner, hips = j.hips;
+    if (!hips) return;
+    const w = st.w, ff = FLEX_ASSEMBLED;                                     // (called with jw 1: the flex factor is the assembled one)
+    const pivots = this.stPiv;
+    for (let i = 0; i < 2; i++) pivots[i]!.copy(hips[i]!.position).add(hips[i]!.parent!.position);   // the hip pivots in g's frame (the holders between them and g only move)
+    const gq = j.g.quaternion, gqi = this.stQ.copy(gq).invert();
+    this.stGn.copy(STAGE_TO_CAD).multiply(gq).multiply(CAD_TO_STAGE);
+    const keys = [["hipL", "kneeL", "ankleL"], ["hipR", "kneeR", "ankleR"]] as const;
+    if (st.fresh) {
+      st.fresh = false;
+      this.stDrop = 0;
+      this.stG0.copy(STAGE_TO_CAD).multiply(gq).multiply(CAD_TO_STAGE);
+      for (let i = 0; i < 2; i++) {
+        const k = keys[i]!;
+        const d = legForward(p.j[k[0]], p.j[k[1]], p.j[k[2]], ff, S, this.stF0[i]);       // ankle minus pivot (stage, g-local), and the foot's orientation
+        this.stA0[i]!.copy(pivots[i]!).add(d).applyQuaternion(gq).add(j.g.position);      // the starting ankle in the toy's frame
+      }
+    }
+    // where each ankle must be (the toy's frame), and the crouch that brings both within reach
+    const yaw = st.bodyYaw;
+    const targets = this.stTgt;
+    let need = 0;
+    const reach = LEG_REACH_MM * S * 0.965;
+    for (let i = 0; i < 2; i++) {
+      const rho = st.ang[i]! - yaw;
+      const a0 = this.stA0[i]!;
+      const c = Math.cos(rho), s = Math.sin(rho);
+      targets[i]!.set(a0.x * c + a0.z * s, a0.y + st.lift[i]!, -a0.x * s + a0.z * c);   // R_y(rho) applied to the starting ankle
+      const pr = this.stV3.copy(pivots[i]!).applyQuaternion(gq).add(j.g.position);
+      const dy = targets[i]!.y - pr.y, hx = targets[i]!.x - pr.x, hz = targets[i]!.z - pr.z;
+      const h2 = hx * hx + hz * hz;
+      const drop = -dy - Math.sqrt(Math.max(0, reach * reach - h2));
+      if (drop > need) need = drop;
+    }
+    const k1 = 1 - Math.exp(-this.dtLast / 0.04);
+    this.stDrop += (need * w - this.stDrop) * k1;
+    j.g.position.y -= this.stDrop;
+    for (let i = 0; i < 2; i++) {
+      const rho = st.ang[i]! - yaw;
+      // the ankle relative to its hip pivot, in the hip holder's (stage) frame
+      const dVec = this.stV.copy(targets[i]!).sub(j.g.position).applyQuaternion(gqi).sub(pivots[i]!);
+      const pole = this.stV2.set(Math.cos(rho), 0, -Math.sin(rho));                    // the foot's forward, round the vertical axis by rho: the knee points that way
+      // the foot as it was at the start (against the ground), turned by the yaw it has since the body turned, then taken back into the body's frame as it is now
+      this.stQ2.copy(this.stGn).invert().multiply(this.stQ3.setFromAxisAngle(AXIS_Y, rho)).multiply(this.stG0).multiply(this.stF0[i]!);
+      solveLegIk(dVec, S, pole, this.stQ2, ff, this.stIk);
+      this.stReach[i] = this.stIk.reach;
+      const k = keys[i]!;
+      p.j[k[0]].slerp(this.stIk.hip, w);
+      p.j[k[1]].slerp(this.stIk.knee, w);
+      p.j[k[2]].slerp(this.stIk.ankle, w);
+    }
+  }
+
   /** Roll the hips outward by `HIP_SPREAD_RAD x amount` (see there), with the ankles undoing it so the soles stay as the clip has them. Only on a pose that carries joint data. */
   private spreadHips(p: Pose, amount: number): void {
     const a = HIP_SPREAD_RAD * Math.min(1, amount);
@@ -791,6 +882,7 @@ export class MixamoDriver {
         hingeHead(j.head);
       }
     }
+    if (on && jw >= 0.99 && !bending && this.stepTurner.w > 0.001) this.stepLegs(j, p, S);
     // the limbs: elbows, wrists, knees and ankles ease in with the exact pose; at jw 0 these are all identity and the flex is 0, which is the rigid limb at rest
     const flex = FLEX_ASSEMBLED * jw;
     const armKeys = [["shoulderL", "elbowL", "wristL"], ["shoulderR", "elbowR", "wristR"]] as const;

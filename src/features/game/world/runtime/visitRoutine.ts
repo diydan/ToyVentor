@@ -16,6 +16,8 @@ export interface VisitAdapter {
   stopWalk(): void;
   /** Turn the toy to face +x (1) or -x (-1). */
   face(dir: 1 | -1): void;
+  /** True when the toy already faces `dir` (to within about 20 degrees). `face` may only ASK for the turn (a big one is made in steps, and takes a moment); the act waits for this. Absent: `face` is instant. */
+  facing?(dir: 1 | -1): boolean;
   /** Told on every phase change. */
   onPhase?(phase: VisitPhase, previous: VisitPhase): void;
 }
@@ -89,8 +91,12 @@ export function createVisitor(a: VisitAdapter) {
         const tx = a.targetX();
         if (tx !== null && Math.abs(tx - v.standX) > REDIRECT_X) { a.stopWalk(); v = null; go("idle"); return; }   // the player sent the toy elsewhere
         // The walk finishes first (the toy's last step ends with its feet together, and it stands exactly on its mark); the act starts when it has stopped walking, not when it first comes within reach.
-        if (tx === null && Math.abs(a.position().x - v.standX) < ARRIVE_X && (v.standZ === undefined || Math.abs(a.position().z - v.standZ) < (v.deep ? ARRIVE_DEEP_Z : ARRIVE_X))) { a.face(v.face); go("acting"); cue = 0; v.begin(); }
-        else { t += dt; if (t >= WALK_TIMEOUT_S) { a.stopWalk(); v = null; go("idle"); } }
+        if (tx === null && Math.abs(a.position().x - v.standX) < ARRIVE_X && (v.standZ === undefined || Math.abs(a.position().z - v.standZ) < (v.deep ? ARRIVE_DEEP_Z : ARRIVE_X))) {
+          a.face(v.face);
+          if (!a.facing || a.facing(v.face)) { go("acting"); cue = 0; v.begin(); return; }       // a big turn to face the prop is made in steps first: the act starts when the toy is round
+        }
+        t += dt;
+        if (t >= WALK_TIMEOUT_S) { a.stopWalk(); v = null; go("idle"); }
         return;
       }
       if (phase === "acting" && v) {

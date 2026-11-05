@@ -59,7 +59,24 @@ describe("foot slide as the game wires it (stops, key release, turns, the alert 
     expect(world).toContain("P.nHop=nk*.12");
     expect(world).toContain("P.model.position.set(P.lunge,P.hop+(P.nHop||0)+(P.turnHop||0),0);");
     expect(world).toContain("var TURN_HOP=.1;");
-    expect(world).toContain("P.turnHop=(S.type==='character'&&!reduce&&!P.busy&&!P.showcase&&sp<.6&&!(mix&&mix.busyAction))?TURN_HOP*thk*thk*(3-2*thk):0;");
+    expect(world).toContain("P.turnHop=(S.type==='character'&&!reduce&&!P.busy&&!P.showcase&&sp<.6&&!(mix&&(mix.busyAction||mix.stepTurning)))?TURN_HOP*thk*thk*(3-2*thk):0;");
+  });
+});
+
+describe("the step-turn as the game wires it (runtime/stepTurn.ts, mixamo.ts stepTurnFace, legIk.ts)", () => {
+  it("a turn on the spot of more than 60 degrees gets its yaw from the driver's planner; the old fast easing is what is left otherwise", () => {
+    expect(world).toContain('var stOk=!!(mix&&S.type==="character"&&!reduce&&!P.busy&&!P.showcase&&!P.mDrive&&sp<.6&&P.rig&&P.rig.type==="character"&&P.rig.snap&&!mix.busyAction&&!(P.target&&Math.abs(df)<.9)&&mix.canDrive(P.rig)),stFace=mix?mix.stepTurnFace(dt,P.face,P.tface,stOk):null;');
+    expect(world).toContain("if(stFace!==null)P.face=stFace;else P.face+=df*Math.min(1,dt*10);");
+  });
+  it("the toy stands still while it steps round (no walking, no reversal hop), and a walk takes over when 50 degrees are left", () => {
+    expect(world).toContain("function turnedToward(heading: number){if(mix&&mix.stepTurning)return 0;");
+    expect(world).toContain("&&!P.busy&&!reduce&&!(mix&&mix.stepTurning))fx.push(");                    // the 0.2 hop when the direction flips
+    expect(world).toContain("!(P.target&&Math.abs(df)<.9)");                                           // 0.9 rad is 52 degrees
+  });
+  it("a visit that has to turn to face its prop asks for the turn and waits for `facing`; only a few degrees are put right outright", () => {
+    expect(world).toContain('face:function(d: number){var tf=d>0?0:Math.PI;P.tface=tf;');
+    expect(world).toContain("Math.abs(((tf-P.face+Math.PI*3)%(Math.PI*2))-Math.PI)<.35)P.face=tf},facing:function(d: number){var tf=d>0?0:Math.PI;return Math.abs(((tf-P.face+Math.PI*3)%(Math.PI*2))-Math.PI)<.35},");
+    expect(acts).toContain("facing: w.facing ? (d) => w.facing!(d) : undefined,");
   });
 });
 

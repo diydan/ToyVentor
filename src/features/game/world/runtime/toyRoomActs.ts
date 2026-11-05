@@ -199,6 +199,7 @@ export function createActs(w: ActsWorld) {
     walkDeep: w.walkDeep ? (x, z) => w.walkDeep!(x, z) : undefined,
     stopWalk: () => w.stopWalk(),
     face: (d) => w.face(d),
+    facing: w.facing ? (d) => w.facing!(d) : undefined,
     onPhase: (p, prev) => w.phase(p, prev),
   });
 
