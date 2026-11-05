@@ -143,7 +143,8 @@ check('prompt is a sane size', prompt.length > 3000 && prompt.length < 16000, `$
   check(`grouped legal-mates table expands to exactly the ${want.size} fit-matrix pairs`, eq([...want].sort(), [...got].sort()), `${want.size} vs ${got.size}`);
 }
 check('prompt carries the description', prompt.includes('"a race car"'));
-check('examples follow the description: scooter words pull in the scooter recipe', exampleRecipes('a scooter with a top hat').map((r) => r.id).slice(0, 2).includes('scooter'));
+check('examples follow the description: scooter words pull in a scooter recipe, and the fancy one (a top hat on a scooter) comes first', (() => { const ids = exampleRecipes('a scooter with a top hat').map((r) => r.id); return ids.slice(0, 2).some((id) => id.includes('scooter')) && ids[0] === 'fancy-scooter'; })());
+check('examples for the plain words still find the plain scooter', exampleRecipes('a motor scooter').map((r) => r.id).slice(0, 2).includes('scooter'));
 check('examples fall back to the defaults when nothing matches', exampleRecipes('zzz qqq').length === 3);
 check('there are always three distinct examples', new Set(exampleRecipes('a robot').map((r) => r.id)).size === 3);
 const tested = testedMatesText(book.allowedIds);

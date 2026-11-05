@@ -245,7 +245,7 @@ export const PILE_LIFT = 12;     // mm of clear air above the highest assembled 
  *     come down to the start of the part's approach, then the plan's own approach slide. Of four orders of crossing the first whose legs sweep through no seated part and no part
  *     still in the pile is used (`clear[id]` is true); if none is clear the first is used anyway and `clear[id]` is false.
  */
-export function pilePlan(plan, { gap = PILE_GAP, lift = PILE_LIFT } = {}) {
+export function pilePlan(plan, { gap = PILE_GAP, lift = PILE_LIFT, startX } = {}) {
   const ids = plan.order;
   const all = ids.map((id) => plan.assembled[id]).reduce(hull);
   const groundZ = all[2];
@@ -262,7 +262,8 @@ export function pilePlan(plan, { gap = PILE_GAP, lift = PILE_LIFT } = {}) {
     rowD = Math.max(rowD, s.d);
   }
   const depth = y + rowD;
-  const ox = all[3] + gap, oy = (all[1] + all[4]) / 2 - depth / 2;
+  // The pile starts a gap beyond the model; `startX` (set only on the second try below) is further out.
+  const ox = (startX ?? all[3]) + gap, oy = (all[1] + all[4]) / 2 - depth / 2;
   const offsets = {}, boxes = {};
   for (const s of sizes) {
     const b = plan.assembled[s.id];
@@ -303,6 +304,14 @@ export function pilePlan(plan, { gap = PILE_GAP, lift = PILE_LIFT } = {}) {
     const pts = [v, ...(pick ?? candidates[0]), [0, 0, 0]];
     routes[id] = pts.filter((q, k) => k === 0 || q[0] !== pts[k - 1][0] || q[1] !== pts[k - 1][1] || q[2] !== pts[k - 1][2]);
   });
+  // A part slides in from a little way behind its seat (a rear wheel's approach ends about 30 mm past the model), and a pile column that near can stand in its way down. When any flight is
+  // blocked the pile is started beyond the furthest place a part slides in from, and the better of the two layouts is used; a book whose flights are all clear keeps its first layout exactly.
+  if (startX === undefined && !Object.values(clear).every(Boolean)) {
+    const reachX = ids.reduce((m, id) => Math.max(m, plan.assembled[id][3] + Math.max(0, (plan.approach[id] ?? [0, 0, 0])[0])), all[3]);
+    const again = pilePlan(plan, { gap, lift, startX: reachX });
+    const count = (c) => Object.values(c).filter(Boolean).length;
+    if (count(again.clear) > count(clear)) return again;
+  }
   return { offsets, boxes, region, groundZ, routes, clear, order: ids };
 }
 

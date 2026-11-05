@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { DESCRIBE_CONTRACT, describePrompt, describeRateLimited, handleDescribe } from "../worker/describe";
+import { DESCRIBE_CONTRACT, PROMPT_KEYWORDS, describePrompt, describeRateLimited, handleDescribe } from "../worker/describe";
 // @ts-expect-error viewer JS modules ship without d.ts
 import { readEndpointReply, stepsShapeProblem, posesProblem } from "../parts/kip/viewer/kip-describe.js";
 import book from "../parts/kip/viewer/kip-describe-recipes.json";
@@ -68,6 +68,23 @@ describe("/api/describe picks a checked build for the child's words", () => {
     expect(input).toContain("[number removed]");
     expect(input).not.toContain("mum@example.com");
     expect(input).not.toContain("555 123 4567");
+  });
+
+  it("the prompt tells Muse the other names of each build, a few and never the ones already in its description, so \"police car\" finds the taxi and \"fire truck\" the rescue truck", () => {
+    const p = describePrompt("a police car");
+    const lines = p.split("\n").filter((l) => l.startsWith("- "));
+    expect(lines.length).toBe(RECIPES.recipes.length);
+    const taxi = lines.find((l) => l.startsWith("- taxi: "))!;
+    expect(taxi).toContain("also called:");
+    expect(taxi).toContain("police car");
+    expect(lines.find((l) => l.startsWith("- bull-bar-truck: "))!).toContain("fire truck");
+    expect(lines.find((l) => l.startsWith("- family-car-roof-rack: "))!).toContain("school bus");
+    for (const l of lines) {
+      const names = l.includes("also called: ") ? l.split("also called: ")[1]!.split(", ") : [];
+      expect(names.length, l).toBeLessThanOrEqual(PROMPT_KEYWORDS);
+    }
+    expect((RECIPES.recipes as Array<{ keywords?: string[] }>).every((r) => (r.keywords ?? []).every((k) => !/["\n\\]/.test(k)))).toBe(true);
+    expect(p.length, "sixty-odd builds with their other names are still a short list").toBeLessThan(14_000);
   });
 
   it("a child cannot break out of the quoted words: quotes are neutralised", () => {

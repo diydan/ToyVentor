@@ -37,8 +37,10 @@ const plans = (recipes.recipes as Array<{ id: string; steps: Array<{ id: string;
 });
 
 describe("the pile, on every real recipe", () => {
-  it("covers all 35 recipes", () => {
-    expect(plans.length).toBe(35);
+  it("covers every recipe in the book: the 35 the pile was first made on, and the builds added since", () => {
+    expect(plans.length).toBe(recipes.recipes.length);
+    expect(plans.length).toBeGreaterThanOrEqual(66);
+    expect(new Set(plans.map((p) => p.id)).size).toBe(plans.length);
   });
 
   it("is deterministic: the same recipe gives exactly the same pile every time", () => {
@@ -85,9 +87,31 @@ describe("the pile, on every real recipe", () => {
     for (const { id, plan, pile } of plans) {
       const maxX = Math.max(...plan.order.map((s: string) => plan.assembled[s][3]));
       const minY = Math.min(...plan.order.map((s: string) => plan.assembled[s][1])), maxY = Math.max(...plan.order.map((s: string) => plan.assembled[s][4]));
-      expect(pile.region[0], id).toBeCloseTo(maxX + PILE_GAP, 6);
+      // one gap from the model, or (only when a part's slide-in would be blocked there: the next test) one gap from the furthest place a part slides in from
+      const reachX = Math.max(maxX, ...plan.order.map((s: string) => plan.assembled[s][3] + Math.max(0, (plan.approach[s] ?? [0, 0, 0])[0])));
+      const atModel = Math.abs(pile.region[0] - (maxX + PILE_GAP)) < 1e-6, atReach = Math.abs(pile.region[0] - (reachX + PILE_GAP)) < 1e-6;
+      expect(atModel || atReach, `${id}: the pile starts at ${pile.region[0]}, the model ends at ${maxX} and the furthest slide-in at ${reachX}`).toBe(true);
       expect((pile.region[1] + pile.region[4]) / 2, id).toBeCloseTo((minY + maxY) / 2, 6);
     }
+  });
+
+  it("keeps the first thirty-five builds' piles exactly where they were (one gap from the model), and moves the pile back only for a build whose slide-in the first layout would block", () => {
+    const original = new Set((recipes.recipes as Array<{ id: string }>).slice(0, 35).map((r) => r.id));   // the book's first 35, in the order they were made
+    expect(original.size).toBe(35);
+    let moved = 0;
+    for (const { id, plan, pile } of plans) {
+      const maxX = Math.max(...plan.order.map((s: string) => plan.assembled[s][3]));
+      const pushed = Math.abs(pile.region[0] - (maxX + PILE_GAP)) > 1e-6;
+      if (original.has(id)) expect(pushed, `${id} was laid out before the fix and must not move`).toBe(false);
+      if (pushed) {
+        moved++;
+        // the first layout is what the planner would have made; every one of these needed the second
+        const first = pilePlan(plan, { startX: maxX });
+        expect(Object.values(first.clear).every(Boolean), `${id} was pushed back although the first layout was clear`).toBe(false);
+        expect(Object.values(pile.clear).every(Boolean), `${id}: the second layout is clear`).toBe(true);
+      }
+    }
+    expect(moved, "the builds added since (a hat or a haircut on a rider in a vehicle) are the ones that need it").toBeGreaterThan(5);
   });
 
   it("gives every part a route from its place in the pile to its seat: it starts in the pile and ends exactly seated", () => {
@@ -119,7 +143,7 @@ describe("the pile, on every real recipe", () => {
     }
   });
 
-  it("carries every part clear of everything: no leg before the final slide sweeps through a seated part or a part still lying in the pile (330 flights, checked independently)", () => {
+  it("carries every part clear of everything: no leg before the final slide sweeps through a seated part or a part still lying in the pile (every flight of every build, checked independently)", () => {
     let flights = 0;
     for (const { id, plan, pile } of plans) {
       plan.order.forEach((s: string, i: number) => {
@@ -133,7 +157,8 @@ describe("the pile, on every real recipe", () => {
         }
       });
     }
-    expect(flights).toBe(330);
+    expect(flights).toBe((recipes.recipes as Array<{ steps: unknown[] }>).reduce((n, r) => n + r.steps.length, 0));
+    expect(flights).toBeGreaterThanOrEqual(724);
   });
 
   it("is carried above the model: while crossing, a part's lowest point is at least the lift above the model's highest point", () => {

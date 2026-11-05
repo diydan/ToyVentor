@@ -4,7 +4,7 @@
 //
 // What the model is allowed to do here, and why it is only this. The contract says poses are never written by a model: they come from the
 // real assembly validator (Python, exact collisions), which cannot run in a Worker. So the Worker never lets Muse invent a build. Muse
-// reads the child's words (in any language, which the tab's English keyword matcher cannot) and CHOOSES one of the ten ready builds in
+// reads the child's words (in any language, which the tab's English keyword matcher cannot) and CHOOSES one of the ready builds (more than sixty) in
 // kip-describe-recipes.json, each already checked by the real validator. The reply is that build's own steps and reference poses, so what
 // the child sees is always buildable and always checked. Inventing new builds stays with the local tool (tools/describe-endpoint.mjs),
 // which runs the real validator.
@@ -33,6 +33,7 @@ interface Recipe {
   id: string;
   title: string;
   description: string;
+  keywords?: string[];
   steps: unknown[];
   reference: { poses: Record<string, unknown> };
 }
@@ -52,8 +53,17 @@ function json(data: unknown, status = 200): Response {
 }
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
 
+/** How many of a build's keywords the prompt shows: enough for the synonyms a child uses, few enough that sixty-odd builds stay a short list. */
+export const PROMPT_KEYWORDS = 6;
+const alsoCalled = (r: Recipe): string => {
+  const own = new Set(`${r.description} ${r.title}`.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean));
+  const extra = (r.keywords ?? []).filter((k) => typeof k === "string" && k.trim() && !k.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean).every((w) => own.has(w))).slice(0, PROMPT_KEYWORDS);
+  return extra.length ? `; also called: ${extra.join(", ")}` : "";
+};
+
 export function describePrompt(description: string): string {
-  const list = RECIPES.map((r) => `- ${r.id}: ${r.description} (${r.title})`).join("\n");
+  // each build with the other names a child may call it by (the book's own keywords, the first few): "police car" finds the taxi, "fire truck" the rescue truck, "bus" the family car
+  const list = RECIPES.map((r) => `- ${r.id}: ${r.description} (${r.title})${alsoCalled(r)}`).join("\n");
   return [
     SAFETY,
     "You match a child's words to one of these ready-made toy builds. The child may write in any language.",
