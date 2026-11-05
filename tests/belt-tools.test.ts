@@ -8,7 +8,9 @@ import { describe, expect, it } from "vitest";
 import { HELD, TOOL_TURN, createHeld, placeHeldMesh } from "../src/features/game/world/runtime/heldItems";
 import { createPickupHeld, parsePickup } from "../src/features/game/world/runtime/pickupHeld";
 import { TOOL_GRIP, buildDrillMesh, buildHammerMesh, buildScrewdriverMesh, buildSpannerMesh } from "../src/features/game/world/runtime/toolMeshes";
-import { BELT_TOYS, BLOW_S, PLAY_S, createActs } from "../src/features/game/world/runtime/toyRoomActs";
+import { BELT_TOYS, BLOW_S, MALLET_S, PLAY_S, READ_S, TUNE, createActs } from "../src/features/game/world/runtime/toyRoomActs";
+import { MALLET_COUNT } from "../src/features/game/world/runtime/proceduralClips";
+import { XYLO_NOTES } from "../src/features/game/world/runtime/xylophone";
 
 const read = (rel: string) => readFileSync(join(__dirname, "..", rel), "utf8");
 const TOOLS = { screwdriver: buildScrewdriverMesh, spanner: buildSpannerMesh, hammer: buildHammerMesh, drill: buildDrillMesh } as const;
@@ -129,11 +131,15 @@ describe("the belt's pick is in Kip's hand (pickupHeld.take)", () => {
 });
 
 describe("the Toys row plays a toy where Kip stands (toyRoomActs.toy)", () => {
-  function game(opts: { allowed?: boolean; eater?: "character" | "robot" } = {}) {
+  function game(opts: { allowed?: boolean; eater?: "character" | "robot"; nearby?: unknown[] } = {}) {
     const s = { pos: { x: 12, y: 0, z: 0.4 }, target: null as number | null };
     const log: string[] = [];
     const found: string[] = [];
     const blows: number[] = [];
+    const tones: number[] = [];
+    const says: unknown[] = [];
+    const strikes: unknown[] = [];
+    const nearbyList: unknown[] = opts.nearby ?? [];
     const root = new THREE.Group();
     const w = {
       position: () => ({ ...s.pos }), targetX: () => s.target,
@@ -143,23 +149,23 @@ describe("the Toys row plays a toy where Kip stands (toyRoomActs.toy)", () => {
       root: () => root, eater: () => opts.eater ?? "character", allowed: () => opts.allowed ?? true,
       clip: (a: string) => { log.push(`clip:${a}`); return true; },
       setPosition: (x: number, y: number, z: number) => { s.pos = { x, y, z }; },
-      tone: () => {}, phase: () => {},
+      tone: (f: number) => { tones.push(f); }, phase: () => {},
       hold: (i: string) => log.push(`hold:${i}`), release: () => log.push("release"),
       found: (k: string) => found.push(k),
       mouth: (d: number) => ({ x: s.pos.x + 0.5 * d, y: 1.8, z: s.pos.z }),
       bubbles: { blow: (_f: unknown, _d: number, n: number) => { blows.push(n); } },
       fx: {
-        squish: () => {}, strike: () => 262, kickBall: () => true, flutter: () => {}, say: () => {}, setVisible: (_i: unknown, v: boolean) => log.push(`visible:${v}`),
-        cue: () => {}, nearby: () => [],
+        squish: () => {}, strike: (i: unknown) => { strikes.push(i); return 262; }, kickBall: () => true, flutter: () => {}, say: (i: unknown) => { says.push(i); }, setVisible: (_i: unknown, v: boolean) => log.push(`visible:${v}`),
+        cue: () => {}, nearby: () => nearbyList,
       },
     };
     const acts = createActs(w as never);
     const run = (seconds: number, dt = 1 / 30) => { for (let t = 0; t < seconds - 1e-9; t += dt) { acts.update(dt); if (s.target !== null) { s.pos.x = s.target; s.target = null; } } };
-    return { acts, log, found, blows, run, s };
+    return { acts, log, found, blows, tones, says, strikes, run, s };
   }
 
-  it("the belt has the two toys that need no prop to stand at", () => {
-    expect([...BELT_TOYS]).toEqual(["guitar", "wand"]);
+  it("the belt has the four toys that can be played without their prop", () => {
+    expect([...BELT_TOYS]).toEqual(["guitar", "wand", "book", "mallets"]);
   });
 
   it("the guitar: Kip stays where he is, holds it, strums, and lets it go; no prop is hidden", () => {
@@ -186,6 +192,44 @@ describe("the Toys row plays a toy where Kip stands (toyRoomActs.toy)", () => {
     expect(g.log).toContain("clip:blow");
     expect(g.blows.length).toBeGreaterThan(0);
     expect(g.found).toEqual(["wand"]);
+    expect(g.log).toContain("release");
+    expect(g.acts.busy).toBe(false);
+  });
+
+  it("the book: Kip reads where he stands, turns pages, reads out the names of the props near him, and lets it go", () => {
+    const near = [{ type: "teddy" }, { type: "ball" }];
+    const g = game({ nearby: near });
+    expect(g.acts.toy("book")).toBe(true);
+    g.run(READ_S + 1);
+    expect(g.log).toContain("hold:book");
+    expect(g.log).toContain("clip:read");
+    expect(g.found).toEqual(["book"]);
+    expect(g.says.length).toBeGreaterThan(0);
+    for (const said of g.says) expect(near).toContain(said);
+    expect(g.tones.length).toBeGreaterThan(0);                                  // the page-turn sound
+    expect(g.log.filter((l) => l.startsWith("walkTo")).every((l) => l.startsWith("walkTo:12,")), g.log.join(" ")).toBe(true);
+    expect(g.log).toContain("release");
+    expect(g.acts.busy).toBe(false);
+  });
+
+  it("the book with nothing near him still turns its pages, and says nothing", () => {
+    const g = game();
+    expect(g.acts.toy("book")).toBe(true);
+    g.run(READ_S + 1);
+    expect(g.says).toEqual([]);
+    expect(g.tones.length).toBeGreaterThan(0);
+    expect(g.found).toEqual(["book"]);
+  });
+
+  it("the mallets: Kip plays the xylophone's tune on its own five notes where he stands, with no xylophone to strike", () => {
+    const g = game();
+    expect(g.acts.toy("mallets")).toBe(true);
+    g.run(MALLET_S + 1);
+    expect(g.log).toContain("hold:mallets");
+    expect(g.log).toContain("clip:mallet");
+    expect(g.found).toEqual(["mallets"]);
+    expect(g.strikes).toEqual([]);
+    expect(g.tones).toEqual(TUNE.slice(0, MALLET_COUNT).map((bar) => XYLO_NOTES[bar]));
     expect(g.log).toContain("release");
     expect(g.acts.busy).toBe(false);
   });
@@ -242,5 +286,45 @@ describe("the belt's tool steps out of the hand while its twin works (pickupHeld
     expect(r.model.children[2]!.visible).toBe(true);                              // the guitar
     p.beltVisible(true);
     p.dispose();
+  });
+});
+
+describe("the belt's tool is kept out of the title and showcase scenes (pickupHeld.beltSuppress)", () => {
+  it("hides the tool whatever else says, and shows it when the scene ends; a tool put on while suppressed is hidden", () => {
+    const r = rig();
+    const p = createPickupHeld({ held: createHeld(), rig: () => r });
+    p.take("screwdriver");
+    const mesh = r.armR.children[0]!;
+    p.beltSuppress(true);
+    expect(mesh.visible).toBe(false);
+    p.beltVisible(true);                                                            // the work animation ending must not bring it back inside a showcase
+    expect(mesh.visible).toBe(false);
+    p.take("hammer");
+    expect(r.armR.children[0]!.visible).toBe(false);
+    p.beltSuppress(false);
+    expect(r.armR.children[0]!.visible).toBe(true);
+    p.beltVisible(false);                                                           // and the other way: away working, then not suppressed
+    expect(r.armR.children[0]!.visible).toBe(false);
+    p.beltVisible(true);
+    expect(r.armR.children[0]!.visible).toBe(true);
+    p.dispose();
+  });
+  it("the frame calls it with the showcase flag just before the holder ticks", () => {
+    expect(read("src/features/game/world/runtime/world.ts")).toContain("PICK.beltSuppress(!!P.showcase);PICK.tick();");
+  });
+});
+
+describe("the world's handle is whole (a line comment once swallowed half of it)", () => {
+  // The handle literal in world.ts is ONE very long line. A `//` comment inside it comments out every property after it on that line: in 8dcc7a2 it swallowed capturePortrait (so the avatar
+  // never got its picture), playSeed, worldName, open and close, and nothing failed loudly because the next line carries on the literal. A block comment is the only kind that is safe there.
+  const world = read("src/features/game/world/runtime/world.ts");
+  const line = world.split("\n").find((l) => l.includes("capturePortrait:toyPortrait")) ?? "";
+  it("has no line comment before the properties that follow portraitSig on that line", () => {
+    expect(line.length).toBeGreaterThan(0);
+    const before = line.slice(0, line.indexOf("capturePortrait:toyPortrait"));
+    expect(before, "a // comment on the handle's long line hides the properties after it").not.toMatch(/\s\/\/\s/);
+  });
+  it("still has the properties that line carries", () => {
+    for (const key of ["capturePortrait:toyPortrait", "playSeed:playSeed", "worldName:function"]) expect(line).toContain(key);
   });
 });

@@ -210,6 +210,9 @@ export function createPickupHeld(opts: PickupHeldOptions) {
   const current = (): Wanted | null => wanted ?? base;
   /** False while the belt's tool is away working on a fit (a copy of it flies to the fit, world.ts `toolAnim`): the one in the hand is hidden, and back when it returns. */
   let beltShown = true;
+  /** True in the title and the showcase scenes (the toy dances on a turntable): the belt's tool is not shown there at all. */
+  let beltSuppressed = false;
+  const beltVisibleNow = (): boolean => beltShown && !beltSuppressed;
   let chip: HTMLButtonElement | null = null;
   let loadId = 0;
   let disposed = false;
@@ -276,7 +279,7 @@ export function createPickupHeld(opts: PickupHeldOptions) {
         return mesh;
       });
       mountedFor = w;
-      if (w === base) for (const m of mounted) m.visible = beltShown;
+      if (w === base) for (const m of mounted) m.visible = beltVisibleNow();
       showChip(!w.quiet);
       return true;
     }
@@ -408,7 +411,13 @@ export function createPickupHeld(opts: PickupHeldOptions) {
     /** Hide (false) or show (true) the belt's tool in the hand while a copy of it is away working on a fit. Safe whatever is held; the setting is remembered for the next time it is put on the arm. */
     beltVisible(on: boolean): void {
       beltShown = on;
-      if (mounted && mountedFor === base) for (const m of mounted) m.visible = on;
+      if (mounted && mountedFor === base) for (const m of mounted) m.visible = beltVisibleNow();
+    },
+    /** Keep the belt's tool out of sight while true (the title and showcase scenes), whatever `beltVisible` says. Cheap to call every frame. */
+    beltSuppress(on: boolean): void {
+      if (beltSuppressed === on) return;
+      beltSuppressed = on;
+      if (mounted && mountedFor === base) for (const m of mounted) m.visible = beltVisibleNow();
     },
     /** What the belt has Kip holding (a tool or a toy), or null. For tests and the page. */
     get belt(): HeldItem | null { return base ? base.item : null; },

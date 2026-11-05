@@ -7,7 +7,7 @@ import { karaokeAt } from "../shared/songKaraoke";
 import { WATERMARK_TAIL_S } from "../shared/themeParty";
 import type { KeptSong } from "../src/features/game/world/themeSongFlow";
 import {
-  CROSSFADE_S, DEFAULT_TITLE_TRACK, FADE_IN_S, MIN_LOOP_S, MUTE_KEY, TITLE_VOLUME, createTitleMusic, karaokeFor, loopSecondsFor, pickTitleSong, readMuted, writeMuted,
+  CROSSFADE_S, DEFAULT_TITLE_TRACK, FADE_IN_S, MIN_LOOP_S, MUTE_KEY, WATERMARK_MIN_TAIL_S, TITLE_VOLUME, createTitleMusic, karaokeFor, loopSecondsFor, pickTitleSong, readMuted, writeMuted,
   type AudioLike, type TitleMusic,
 } from "../src/features/game/world/titleMusicCore";
 
@@ -39,6 +39,14 @@ describe("the loop and the karaoke", () => {
     expect(loopSecondsFor(MIN_LOOP_S + WATERMARK_TAIL_S - 0.1)).toBe(0);
     expect(loopSecondsFor(NaN)).toBe(0);
     expect(loopSecondsFor(0)).toBe(0);
+  });
+  it("with timed lines the loop ends just inside the last sung line, never before the cautious cut and never into the watermark (the first real song: 65.19 s, last line ends 60.52 s)", () => {
+    expect(loopSecondsFor(65.19, [{ e: 30400 }, { e: 60520 }])).toBeCloseTo(60.42, 6);
+    expect(loopSecondsFor(65.19, [{ e: 52000 }])).toBeCloseTo(65.19 - WATERMARK_TAIL_S, 6);              // an outro after the last line: the cautious cut
+    expect(loopSecondsFor(65.19, [{ e: 64000 }])).toBeCloseTo(65.19 - WATERMARK_MIN_TAIL_S, 6);           // lines that run late: never into the watermark
+    expect(loopSecondsFor(65.19, [])).toBeCloseTo(65.19 - WATERMARK_TAIL_S, 6);
+    expect(loopSecondsFor(65.19, [{ e: NaN }])).toBeCloseTo(65.19 - WATERMARK_TAIL_S, 6);
+    expect(loopSecondsFor(12, [{ e: 9000 }])).toBe(0);                                                    // still too short to loop
   });
   it("puts the provider's timed lines on the loop; a song with none has no karaoke (no guessing)", () => {
     const song = kept({ task: "100000002", kind: "prompt", lines: [{ s: 2000, e: 5000, t: "Hello Mia", w: [2000, 3500] }, { s: 6000, e: 8000, t: "Sing along" }, { s: 59000, e: 61000, t: "after the cut" }] });

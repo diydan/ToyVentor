@@ -6,7 +6,7 @@ import * as THREE from "three";
 import { BALL_BOUNDS } from "./ballKick";
 import type { EaterKind } from "./fruitAppetite";
 import { BLOW_PUFFS_S, HUG_SQUEEZE_S, KICK_CONTACT_S, MALLET_COUNT, MALLET_EVERY_S, MALLET_START_S, PET_STROKES_S, READ_PAGES_S, STRUM_COUNT, STRUM_EVERY_S } from "./proceduralClips";
-import { barX } from "./xylophone";
+import { XYLO_NOTES, barX } from "./xylophone";
 import type { PropInst } from "./propReactions";
 import type { P3 } from "./sleepRoutine";
 import { createPlaythings, type ThingKind } from "./playthings";
@@ -44,9 +44,12 @@ export const JUMP_DOWN_S = 2.35;
 export const JUMP_UP_HEIGHT = 1.1;
 export const JUMP_DOWN_HEIGHT = 0.8;
 export const READ_STAND = 1.4;
-/** The toys that can be played from the tool belt once found (Dan, 2026-11-04 night): the acts that need no prop to stand at. */
-export type BeltToy = "guitar" | "wand";
-export const BELT_TOYS: readonly BeltToy[] = ["guitar", "wand"];
+/**
+ * The toys that can be played from the tool belt once found (Dan, 2026-11-04 night): the guitar and the bubble wand need no prop to stand at; the book reads out the names of whatever props are
+ * near Kip (none: just the page turns), and the mallets play the xylophone's tune on its own notes without the xylophone (2026-11-05, "do 3").
+ */
+export type BeltToy = "guitar" | "wand" | "book" | "mallets";
+export const BELT_TOYS: readonly BeltToy[] = ["guitar", "wand", "book", "mallets"];
 export const PLAY_STAND = 1.25;
 export const BLOW_STAND = 1.15;
 export const PET_STAND = 1.9;
@@ -256,18 +259,20 @@ export function createActs(w: ActsWorld) {
     };
   }
 
-  function readVisit(inst: PropInst): Visit {
-    const x = inst.base.px;
+  function readVisit(inst: PropInst): Visit { return readingVisit(inst.base.px - READ_STAND, inst.base.px, inst); }
+  /** The reading act. At the books (`inst`) Kip walks to `standX`; from the belt there is no book prop, he reads where he is (`x` is where the props are looked for) and reads out only what is near. */
+  function readingVisit(standX: number, x: number, inst: PropInst | null): Visit {
     let names: PropInst[] = [];
     return {
-      standX: x - READ_STAND, face: 1, seconds: READ_S,
+      standX, face: 1, seconds: READ_S,
       begin: () => {
         names = w.fx.nearby(x, READ_NAMES, ["books"]);
-        if (!names.length) names = [inst];                                // nothing else around: it reads out the book's own name
+        if (!names.length && inst) names = [inst];                        // nothing else around: it reads out the book's own name
         w.hold("book");
         w.clip("read");
+        w.found?.("book");
       },
-      cues: READ_PAGES_S.map((at, i) => ({ at, fn: () => { w.fx.flutter(inst); w.fx.say(names[i % names.length]!); w.tone(560, 0, 0.06, "triangle", 0.04, 420); } })),
+      cues: READ_PAGES_S.map((at, i) => ({ at, fn: () => { if (inst) w.fx.flutter(inst); if (names.length) w.fx.say(names[i % names.length]!); w.tone(560, 0, 0.06, "triangle", 0.04, 420); } })),
       end: () => { w.release(); },
     };
   }
@@ -321,16 +326,23 @@ export function createActs(w: ActsWorld) {
     const m = inst.holder?.userData?.mallets as THREE.Object3D | undefined;
     if (m) m.visible = on;
   }
-  function malletVisit(inst: PropInst): Visit {
-    const x = inst.base.px, z = inst.base.pz;
+  function malletVisit(inst: PropInst): Visit { return malletsVisit(inst.base.px - MALLET_STAND, inst.base.px, inst.base.pz, inst); }
+  /**
+   * The xylophone act. At the xylophone (`inst`) Kip walks to `standX`, the mallets leave the ledge and each stroke rings a bar. From the belt there is no xylophone: he plays the same tune on the same
+   * five notes right where he stands (the notes are made directly, with a note floating up over each stroke), and `x`, `z` are where the bars would be.
+   */
+  function malletsVisit(standX: number, x: number, z: number, inst: PropInst | null): Visit {
     return {
-      standX: x - MALLET_STAND, face: 1, seconds: MALLET_S,
-      begin: () => { setMallets(inst, false); w.hold("mallets"); w.clip("mallet"); },
+      standX, face: 1, seconds: MALLET_S,
+      begin: () => { if (inst) setMallets(inst, false); w.hold("mallets"); w.clip("mallet"); w.found?.("mallets"); },
       cues: TUNE.slice(0, MALLET_COUNT).map((bar, i) => ({
         at: MALLET_START_S + i * MALLET_EVERY_S,
-        fn: () => { w.fx.strike(inst, bar); if (i % 2 === 0) floater("note", new THREE.Vector3(x + barX(bar), inst.size.y + 0.5, z + 0.4), 0.4); },
+        fn: () => {
+          if (inst) w.fx.strike(inst, bar); else w.tone(XYLO_NOTES[bar]!, 0, 0.55, "triangle", 0.09);
+          if (i % 2 === 0) floater("note", new THREE.Vector3(x + barX(bar), (inst ? inst.size.y : 1.4) + 0.5, z + 0.4), 0.4);
+        },
       })),
-      end: () => { w.release(); setMallets(inst, true); },                   // the mallets are back on the ledge, even if the tune was cut short
+      end: () => { w.release(); if (inst) setMallets(inst, true); },         // the mallets are back on the ledge, even if the tune was cut short
     };
   }
 
@@ -361,7 +373,12 @@ export function createActs(w: ActsWorld) {
       if (!w.allowed() || w.eater() !== "character") return false;
       following = null;
       const here = w.position();
-      return visitor.start(kind === "guitar" ? strumVisit(here.x, here.x + PLAY_STAND, here.z, null) : wandVisit(here.x));
+      const visit =
+        kind === "guitar" ? strumVisit(here.x, here.x + PLAY_STAND, here.z, null)
+        : kind === "wand" ? wandVisit(here.x)
+        : kind === "book" ? readingVisit(here.x, here.x, null)
+        : malletsVisit(here.x, here.x + 0.9, here.z, null);
+      return visitor.start(visit);
     },
     /** Start a visit that is not a tap on a prop (the Clean button): false (and nothing happens) if one is already under way or an act is not allowed now. */
     run(visit: Visit): boolean { return w.allowed() && w.eater() === "character" ? visitor.start(visit) : false; },

@@ -33,11 +33,25 @@ export function pickTitleSong(kept: readonly KeptSong[]): KeptSong | null {
   return kept.find((s) => s.kind === "prompt" && ok(s)) ?? kept.find((s) => s.kind === undefined && ok(s)) ?? null;
 }
 
-/** Seconds of the song the title loops (everything before the watermark), or 0 when the song is too short to loop or its length is not known. */
-export function loopSecondsFor(duration: number): number {
+/**
+ * The watermark's start is never nearer the end than this (measured on the first real theme song, 2026-11-05: the song body ended 4.8 s before the end of the file, the rest was the
+ * provider's appended watermark). `WATERMARK_TAIL_S` (5.5 s) is the cautious figure the dance party cuts with.
+ */
+export const WATERMARK_MIN_TAIL_S = 4.6;
+
+/**
+ * Seconds of the song the title loops (everything before the watermark), or 0 when the song is too short to loop or its length is not known. Without timed lines it is the cautious
+ * `duration - WATERMARK_TAIL_S`. With them the loop ends just inside the end of the last sung line when that is between the cautious figure and the earliest the watermark can start, so the
+ * last words are not chopped: on the real song (65.19 s, last line ends 60.52 s) that is 60.42 s, where the cautious figure would end it at 59.69 s, in the middle of the last line.
+ */
+export function loopSecondsFor(duration: number, lines?: readonly { e: number }[]): number {
   if (!Number.isFinite(duration) || duration <= 0) return 0;
-  const loop = duration - WATERMARK_TAIL_S;
-  return loop >= MIN_LOOP_S ? loop : 0;
+  const cautious = duration - WATERMARK_TAIL_S;
+  if (cautious < MIN_LOOP_S) return 0;
+  if (!lines || !lines.length) return cautious;
+  const lastEnd = Math.max(...lines.map((l) => l.e)) / 1000;
+  if (!Number.isFinite(lastEnd)) return cautious;
+  return Math.min(duration - WATERMARK_MIN_TAIL_S, Math.max(cautious, lastEnd - 0.1));
 }
 
 /** The song's timed lines on the loop the title plays (seconds from the start). Empty when the provider gave no times. */
@@ -212,7 +226,7 @@ export function createTitleMusic(deps: TitleMusicDeps): TitleMusic {
     audio.volume = 0;
     const ready = () => {
       if (stopped || want !== song.task) { deps.revokeUrl(url); return; }
-      const loop = loopSecondsFor(audio.duration);
+      const loop = loopSecondsFor(audio.duration, song.lines);
       if (loop <= 0) { deps.revokeUrl(url); return; } // too short to loop, or not a song: the default keeps playing
       customVoice = { audio, url, gain: 0, target: 0, rate: CROSSFADE_S, track: { kind: "custom", title: song.name, karaoke: karaokeFor(song, loop), loop } };
       sync();
