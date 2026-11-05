@@ -340,9 +340,9 @@ Date 2026-11-04 commit 0e35110 URL https://toyventor.com tester mavis (an agent 
 
 Merged on 2026-11-04 from: [deploy-checklist.md](deploy-checklist.md) (parts 1 to 3), `carousel-qa-checklist.md` and `carousel-playtest-runsheet.md` (parts 5 to 7, now archived), [demo-script.md](demo-script.md) (4.1), the pre-recording list in [forge-ai-spec.md](../specs/forge-ai-spec.md) (4.6), the "not verified" lists in the garage, household, dance-party, explorer, parallax and sam-physical-to-digital specs (parts 4 and 5), and the room-photo run of 2026-11-02 and 2026-11-04.
 
-The two carousel QA documents were folded in on 2026-11-04 and archived to
-[`../archive/qa/`](../archive/qa/). Everything that was unique to them was
-carried over before they were moved:
+The two carousel QA documents were folded in on 2026-11-04 and the originals
+retired with the archive. Everything that was unique to them was carried over
+before they were moved:
 
 - **The measured robot baseline** (the `390 x 844` tap counts, card sizes and
   landscape measurements) was only in the run sheet. It is now section 5.0

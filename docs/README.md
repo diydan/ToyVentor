@@ -146,7 +146,7 @@ authority.
 | [0001](decisions/0001-react-spa.md) | React SPA as the app shape. |
 | [0002](decisions/0002-blockml-machineblocks.md) | BlockML and MachineBlocks are not used. |
 | [0003](decisions/0003-blockml-spike.md) | The BlockML spike. |
-| [0004](archive/0004-license-email-draft.md) | The licence email draft (retired, never sent; archived). |
+| 0004 | The licence email draft (retired, never sent; removed with the archive). |
 | [0005](decisions/0005-partspec-lattice-merge.md) | The PartSpec and TU lattice merge. The geometry authority. |
 | [0006](decisions/0006-sam-mask-decoding.md) | SAM mask decoding. |
 | [0007](decisions/0007-sam-provider-retention.md) | SAM provider retention. |
@@ -175,15 +175,6 @@ the backdrops is [parallax-backdrops-spec.md](specs/parallax-backdrops-spec.md).
   submitted package.
 - [`../generated/`](../generated/) holds build output, including the
   physical validation coupons. Never edited by hand.
-
-## Archive
-
-[archive/](archive/README.md) holds retired docs with their replacements: the
-5-tab wireframe and PDF, pre-consolidation mockups, 16/32 mm samples, the raw
-brain-dump, the point-in-time parts review, the eight merged parts engineering
-documents, the two merged carousel QA documents, the future-vision pitch draft
-and the household-weekends review. Archive entries are history; do not update
-them to match today.
 
 ## Changing these docs
 

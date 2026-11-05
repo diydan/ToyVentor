@@ -30,9 +30,7 @@ export const SHADOW_MAP = 1024;
 export const FOLIAGE_DETAIL = 0.7;
 export const foliageSegs = (n: number): number => Math.max(6, Math.round(n * FOLIAGE_DETAIL));
 /** Set once the adaptive quality has turned a post effect off: the light rig must then leave bloom off (lighting.ts `syncPost`). */
-export const quality = { low: false, /** False once the last quality step has taken the clear-coat layer off the plastic and paint (see `dropClearcoat`); stays false for the page session: a device that was slow once is slow. */ coat: true };
-/** A clear-coat up to this strong is a sheen on plastic or paint and goes in the last quality step; a stronger one is the point of the thing (water, glass) and stays. */
-export const COAT_DROP_MAX = 0.5;
+export const quality = { low: false };
 
 let renderer!: THREE.WebGLRenderer;
 let scene!: THREE.Scene;
@@ -174,11 +172,11 @@ function glowTex(col: string): THREE.Texture {if(!GT[col])GT[col]=canv(128,128,f
 function glowSprite(col: string, size: number, op?: number, normal?: unknown): THREE.Sprite {var s=new T.Sprite(new T.SpriteMaterial({map:glowTex(col),transparent:true,depthWrite:false,blending:normal?T.NormalBlending:T.AdditiveBlending,opacity:op==null?1:op,fog:false}));s.scale.set(size,size,1);return s}
 
 /* ---------- materials ---------- */
-function plastic(c: string, o?: Record<string, unknown>): THREE.MeshPhysicalMaterial {var k="p"+c+JSON.stringify(o||{});if(!MC[k]){var pm=new T.MeshPhysicalMaterial(Object.assign({color:c,roughness:.42,metalness:0,clearcoat:.3,clearcoatRoughness:.32,envMapIntensity:.55},o||{}));if(!quality.coat&&pm.clearcoat<=COAT_DROP_MAX)pm.clearcoat=0;MC[k]=pm}return MC[k] as THREE.MeshPhysicalMaterial}
+function plastic(c: string, o?: Record<string, unknown>): THREE.MeshPhysicalMaterial {var k="p"+c+JSON.stringify(o||{});if(!MC[k])MC[k]=new T.MeshPhysicalMaterial(Object.assign({color:c,roughness:.42,metalness:0,clearcoat:.3,clearcoatRoughness:.32,envMapIntensity:.55},o||{}));return MC[k] as THREE.MeshPhysicalMaterial}
 function matte(c: string, flat?: unknown): THREE.MeshStandardMaterial {var k="m"+c+flat;if(!MC[k])MC[k]=new T.MeshStandardMaterial({color:c,roughness:.85,metalness:0,flatShading:!!flat,envMapIntensity:.1});return MC[k] as THREE.MeshStandardMaterial}
 function metal(c: string): THREE.MeshStandardMaterial {var k="x"+c;if(!MC[k])MC[k]=new T.MeshStandardMaterial({color:c,roughness:.36,metalness:.65,envMapIntensity:1.0});return MC[k] as THREE.MeshStandardMaterial}
 function glowMat(c: string, i?: number): THREE.MeshStandardMaterial {var k="g"+c+i;if(!MC[k])MC[k]=new T.MeshStandardMaterial({color:c,emissive:c,emissiveIntensity:i||1.5,roughness:.4,envMapIntensity:.2});return MC[k] as THREE.MeshStandardMaterial}
-function paintMat(c: string): THREE.MeshPhysicalMaterial {var k="pm"+c;if(!MC[k])MC[k]=new T.MeshPhysicalMaterial({color:c,metalness:.08,roughness:.42,clearcoat:quality.coat?.3:0,clearcoatRoughness:.3,envMapIntensity:.6});return MC[k] as THREE.MeshPhysicalMaterial}
+function paintMat(c: string): THREE.MeshPhysicalMaterial {var k="pm"+c;if(!MC[k])MC[k]=new T.MeshPhysicalMaterial({color:c,metalness:.08,roughness:.42,clearcoat:.3,clearcoatRoughness:.3,envMapIntensity:.6});return MC[k] as THREE.MeshPhysicalMaterial}
 const GLASS = new T.MeshPhysicalMaterial({color:0x9fdcff,roughness:.05,clearcoat:1,transparent:true,opacity:.85});
 const BUBBLE = new T.MeshPhysicalMaterial({color:0xcfeaff,roughness:.05,clearcoat:1,transparent:true,opacity:.35,side:T.DoubleSide,depthWrite:false});
 
@@ -225,19 +223,7 @@ const GRADE = {uniforms:{tDiffuse:{value:null},uTint:{value:new T.Vector3(1,1,1.
 const TINT: Record<string, [number, number, number]> = {garden:[.97,1.0,1.07],sky:[1.03,1.02,.98],junk:[1.09,.98,.93],beach:[1.04,1.02,.95],snow:[.95,1.0,1.08],room:[1.07,.99,.94]};
 
 function setupPost(w: number, h: number): void {if(QP==="low"||!T.EffectComposer||!T.UnrealBloomPass)return;try{var pr0=renderer.getPixelRatio(),rt=renderer.capabilities.isWebGL2?new T.WebGLRenderTarget(w*pr0,h*pr0,{minFilter:T.LinearFilter,magFilter:T.LinearFilter,format:T.RGBAFormat,type:T.HalfFloatType}):undefined;composer=new T.EffectComposer(renderer,rt);composer.addPass(new T.RenderPass(scene,camera));bloom=new T.UnrealBloomPass(new T.Vector2(256,256),.38,.42,1.0);composer.addPass(bloom);grade=new T.ShaderPass(GRADE);composer.addPass(grade);composer.addPass(new T.OutputPass());fxaa=new T.ShaderPass(T.FXAAShader);composer.addPass(fxaa)}catch(e){console.error(e);composer=null}}
-/**
- * The last resort for a slow device (the second quality step, or the first on a device with no post chain): take the clear-coat layer off every plastic and paint (a second specular lobe and an
- * environment look-up per pixel, on every surface Kip and the props have) and let the shader programs rebuild without it. Measured 2026-11-05: Kip with and without it differs in about 1 percent of
- * his pixels by more than 12 levels, a flatter sheen on the shirt, the trousers and the boots, so it is not taken from a device that is keeping up. Water and glass keep theirs (`COAT_DROP_MAX`).
- */
-export function dropClearcoat(): void {
-  if (!quality.coat) return;
-  quality.coat = false;
-  const drop = (m: THREE.Material | undefined): void => { const p = m as THREE.MeshPhysicalMaterial | undefined; if (p && p.isMeshPhysicalMaterial && p.clearcoat > 0 && p.clearcoat <= COAT_DROP_MAX) { p.clearcoat = 0; p.needsUpdate = true; } };
-  for (const k of Object.keys(MC)) drop(MC[k]);
-  if (scene) scene.traverse((o) => { const m = (o as THREE.Mesh).material; if (Array.isArray(m)) m.forEach(drop); else drop(m as THREE.Material | undefined); });
-}
-function stepDown(onResize: () => void): void {if(bloom&&bloom.enabled){quality.low=true;bloom.enabled=false;renderer.setPixelRatio(Math.min(1.25,window.devicePixelRatio||1));onResize();return}dropClearcoat();if(composer){composer=null;renderer.setPixelRatio(1);sun.shadow.mapSize.set(512,512);if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null}onResize()}}
+function stepDown(onResize: () => void): void {if(bloom&&bloom.enabled){quality.low=true;bloom.enabled=false;renderer.setPixelRatio(Math.min(1.25,window.devicePixelRatio||1));onResize();return}if(composer){composer=null;renderer.setPixelRatio(1);sun.shadow.mapSize.set(512,512);if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null}onResize()}}
 
 export {
   T,

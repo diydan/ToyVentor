@@ -3,9 +3,9 @@
 **Status (2026-11-04):** active. This file is the single entry point to the
 parts engineering lane. It merges eight documents that used to sit beside each
 other in `docs/specs/` with overlapping supersession banners. Every fact that
-was still authoritative is carried here; the full text of each merged document
-is archived, unedited, under
-[`../archive/parts-engineering/`](../archive/parts-engineering/) (Appendix A).
+was still authoritative is carried here; the eight merged documents were
+retired with the archive (Appendix A records what each held and where its
+live content went).
 
 **Read the sections, not the whole file.** §1–§7 are the engineering canon
 (decisions, geometry, laws, gates, physics, electrical safety, capability
@@ -924,25 +924,24 @@ only about `1.6 mm` above the lip).
 
 ---
 
-## Appendix A: where the full text of each merged document is archived
+## Appendix A: what each merged document held
 
-Each file below is archived **unedited** under
-[`../archive/parts-engineering/`](../archive/parts-engineering/). The archive
-holds the reasoning, the derivations, the audit tables and the sources that
-this file condenses. Where this file and an archived file disagree, this file
-is the live one for the sections it covers (§1–§7 are the engineering canon);
-the archived file remains the record of how the decision was reached.
+Each file below was retired with the archive (removed). The archive held the
+reasoning, the derivations, the audit tables and the sources that this file
+condenses. Where this file and a retired file disagreed, this file is the live
+one for the sections it covers (§1–§7 are the engineering canon); the retired
+file remains the record of how the decision was reached.
 
-| Archived file | What it holds now | Where its live content went |
+| Retired file | What it held | Where its live content went |
 | --- | --- | --- |
-| [`functional-print-mechanics-spec.md`](../archive/parts-engineering/functional-print-mechanics-spec.md) | The canonical CAD baseline, the `D1`–`D3` / `R1`–`R7` review findings, the notation, the supersession table, the 8-card manifest and the sign-off gates. | §1, §1.1, §2, §3, §4, §11 |
-| [`progressive-power-system-spec.md`](../archive/parts-engineering/progressive-power-system-spec.md) | The pre-CAD Pass 4g baseline: the physics and impulse derivations, the 7-gate protocol, the `Card F` electrical safety baseline and the capability matrix. Its geometry, packaging and card-manifest sections are superseded by §1.1. | §4, §5, §6, §7 (carried verbatim) |
-| [`motion-stage-options-spec.md`](../archive/parts-engineering/motion-stage-options-spec.md) | The ladder decision, the options analysis, the bench-test ordering and the print-and-test sheet. | §1, §11 |
-| [`flatpack-modular-craft-spec.md`](../archive/parts-engineering/flatpack-modular-craft-spec.md) | Pass 4g coordinate frames, the 15-module catalog, the 9-craft assembly traces and the Pass 5 CAD execution sequence. Its geometry is superseded by §2. | §2 |
-| [`kip-print-workflow-spec.md`](../archive/parts-engineering/kip-print-workflow-spec.md) | The full "print what's on screen" engineering spec: the printer profile, the colour resolver, the 3MF package, the kit-card engine, the sticker and stencil design, and the appendix of sources. | §8 |
-| [`parts-asset-optimization-spec.md`](../archive/parts-engineering/parts-asset-optimization-spec.md) | The asset pipeline design, the file and schema specifications, the LLM tuning approach and the dynamic-part section. | §9 |
-| [`describe-and-build-viewer-spec.md`](../archive/parts-engineering/describe-and-build-viewer-spec.md) | The Describe & Build design spec, its six build steps and its validation plan. | §10.1 |
-| [`kip-demo-implementation.md`](../archive/parts-engineering/kip-demo-implementation.md) | The Kip demo build plan, its phase constraints and its implementation log. | §10.2 |
+| `functional-print-mechanics-spec.md` | The canonical CAD baseline, the `D1`–`D3` / `R1`–`R7` review findings, the notation, the supersession table, the 8-card manifest and the sign-off gates. | §1, §1.1, §2, §3, §4, §11 |
+| `progressive-power-system-spec.md` | The pre-CAD Pass 4g baseline: the physics and impulse derivations, the 7-gate protocol, the `Card F` electrical safety baseline and the capability matrix. Its geometry, packaging and card-manifest sections are superseded by §1.1. | §4, §5, §6, §7 (carried verbatim) |
+| `motion-stage-options-spec.md` | The ladder decision, the options analysis, the bench-test ordering and the print-and-test sheet. | §1, §11 |
+| `flatpack-modular-craft-spec.md` | Pass 4g coordinate frames, the 15-module catalog, the 9-craft assembly traces and the Pass 5 CAD execution sequence. Its geometry is superseded by §2. | §2 |
+| `kip-print-workflow-spec.md` | The full "print what's on screen" engineering spec: the printer profile, the colour resolver, the 3MF package, the kit-card engine, the sticker and stencil design, and the appendix of sources. | §8 |
+| `parts-asset-optimization-spec.md` | The asset pipeline design, the file and schema specifications, the LLM tuning approach and the dynamic-part section. | §9 |
+| `describe-and-build-viewer-spec.md` | The Describe & Build design spec, its six build steps and its validation plan. | §10.1 |
+| `kip-demo-implementation.md` | The Kip demo build plan, its phase constraints and its implementation log. | §10.2 |
 
 **Not merged, still live elsewhere in `docs/specs/`:** the vehicle and
 construction drafts (`construction-vehicles-spec.md`), the game and world

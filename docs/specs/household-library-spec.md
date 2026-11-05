@@ -204,7 +204,7 @@ shape?" (pick the item's silhouette from a few pictures, right in a row, less re
 or per-item stat question. A scan in the Kip viewer is a bonus: the match offer and the 3D item coloured from the photo. The full rules, the numbers and
 the tool weekends are in "Household library drops" in [garage-weekend-spec.md](garage-weekend-spec.md). From this library the Garage needs a **front
 picture of each item** (an SVG: each colour zone's outline from the front, back to front, plus the whole outline as the silhouette), written by the
-library build; **built 2026-11-03**, see "Pictures: what was built". The review of the weekend proposal (docs/archive/review/household-weekends-review.md, 2026-11-03) widened that: the build also
+library build; **built 2026-11-03**, see "Pictures: what was built". The review of the weekend proposal (2026-11-03, retired with the archive) widened that: the build also
 writes the **three-quarter silhouette**, a hand-written **`group`** on each row (cutlery, tools, fruit, containers, stationery, toys, bath, kitchen; the
 `family` column is a construction family, not a household one) and a **`confusableWith`** list per item (the items whose real silhouette overlaps it
 above a threshold), because the picture decides whether the shape game is playable: measured on the real outlines (96 x 96, in a common box), 31 of the

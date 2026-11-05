@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 import { LIGHT_PRESETS, LIGHT_RIGS, bloomWanted, moodRig, presetFor, rigFor, type LightRig, type PresetId } from "../src/features/game/world/runtime/lighting";
-import { COAT_DROP_MAX, MAX_PIXEL_RATIO, QUALITY, SHADOW_MAP, dropClearcoat, metal, paintMat, perf, plastic, quality, qualityTick, stepsFor } from "../src/features/game/world/runtime/worldScene";
+import { MAX_PIXEL_RATIO, QUALITY, SHADOW_MAP, metal, paintMat, perf, plastic, qualityTick, stepsFor } from "../src/features/game/world/runtime/worldScene";
 import { levelWorld } from "../src/features/game/world/runtime/catalog";
 
 const read = (rel: string) => readFileSync(resolve(process.cwd(), rel), "utf8");
@@ -214,42 +214,5 @@ describe("cost: the knobs that were measured", () => {
       expect(w).toContain("qualityTick(dt,t,resize);");
       expect(w).not.toContain("perf.n>=90");
     });
-  });
-});
-
-// The last quality step takes the clear-coat layer off (2026-11-05, performance, "best guess"): a second specular lobe and an environment look-up per pixel on all the plastic and paint, for a
-// device that is not keeping up; a device that is keeping up never loses it.
-describe("the last quality step takes the clear-coat off plastic and paint, and only then", () => {
-  const withCoat = () => { quality.coat = true; };
-  it("is on until a step takes it, and the factories make coated plastic and paint", () => {
-    withCoat();
-    expect(quality.coat).toBe(true);
-    expect(plastic("#a1b2c3").clearcoat).toBeGreaterThan(0);
-    expect(paintMat("#a1b2c4").clearcoat).toBeGreaterThan(0);
-    expect(plastic("#a1b2c5", { clearcoat: 0.12 }).clearcoat).toBeCloseTo(0.12, 9);
-  });
-  it("dropClearcoat zeroes every plastic and paint already made, makes the shader rebuild, keeps a strong coat (water, glass), and what is made after has none", () => {
-    withCoat();
-    try {
-      const a = plastic("#b1b2c3"), b = paintMat("#b1b2c4"), c = plastic("#b1b2c5", { clearcoat: 0.12 }), strong = plastic("#b1b2c6", { clearcoat: 0.9 });
-      const va = a.version, vb = b.version;
-      expect(COAT_DROP_MAX).toBeLessThan(0.9);
-      dropClearcoat();
-      expect(quality.coat).toBe(false);
-      expect(a.clearcoat).toBe(0); expect(b.clearcoat).toBe(0); expect(c.clearcoat).toBe(0);
-      expect(a.version, "the shader program is rebuilt without the coat").toBeGreaterThan(va);
-      expect(b.version).toBeGreaterThan(vb);
-      expect(strong.clearcoat, "a strong coat is the point of the thing and stays").toBeCloseTo(0.9, 9);
-      expect(plastic("#b1b2c7").clearcoat, "made after: none").toBe(0);
-      expect(paintMat("#b1b2c8").clearcoat).toBe(0);
-      expect(plastic("#b1b2c9", { clearcoat: 0.9 }).clearcoat, "made after: a strong coat is still strong").toBeCloseTo(0.9, 9);
-      const v = a.version; dropClearcoat();
-      expect(a.version, "a second call does nothing").toBe(v);
-    } finally { withCoat(); }
-  });
-  it("the step-down takes it in the second step (or the first, on a device with no post chain) and never in the first when bloom is there to give up", () => {
-    const scene = read("src/features/game/world/runtime/worldScene.ts");
-    expect(scene).toContain("{quality.low=true;bloom.enabled=false;renderer.setPixelRatio(Math.min(1.25,window.devicePixelRatio||1));onResize();return}dropClearcoat();if(composer){");
-    expect(scene).toContain("export function dropClearcoat(): void {");
   });
 });

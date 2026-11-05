@@ -9,8 +9,8 @@ did not know about.
 
 Neither old follow-up is owed for adoption. A side-by-side print is no
 longer on the product path, and the written license clarification is no
-longer being pursued: [0004-license-email-draft.md](0004-license-email-draft.md)
-is retired in favor of PartSpec's no-contact decision. If the author ever
+longer being pursued: `0004-license-email-draft.md` was retired with the
+archive in favor of PartSpec's no-contact decision. If the author ever
 clarifies the terms unprompted, that only updates the documentation; it
 does not reopen adoption before Nov 4.
 
