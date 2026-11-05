@@ -360,6 +360,24 @@ interface Joints {
 export const KIP_HIP_REST_MM = 61.5;
 /** Points on the sole of the boot (mm, from the boot's origin: across, then along), for standing the lowest one on the floor. */
 const SOLE_PROBES: ReadonlyArray<readonly [number, number]> = [[-7, -9], [7, -9], [-7, 15], [7, 15]];
+/**
+ * The contact lock (`lockFeet`): while an in-place clip plays (a dance, a gesture, a cheer, an action; never a walk, a run or a turn in steps) a sole that is on the floor stays WHERE IT LANDED. A sole counts as
+ * planted when it comes within LOCK_PLANT_Y of the floor and stops counting when it rises past LOCK_RELEASE_Y (stage units; the hysteresis keeps a foot hovering at the edge from flipping). The toy's root is shifted
+ * against the foot's drift (low-passed over LOCK_TAU seconds so a hand-over from one foot to the other is smooth, and never more than LOCK_MAX from where the toy stands), which is exactly what a planted foot
+ * does to a body that sways over it. It is for clips that have no planting of their own: a clip the bake planted (`BakedClip.planted`: the baked dances, the cheers) keeps its feet where the bake put them and is not touched. With no sole planted (a jump, a lifted foot) the shift eases home over LOCK_FREE_TAU. Measured 2026-11-05 over the in-game clips: the Samba's soles slid a median 1.07 stage units
+ * a second on the floor, the cheer, the dances and the gestures 0.1 to 0.4.
+ */
+const LOCK_PLANT_Y = 0.03;
+const LOCK_RELEASE_Y = 0.05;
+/** With both soles planted the one that landed first leads: the other counts for this much of it, so a hovering or newly landed sole cannot drag the stance foot. */
+const LOCK_FOLLOWER = 0.2;
+const LOCK_TAU = 0.05;
+const LOCK_FREE_TAU = 0.2;
+const LOCK_MAX = 0.8;
+/** With both soles planted the body's twist about the vertical swings them in opposite directions, which no translation can pin: the yaw that keeps both is taken off (`lockFeet`), at most this many radians, low-passed over LOCK_TAU. */
+const LOCK_MAX_YAW = 0.8;
+/** Two soles closer than this (stage units) do not say which way the body is turned: no yaw is fitted. */
+const LOCK_MIN_SPAN = 0.15;
 
 /** Find the joints a rig exposes. The STL Kip rig tags its leg pivots with `userData.hip`; procedural rigs just have fewer. */
 export function jointsOf(rig: ToyRig): Joints | null {
@@ -523,6 +541,23 @@ export class MixamoDriver {
   private readonly qrr = new THREE.Quaternion();
   private readonly qnw = new THREE.Quaternion();
   private readonly inv = new THREE.Matrix4();
+  // the contact lock (lockFeet): each sole's centre before the shift, where each planted sole was put down, which soles are planted, and the shift (x, z in the rig's parent frame)
+  private readonly lkU = [new THREE.Vector2(), new THREE.Vector2()];
+  private readonly lkA = [new THREE.Vector2(), new THREE.Vector2()];
+  private readonly lkPlanted: [boolean, boolean] = [false, false];
+  private lkX = 0;
+  private lkZ = 0;
+  private lkYaw = 0;
+  private readonly lkW: [number, number] = [0, 0];
+  private readonly lkAge: [number, number] = [0, 0];                       // how long each sole has been planted, seconds
+  private readonly lkP = [new THREE.Vector2(), new THREE.Vector2()];      // each sole's centre the frame before, before the shift (the pose's own speed: the stance sole is the slower one)
+  private lkHave = false;
+  /** The contact lock on (the default) or off: for comparing a clip with and without it in the tests and the measuring scripts. */
+  contactLock = true;
+  /** The yaw fit of the contact lock on (the default) or off (translation only): for the measuring scripts. */
+  lockYawFit = true;
+  /** The shift the contact lock is applying to the toy this frame (stage units, in the rig's parent frame): for the tests and the measuring scripts. */
+  get lockShift(): { x: number; z: number; yaw: number } { return { x: this.lkX, z: this.lkZ, yaw: this.lkYaw }; }
 
   constructor(private readonly bank: ClipBank, private readonly tuning: DriverTuning = DEFAULT_TUNING) {}
 
@@ -640,6 +675,7 @@ export class MixamoDriver {
     if (wWalk > 0.001) { sampleClip(bank.walk!, this.tWalk, this.a); mixPose(p, this.a, wWalk / Math.max(1e-6, wIdle + wWalk)); }
     if (wRun > 0.001 && bank.run) { sampleClip(bank.run, this.tRun, this.a); mixPose(p, this.a, wRun); }
 
+    let lockL = 0;                                  // how much of the pose is an in-place clip this frame: the contact lock's strength
     const act = this.action;
     if (act) {
       act.t += dt * act.rate;
@@ -653,6 +689,9 @@ export class MixamoDriver {
         if (this.a.jw > 0) this.a.j.hipsMm.y = KIP_HIP_REST_MM + (this.a.j.hipsMm.y - KIP_HIP_REST_MM) * act.lift;
       }
       mixPose(p, this.a, w);
+      // the pin is FULL while the clip fades in (the soles are where the idle left them and the pose moves away from them by degrees: pinned, the body takes that; weighted by the fade-in the foot would be dragged out
+      // and pulled back), and only lets go as the clip fades out (the toy is back where it stands when the gesture is gone)
+      if (!act.clip.planted) lockL = Math.max(lockL, Math.min(1, Math.max(0, (dur - act.t) / act.fade)) * (1 - smooth(0.4, 1.2, speed)));   // a clip the bake PLANTED is left to its own planting (the driver grounds it)
       if (act.t >= dur) this.action = null;
     }
     const h = this.held;
@@ -686,14 +725,18 @@ export class MixamoDriver {
         } else {
           mixPose(p, this.a, smooth(0, 1, bd.w) * (1 - smooth(0.4, 1.2, speed)));
         }
+        if (!bd.cur.planted) lockL = Math.max(lockL, (bd.leaving ? smooth(0, 1, bd.w) : 1) * (1 - smooth(0.4, 1.2, speed)));   // full while the dance is on and while it fades in, eased with the fade-out; not for a planted clip
       }
       if (bd.leaving && bd.w <= 0) this.beat = null;
     }
     this.spreadHips(p, wWalk + wRun);
     this.apply(j, p);
+    const inPlace = this.contactLock && wWalk + wRun < 0.05 && this.stepTurner.w < 0.001;
     this.applyJoints(j, p);
     // A limb-direction clip (no joint data: the Samba, yawn, eat, oops, smell...) has no planted foot, so it can leave the toy floating: measured 2026-11-04, the Samba's lowest sole a median 0.23 above the floor and up to 0.5, yawn 0.09, eat 0.23. While an action or a dance plays, lower the toy until its lowest sole touches the floor (never raise it: a crouch or a seat is the clip's own business), and not while it walks or runs (their sole height is tuned below).
     if ((this.action || this.beat) && wWalk + wRun < 0.05 && p.jw < 0.999) this.dropToFloor(j, 1 - p.jw);
+    // The planted sole stays where it landed (see LOCK_PLANT_Y): only for an in-place clip, never in a walk, a run or a turn in steps (their own planted-foot rules).
+    this.lockFeet(j, inPlace ? lockL : 0, dt);
     // The baked run never brings the sole lower than 0.06 stage units (5 % of the hip height) above the floor the idle stands on, so the whole run hovers and its planted foot looks like it skates
     // on air. Bring the toy down by that much while it runs: the stance foot is on the floor, the flight phase still leaves it.
     if (wRun > 0.001) j.g.position.y -= RUN_SOLE_HOVER * j.hipY * wRun;
@@ -714,6 +757,85 @@ export class MixamoDriver {
       }
     }
     if (Number.isFinite(lowest) && lowest > 0.002) j.g.position.y -= lowest * Math.min(1, w);
+  }
+
+  /**
+   * The contact lock (see LOCK_PLANT_Y): pin each sole that is on the floor where it landed by shifting the toy against its drift, weighted by `L` (the in-place clip's share of the pose, so the shift
+   * fades with the clip and the toy is back where it stands when the gesture is gone). Runs after the pose and the grounding are final; `apply` rewrites the root every frame, so the shift never accumulates.
+   */
+  private lockFeet(j: Joints, L: number, dt: number): void {
+    const sn = j.snap, parent = j.g.parent;
+    if (!sn || !parent) { this.lkX = 0; this.lkZ = 0; this.lkYaw = 0; this.lkPlanted[0] = false; this.lkPlanted[1] = false; return; }
+    const step = Number.isFinite(dt) && dt > 0 ? Math.min(0.1, Math.max(1 / 240, dt)) : this.dtLast;
+    const on = L > 0.001;
+    let n = 0, tx = 0, tz = 0;
+    if (on || this.lkPlanted[0] || this.lkPlanted[1]) {
+      parent.updateWorldMatrix(true, false);
+      this.inv.copy(parent.matrixWorld).invert();
+      for (let i = 0; i < 2; i++) {
+        const leg = sn.legs[i]!;
+        leg.foot.updateWorldMatrix(true, false);
+        let y = Infinity, cx = 0, cz = 0;
+        for (const [dx, dz] of SOLE_PROBES) {
+          this.v.set(leg.boot.position.x + dx, leg.boot.position.y, leg.boot.position.z + dz).applyMatrix4(leg.foot.matrixWorld).applyMatrix4(this.inv);
+          if (this.v.y < y) y = this.v.y;
+          cx += this.v.x; cz += this.v.z;
+        }
+        cx /= SOLE_PROBES.length; cz /= SOLE_PROBES.length;
+        this.lkU[i]!.set(cx, cz);
+        const was = this.lkPlanted[i]!;
+        const planted = on && Number.isFinite(y) && y < (was ? LOCK_RELEASE_Y : LOCK_PLANT_Y);
+        if (planted && !was) {                                                  // put down where it lands, as the lock has the body now (yaw, then shift): the lock does not jump
+          const c0 = Math.cos(this.lkYaw), s0 = Math.sin(this.lkYaw), dx0 = cx - j.g.position.x, dz0 = cz - j.g.position.z;
+          this.lkA[i]!.set(j.g.position.x + dx0 * c0 - dz0 * s0 + this.lkX, j.g.position.z + dx0 * s0 + dz0 * c0 + this.lkZ);
+        }
+        this.lkPlanted[i] = planted;
+        // the pose's own speed of this sole (before the shift, so the shift cannot feed back into it): the slower planted sole is the stance one and counts for more
+        const sp = this.lkHave ? Math.hypot(cx - this.lkP[i]!.x, cz - this.lkP[i]!.y) / step : 0;
+        this.lkP[i]!.set(cx, cz);
+        this.lkAge[i] = planted ? this.lkAge[i]! + step : 0;
+        this.lkW[i] = planted ? 1 / (0.08 + sp) : 0;
+      }
+      if (this.lkW[0]! > 0 && this.lkW[1]! > 0) { const lead = this.lkAge[0]! >= this.lkAge[1]! ? 0 : 1; this.lkW[lead === 0 ? 1 : 0] = this.lkW[lead === 0 ? 1 : 0]! * LOCK_FOLLOWER; }   // the older sole leads
+      // both soles planted: the yaw about the root that turns where they are onto where they were put down (the body's twist swings them apart), then the shift that carries the pair home
+      const both = this.lkW[0]! > 0 && this.lkW[1]! > 0;
+      let yawT = 0;
+      if (both && this.lockYawFit) {
+        const vux = this.lkU[0]!.x - this.lkU[1]!.x, vuz = this.lkU[0]!.y - this.lkU[1]!.y, vax = this.lkA[0]!.x - this.lkA[1]!.x, vaz = this.lkA[0]!.y - this.lkA[1]!.y;
+        if (Math.hypot(vux, vuz) > LOCK_MIN_SPAN && Math.hypot(vax, vaz) > LOCK_MIN_SPAN) {
+          let a = Math.atan2(vaz, vax) - Math.atan2(vuz, vux);
+          a = Math.atan2(Math.sin(a), Math.cos(a));
+          yawT = Math.max(-LOCK_MAX_YAW, Math.min(LOCK_MAX_YAW, a)) * L;
+        }
+      }
+      const ky = 1 - Math.exp(-step / (both ? LOCK_TAU : LOCK_FREE_TAU));
+      this.lkYaw += (yawT - this.lkYaw) * ky;
+      const cs = Math.cos(this.lkYaw), sn2 = Math.sin(this.lkYaw), rx = j.g.position.x, rz = j.g.position.z;
+      for (let i = 0; i < 2; i++) {
+        const w = this.lkW[i]!;
+        if (w <= 0) continue;
+        const dx = this.lkU[i]!.x - rx, dz = this.lkU[i]!.y - rz;                       // the sole as the yaw would leave it: turned about the root
+        const ux = rx + dx * cs - dz * sn2, uz = rz + dx * sn2 + dz * cs;
+        n += w; tx += (this.lkA[i]!.x - ux) * w; tz += (this.lkA[i]!.y - uz) * w;
+      }
+    }
+    if (n > 0) {
+      const k = 1 - Math.exp(-step / LOCK_TAU);
+      this.lkX += (tx / n * L - this.lkX) * k;
+      this.lkZ += (tz / n * L - this.lkZ) * k;
+    } else {
+      const k = 1 - Math.exp(-step / LOCK_FREE_TAU);
+      this.lkX -= this.lkX * k;
+      this.lkZ -= this.lkZ * k;
+    }
+    const m = Math.hypot(this.lkX, this.lkZ);
+    if (m > LOCK_MAX) { this.lkX *= LOCK_MAX / m; this.lkZ *= LOCK_MAX / m; }
+    if (m < 1e-5 && n === 0) { this.lkX = 0; this.lkZ = 0; }
+    if (n === 0 && Math.abs(this.lkYaw) < 1e-4) this.lkYaw = 0;
+    if (Math.abs(this.lkYaw) > 1e-5) j.g.quaternion.premultiply(this.qrr.setFromAxisAngle(AXIS_Y, -this.lkYaw));   // the parent's vertical axis: Ry(-a) turns (x, z) by +a the other way round
+    j.g.position.x += this.lkX;
+    j.g.position.z += this.lkZ;
+    this.lkHave = on;
   }
 
   /**

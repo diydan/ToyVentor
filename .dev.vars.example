@@ -72,13 +72,9 @@ SELF_IMAGE_URL=
 SELF_IMAGE_KEY=
 # Voice input for Describe & build (worker/transcribe.ts, POST/GET /api/transcribe). Two ways, and nothing else turns it on (an unset switch, MODEL_BACKEND=hosted, a missing key or
 # address all leave it off, and the microphone button stays hidden):
-#   TRANSCRIBE_BACKEND=self    our own speech model (Whisper large-v3-turbo, scripts/modal/whisper_server.py) AND an address below. The plan for children.
 #   TRANSCRIBE_BACKEND=hosted  Meta's muse-voice-transcribe-1.0 with MODEL_API_KEY. A DEMO-ONLY exception (Dan, 2026-11-04, docs/decisions/0008): it must be written out exactly like this
 #                              (the master MODEL_BACKEND never enables it), and the page sends a 16 kHz mono WAV. Remove the line to end it.
-# SELF_TRANSCRIBE_URL is the address `modal deploy` printed (with or without a trailing /v1);
-# SELF_TRANSCRIBE_KEY = the key you gave the Modal secret whisper-api-key (WHISPER_API_KEY).
-SELF_TRANSCRIBE_URL=
-SELF_TRANSCRIBE_KEY=
+# There is no child-facing voice route yet: a self-hosted speech model has not been chosen.
 
 # Text to part (worker/forgeMake.ts, worker/forgeOptimizer.ts). The optimizer daemon is what builds and checks the part; with no URL the routes
 # answer 503 "disabled". A non-loopback daemon MUST also have a token. Local dev: http://127.0.0.1:8791 (npm run forge:optimizer).

@@ -14,6 +14,7 @@
 //
 // The blueprint is drawn on a canvas. Where there is no `document` (a unit test in node) or no 2D context, the poster is a flat blueprint-blue plane: building never throws.
 import * as THREE from "three";
+import { TURNTABLE } from "./onbStage";
 
 const ORANGE = "#ff6b4a", NAVY = "#2b4c85", SKIN = "#f3ba95", YELLOW = "#ffd24d";
 export const BLUEPRINT_BLUE = "#1b3a8a";
@@ -302,6 +303,32 @@ export function buildWorkshop(opts: WorkshopOptions): THREE.Group {
   box(W.posterW + fw * 2, fw, 0.06, "#8a5a2c", px, W.posterY - W.posterH / 2 - fw / 2, fz, { name: "frame" });
   box(fw, W.posterH, 0.06, "#8a5a2c", px - W.posterW / 2 - fw / 2, W.posterY, fz, { name: "frame" });
   box(fw, W.posterH, 0.06, "#8a5a2c", px + W.posterW / 2 + fw / 2, W.posterY, fz, { name: "frame" });
+
+  // (f) the TURNTABLE Kip will stand on (Dan, 2026-11-05): the title's blue disc with its ring of lights, a lighter stripe so a turn can be seen, still until he is built. `userData.tt` is the group that turns (and
+  // sinks into the floor at the end); it is centred on Kip's standing place, `TURNTABLE.top` high.
+  const tt = new THREE.Group();
+  tt.name = "turntable";
+  tt.position.set(x, 0, z);
+  const ttMat = (color: string, rough: number) => new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: 0.1 });
+  const ttBase = new THREE.Mesh(new THREE.CylinderGeometry(TURNTABLE.r - 0.15, TURNTABLE.r, 0.32, 40), ttMat("#22337e", 0.45));
+  ttBase.position.y = 0.16; ttBase.receiveShadow = true;
+  const ttTop = new THREE.Mesh(new THREE.CylinderGeometry(TURNTABLE.r - 0.3, TURNTABLE.r - 0.3, 0.04, 40), ttMat("#3350b8", 0.4));
+  ttTop.position.y = TURNTABLE.top - 0.02; ttTop.receiveShadow = true;
+  const ttStripe = new THREE.Mesh(new THREE.BoxGeometry((TURNTABLE.r - 0.5) * 2, 0.012, 0.14), ttMat("#7d97f0", 0.4));
+  ttStripe.position.y = TURNTABLE.top + 0.004;
+  ttStripe.receiveShadow = true;
+  tt.add(ttBase, ttTop, ttStripe);
+  const lightMat = new THREE.MeshStandardMaterial({ color: "#9bd4ff", emissive: new THREE.Color("#9bd4ff"), emissiveIntensity: 2.2 });
+  for (let j = 0; j < 16; j++) {
+    const a = (j / 16) * Math.PI * 2;
+    const l = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), lightMat);
+    l.position.set(Math.cos(a) * (TURNTABLE.r - 0.2), 0.3, Math.sin(a) * (TURNTABLE.r - 0.2));
+    l.receiveShadow = true;
+    tt.add(l);
+  }
+  g.add(tt);
+  g.userData.tt = tt;
+  g.userData.turntable = { x, z, top: TURNTABLE.top, r: TURNTABLE.r };
 
   g.userData.floor = { z0: z - W.floorBack, z1: z + W.floorFront, y: 0.02 };
   g.userData.bench = { x: bx, z: bz, topY, w: W.benchW, d: W.benchD };

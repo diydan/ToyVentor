@@ -5,7 +5,9 @@
 import * as THREE from "three";
 import { BALL_BOUNDS } from "./ballKick";
 import type { EaterKind } from "./fruitAppetite";
-import { BLOW_PUFFS_S, HUG_SQUEEZE_S, KICK_CONTACT_S, MALLET_COUNT, MALLET_EVERY_S, MALLET_START_S, PET_STROKES_S, READ_PAGES_S, STRUM_COUNT, STRUM_EVERY_S } from "./proceduralClips";
+import { BLOW_PUFFS_S, HUG_SQUEEZE_S, KICK_CONTACT_S, MALLET_COUNT, MALLET_EVERY_S, MALLET_START_S, PET_STROKES_S, READ_PAGES_S } from "./proceduralClips";
+import { GUITAR_CLIP, guitarArmSpec } from "./guitarClip";
+import { PREFER_MIXAMO_GUITAR, PROCEDURAL_ARM, RIFF_S, autoRiff, createArmSweep, createSession, makeStroke, type ArmClipSpec, type ArmSweep, type Stroke } from "./guitarPlay";
 import { XYLO_NOTES, barX } from "./xylophone";
 import type { PropInst } from "./propReactions";
 import type { P3 } from "./sleepRoutine";
@@ -56,7 +58,7 @@ export const PET_STAND = 1.9;
 /** How far the dog flops in towards Kip when the pet is over (units): a small step, taken at a walking pace (propReactions WALK_SPEED), not a freeze. */
 export const PET_STEP_IN = 0.35;
 export const READ_S = 6.6;
-export const PLAY_S = 4.4;
+export const PLAY_S = RIFF_S;
 export const BLOW_S = 3.6;
 export const PET_S = 2.6;
 /** When the dog is told it is being petted (it has just barked from the tap: let the woofs finish before the happy wagging takes over). */
@@ -65,8 +67,13 @@ export const PET_CUE_S = 0.6;
 export const READ_NAMES = 3;
 /** How many bubbles come out on each puff. */
 export const BUBBLES_PER_PUFF = 4;
-/** The tune Kip strums: the pitch of each of the STRUM_COUNT strums (C major pentatonic). An even strum is a downstroke (a three-note chord), an odd one an upstroke (one high note). */
-export const RIFF: readonly number[] = [392, 330, 392, 523, 440, 392, 330, 262, 330, 392, 440, 392, 330, 262];
+/** After a strum act ends Kip's hands take this long to come down; the guitar stays in them until they have (he does not drop it, then lower his arms). */
+export const STRUM_LINGER_S = 0.4;
+/** How hard the held guitar kicks on a stroke (a share of its size) and how long the kick lasts. */
+export const STRUM_KICK = 0.07;
+export const STRUM_KICK_S = 0.14;
+/** How near the dog must be (units from Kip) to join in the song. */
+export const DOG_EARS = 9;
 export const MALLET_STAND = 1.9;
 /**
  * The tune Kip plays on the xylophone: which bar (C D E G A = 0 to 4) on each of the MALLET_COUNT strokes. "Mary had a little lamb" (E D C D E E E, D D D, E G G) and home to C: it
@@ -110,7 +117,7 @@ export interface ActsWorld extends Omit<VisitAdapter, "onPhase"> {
   /** Play a character clip; false if it cannot (reduced motion, not loaded). */
   clip(action: "hug" | "kick" | "cheer" | "read" | "strum" | "blow" | "pet" | "mallet" | "jump" | "shove" | "throw" | PlayAction): boolean;
   /** Put something in Kip's hands (a book, the guitar, the bubble wand) and take it away again (safe to call when it holds nothing). */
-  hold(item: "book" | "guitar" | "wand" | "mallets" | Extract<HeldItem, "can" | "carrot" | "bouquet" | "sandwich" | "smallball">): void;
+  hold(item: "book" | "guitar" | "guitarFront" | "wand" | "mallets" | Extract<HeldItem, "can" | "carrot" | "bouquet" | "sandwich" | "smallball">): void;
   release(): void;
   /** A toy the child has just played at its prop for the first time or again (the guitar, the bubble wand): the page keeps it in the belt's Toys row. Absent: nothing is kept. */
   found?(toy: BeltToy): void;
@@ -130,6 +137,19 @@ export interface ActsWorld extends Omit<VisitAdapter, "onPhase"> {
   /** Roll Kip about his origin, toward +x for a positive angle (radians): the swing ride tilts him with the ropes. Optional: a world without it just keeps him upright. */
   setRoll?(angle: number): void;
   tone(freq: number, delay: number, dur: number, type: OscillatorType, vol: number, slideTo?: number): void;
+  /** Play one guitar stroke (guitarSound.ts: modelled strings, a body thump, the pick). Absent: each string is a soft triangle `tone`. */
+  strum?(stroke: Stroke): void;
+  /**
+   * The character's guitar arm (world.ts): `has(clip)` says whether a clip is in his bank, `start(clip, time)` poses him in it from `time()` seconds into the clip, read every frame (false: cannot, reduced
+   * motion or no rig), `stop()` eases him out of it. Absent or false: the canned `strum` clip plays instead (it just cannot follow the taps).
+   */
+  guitarArm?: { has(clip: string): boolean; start(clip: string, time: () => number): boolean; stop(): void };
+  /** Turn Kip to face the camera (the guitarist's pose) or back to the way he was walking (+x). Absent: he stays in profile. */
+  faceCamera?(on: boolean): void;
+  /** Warm up the guitar's strings (make the notes a few at a time in the background, so the first tap does not stall). Absent: nothing to warm. */
+  primeStrings?(): void;
+  /** The guitar Kip is holding, to give it a little kick on every stroke. Absent: no kick. */
+  heldMesh?(): THREE.Object3D | null;
   /** The phase changed (the world marks the toy busy while it acts). */
   phase(phase: VisitPhase, previous: VisitPhase): void;
   fx: {
@@ -192,6 +212,18 @@ export function createActs(w: ActsWorld) {
   const hearts: Floater[] = [];                                       // every glyph floating up: hearts and notes
   /** The ball Kip has just kicked and will follow once it stops, and which way it was kicked. */
   let following: { inst: PropInst; dir: 1 | -1 } | null = null;
+  /** The guitar act in progress, once Kip is playing (a tap on the stage is a stroke of the song), and the guitar still in his hands while they come down after it ended. */
+  let playing: { tap(): void } | null = null;
+  let linger: { left: number; release(): void; restore(): void } | null = null;
+  /** Put the guitar away now, if his hands were still coming down (another act, a world change). `keepHeld`: another act has taken something into his hands since, so only the stand gets its guitar back. */
+  function settleLinger(keepHeld = false) { const l = linger; linger = null; if (!l) return; if (!keepHeld) l.release(); l.restore(); }
+  /** Which clip poses Kip at the guitar, and where its strokes are: the Mixamo "Guitar Playing" when it is loaded and the character can use it, else the hand-authored `strum`, else none (the canned `strum` clip plays instead). */
+  function armChoice(world: ActsWorld): { clip: string; spec: ArmClipSpec } | null {
+    if (!world.guitarArm) return null;
+    const mx = PREFER_MIXAMO_GUITAR && world.faceCamera && world.guitarArm.has(GUITAR_CLIP) ? guitarArmSpec() : null;      // (a guitarist facing the camera: a world that cannot turn him keeps the profile clip)
+    if (mx) return { clip: GUITAR_CLIP, spec: mx };
+    return world.guitarArm.has("strum") ? { clip: "strum", spec: PROCEDURAL_ARM } : null;
+  }
   const visitor = createVisitor({
     position: () => w.position(),
     targetX: () => w.targetX(),
@@ -279,25 +311,93 @@ export function createActs(w: ActsWorld) {
   }
 
   function playVisit(inst: PropInst): Visit { return strumVisit(inst.base.px - PLAY_STAND, inst.base.px, inst.base.pz, inst); }
-  /** The guitar act. At the prop (`inst`) Kip walks to `standX` and the guitar leaves its stand while he plays; from the belt there is no prop, he plays where he is (`x` is where the prop would be). */
+  /**
+   * The guitar act. At the prop (`inst`) Kip walks to `standX` and the guitar leaves its stand while he plays; from the belt there is no prop, he plays where he is (`x` is where the prop would be).
+   * It opens with a short riff (the invitation), and from the first tap on the stage the child plays: every tap is a stroke of the song (guitarPlay.ts), keeps the act going and swings the strum arm.
+   */
   function strumVisit(standX: number, x: number, z: number, inst: PropInst | null): Visit {
-    const cues = Array.from({ length: STRUM_COUNT }, (_, i) => {
-      const f = RIFF[i % RIFF.length]!;
-      return {
-        at: 0.2 + (i + 1) * STRUM_EVERY_S,
-        fn: () => {
-          if (i % 2 === 0) { [f, f * 1.25, f * 1.5].forEach((n, k) => w.tone(n, k * 0.025, 0.4, "triangle", 0.07)); }        // a downstroke: a chord, strummed
-          else w.tone(f * 2, 0, 0.3, "triangle", 0.06);                                                                      // an upstroke: one bright note
-          if (i % 2 === 0) floater("note", new THREE.Vector3(x - PLAY_STAND + 0.9 + (i % 4) * 0.1, 2.3, z + 0.5), 0.45);
-        },
-      };
-    });
-    return {
-      standX, face: 1, seconds: PLAY_S,
-      begin: () => { if (inst) w.fx.setVisible(inst, false); w.hold("guitar"); w.clip("strum"); w.found?.("guitar"); },
-      cues,
-      end: () => { w.release(); if (inst) w.fx.setVisible(inst, true); },     // the guitar is back on its stand, even if it was cut short
+    settleLinger();
+    const session = createSession(Math.random);
+    let now = 0, armTime = 0, kick = 0;
+    let sweep: ArmSweep | null = null;                                  // the strum arm's clock, while the character's own guitar clip is being driven
+    let drive: NonNullable<ActsWorld["guitarArm"]> | null = null;
+    let kickBase = 0, turned = false;
+    const out = (s: Stroke) => {
+      if (w.strum) w.strum(s);
+      else for (const n of s.notes) w.tone(n.freq, n.delay, 0.4, "triangle", 0.05 * n.vel);
     };
+    /** Join in with the dog if it is near: a hop on each lap's end, a woof when the song comes home. */
+    const dogJoins = (cue: "happy" | "bark") => {
+      const dog = w.fx.nearby(x - PLAY_STAND, 20).find((p) => p.type === "dog");
+      if (!dog || Math.abs(dog.base.px - (x - PLAY_STAND)) > DOG_EARS) return;
+      w.fx.cue(dog, cue);
+      if (cue === "bark") { w.tone(300, 0.05, 0.09, "sawtooth", 0.05, 180); w.tone(260, 0.22, 0.1, "sawtooth", 0.05, 160); }
+    };
+    /** Everything a stroke does: the sound, a note floating up, the arm's swing, the guitar's kick. */
+    const play = (s: Stroke, closing = false) => {
+      out(s);
+      if (hearts.length < 28) {
+        const i = Math.max(0, s.index);
+        floater("note", new THREE.Vector3(x - PLAY_STAND + 0.85 + (i % 4) * 0.12 + (s.dir === "up" ? 0.18 : 0), (s.dir === "up" ? 2.45 : 2.25) + (i % 3) * 0.08, z + 0.5), s.dir === "up" ? 0.34 : 0.45 + (s.accent ? 0.06 : 0));
+      }
+      sweep?.stroke(s.dir);
+      kick = 1;
+      if (closing) dogJoins("bark"); else if (s.lapEnd) dogJoins("happy");
+    };
+    const riff = autoRiff().map((r) => ({ at: r.at, fn: () => { if (!session.taken) play(makeStroke(-1, r.chord, r.dir, { accent: r.accent, rng: Math.random })); } }));
+    const visit: Visit = {
+      standX, face: 1, seconds: PLAY_S,
+      begin: () => {
+        if (inst) w.fx.setVisible(inst, false);
+        const arm = armChoice(w);
+        if (arm) {
+          sweep = createArmSweep(arm.spec);
+          armTime = sweep.time();
+          if (w.guitarArm!.start(arm.clip, () => armTime)) drive = w.guitarArm!; else sweep = null;
+        }
+        const front = !!drive && arm!.clip === GUITAR_CLIP;                                  // the Mixamo clip is a guitarist facing the camera; the hand-authored one plays in profile
+        w.hold(front ? "guitarFront" : "guitar");
+        if (front) { w.faceCamera?.(true); turned = true; }
+        if (!drive) w.clip("strum");
+        kickBase = (w.heldMesh?.()?.scale.x) ?? 0;
+        w.found?.("guitar");
+        w.primeStrings?.();
+        playing = {
+          tap: () => {
+            const s = session.tap(now);
+            if (!s) return;
+            visit.seconds = session.endAt;
+            play(s);
+          },
+        };
+      },
+      tick: (t) => {
+        const dt = Math.max(0, t - now);
+        now = t;
+        if (sweep) armTime = sweep.update(dt);
+        if (kick > 0) {
+          kick = Math.max(0, kick - dt / STRUM_KICK_S);
+          const m = w.heldMesh?.();
+          if (m && kickBase > 0) m.scale.setScalar(kickBase * (1 + STRUM_KICK * kick * kick));
+        }
+        const closing = session.resolveDue(t);
+        if (closing) play(closing, true);
+      },
+      cues: riff,
+      end: () => {
+        playing = null;
+        if (turned) w.faceCamera?.(false);
+        const m = w.heldMesh?.();
+        if (m && kickBase > 0) m.scale.setScalar(kickBase);
+        const release = () => w.release();
+        const restore = () => { if (inst) w.fx.setVisible(inst, true); };               // the guitar is back on its stand, even if it was cut short
+        if (drive) {                                                                    // his hands come down over STRUM_LINGER_S: the guitar stays in them until they have
+          drive.stop();
+          linger = { left: STRUM_LINGER_S, release, restore };
+        } else { release(); restore(); }
+      },
+    };
+    return visit;
   }
 
   function blowVisit(inst: PropInst): Visit { return wandVisit(inst.base.px - BLOW_STAND); }
@@ -384,9 +484,14 @@ export function createActs(w: ActsWorld) {
     /** Start a visit that is not a tap on a prop (the Clean button): false (and nothing happens) if one is already under way or an act is not allowed now. */
     run(visit: Visit): boolean { return w.allowed() && w.eater() === "character" ? visitor.start(visit) : false; },
     /** Call first in the world's pointerdown: true means a tap during the action, which must NOT also walk the toy or tap a prop. A tap while the toy is still walking over drops the visit and returns false. */
-    consume(): boolean { return visitor.busy ? visitor.tapElsewhere() : false; },
+    consume(): boolean {
+      if (!visitor.busy) return false;
+      if (visitor.phase === "acting" && playing) { playing.tap(); return true; }           // playing the guitar: a tap anywhere on the stage is a stroke
+      return visitor.tapElsewhere();
+    },
     update(dt: number): void {
       visitor.update(dt);
+      if (linger) { linger.left -= dt; if (linger.left <= 0) settleLinger(visitor.phase === "acting"); }
       things.update(dt);
       if (following && !visitor.busy) {
         const f = following;
@@ -408,7 +513,7 @@ export function createActs(w: ActsWorld) {
       }
     },
     /** A world change or a new toy: drop whatever is happening (an action in progress is put right) and remove the hearts. */
-    reset(): void { visitor.cancel(); clearHearts(); things.reset(); following = null; },
+    reset(): void { visitor.cancel(); settleLinger(); playing = null; clearHearts(); things.reset(); following = null; },
   };
 }
 

@@ -1,7 +1,7 @@
 // The ball throw (Dan, 2026-11-04: Mixamo "pickup and Throw Object"): Kip walks to the small ball in the Toy Room, bends, picks it up, straightens, winds up and throws it overarm, and the dog fetches it
 // (src/features/game/world/runtime/playthings.ts `throwVisit`, smallBall.ts, ballKick.ts, propReactions.ts `kickBall`). The big ball is nearly as wide as Kip's chest, so it stays a kicked ball; this is a
 // hand-sized one. The rules are functions of the visit so each can be run on a version that is wrong on purpose and must fail.
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import * as THREE from "three";
 import { describe, expect, it } from "vitest";
@@ -17,8 +17,9 @@ import type { PropInst } from "../src/features/game/world/runtime/propReactions"
 import type { Visit } from "../src/features/game/world/runtime/visitRoutine";
 
 const root = join(__dirname, "..");
+const HAVE_BAKED = existsSync(join(root, "public/kip/mixamo/baked/index.json"));
 const read = (rel: string) => readFileSync(join(root, rel), "utf8");
-const clipFile = JSON.parse(read("public/kip/mixamo/baked/act_pickthrow.json"));
+const clipFile = HAVE_BAKED ? JSON.parse(read("public/kip/mixamo/baked/act_pickthrow.json")) : null;
 
 // ---- the ball's physics -------------------------------------------------------------------------------------------------------
 
@@ -185,7 +186,7 @@ function failures(mod?: Mod): string[] {
   return [...bad];
 }
 
-describe("the throw visit", () => {
+describe.skipIf(!HAVE_BAKED)("the throw visit", () => {
   const v = scenario().visit;
   it("stands Kip a hand's reach from the ball so his fist is on it at the bottom of the bend, facing the way it will go, and lasts as long as the clip", () => {
     expect(v.standX).toBeCloseTo(29.6 - THROW_STAND, 9);
@@ -269,7 +270,7 @@ describe("the throw visit", () => {
 
 // ---- the places it plugs into -------------------------------------------------------------------------------------------------------
 
-describe("what plugs the throw into the game", () => {
+describe.skipIf(!HAVE_BAKED)("what plugs the throw into the game", () => {
   it("a tap on the small ball starts the throw; the Toy Room has one, near the teddy and clear of the toy box; the catalog names it", () => {
     expect(ACT_FOR_PROP.smallball).toBe("throw");
     const cat = read("src/features/game/world/runtime/catalog.ts");

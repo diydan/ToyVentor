@@ -91,3 +91,6 @@ public/kip/mockup-images/
 public/kip/partspec/mockup/
 # Generated Kip rig (refresh: python3 parts/kip/sync_kip_rig.py --check).
 # Tracked since the committed Truck-Mockup page imports it.
+# Mixamo-derived joint data (Adobe terms bar redistributing the raw files):
+# bake locally, never commit. See public/kip/mixamo/baked/README.md.
+public/kip/mixamo/baked/*.json

@@ -8,8 +8,9 @@ Progress is modular (Snap-> Motion-> Pro) and digital and physical, a system ali
 Build during Meta Global AI Developer Hackathon (indie track), November 2026; open source under Apache-2.0.
 
 > **Demo posture.** This build is meant to be operated by an adult and is not for
-> children's use. Making a part from words runs on our own self-hosted,
-> fine-tuned Muse Glimmer by default. Photo scan and outline, generated art and
+> children's use. Making a part from words runs on our own self-hosted Muse
+> Glimmer by default (a fine-tuned copy first, our untuned base for repairs and
+> vehicle parts). Photo scan and outline, generated art and
 > skins, voice input, songs and some text features still call Meta's hosted Model
 > API, whose terms are for adults 18+ only ([decision 0008](docs/decisions/0008-meta-models-and-under-18-users.md),
 > option B, for the demo window only). Child-facing production moves those to our

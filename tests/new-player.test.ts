@@ -47,8 +47,8 @@ describe("the closed lists", () => {
 
 describe("who needs a grown-up", () => {
   it("under 13 goes through the grown-up check and names the parent; 13 and over skips only the check", () => {
-    expect(stepsFor(true)).toEqual(["who", "grownup", "names", "favourites", "dress", "song", "build", "intro"]);
-    expect(stepsFor(false)).toEqual(["who", "names", "favourites", "dress", "song", "build", "intro"]);
+    expect(stepsFor(true)).toEqual(["who", "grownup", "names", "favourites", "build", "dress", "song", "intro"]);
+    expect(stepsFor(false)).toEqual(["who", "names", "favourites", "build", "dress", "song", "intro"]);
   });
   it("the grown-up question is a small multiplication with the right answer, and survives a bad random draw", () => {
     for (const r of [0, 0.5, 0.999999, Number.NaN, 7, -3]) { const q = grownUpQuestion(() => r); expect(q.answer).toBe(q.a * q.b); expect(q.a).toBeGreaterThanOrEqual(6); expect(q.a).toBeLessThanOrEqual(9); }

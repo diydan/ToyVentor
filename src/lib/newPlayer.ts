@@ -87,10 +87,13 @@ export function cleanName(raw: unknown): NameResult {
 export const ADULT_AGE = 13;
 export const needsGrownUp = (under13: boolean): boolean => under13;
 
-export type StepId = "who" | "grownup" | "names" | "favourites" | "dress" | "song" | "build" | "intro";
-/** The screens in order. A player 13 or over skips only the grown-up check. The song's yes comes BEFORE the build so the grown-up answers it while still holding the device; the song itself is only asked for when the intro begins, so the wait is the tour. */
+export type StepId = "who" | "grownup" | "names" | "favourites" | "build" | "dress" | "song" | "intro";
+/**
+ * The screens in order. A player 13 or over skips only the grown-up check. Kip is BUILT first (a pile of bricks that flies onto a turntable), then the child spins the table and DRESSES him there (Dan,
+ * 2026-11-05), then the song's yes, which is asked for last so the song can carry what he wears; the intro starts with three cards about the Toy Room Kip has landed in, then the tour while the song is made.
+ */
 export function stepsFor(under13: boolean): readonly StepId[] {
-  return under13 ? ["who", "grownup", "names", "favourites", "dress", "song", "build", "intro"] : ["who", "names", "favourites", "dress", "song", "build", "intro"];
+  return under13 ? ["who", "grownup", "names", "favourites", "build", "dress", "song", "intro"] : ["who", "names", "favourites", "build", "dress", "song", "intro"];
 }
 
 /** The grown-up check: one small multiplication, drawn fresh. It is an age screen and nothing more (the COPPA spec: a math question is not consent; the consent is the button on the song screen). */

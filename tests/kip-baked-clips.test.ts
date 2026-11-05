@@ -22,6 +22,7 @@ const { KIP_CLIPS, LEG_RIG, REST_LEGS } = clipsMod as any;
 const root = join(__dirname, "..");
 const read = (rel: string) => readFileSync(join(root, rel), "utf8");
 const bakedDir = join(root, "public/kip/mixamo/baked");
+const HAVE_BAKED = existsSync(join(bakedDir, "index.json"));
 
 // ---- fixtures ---------------------------------------------------------------------------------------------------------------------------
 
@@ -186,9 +187,9 @@ describe("baked clips: the JSON that ships", () => {
 
 // ---- the clips that actually ship -----------------------------------------------------------------------------------------------------
 
-describe("baked clips: the shipped data (public/kip/mixamo/baked)", () => {
-  const index = JSON.parse(read("public/kip/mixamo/baked/index.json"));
-  const files = readdirSync(bakedDir).filter((f) => f.endsWith(".json") && f !== "index.json");
+describe.skipIf(!HAVE_BAKED)("baked clips: the shipped data (public/kip/mixamo/baked)", () => {
+  const index = HAVE_BAKED ? JSON.parse(read("public/kip/mixamo/baked/index.json")) : { v: 1, clips: [] };
+  const files = HAVE_BAKED ? readdirSync(bakedDir).filter((f) => f.endsWith(".json") && f !== "index.json") : [];
   const baked = new Map<string, any>(files.map((f) => [f.replace(/\.json$/, ""), JSON.parse(read(`public/kip/mixamo/baked/${f}`))]));
   const GROUPS = ["dance", "move", "music", "react", "act"];
   // The locomotion set is baked from its own config (scripts/mixamo-loco-clips.json) and is loaded by PATH, not through the index: it is the game's own idle, walk and run

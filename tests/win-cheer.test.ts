@@ -1,7 +1,7 @@
 // The win cheer (src/features/game/world/runtime/winCheer.ts; Dan, 2026-11-04: "then start 2": the baked Mixamo cheer and fist pump in place of the hand-built cheer; then his "Cheering 2 hands" and "Victory"). Every win moment asks the
 // driver for the action `cheer`; this makes that the real performance, taking turns between four, at about the length the win moments reserve. The rules are functions of an implementation so each can
 // be run on a version that is wrong on purpose and must fail.
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { createGestureLibrary } from "../src/features/game/world/runtime/idleBehavior";
@@ -12,6 +12,7 @@ import { jointClipToGame, parseJointClip } from "../src/features/game/world/runt
 import type { BakedClip } from "../src/features/game/world/runtime/mixamo";
 
 const root = join(__dirname, "..");
+const HAVE_BAKED = existsSync(join(root, "public/kip/mixamo/baked/index.json"));
 const baked = (id: string) => readFileSync(join(root, "public/kip/mixamo/baked", `${id}.json`), "utf8");
 const seeded = (seed: number) => () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
 const fetchOf = (overrides: Record<string, string | number> = {}): typeof fetch => (async (url: string) => {
@@ -22,7 +23,7 @@ const fetchOf = (overrides: Record<string, string | number> = {}): typeof fetch 
 }) as unknown as typeof fetch;
 const realClip = (id: string): BakedClip => jointClipToGame(parseJointClip(JSON.parse(baked(id)))!, id, { joints: true });
 
-describe("the clip a win plays", () => {
+describe.skipIf(!HAVE_BAKED)("the clip a win plays", () => {
   it("is the baked clip under the name the game asks for, one-shot, at the length the win moments reserve, with its joint data", () => {
     for (const id of CHEER_FILES) {
       const src = realClip(id);
@@ -109,7 +110,7 @@ describe("which cheer comes next", () => {
   });
 });
 
-describe("the cheers in the driver's bank", () => {
+describe.skipIf(!HAVE_BAKED)("the cheers in the driver's bank", () => {
   function make(over: Record<string, string | number> = {}, rng: () => number = seeded(5)) {
     const bank: Record<string, BakedClip> = {};
     let adds = 0;

@@ -1,6 +1,6 @@
 // The sad, sneak and kick actions played from real Mixamo clips (src/features/game/world/runtime/gameActions.ts; Dan, 2026-11-04: "copy and implement" the clips he downloaded). Each keeps its action name,
 // so every caller is unchanged; the kick is retimed to the toy room's act. The rules are functions of an implementation so each can be run on a version that is wrong on purpose and must fail.
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ACTION_FILES, KICK_PLAY_S, actionClip, createActions, type BakedAction } from "../src/features/game/world/runtime/gameActions";
@@ -10,6 +10,7 @@ import { jointClipToGame, parseJointClip } from "../src/features/game/world/runt
 import type { BakedClip } from "../src/features/game/world/runtime/mixamo";
 
 const root = join(__dirname, "..");
+const HAVE_BAKED = existsSync(join(root, "public/kip/mixamo/baked/index.json"));
 const baked = (id: string) => readFileSync(join(root, "public/kip/mixamo/baked", `${id}.json`), "utf8");
 const realClip = (id: string): BakedClip => jointClipToGame(parseJointClip(JSON.parse(baked(id)))!, id, { joints: true });
 const fetchOf = (overrides: Record<string, string | number> = {}): typeof fetch => (async (url: string) => {
@@ -20,7 +21,7 @@ const fetchOf = (overrides: Record<string, string | number> = {}): typeof fetch 
 }) as unknown as typeof fetch;
 const ACTIONS = Object.keys(ACTION_FILES) as BakedAction[];
 
-describe("the clip an action plays", () => {
+describe.skipIf(!HAVE_BAKED)("the clip an action plays", () => {
   /** The rules, as a function of the converter, so a broken one can be run through them. Returns what is wrong. */
   function failures(make: (name: BakedAction, clip: BakedClip) => BakedClip): string[] {
     const bad = new Set<string>();
@@ -64,7 +65,7 @@ describe("the clip an action plays", () => {
   });
 });
 
-describe("the actions in the driver's bank", () => {
+describe.skipIf(!HAVE_BAKED)("the actions in the driver's bank", () => {
   function make(over: Record<string, string | number> = {}) {
     const bank: Record<string, BakedClip> = {};
     const names: string[][] = [];

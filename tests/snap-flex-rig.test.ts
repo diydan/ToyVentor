@@ -177,6 +177,7 @@ describe("the driver on a Snap rig", () => {
     const lean = jointClip("lean", { planted: false }); // not planted: the grounder would move the hips to put the soles on the floor, and this is about the pivot alone
     lean.body = track(4, (() => { const q = Q(1, 0, 0, 25); return [q.x, q.y, q.z, q.w]; })()); // the whole body leans 25 degrees
     const d = driver({ lean });
+    d.contactLock = false; // this is about the pivot alone: the contact lock (an unplanted clip's soles are pinned where they land: runtime/mixamo.ts lockFeet) is a separate layer on top, tested in mixamo-contact-lock.test.ts
     const hipAt = (r: ReturnType<typeof makeRig>) => { r.world.updateMatrixWorld(true); return (r.rig as unknown as { feet: THREE.Object3D[] }).feet.map((f) => f.userData.hip.getWorldPosition(new THREE.Vector3())); };
     const rest = hipAt({ rig, world } as never);
     d.trigger("lean" as never);

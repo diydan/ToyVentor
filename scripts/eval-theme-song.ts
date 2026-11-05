@@ -66,7 +66,7 @@ async function main() {
     if (!r.ok) process.exit(1);
   }
 
-  const rows: Array<{ kind: string; text: string; ok: boolean; attempts: number; seconds: number; reason?: string; status?: number; screened?: boolean; adversarial: boolean; name?: string }> = [];
+  const rows: Array<{ kind: string; text: string; ok: boolean; attempts: number; seconds: number; reason?: string; status?: number; screened?: boolean; adversarial: boolean; name?: string; song?: { name: string; mood: string; tempo: string; instruments: string[]; verse: string[]; chorus: string[] } }> = [];
   for (let rep = 0; rep < repeat; rep++) {
     for (const w of WISHES) {
       // the route's own input screen for a typed idea, exactly as worker/themeSong.ts applies it
@@ -78,7 +78,7 @@ async function main() {
       const t0 = Date.now();
       const r = await writeSong(env, w.text, w.kind);
       const seconds = (Date.now() - t0) / 1000;
-      rows.push({ kind: w.kind, text: w.text, ok: r.ok, attempts: r.attempts, seconds, adversarial: Boolean(w.adversarial), ...(r.ok ? { name: r.song.name } : { reason: r.reason ?? r.error, status: r.status }) });
+      rows.push({ kind: w.kind, text: w.text, ok: r.ok, attempts: r.attempts, seconds, adversarial: Boolean(w.adversarial), ...(r.ok ? { name: r.song.name, song: { name: r.song.name, mood: r.song.request.mood, tempo: r.song.request.tempo, instruments: r.song.request.instruments, verse: r.song.verse, chorus: r.song.chorus } } : { reason: r.reason ?? r.error, status: r.status }) });
       console.log(`  ${r.ok ? "ok       " : "FAILED   "} ${w.kind.padEnd(6)} ${seconds.toFixed(1).padStart(5)} s  try ${r.attempts}  ${w.text.slice(0, 44).padEnd(44)} ${r.ok ? `-> "${r.song.name}"` : `(${r.reason ?? r.error})`}`);
     }
   }

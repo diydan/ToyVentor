@@ -13,7 +13,7 @@ import { buildSmallBallMesh } from "./smallBall";
 import { TOOL_GRIP, buildDrillMesh, buildHammerMesh, buildScrewdriverMesh, buildSpannerMesh } from "./toolMeshes";
 import type * as THREE from "three";
 
-export type HeldItem = "book" | "guitar" | "wand" | "mallets" | "mop" | "vacuum" | "sponge" | "spatula" | "can" | "carrot" | "bouquet" | "sandwich" | "smallball" | "screwdriver" | "spanner" | "hammer" | "drill";
+export type HeldItem = "book" | "guitar" | "guitarFront" | "wand" | "mallets" | "mop" | "vacuum" | "sponge" | "spatula" | "can" | "carrot" | "bouquet" | "sandwich" | "smallball" | "screwdriver" | "spanner" | "hammer" | "drill";
 
 /** A small hardback book: a coloured cover, cream pages and a spine, flat, about 0.7 by 0.5. */
 export function buildBookMesh(): THREE.Group {
@@ -37,7 +37,7 @@ export interface HeldSpec {
    * Tools and the book stay in the body's frame, so how they are tilted does not depend on how the arms are bent, but are moved every frame (`follow`) so that this point of them, in their
    * own frame, is in the fist (or midway between the fists, `both`): the handle always passes through the hands, whatever the clip does with the arms.
    */
-  hands?: { grip: readonly [number, number, number]; both?: boolean };
+  hands?: { grip: readonly [number, number, number]; both?: boolean; /** Which fist the grip point goes in when it is one fist: the right (default) or the left (the guitar's neck). */ hand?: "left" | "right"; /** Keep the item at this depth in the body's frame instead of following the fist's (the guitar stays on Kip's centre line, the fist a little behind its neck, as seen from the camera). */ z?: number };
   /** For an item held in a fist: the point of the item (in its own frame) that goes in the fist, in place of its origin: the can's handle, say. `position` then moves the item from there. */
   at?: readonly [number, number, number];
 }
@@ -55,11 +55,28 @@ export const ARM_FIST: readonly [number, number, number] = [0.125, -0.845, 0];
  * -y (the wand's half turn puts its ring end down the arm), so up is +y here.
  */
 export const TOOL_TURN = -Math.PI / 2 + 0.35;
+/**
+ * The guitar as a guitarist holds it when he faces the camera (the Mixamo "Guitar Playing" clip is authored that way: the neck across his body to his left, the strumming hand over the body): its neck
+ * along his -z (his left, the screen's right), tipped up a little (`FRONT_TILT`), its face to his front (+x). The basis is built from those two axes and turned into the Euler the spec wants.
+ */
+export const FRONT_TILT = 0.3;
+/** ... and turned about the vertical a little (the neck points slightly forward, the face towards the camera), as the clip's two hands are: the left is a little ahead of the right. */
+export const FRONT_YAW = 0.3;
+const FRONT_EULER = ((): [number, number, number] => {
+  const s = Math.sin(FRONT_TILT), c = Math.cos(FRONT_TILT), up = new T.Vector3(0, 1, 0);
+  const cols = [new T.Vector3(0, -c, -s), new T.Vector3(0, s, -c), new T.Vector3(1, 0, 0)].map((v) => v.applyAxisAngle(up, -FRONT_YAW));
+  const e = new T.Euler().setFromRotationMatrix(new T.Matrix4().makeBasis(cols[0]!, cols[1]!, cols[2]!));
+  return [e.x, e.y, e.z];
+})();
+
 export const HELD: Readonly<Record<HeldItem, HeldSpec>> = {
   // Held open between the two hands, tilted up a little so the reader and the camera can see the cover (the hands are 0.8 apart: the book is that wide).
   book: { parent: "model", position: [0.55, 1.2, 0], rotation: [0, 0, 0.55], scale: 1.45, build: buildBookMesh, hands: { grip: [0, 0.035, 0], both: true } },
-  // Across the body with the neck pointing forward and up (+x is forward), the body at the hip.
-  guitar: { parent: "model", position: [0.3, 1.0, 0.28], rotation: [0, 0, -1.15], scale: HELD_GUITAR_SCALE, build: buildGuitarMesh },
+  // Across the chest, the neck to Kip's left, for a Kip who faces the camera (the Mixamo guitar clip): the neck through the left fist all the same.
+  guitarFront: { parent: "model", position: [0.45, 1.0, 0], rotation: FRONT_EULER, scale: HELD_GUITAR_SCALE, build: buildGuitarMesh, hands: { grip: [0, 0.8, 0.09], hand: "left" } },
+  // Across the body with the neck pointing forward and up (+x is forward), the body at the hip, and the neck always through the LEFT fist (the fretting hand): it is moved every frame so a point on the neck is
+  // in the fist, whatever the clip does with the arm (Dan, 2026-11-05: the old fixed place left the hand floating above the neck).
+  guitar: { parent: "model", position: [0.3, 1.0, 0.28], rotation: [0, 0, -1.15], scale: HELD_GUITAR_SCALE, build: buildGuitarMesh, hands: { grip: [0, 0.95, 0.09], hand: "left", z: 0.12 } },
   // In the right fist, the ring end continuing the line of the arm (the arm points along its own -y).
   wand: { parent: "armR", position: [0, 0, 0], rotation: [0, 0, Math.PI], scale: 1, build: buildWandMesh },
   // A mallet in each fist, the stick continuing the line of the arm and the head at its far end.
@@ -140,7 +157,8 @@ export function placeHeldMesh(mesh: THREE.Object3D, spec: HeldSpec, parent: THRE
 /** A tool or the book (a spec with `hands`) hung from `model`: move it so its grip point is in the fist, or midway between the fists, keeping its tilt. True when it did. */
 export function followHandsMesh(mesh: THREE.Object3D, spec: HeldSpec, model: THREE.Object3D | null | undefined, grips: ReadonlyArray<THREE.Object3D | null | undefined> | null | undefined): boolean {
   if (!spec.hands || !model || !grips || mesh.parent !== model) return false;
-  const right = grips[1], left = grips[0];
+  const left = grips[0];
+  const right = spec.hands.hand === "left" ? left : grips[1];
   if (!right) return false;
   model.updateWorldMatrix(true, false);
   right.updateWorldMatrix(true, false);
@@ -149,6 +167,7 @@ export function followHandsMesh(mesh: THREE.Object3D, spec: HeldSpec, model: THR
   model.worldToLocal(_target);
   _grip.set(...spec.hands.grip).multiplyScalar(spec.scale).applyEuler(mesh.rotation);   // where the grip point is from the item's origin, in the body's frame
   mesh.position.copy(_target).sub(_grip);
+  if (spec.hands.z !== undefined) mesh.position.z = spec.hands.z;
   return true;
 }
 

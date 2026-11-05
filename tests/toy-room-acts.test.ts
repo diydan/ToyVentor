@@ -4,11 +4,12 @@ import path from "node:path";
 import * as THREE from "three";
 import { describe, expect, it, vi } from "vitest";
 import { BALL_BOUNDS } from "../src/features/game/world/runtime/ballKick";
-import { BLOW_PUFFS_S, HUG_SQUEEZE_S, KICK_CONTACT_S, MALLET_COUNT, MALLET_EVERY_S, MALLET_START_S, PET_STROKES_S, READ_PAGES_S, STRUM_COUNT, STRUM_EVERY_S } from "../src/features/game/world/runtime/proceduralClips";
+import { BLOW_PUFFS_S, HUG_SQUEEZE_S, KICK_CONTACT_S, MALLET_COUNT, MALLET_EVERY_S, MALLET_START_S, PET_STROKES_S, READ_PAGES_S } from "../src/features/game/world/runtime/proceduralClips";
+import { AUTO_START_S, autoRiff, makeStroke } from "../src/features/game/world/runtime/guitarPlay";
 import type { PropInst } from "../src/features/game/world/runtime/propReactions";
 import { BAR_COUNT } from "../src/features/game/world/runtime/xylophone";
 import {
-  ACT_FOR_PROP, MALLET_S, MALLET_STAND, TUNE, BLOW_S, BLOW_STAND, BUBBLES_PER_PUFF, CUSHION_TOP, HEART_RISE, HEART_RISE_S, HUG_S, HUG_SECOND_SQUEEZE_S, HUG_STAND, JUMP_BOUNCES, JUMP_DOWN_S, JUMP_STAND, JUMP_UP_S, FOLLOW_STAND, PET_CUE_S, PET_S, PET_STAND, PLAY_S, PLAY_STAND, READ_NAMES, READ_S, READ_STAND, RIFF, KICK_ROOM, KICK_S, KICK_STAND, KICK_VX, KICK_VY,
+  ACT_FOR_PROP, MALLET_S, MALLET_STAND, TUNE, BLOW_S, BLOW_STAND, BUBBLES_PER_PUFF, CUSHION_TOP, HEART_RISE, HEART_RISE_S, HUG_S, HUG_SECOND_SQUEEZE_S, HUG_STAND, JUMP_BOUNCES, JUMP_DOWN_S, JUMP_STAND, JUMP_UP_S, FOLLOW_STAND, PET_CUE_S, PET_S, PET_STAND, PLAY_S, PLAY_STAND, READ_NAMES, READ_S, READ_STAND, KICK_ROOM, KICK_S, KICK_STAND, KICK_VX, KICK_VY,
   createActs, jumpPath, type JumpPlan,
 } from "../src/features/game/world/runtime/toyRoomActs";
 import type { VisitPhase } from "../src/features/game/world/runtime/visitRoutine";
@@ -307,7 +308,7 @@ describe("playing the guitar", () => {
     expect(g.visibility).toEqual([[guitar, false], [guitar, true]]);
   });
 
-  it("plays a chord on every downstroke and one bright note on every upstroke, to the tune, one strum after another", () => {
+  it("opens with a riff (two bars, C then G): each stroke is its strings one after another, a chord on a down stroke and the top strings on an up stroke", () => {
     const g = game();
     g.acts.tap(guitar);
     g.arriveAt(18 - PLAY_STAND);
@@ -315,26 +316,22 @@ describe("playing the guitar", () => {
     expect(g.tones).toEqual([]);                                             // nothing before the first strum
     g.run(PLAY_S + 0.2);
     const expected: number[] = [];
-    for (let i = 0; i < STRUM_COUNT; i++) {
-      const f = RIFF[i]!;
-      if (i % 2 === 0) expected.push(f, f * 1.25, f * 1.5); else expected.push(f * 2);
-    }
+    for (const r of autoRiff()) for (const n of makeStroke(-1, r.chord, r.dir).notes) expected.push(n.freq);
     expect(g.tones).toEqual(expected);
-    expect(g.tones.length).toBe(Math.ceil(STRUM_COUNT / 2) * 3 + Math.floor(STRUM_COUNT / 2));
+    expect(autoRiff()).toHaveLength(12);
   });
 
-  it("the first strum comes after the hand has settled (about 0.5 s), then one every STRUM_EVERY_S", () => {
+  it("the first strum comes after the hand has settled (about 0.5 s), then they follow the riff's own times", () => {
     const g = game();
     g.acts.tap(guitar);
     g.arriveAt(18 - PLAY_STAND);
     g.run(0.3);
     expect(g.tones).toHaveLength(0);
-    g.run(0.25);
-    expect(g.tones).toHaveLength(3);
-    g.run(STRUM_EVERY_S);
-    expect(g.tones).toHaveLength(4);
-    g.run(STRUM_EVERY_S);
-    expect(g.tones).toHaveLength(7);
+    g.run(AUTO_START_S - 0.3 + 0.05);
+    expect(g.tones).toHaveLength(5);                                         // the C chord's five strings
+    const r = autoRiff();
+    g.run(r[1]!.at - AUTO_START_S);
+    expect(g.tones).toHaveLength(10);
   });
 
   it("music notes float up from the guitar as it plays and are gone afterwards", () => {
@@ -782,7 +779,7 @@ describe("wiring in world.ts", () => {
     expect(world).toContain("bubbles:BUBBLES,held:HELD,fetch:DOGF,");
   });
   it("Kip can hold a book, the guitar, the wand and a pair of mallets: the right arm is arms[1], the left arms[0] and the mouth is found from Kip's own box", () => {
-    expect(world).toContain("hold:function(i: \"book\"|\"guitar\"|\"wand\"|\"mallets\"|\"can\"|\"carrot\"|\"bouquet\"|\"sandwich\"|\"smallball\"){HELD.hold(i,P.model,handOf(1),handOf(0))}");
+    expect(world).toContain("hold:function(i: \"book\"|\"guitar\"|\"guitarFront\"|\"wand\"|\"mallets\"|\"can\"|\"carrot\"|\"bouquet\"|\"sandwich\"|\"smallball\"){HELD.hold(i,P.model,handOf(1),handOf(0))}");
     expect(world).toContain("release:function(){HELD.release()}");
     expect(world).toContain("bubbles:BUBBLES,");
     expect(world).toMatch(/mouth:function\(d: number\)\{var b=new T\.Box3\(\)\.setFromObject\(P\.root\)/);

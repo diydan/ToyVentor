@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
@@ -13,6 +13,7 @@ import { buildToy } from "../src/features/game/world/runtime/playerRig";
 
 const ROOT = process.cwd();
 const BAKED = join(ROOT, "public/kip/mixamo/baked");
+const HAVE_BAKED = existsSync(join(BAKED, "index.json"));
 const read = (id: string) => JSON.parse(readFileSync(join(BAKED, `${id}.json`), "utf8")) as Record<string, any>;
 
 describe("the rig numbers are the bench's", () => {
@@ -125,7 +126,7 @@ describe("a file that is not exactly what the bake wrote is refused", () => {
   });
 });
 
-describe("the real baked dances", () => {
+describe.skipIf(!HAVE_BAKED)("the real baked dances", () => {
   const ids = ["dance_silly", "dance_hiphop", "dance_swing"];
   for (const id of ids) {
     it(`${id}: parses, converts, and every channel is a sane number`, () => {
@@ -185,7 +186,7 @@ describe("where a dance's weight lands (beatHit)", () => {
     expect(beatHit({ hips: new Float32Array(9), frames: 3, duration: 1 }, 4).lows).toBe(0);
     expect(beatHit(synthetic(0.2), 0).offset).toBe(0);
   });
-  it("on the real dances: Hip Hop and Silly keep a steady beat in their hips, and Swing does not (so it is not shifted)", () => {
+  it.skipIf(!HAVE_BAKED)("on the real dances: Hip Hop and Silly keep a steady beat in their hips, and Swing does not (so it is not shifted)", () => {
     const hit = (id: string) => { const r = read(id); return beatHit(jointClipToGame(parseJointClip(r)!, id), r.beats); };
     expect(hit("dance_hiphop")).toMatchObject({ lows: 8 });
     expect(hit("dance_hiphop").consistency).toBeGreaterThan(0.95);
@@ -198,7 +199,7 @@ describe("where a dance's weight lands (beatHit)", () => {
 });
 
 describe("the index of dances", () => {
-  it("offers exactly the dances with a counted tempo, in the file's order, and never the Samba's own id", () => {
+  it.skipIf(!HAVE_BAKED)("offers exactly the dances with a counted tempo, in the file's order, and never the Samba's own id", () => {
     const list = parseDanceIndex(JSON.parse(readFileSync(join(BAKED, "index.json"), "utf8")));
     expect(list.map((d) => d.id)).toEqual(["dance_silly", "dance_hiphop", "dance_swing", "dance_samba"]); // dance_samba: the sample Samba baked as a planted joint clip (2026-11-05), not the hand-built `dance`
     expect(list.map((d) => [d.bpm, d.beats])).toEqual([[125.22, 8], [101.41, 8], [137.8, 48], [110.77, 8]]);
@@ -224,11 +225,15 @@ describe("the dance library", () => {
     log.push(url);
     const name = url.split("/").pop()!;
     if (name in over) { const v = over[name]; return v === null ? new Response("nope", { status: 404 }) : new Response(v, { status: 200 }); }
-    return new Response(readFileSync(join(BAKED, name)), { status: 200 });
+    try {
+      return new Response(readFileSync(join(BAKED, name)), { status: 200 });
+    } catch {
+      return new Response("nope", { status: 404 });
+    }
   }) as unknown as typeof fetch;
   const lib = (over: Record<string, string | null> = {}) => { const bank: Record<string, BakedClip> = {}; const log: string[] = []; return { bank, log, lib: createDanceLibrary({ fetchImpl: fileFetch(over, log), addClips: (c) => Object.assign(bank, c) }) }; };
 
-  it("starts with the Samba alone, reads the index once, and then knows the other four", async () => {
+  it.skipIf(!HAVE_BAKED)("starts with the Samba alone, reads the index once, and then knows the other four", async () => {
     const { lib: l, log } = lib();
     expect(l.list().map((d) => d.id)).toEqual(["dance"]);
     await l.prepare(); await l.prepare();
@@ -236,7 +241,7 @@ describe("the dance library", () => {
     expect(log.filter((u) => u.endsWith("index.json"))).toHaveLength(1);
     expect(l.list()[0]).toMatchObject({ ...SAMBA, loaded: true });
   });
-  it("loads a dance on demand: the clip goes into the bank under its id, its weight-landing point is measured, and it is not fetched twice", async () => {
+  it.skipIf(!HAVE_BAKED)("loads a dance on demand: the clip goes into the bank under its id, its weight-landing point is measured, and it is not fetched twice", async () => {
     const { lib: l, bank, log } = lib();
     expect(await l.ensure(["dance_hiphop"])).toEqual(["dance_hiphop"]);
     expect(Object.keys(bank)).toEqual(["dance_hiphop"]);
@@ -245,16 +250,16 @@ describe("the dance library", () => {
     await l.ensure(["dance_hiphop", "dance_hiphop"]);
     expect(log.filter((u) => u.endsWith("dance_hiphop.json"))).toHaveLength(1);
   });
-  it("two parties asking at once share one fetch", async () => {
+  it.skipIf(!HAVE_BAKED)("two parties asking at once share one fetch", async () => {
     const { lib: l, log } = lib();
     await Promise.all([l.ensure(["dance_silly"]), l.ensure(["dance_silly"])]);
     expect(log.filter((u) => u.endsWith("dance_silly.json"))).toHaveLength(1);
   });
-  it("resolves the ids that are playable, in the order asked; the Samba is always there; an unknown id is left out", async () => {
+  it.skipIf(!HAVE_BAKED)("resolves the ids that are playable, in the order asked; the Samba is always there; an unknown id is left out", async () => {
     const { lib: l } = lib();
     expect(await l.ensure(["dance_swing", "dance", "nope", "dance_silly"])).toEqual(["dance_swing", "dance", "dance_silly"]);
   });
-  it("leaves out a dance whose file is missing, is not JSON, is the wrong dance, has another tempo or beat count, or is too big; the others still load", async () => {
+  it.skipIf(!HAVE_BAKED)("leaves out a dance whose file is missing, is not JSON, is the wrong dance, has another tempo or beat count, or is too big; the others still load", async () => {
     const good = JSON.parse(readFileSync(join(BAKED, "dance_silly.json"), "utf8"));
     const cases: Record<string, string | null> = {
       "dance_hiphop.json": null,
@@ -279,7 +284,7 @@ describe("the dance library", () => {
 });
 
 // ---- the driver: a dance from a source that changes clip ----------------------------------------------------------------------------------------------
-describe("the driver switches dances without a jump", () => {
+describe.skipIf(!HAVE_BAKED)("the driver switches dances without a jump", () => {
   let bank: ClipBank;
   beforeAll(async () => {
     const parse = (url: string) => {

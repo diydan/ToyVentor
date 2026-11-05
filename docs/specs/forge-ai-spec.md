@@ -4,8 +4,8 @@
 
 **Updated 2026-11-04.** Text to part (F1) is built and is in the Nov 4 build, on the hosted model. The own-model track is no longer only a stretch: the Meta Model API
 terms bar under-18 users and products aimed at them (`docs/decisions/0008-meta-models-and-under-18-users.md`), so **base Muse Glimmer, self-hosted and prompted, is v1 for
-child-facing use, and the tuned model is v2, after the hackathon.** Prompt workflows stay the fallback throughout. This table is the one place to see where things stand; the detail is
-in the sections it names. **Deployed 2026-11-04 09:54 UTC** (Worker version `02c828d4`; the live `/kip` files are byte-identical to `4edda11`, checked with `scripts/smoke-live.mjs`); what was committed after that is not live.
+child-facing use, and the tuned model is v2: since 2026-11-05 it runs in front of the base for hat and head wishes (one qualified pass, pilot 8), with the base answering repairs and vehicle parts and as the fallback.** Prompt workflows stay the fallback throughout. This table is the one place to see where things stand; the detail is
+in the sections it names. **Deployed 2026-11-05, 02:15 CET, at https://app.toyventor.com** (commit `5424850`, Worker version `37b3129c`, cache v13; first deployed as `b0441e1`, Worker `0c2b5647`, with the `app.` custom domain; the live files are byte-identical to `5424850`, checked with `scripts/smoke-live.mjs`, 19/19); what was committed after that is not live. Make from words on our own models, live since the first of those deploys: 10 wishes through the real flow, 9 tuned, 1 base (vehicle slot), 0 failures, median 15.4 s on `5424850` (19 s on `b0441e1`).
 
 | Item | State | Evidence, and where it is written up |
 | --- | --- | --- |
@@ -753,7 +753,7 @@ Guards. `tests/forge-fast-prompt-pin.test.ts` pins the production prompt to the 
 
 What it is not. Not evidence beyond the evaluation tables: pilot 8 passes the decision rule under the fixed name rule in two 243-wish runs and fails the stored filter-count gate on the blind dev half for a reason that is mostly echo drops (see the journal); the blind test half has not been touched; no native-speaker read; no signed risk assessment; the hosted model's own numbers on these wishes were never measured.
 
-Turning it on (Dan, Worker secrets, BEFORE the deploy: with child as the default, make-from-words answers 503 until our own models are configured). The tuned server is `toyventor-glimmer-tuned-p8`, the standard one `toyventor-glimmer`, both scale to zero (about $1.95 an hour each while warm; `/api/forge/warm` wakes them when a child opens Make): `SELF_FAST_URL`, `SELF_FAST_MODEL=forge-glimmer`, `SELF_FAST_KEY`, `SELF_TEXT_URL`, `SELF_TEXT_MODEL=muse-glimmer-30B`, `SELF_TEXT_KEY`, `SELF_TEXT_API=chat`. Roll back to the hosted fallback with `FORGE_AUDIENCE_DEFAULT=adult`; kill the tuned model with `FORGE_FAST_MODE=off`. Verify with `scripts/tuning/fast-smoke.ts`.
+Turning it on (Dan, Worker secrets, BEFORE the deploy: with child as the default, make-from-words answers 503 until our own models are configured). The tuned server is `toyventor-glimmer-tuned-p8`, the standard one `toyventor-glimmer`, both scale to zero (about $1.95 an hour each while warm; `/api/forge/warm` wakes them when a child opens Make): `SELF_FAST_URL`, `SELF_FAST_MODEL=forge-glimmer`, `SELF_FAST_KEY`, `SELF_TEXT_URL`, `SELF_TEXT_MODEL=muse-glimmer-30B`, `SELF_TEXT_KEY`, `SELF_TEXT_API=chat`. Roll back to the hosted fallback with `FORGE_AUDIENCE_DEFAULT=adult`; kill the tuned model with `FORGE_FAST_MODE=off`. Verify with `scripts/tuning/fast-smoke.ts`. Done 2026-11-05: all of these are set on the live Worker (names checked with `wrangler secret list`), and the smoke through the real flow gave 9 tuned, 1 base, 0 failures, median 19 s.
 
 ### Parent supervision for the features that use another model (Dan, 2026-11-04 night: "use the parent gate for 3 minutes, and 5 minutes for AR"; server half built, all switches OFF)
 

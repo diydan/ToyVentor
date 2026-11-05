@@ -18,9 +18,10 @@ const raw = JSON.parse(readFileSync(join(dir, "index.json"), "utf8"));
 const parsed = parseSongIndex(raw);
 
 /** Every clip with a tempo that the party can be given: the procedural dances and what the Mixamo intake shipped. */
+const HAVE_BAKED = existsSync(join(root, "public/kip/mixamo/baked/index.json"));
 function partyClips(): PartyClip[] {
   const out: PartyClip[] = KIP_CLIPS.filter((c: any) => c.group === "dance" && c.bpm).map((c: any) => ({ id: c.id, bpm: c.bpm, beats: c.beats, group: "dance" }));
-  const baked = JSON.parse(readFileSync(join(root, "public/kip/mixamo/baked/index.json"), "utf8"));
+  const baked = HAVE_BAKED ? JSON.parse(readFileSync(join(root, "public/kip/mixamo/baked/index.json"), "utf8")) : { clips: [] };
   for (const c of baked.clips) if (["dance", "move", "music"].includes(c.group) && c.beats) out.push({ id: c.id, bpm: c.bpm, beats: c.beats, group: c.group });
   return out;
 }

@@ -102,7 +102,7 @@ describe("the wiring", () => {
     expect(world).toContain("FAC.userData.gears[0].rotation.y+=tts.d*GEAR_RATIO[0];FAC.userData.gears[1].rotation.y+=tts.d*GEAR_RATIO[1]");
     expect(world).toContain("else{TT.park();TTS.quiet()}");                                                  // off the title the table is back to its idle turn and quiet
     expect(world).toContain("if(!ttLive()||!FAC||ttGrab||disposed");                                          // only the title and the Build sheet's showcase react to a press on the stage (turntableLive)
-    expect(world).toContain("hostEl.classList.contains(\"building\")})}");                                      // ...and the Build sheet is told apart from the Create screen by the `building` class
+    expect(world).toContain("hostEl.classList.contains(\"building\")})||(ONBV&&!ONBLAND&&!!ONBK)}");                                      // ...and the Build sheet is told apart from the Create screen by the `building` class (the new-player setup's table joins them once Kip is built on it)
     expect(world).toContain("camera.setViewOffset(W0,H0,-buildShiftPx(W0,P.shx),-.04*H0,W0,H0)");            // the showcase camera stands the toy in the free stage beside the left card
   });
 

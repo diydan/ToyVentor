@@ -1,7 +1,7 @@
 // What the game's character does on its own (src/features/game/world/runtime/idleBehavior.ts; Dan, 2026-11-04: "idle waves and random dances if nothing is going on"): what it chooses, how long it
 // plays for, the files it loads (the real baked ones, through a fake fetch), and the controller that starts and stops it. The rules are functions of an implementation so each can be run on a
 // version that is wrong on purpose and must fail. The behaviour in the real game is scripts/e2e-game-idle.mjs.
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
@@ -24,11 +24,12 @@ import {
 import type { BakedClip, BeatSource } from "../src/features/game/world/runtime/mixamo";
 
 const root = join(__dirname, "..");
+const HAVE_BAKED = existsSync(join(root, "public/kip/mixamo/baked/index.json"));
 const baked = (id: string) => readFileSync(join(root, "public/kip/mixamo/baked", `${id}.json`), "utf8");
 const seeded = (seed: number) => () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
 
 /** What is in the bank when everything has loaded: each clip's real length from its file, and the Samba. */
-const ALL = new Map<string, number>([[SAMBA_CLIP, 4.4], ...IDLE_IDS.map((id) => [id, JSON.parse(baked(id)).dur as number] as const)]);
+const ALL = new Map<string, number>([[SAMBA_CLIP, 4.4], ...(HAVE_BAKED ? IDLE_IDS.map((id) => [id, JSON.parse(baked(id)).dur as number] as const) : [])]);
 
 describe("how long a behaviour plays for", () => {
   it("is whole loops of the clip, between the time asked for and the cap, for every clip we ship (a fidget is played once, whole: see below)", () => {
@@ -61,7 +62,7 @@ describe("how long a behaviour plays for", () => {
     for (const nan of [0, -1, NaN, Infinity]) { const s = play("fidget", nan); if (!(s > 0) || !Number.isFinite(s)) bad.add("a length that is not a number still gives a real time"); }
     return [...bad];
   }
-  it("plays a fidget once, whole, up to the cap (the 10.7 s Bored included), and survives a length that is not a number", () => {
+  it.skipIf(!HAVE_BAKED)("plays a fidget once, whole, up to the cap (the 10.7 s Bored included), and survives a length that is not a number", () => {
     expect(Math.max(...IDLE_FILES.fidget.map((id) => ALL.get(id)!))).toBeLessThanOrEqual(IDLE_SECONDS.fidgetCap); // none of ours is cut
     expect(fidgetFailures(playSeconds)).toEqual([]);
   });
@@ -135,7 +136,7 @@ describe("what to do on an idle tick", () => {
     return [...bad];
   }
 
-  it("follows the rules: no dance before the second tick, the odds (wave, clap, dance, fidget), only loaded clips, every dance and every fidget gets a turn", () => {
+  it.skipIf(!HAVE_BAKED)("follows the rules: no dance before the second tick, the odds (wave, clap, dance, fidget), only loaded clips, every dance and every fidget gets a turn", () => {
     expect(failures(chooseIdle)).toEqual([]);
   });
 
@@ -153,7 +154,7 @@ describe("what to do on an idle tick", () => {
   });
 });
 
-describe("the files", () => {
+describe.skipIf(!HAVE_BAKED)("the files", () => {
   const fetchOf = (overrides: Record<string, string | number> = {}): typeof fetch => (async (url: string) => {
     const id = /\/([a-z0-9_]+)\.json$/.exec(String(url))![1]!;
     const o = overrides[id];
@@ -250,7 +251,7 @@ describe("the controller", () => {
     expect(c.mix.calls).toContain("stop");
     expect(c.idle.active).toBe(false);
   });
-  it("plays a fidget once, whole, from its own start (it can come on the first tick), and ends when the clip does: a shrug is two seconds, not nine", () => {
+  it.skipIf(!HAVE_BAKED)("plays a fidget once, whole, from its own start (it can come on the first tick), and ends when the clip does: a shrug is two seconds, not nine", () => {
     // at the first tick the slices are wave .24, clap .34, fidget .54: 0.45 is a fidget, and the pick (second draw) is the shrug when it is the one the draw lands on
     const picks: number[] = [0.45, (IDLE_FILES.fidget.indexOf("mood_shrug") + 0.5) / IDLE_FILES.fidget.length];
     let i = 0;
@@ -311,7 +312,7 @@ describe("the controller", () => {
 });
 
 describe("the title screen's show", () => {
-  it("plays a dance, then another, never the same twice running, and does not turn the character (no begin)", () => {
+  it.skipIf(!HAVE_BAKED)("plays a dance, then another, never the same twice running, and does not turn the character (no begin)", () => {
     const c = controller({ rng: seeded(3) });
     expect(c.idle.startShow()).toBe(true);
     expect(c.begins).toBe(0);

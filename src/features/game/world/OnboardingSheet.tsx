@@ -1,5 +1,5 @@
-// The new-player setup (Dan, 2026-11-04): who is playing (a grown-up sets up anyone under 13), the names, the favourites, a yes or no to a theme song, a pile of bricks that builds the
-// child's Kip, then an intro with confetti while the song is made, and a quick word about the app. Spec: docs/specs/accounts-and-new-user-spec.md; every rule and every word list lives in
+// The new-player setup (Dan, 2026-11-04): who is playing (a grown-up sets up anyone under 13), the names, the favourites, a pile of bricks that builds the child's Kip on a turntable, then the child spins
+// the table and DRESSES him (Dan, 2026-11-05: the build comes first), a yes or no to a theme song that carries what he wears, a word about Kip's Toy Room, then an intro with confetti while the song is made. Spec: docs/specs/accounts-and-new-user-spec.md; every rule and every word list lives in
 // src/lib/newPlayer.ts (pure, tested). PHASE 0: nothing here logs in or reaches a server; the profile is kept on the device, and the one request that leaves it is the song, after a yes.
 import { useEffect, useMemo, useRef, useState } from "react";
 import "../../../onboarding.css";
@@ -8,12 +8,13 @@ import {
   stepsFor, type Choice, type KipConfig, type PlayerProfile, type StepId, type Store,
 } from "../../../lib/newPlayer";
 import type { FlowState } from "./themeSongFlow";
+import { BUILT_FALLBACK_MS } from "./runtime/onbStage";
 
 export interface OnboardingSheetProps {
   /** Leave without finishing (nothing is saved unless the intro was reached). */
   onClose(): void;
   /** The "meet Kip" scene in the game's world: `enter` leaves the title and goes to the Toy Room (false: there is no game to show it in), `dress` puts the real Kip in the workshop wearing the outfit in `hex` (a JSON object) and keeps him up to date, `pile` paints the shirt (the favourite colour) and lays Kip out as a pile of his real parts, `build` carries them to their seats, `abort` puts Kip back, `phonesShow` floats the headphones beside Kip. */
-  onStage(op: "enter" | "dress" | "pile" | "build" | "abort" | "end" | "phonesShow", hex?: string): void | boolean;
+  onStage(op: "enter" | "dress" | "pile" | "build" | "land" | "abort" | "end" | "phonesShow", hex?: string): void | boolean;
   /** True from the grown-up's yes until the headphones are picked up: the song is made but does not dance by itself. */
   onHold(on: boolean): void;
   /** The player picked up the headphones: Kip puts them on and the dance starts. Called from a tap. */
@@ -37,8 +38,8 @@ export const GRAB_MAX_MS = 25000;
 /** How long the pile waits for a first tap, and for another after a tap, before Kip builds himself. */
 export const TAP_IDLE_MS = 4500;
 export const TAP_IDLE_AFTER_TAP_MS = 3500;
-/** The build carries the parts for up to 3.4 s, then the finished blueprint shows for 0.7 s, then he arrives (world.ts ONBS build). */
-export const BUILD_DONE_MS = 4400;
+/** The most the sheet waits for the world to say Kip stands on the turntable before it shows its own "built" card: the bricks fly slowly (up to 6.4 s, onbStage.ts), the blueprint is whole for a moment, then he arrives. The world normally tells it first. */
+export const BUILD_DONE_MS = BUILT_FALLBACK_MS;
 
 const reduced = (): boolean => { try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch { return false; } };
 const todayIso = (): string => new Date().toISOString();
@@ -109,7 +110,9 @@ export function OnboardingSheet({ onClose, onStage, onHold, onPickUp, onIntroSta
   /** Colour tiles are named by id but the config holds the hex: translate both ways. */
   const pickHex = (key: keyof KipConfig, list: readonly { id: string; hex: string }[]) => (id: string) => { const hit = list.find((x) => x.id === id); if (hit) setCfg((c) => ({ ...c, [key]: hit.hex })); };
   const idOf = (list: readonly { id: string; hex: string }[], hex: string) => list.find((x) => x.hex.toLowerCase() === hex.toLowerCase())?.id ?? "";
-  const [scene, setScene] = useState<"wait" | "pile" | "building" | "built" | "meet">("wait");
+  const [scene, setScene] = useState<"wait" | "pile" | "building" | "built">("wait");
+  // the intro has two parts: three cards about the Toy Room (Kip has landed there), then the tour with confetti while the song is made
+  const [introPart, setIntroPart] = useState<"meet" | "tour">("meet");
   const [meet, setMeet] = useState(0);
   const timers = useRef<number[]>([]);
   const [slide, setSlide] = useState(0);
@@ -151,49 +154,46 @@ export function OnboardingSheet({ onClose, onStage, onHold, onPickUp, onIntroSta
     next();
   };
 
-  // The DRESS step shows the REAL Kip, standing in the workshop and wearing every pick at once (the kid bench, spec section 9). `staged`: the game is already showing the workshop, so the build step does
-  // not enter it again. `engineOk` goes false when there is no game to show him in (the plain-blocks preview stays then); `live`: the workshop is up and picks are sent.
+  // THE STAGE (Dan, 2026-11-05): the BUILD comes first. The workshop has a turntable that stays still while Kip is a pile of bricks (lying far to its left) and while the bricks slowly fly onto it; once he is
+  // built the table can be spun and he is DRESSED there, wearing every pick at once; the table sinks with him on it when the song's yes is answered. `staged`: the game is showing the workshop;
+  // `built`: he stands on the table; `engineOk` goes false when there is no game to show it in (the plain-blocks preview stays for Dress).
   const staged = useRef(false);
-  const [engineOk, setEngineOk] = useState(true);
-  const [live, setLive] = useState(false);
-  const outfit = () => JSON.stringify(cleanKipConfig(cfg) ?? defaultKipConfig(colourOf(colour)?.hex));
-  useEffect(() => {
-    if (step !== "dress") return;
-    if (staged.current) { setLive(true); return; }
-    if (onStage("enter") === false) { setEngineOk(false); return; }
-    staged.current = true;
-    const t = window.setTimeout(() => setLive(true), 900); // the Toy Room is loading; the workshop goes up over it
-    return () => window.clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step]);
-  useEffect(() => {
-    if (step !== "dress" || !live) return;
-    const t = window.setTimeout(() => onStage("dress", outfit()), 40);
-    return () => window.clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, live, cfg]);
-  const backFromDress = () => { onStage("abort"); staged.current = false; setLive(false); back(); };
-  const stageDress = step === "dress" && engineOk;
-
-  // entering the build step goes to the Toy Room (already there after Dress) and lays Kip out as a pile; leaving it any other way than forward puts Kip back
   const laid = useRef(false);
+  const built = useRef(false);
+  const [engineOk, setEngineOk] = useState(true);
+  /** The pile is always the STOCK Kip in the favourite colour; the child's picks go on the built Kip (the Dress step). */
+  const stockOutfit = () => JSON.stringify(defaultKipConfig(colourOf(colour)?.hex));
+  const outfit = () => JSON.stringify(cleanKipConfig(cfg) ?? defaultKipConfig(colourOf(colour)?.hex));
+  const [placed, setPlaced] = useState(0);
+  const [total, setTotal] = useState(0);
+  const [held, setHeld] = useState(false);
+  // entering the build step goes to the Toy Room's workshop and lays Kip out as a pile; coming back from Dress he is already built; leaving it any other way than forward puts everything back
   useEffect(() => {
     if (step !== "build") return;
+    if (built.current) { setScene("built"); return; }
     const there = staged.current;
-    if (!there) onStage("enter");
+    if (!there && onStage("enter") === false) { setEngineOk(false); built.current = true; setScene("built"); return; } // no game to show it in: nothing to build, the plain-blocks preview dresses him
     staged.current = true;
     setScene("wait");
-    const t = window.setTimeout(() => { onStage("pile", outfit()); laid.current = true; setPlaced(0); setTotal(0); setScene("pile"); }, there ? 350 : 1700);
+    const t = window.setTimeout(() => {
+      onStage("pile", stockOutfit()); laid.current = true; setPlaced(0); setTotal(0);
+      if (calm) { built.current = true; setScene("built"); } else setScene("pile"); // reduced motion: no flights, he stands on the table at once
+    }, there ? 350 : 1700);
     timers.current.push(t);
     return () => { window.clearTimeout(t); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
   useEffect(() => () => { timers.current.forEach((t) => window.clearTimeout(t)); }, []);
-  // Tap-to-build: the child may tap the parts of the pile (the world carries each tapped part to its seat and reports it through the window event "tv-onb-progress"). Nobody has to: Kip builds himself
-  // when nothing has been tapped for a few seconds (Dan: "we should not opt in to build Kip"), carrying whatever is left, and "Build it for me" does the same at once.
-  const [placed, setPlaced] = useState(0);
-  const [total, setTotal] = useState(0);
-  const [held, setHeld] = useState(false);
+  // the DRESS step: every pick shows on the built Kip on the table at once (the world keeps the last Kip on show while the new one loads)
+  useEffect(() => {
+    if (step !== "dress" || !engineOk || !built.current) return;
+    const t = window.setTimeout(() => onStage("dress", outfit()), 40);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, cfg, engineOk]);
+  const stageDress = step === "dress" && engineOk;
+  // Tap-to-build: the child may tap or drag the bricks of the pile (the world carries each one to its seat and reports it through the window event "tv-onb-progress"). Nobody has to: Kip builds himself
+  // when nothing has been touched for a few seconds (Dan: "we should not opt in to build Kip"), carrying whatever is left, and "Build it for me" does the same at once.
   useEffect(() => {
     if (scene !== "pile") { setHeld(false); return; }
     let cap: number | null = null;
@@ -207,12 +207,12 @@ export function OnboardingSheet({ onClose, onStage, onHold, onPickUp, onIntroSta
     return () => { window.removeEventListener(GRAB_EVENT, on); if (cap !== null) window.clearTimeout(cap); };
   }, [scene]);
   useEffect(() => {
-    if (scene !== "pile") return;
+    if (scene !== "pile" && scene !== "building") return;
     const on = (e: Event) => {
       const d = (e as CustomEvent<{ placed?: number; total?: number; done?: boolean }>).detail;
       if (!d) return;
       setPlaced(Number(d.placed) || 0); setTotal(Number(d.total) || 0);
-      if (d.done) setScene("built"); // the last part was tapped into place: the world has already shown Kip
+      if (d.done) { built.current = true; setScene("built"); } // he stands on the table: the world says so, after the last brick and a moment on the finished blueprint
     };
     window.addEventListener(PROGRESS_EVENT, on);
     return () => window.removeEventListener(PROGRESS_EVENT, on);
@@ -223,24 +223,24 @@ export function OnboardingSheet({ onClose, onStage, onHold, onPickUp, onIntroSta
     return () => window.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scene, placed, held]);
-  // closing the sheet part-way puts Kip back (a built Kip is untouched, and a pair of headphones already on stays on)
+  // closing the sheet part-way puts everything back (once the stage has landed, nothing is left to put back)
   useEffect(() => () => { if (laid.current || staged.current) onStage("abort"); }, []);
-  // the headphones: they appear when the song is complete (and Kip is built), and the player picks them up to start the dance
+  // the headphones: they appear when the song is complete (Kip is in the Toy Room by then), and the player picks them up to start the dance
   const songReady = !!song && song.phase === "ready" && song.loop > 0;
-  const phonesOk = songReady && (step === "intro" || (step === "build" && (scene === "built" || scene === "meet")));
+  const phonesOk = songReady && step === "intro";
   const [picked, setPicked] = useState(false);
   const shown = useRef(false);
   useEffect(() => { if (phonesOk && !shown.current) { shown.current = true; onStage("phonesShow"); } }, [phonesOk]);
   const buildKip = () => {
     setScene("building");
     onStage("build");
-    timers.current.push(window.setTimeout(() => setScene("built"), BUILD_DONE_MS));
+    timers.current.push(window.setTimeout(() => setScene((sc) => (sc === "building" ? "built" : sc)), BUILD_DONE_MS)); // the world's "done" normally comes first
   };
-  const backFromBuild = () => { onStage("abort"); laid.current = false; staged.current = false; back(); };
+  const backFromBuild = () => { onStage("abort"); laid.current = false; staged.current = false; built.current = false; back(); };
 
   /**
-   * The grown-up's answer on the song screen: the profile is complete now, so it is saved (on this device), and on a yes the song is asked for RIGHT HERE, before Kip is built, so it is being
-   * written and sung while he builds and the tour plays. The dance is held until the headphones are picked up (onHold), so nothing plays by itself.
+   * The grown-up's answer on the song screen: the profile is complete now, so it is saved (on this device), and on a yes the song is asked for RIGHT HERE with everything the child chose (the favourites and what Kip wears), so it is being
+   * written and sung while the cards and the tour play. The dance is held until the headphones are picked up (onHold), so nothing plays by itself.
    */
   const chooseConsent = (yes: boolean) => {
     setConsent(yes);
@@ -250,19 +250,21 @@ export function OnboardingSheet({ onClose, onStage, onHold, onPickUp, onIntroSta
     setProfile(made.profile);
     const idea = songIdea(made.profile, cleanKipConfig(cfg) ?? defaultKipConfig(colourOf(colour)?.hex)); // the favourites AND what he is wearing
     if (idea) { onHold(true); onSong(idea); }
+    onStage("land"); laid.current = false; staged.current = false; built.current = false; // the table sinks with Kip on it and the Toy Room is his again
+    setIntroPart("meet"); setMeet(0);
     next();
   };
   /** The tour begins: the world (the Toy Room, Kip built) shows behind it. */
-  const startIntro = () => { onIntroStart(); setSlide(0); go("intro"); };
+  const startIntro = () => { onIntroStart(); setSlide(0); setIntroPart("tour"); };
 
   const slides = useMemo(() => introSlides(profile?.kidName ?? kid ?? ""), [profile, kid]);
   const pieces = useMemo(() => confetti(70), []);
   // the tour moves on by itself every five seconds (a still page for reduced motion), and the child can go through it faster or back
   useEffect(() => {
-    if (step !== "intro" || calm) return;
+    if (step !== "intro" || introPart !== "tour" || calm) return;
     const t = window.setInterval(() => setSlide((s) => Math.min(slides.length - 1, s + 1)), 5200);
     return () => window.clearInterval(t);
-  }, [step, calm, slides.length]);
+  }, [step, introPart, calm, slides.length]);
 
   const heading = (text: string) => <h2 className="tv-onb-h" tabIndex={-1} data-focus>{text}</h2>;
   const nav = (onNext: () => void, label = "Next", canBack = true) => (
@@ -277,7 +279,7 @@ export function OnboardingSheet({ onClose, onStage, onHold, onPickUp, onIntroSta
 
   return (
     <section ref={rootRef} className={`tv-onb${step === "intro" ? " tv-onb-intro" : ""}${step === "build" || stageDress ? " tv-onb-stage" : ""}${stageDress ? " tv-onb-dressing" : ""}`} role="dialog" aria-modal="true" aria-label="New player setup" data-onb-step={step}>
-      {step === "intro" && !calm && (
+      {step === "intro" && introPart === "tour" && !calm && (
         <div className="tv-onb-confetti" aria-hidden="true">
           {pieces.map((p, i) => (
             <i key={i} style={{ left: `${p.left}%`, width: p.size, height: p.size * 1.5, background: p.colour, animationDelay: `${p.delay}s`, animationDuration: `${p.duration}s`, ["--spin" as string]: `${p.spin}deg`, ["--dx" as string]: `${p.drift}px` }} />
@@ -353,7 +355,7 @@ export function OnboardingSheet({ onClose, onStage, onHold, onPickUp, onIntroSta
               </div>
             </div>
             <div className="tv-onb-nav">
-              <button type="button" className="tv-ctl" onClick={backFromDress} data-onb-back>Back</button>
+              <button type="button" className="tv-ctl" onClick={back} data-onb-back>Back</button>
               <button type="button" className="tv-ctl tv-ctl-primary" onClick={next} data-onb-next>Next</button>
             </div>
           </>
@@ -378,7 +380,7 @@ export function OnboardingSheet({ onClose, onStage, onHold, onPickUp, onIntroSta
                 {heading("Kip is a pile of parts!")}
                 <p className="tv-onb-p" role="status">{placed > 0 ? `${placed} of ${total} parts are in place. Keep going!` : `Tap or drag the parts to build Kip, ${name}! Or just wait: he builds himself.`}</p>
                 <div className="tv-onb-nav">
-                  <button type="button" className="tv-ctl" onClick={backFromBuild}>Back</button>
+                  <button type="button" className="tv-ctl" onClick={backFromBuild} data-onb-back>Back</button>
                   <button type="button" className="tv-ctl tv-ctl-primary" onClick={buildKip} data-onb-build>Build it for me</button>
                 </div>
               </>
@@ -387,28 +389,31 @@ export function OnboardingSheet({ onClose, onStage, onHold, onPickUp, onIntroSta
             {scene === "built" && (
               <>
                 {heading(`Meet Kip, ${name}!`)}
-                <p className="tv-onb-p" role="status">Kip is built, wearing a {colourOf(colour)?.label.toLowerCase()} shirt. Kip loves {fruitOf(fruit)?.label.toLowerCase()} and {animalOf(animal)?.label.toLowerCase()}s too!</p>
-                <div className="tv-onb-nav"><button type="button" className="tv-ctl tv-ctl-primary" onClick={() => { setMeet(0); setScene("meet"); }} data-onb-next>Show me around</button></div>
-              </>
-            )}
-            {scene === "meet" && (
-              <div className="tv-onb-slide" key={meetSlides[meet]?.id} data-meet={meetSlides[meet]?.id}>
-                <span className="tv-onb-icon" aria-hidden="true">{meetSlides[meet]?.icon}</span>
-                <h2 className="tv-onb-h" tabIndex={-1} data-focus>{meetSlides[meet]?.title}</h2>
-                {meetSlides[meet]?.lines.map((l) => <p className="tv-onb-p" key={l}>{l}</p>)}
-                <div className="tv-onb-dots" aria-hidden="true">{meetSlides.map((x, i) => <i key={x.id} className={i === meet ? "on" : ""} />)}</div>
+                <p className="tv-onb-p" role="status">Kip is built and standing on his turntable. Give it a spin, then dress him how {name} likes!</p>
                 <div className="tv-onb-nav">
-                  <button type="button" className="tv-ctl" disabled={meet === 0} onClick={() => setMeet((m) => Math.max(0, m - 1))}>Back</button>
-                  {meet < meetSlides.length - 1
-                    ? <button type="button" className="tv-ctl tv-ctl-primary" onClick={() => setMeet((m) => m + 1)} data-onb-next>Next</button>
-                    : <button type="button" className="tv-ctl tv-ctl-primary" onClick={startIntro} data-onb-next>Meet your song and the app!</button>}
+                  <button type="button" className="tv-ctl" onClick={backFromBuild} data-onb-back>Back</button>
+                  <button type="button" className="tv-ctl tv-ctl-primary" onClick={next} data-onb-next>Dress Kip</button>
                 </div>
-              </div>
+              </>
             )}
             {problem && <p className="tv-onb-err" role="alert">{problem}</p>}
           </div>
         )}
-        {step === "intro" && (
+        {step === "intro" && introPart === "meet" && (
+          <div className="tv-onb-slide" key={meetSlides[meet]?.id} data-meet={meetSlides[meet]?.id}>
+            <span className="tv-onb-icon" aria-hidden="true">{meetSlides[meet]?.icon}</span>
+            <h2 className="tv-onb-h" tabIndex={-1} data-focus>{meetSlides[meet]?.title}</h2>
+            {meetSlides[meet]?.lines.map((l) => <p className="tv-onb-p" key={l}>{l}</p>)}
+            <div className="tv-onb-dots" aria-hidden="true">{meetSlides.map((x, i) => <i key={x.id} className={i === meet ? "on" : ""} />)}</div>
+            <div className="tv-onb-nav">
+              <button type="button" className="tv-ctl" disabled={meet === 0} onClick={() => setMeet((m) => Math.max(0, m - 1))}>Back</button>
+              {meet < meetSlides.length - 1
+                ? <button type="button" className="tv-ctl tv-ctl-primary" onClick={() => setMeet((m) => m + 1)} data-onb-next>Next</button>
+                : <button type="button" className="tv-ctl tv-ctl-primary" onClick={startIntro} data-onb-next>Meet your song and the app!</button>}
+            </div>
+          </div>
+        )}
+        {step === "intro" && introPart === "tour" && (
           <div className="tv-onb-tour" data-slide={slides[slide]?.id}>
             <div className="tv-onb-slide" key={slides[slide]?.id}>
               <span className="tv-onb-icon" aria-hidden="true">{slides[slide]?.icon}</span>

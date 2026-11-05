@@ -131,8 +131,9 @@
 
 /* The Dress step beside the REAL Kip (kid bench): the workshop shows behind, the card is on the RIGHT like the other stage steps, and only one row of tiles shows at a time so it fits a 390 px
    high screen. The section itself catches taps (pointer-events auto), so tapping the stage cannot walk Kip out of the workshop. */
-.tv-onb-dressing { pointer-events: auto; padding-top: 8px; padding-bottom: 8px; }
-.tv-onb-dressing .tv-onb-card { width: min(440px, 54%); gap: 8px; padding: 10px 14px 12px; }
+/* the stage is the player's to touch (the turntable spins under a drag, even in Dress): only the card takes the touches, like the other stage steps */
+.tv-onb-dressing { padding-top: 8px; padding-bottom: 8px; }
+.tv-onb-dressing .tv-onb-card { width: min(400px, 47%); gap: 8px; padding: 10px 14px 12px; }
 .tv-onb-dressing .tv-onb-h { font-size: 20px; }
 .tv-onb-dressing .tv-onb-dress { display: block; }
 .tv-onb-dressing .tv-onb-rowlabel { display: none; }

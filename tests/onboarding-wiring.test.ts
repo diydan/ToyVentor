@@ -63,21 +63,21 @@ describe("the meet-Kip scene reaches the world", () => {
   it("is one hook all the way down: the sheet's onStage, GameCanvas onboardStage, the engine's onbStage, the world's ONBS", () => {
     expect(sheet).toContain("onStage(op:");
     expect(canvas).toContain("onStage={onboardStage}");
-    expect(engine).toContain('onbStage: (op: "hide" | "dress" | "pile" | "build" | "abort" | "end" | "phonesShow" | "phones" | "phonesOff", hex?: string) => void;');
+    expect(engine).toContain('onbStage: (op: "hide" | "dress" | "pile" | "build" | "land" | "abort" | "end" | "phonesShow" | "phones" | "phonesOff", hex?: string) => void;');
     expect(engine).toContain("hooks()?.onbStage?.(op, hex);");
     expect(world).toContain("onbStage:function(op,hex){ONBS(op,hex)},");
     expect(world).toContain("function ONBS(op: string,hex?: string){");
   });
-  it("the pile paints the shirt itself, turns Kip to the screen, waits for his real STL parts, hides the real Kip until the last part lands, and gives him back on every exit", () => {
-    expect(world).toContain("save();buildPlayer(null)}"); // the shirt (and, with the outfit, the rest) is saved and the rig rebuilt before he is laid out
+  it("the pile paints the shirt itself, turns Kip to the screen, waits for his real STL parts, keeps the real Kip hidden until he arrives, and gives him back on every exit", () => {
+    expect(world).toContain("save();buildPlayer(null)}"); // the stock look is saved and the rig rebuilt before he is laid out
     expect(world).toContain("P.face=P.tface=-Math.PI/2;");
     expect(world).toContain('P.rig&&P.rig.stlMode==="stl"'); // his real parts are fetched: no pile of stand-ins
     expect(world).toContain("new T.Mesh(it.o.geometry,it.o.material)"); // every part is a clone sharing the real geometry and material
     expect(world).toContain("P.model.visible=false;blob.visible=false;");
-    expect(world).toContain("if(ONBG!==gg||tk2!==ONBT)return;show();"); // a rebuilt or ended scene is never finished by a stale animation
+    expect(world).toContain("if(gg&&(ONBG!==gg||tk!==ONBT))return;"); // a rebuilt or ended scene is never finished by a stale animation
     expect(world).toMatch(/if\(op==="end"\)\{ONBT\+\+;ONBPRE=null;show\(\);dropPhones\(\);return\}/);
-    expect(world).toMatch(/if\(op==="abort"\)\{ONBT\+\+;var pre=ONBD\?ONBPRE:null;ONBPRE=null;show\(\);.*return\}/); // closing part-way keeps headphones that are already on (dropPhones is only in "end")
-    expect(world).toContain("if(reduce)return;"); // reduced motion: no pile, Kip stays
+    expect(world).toMatch(/if\(op==="abort"\)\{ONBT\+\+;var pre=ONBPRE;ONBPRE=null;show\(\);.*return\}/); // closing part-way keeps headphones that are already on (dropPhones is only in "end"), and puts the look back
+    expect(world).toContain("if(reduce){onbArrive(null,ONBT,0);return}"); // reduced motion: no pile and no flights, he stands on the table at once
     expect(world).toContain('if(S.type!=="character")return;'); // only Kip is a pile of parts
   });
   it("the headphones follow his head, turned ear to ear (his forward is +x, so ear to ear is z), and go when the song is over", () => {
@@ -89,11 +89,12 @@ describe("the meet-Kip scene reaches the world", () => {
 
 describe("the song starts early and the dance waits for the headphones", () => {
   const flow = read("src/features/game/world/themeSongFlow.ts");
-  it("the song is asked for at the grown-up's yes (before Kip is built), held from the first moment, and never again at the intro", () => {
+  it("the song is asked for at the grown-up's yes (after Kip is dressed, so it carries what he wears), held from the first moment, never again at the intro, and the yes ends the stage", () => {
     expect(sheet).toContain("if (idea) { onHold(true); onSong(idea); }");
     expect(sheet.match(/\bonSong\(idea\)/g)).toHaveLength(1);
     expect(sheet).not.toMatch(/startIntro = \(\) => \{[^}]*onSong/);
-    expect(sheet).toMatch(/const startIntro = \(\) => \{ onIntroStart\(\); setSlide\(0\); go\("intro"\); \};/);
+    expect(sheet).toContain('onStage("land"); laid.current = false; staged.current = false; built.current = false;');
+    expect(sheet).toMatch(/const startIntro = \(\) => \{ onIntroStart\(\); setSlide\(0\); setIntroPart\("tour"\); \};/);
   });
   it("the party is held by the flow (holdParty), released and started by the pickup, and Kip builds himself with no button", () => {
     expect(flow).toContain("if (deps.holdParty?.()) { set({ phase: \"ready\", note: \"Your song is ready!\" }); return; }");
@@ -106,20 +107,20 @@ describe("the song starts early and the dance waits for the headphones", () => {
   });
   it("the headphones button appears only when the song is complete (ready with a measured loop) and Kip is built, and the song card stays out of the way until the dance starts", () => {
     expect(sheet).toContain('const songReady = !!song && song.phase === "ready" && song.loop > 0;');
-    expect(sheet).toContain('(step === "intro" || (step === "build" && (scene === "built" || scene === "meet")))');
+    expect(sheet).toContain('const phonesOk = songReady && step === "intro";');
     expect(canvas).toContain('flow={onboardOpen && songFlow && songFlow.phase !== "dancing" && songFlow.phase !== "over" ? null : songFlow}');
   });
 });
 
 describe("no Kip before the pile, headphones on the head, no hovering dance", () => {
   const idle = read("src/features/game/world/runtime/idleBehavior.ts");
-  it("Kip is hidden from the first frame of the build step and held hidden every frame until the last part lands", () => {
+  it("Kip is hidden from the first frame of the build step and held hidden every frame until he arrives on the turntable, then shown only once his parts have loaded", () => {
     expect(canvas).toContain('engineRef.current.onbStage("hide"); if (titleOpen) chooseTitle("play");');
     expect(world).toContain('if(op==="hide"){ONBW=true;if(P.model)P.model.visible=false;blob.visible=false;return}');
-    expect(world).toContain(" IDLEB.update();\n if(ONBW){if(P.model)P.model.visible=false;blob.visible=false;if(W.root)W.root.visible=false}\n"); // enforced every frame (Kip and the Toy Room), so a rebuilt model or room is never seen
-    expect(world).toContain("var show=function(){var hd=BG.cancel();if(hd)ONBDONE(hd,false);ONBFOCUS=null;ONBW=false;"); // and every way out (build done, abort, end) gives him back (and lets go of a brick in the hand)
-    expect(world).toContain("ONBGH=null}ONBW=true;if(hex){save();buildPlayer(null)}"); // the pile keeps him hidden: no show() between the hide and the last part
-    expect(world).toContain("if(reduce){show();return}"); // reduced motion: no pile, so he must not stay hidden
+    expect(world).toContain(" IDLEB.update();\n if(ONBW){var rdy=ONBV&&!!P.rigReady;if(P.model)P.model.visible=rdy;blob.visible=rdy||(ONBV&&!!ONBGH);"); // enforced every frame (Kip and the Toy Room), so a rebuilt model or room is never seen
+    expect(world).toContain("var show=function(){var hd=BG.cancel();if(hd)ONBDONE(hd,false);ONBFOCUS=null;ONBW=false;ONBV=false;ONBY=0;ONBLAND=false;"); // and every way out (land, abort, end) gives him back (and lets go of a brick in the hand)
+    expect(world).toContain("ONBW=true;ONBY=TURNTABLE.top;if(hex){onbOutfit(hex);save();buildPlayer(null)}"); // the pile keeps him hidden: no show() between the hide and the arrival
+    expect(world).toContain("function idleOk(){return !disposed&&!reduce&&!ONBW&&"); // no idle gesture while the stage holds
   });
   it("the headphones are parented to the head the dance moves (the highest sizeable mesh's parent), and the floating bob stops when the pickup starts", () => {
     expect(world).toContain("(top&&top.parent?top.parent:head).attach(h2);");
@@ -139,23 +140,25 @@ describe("the build starts in a workshop with a blueprint", () => {
   it("the workshop dressing is built when the pile is laid out, replaces the Toy Room while the build holds, and goes (with the room coming back) on every exit", () => {
     expect(world).toContain('import { blueprintRegion, buildWorkshop, disposeWorkshop, regionFractions, setBlueprintState, type BrickPart } from "./workshopScene";');
     expect(world).toContain("if(!ONBK){ONBK=buildWorkshop({x:P.pos.x,z:P.pos.z,accent:S.col.c1});scene.add(ONBK)}");
-    expect(world).toContain("ONBW=false;ONBD=false;if(ONBGH){if(ONBGH.parent)ONBGH.parent.remove(ONBGH);ONBGH=null}if(ONBK){disposeWorkshop(ONBK);ONBK=null}if(W.root)W.root.visible=true;");
+    expect(world).toContain("ONBW=false;ONBV=false;ONBY=0;ONBLAND=false;if(ONBGH){if(ONBGH.parent)ONBGH.parent.remove(ONBGH);ONBGH=null}if(ONBK){disposeWorkshop(ONBK);ONBK=null}if(W.root)W.root.visible=true;");
   });
 });
 
 describe("the avatar", () => {
   it("gets no picture while Kip is held hidden for the build (it would be an empty scene, kept under a colour signature), so the avatar's poll waits and takes it when he is built", () => {
-    expect(world).toContain("portraitSig:function(){return P.rigReady&&!ONBW&&!ONBD?String(P.rigSig):null},");
+    expect(world).toContain("portraitSig:function(){return P.rigReady&&!ONBW?String(P.rigSig):null},");
   });
 });
 
 describe("dress your Kip", () => {
-  it("is a step of its own between the favourites and the song; the shirt starts as the favourite colour; the whole outfit goes to the world as one JSON object when the pile is laid out", () => {
+  it("is a step of its own AFTER the build and before the song; the shirt starts as the favourite colour; the pile is the stock look and the picks go on the built Kip as one JSON object", () => {
     expect(sheet).toContain('{step === "dress" && (');
     expect(sheet).toContain("setCfg((c) => ({ ...c, shirt: colourOf(colour)?.hex ?? c.shirt }));");
     expect(sheet).toContain('const outfit = () => JSON.stringify(cleanKipConfig(cfg) ?? defaultKipConfig(colourOf(colour)?.hex));');
-    expect(sheet).toContain('onStage("pile", outfit());');
-    expect(sheet).toContain("<KipPreview cfg={cfg} />"); // a live preview, so a pick is seen at once
+    expect(sheet).toContain("const stockOutfit = () => JSON.stringify(defaultKipConfig(colourOf(colour)?.hex));");
+    expect(sheet).toContain('onStage("pile", stockOutfit());');
+    expect(sheet).not.toContain('onStage("pile", outfit());');                                   // the pile never carries the child's picks: they are made after he is built
+    expect(sheet).toContain("<KipPreview cfg={cfg} />"); // the plain-blocks preview stays for a page with no game
     expect(sheet).toContain('<Tiles label="Shoes" items={SHOE_COLOURS}');
   });
   it("the world applies only valid hex colours and plain strings, sets the colours, hair, hat and tail on the saved character, and rebuilds him", () => {
@@ -173,7 +176,7 @@ describe("dress your Kip", () => {
     expect(world).toContain("sl.tail=cf.tail}");
     expect(world).not.toContain("S.sel.hair=cf.hair");
     expect(world).toContain("else if((qq=hexOk(hex)))S.col.c1=qq;"); // a plain hex is still just the shirt, and only a valid one
-    expect(world).toContain("var chg=hex?onbOutfit(hex):false;"); // the pile applies the outfit through the same helper, and the Dress step does too (chd)
+    expect(world).toContain("if(hex){onbOutfit(hex);save();buildPlayer(null)}"); // the pile applies its (stock) outfit through the same helper, and the Dress step does too (chd)
     expect(world).toContain("var chd=onbOutfit(hex||\"\");");
   });
 });
@@ -182,42 +185,49 @@ describe("dress your Kip", () => {
 describe("the Dress step shows the real Kip (kid bench, spec section 9)", () => {
   const canvas = readFileSync(new URL("../src/features/game/world/GameCanvas.tsx", import.meta.url), "utf8");
   const engine = readFileSync(new URL("../src/features/game/world/engine.ts", import.meta.url), "utf8");
-  it("the sheet enters the workshop when Dress opens, sends the outfit on every pick, and the build step does not enter again", () => {
-    expect(sheet).toContain('if (onStage("enter") === false) { setEngineOk(false); return; }');
+  it("the sheet enters the workshop at the BUILD step (the game's workshop, the Toy Room hidden), sends the picks to the built Kip on every change in Dress, and Dress never enters again", () => {
+    expect(sheet).toContain('if (!there && onStage("enter") === false) { setEngineOk(false); built.current = true; setScene("built"); return; }');
     expect(sheet).toContain('const t = window.setTimeout(() => onStage("dress", outfit()), 40);');
-    expect(sheet).toContain("}, [step, live, cfg]);");
+    expect(sheet).toContain("}, [step, cfg, engineOk]);");
+    expect(sheet).toContain('if (step !== "dress" || !engineOk || !built.current) return;');
     expect(sheet).toContain("const there = staged.current;");
-    expect(sheet).toContain('if (!there) onStage("enter");');
     expect(sheet).toContain("}, there ? 350 : 1700);");
+    expect(sheet.match(/onStage\("enter"\)/g)).toHaveLength(1);
   });
-  it("Back from Dress, closing the sheet and Back from the build all take the workshop away (the world restores the old look when it is still the Dress step)", () => {
-    expect(sheet).toContain('const backFromDress = () => { onStage("abort"); staged.current = false; setLive(false); back(); };');
+  it("Back from Dress returns to the built Kip (nothing is torn down), Back from the build and closing the sheet put everything back (the world restores the look the child had), and the song's yes lands the stage", () => {
+    expect(sheet).toContain('if (built.current) { setScene("built"); return; }');
+    expect(sheet).toContain('onClick={back} data-onb-back>Back</button>');
     expect(sheet).toContain('useEffect(() => () => { if (laid.current || staged.current) onStage("abort"); }, []);');
-    expect(sheet).toContain('const backFromBuild = () => { onStage("abort"); laid.current = false; staged.current = false; back(); };');
-    expect(world).toContain('if(op==="abort"){ONBT++;var pre=ONBD?ONBPRE:null;ONBPRE=null;show();');
+    expect(sheet).toContain('const backFromBuild = () => { onStage("abort"); laid.current = false; staged.current = false; built.current = false; back(); };');
+    expect(sheet.match(/onClick=\{backFromBuild\} data-onb-back>Back<\/button>/g)).toHaveLength(2);        // the pile card and the built card
+    expect(world).toContain('if(op==="abort"){ONBT++;var pre=ONBPRE;ONBPRE=null;show();');
+    expect(world).toContain("if(!ONBPRE){var sl1=cur();ONBPRE={col:{c1:S.col.c1,c2:S.col.c2,boots:S.col.boots,skin:S.col.skin,hair:S.col.hair},sel:{hair:sl1.hair,hat:sl1.hat,tail:sl1.tail}}}");
   });
   it("the plain-blocks preview stays only when there is no game to show Kip in; the stage styling is on only when there is", () => {
     expect(sheet).toContain("{!engineOk && <KipPreview cfg={cfg} />}");
     expect(sheet).toContain("const stageDress = step === \"dress\" && engineOk;");
     expect(sheet).toContain('${stageDress ? " tv-onb-dressing" : ""}');
     expect(canvas).toContain("if (!engineRef.current) return false; // no game to show it in");
-    expect(canvas).toContain('"enter" | "dress" | "pile" | "build" | "abort" | "end" | "phonesShow"');
+    expect(canvas).toContain('"enter" | "dress" | "pile" | "build" | "land" | "abort" | "end" | "phonesShow"');
     expect(engine).toContain('"hide" | "dress" | "pile"');
   });
-  it("the Dress step lays a PILE of Kip's real parts, not a standing Kip (Dan, 2026-11-05: we still don't start with a pile of bricks): Kip and the Toy Room stay hidden all through it, and every pick re-lays the pile", () => {
-    expect(world).toContain("ONBD=true;ONBW=true}"); // the Dress step holds the stage hidden, like the pile
-    expect(world).toContain("if(chd){save();buildPlayer(null);if(!first)sfx.pop()}\n  if(first||chd||!ONBG)onbLay();");
-    expect(world).not.toContain("else if(ONBD){if(W.root)W.root.visible=false;var rdy=");   // no standing Kip is ever shown in Dress
-    expect(world).not.toContain("ONBGH=old");
-    expect(world).toContain("ONBPRE={col:{c1:S.col.c1,c2:S.col.c2,boots:S.col.boots,skin:S.col.skin,hair:S.col.hair},sel:{hair:sl1.hair,hat:sl1.hat,tail:sl1.tail}};");
-    expect(world).toContain("portraitSig:function(){return P.rigReady&&!ONBW&&!ONBD?String(P.rigSig):null},");
+  it("the Dress step happens on the BUILT Kip standing on the turntable (Dan, 2026-11-05: build first, then spin the table and dress): every pick rebuilds him with the last Kip kept on show, so nothing blinks", () => {
+    expect(world).toContain('if(op==="dress"){');
+    expect(world).toContain("if(!ONBV)return;");                                                    // nothing to dress before he is built
+    expect(world).toContain("if(chd){save();var old=(!ONBGH&&P.model&&P.rigReady)?P.model:null;buildPlayer(null);if(old){ONBGH=old;P.root.add(old)}");
+    expect(world).toContain("if(rdy){if(ONBGH.parent)ONBGH.parent.remove(ONBGH);ONBGH=null}else ONBGH.visible=true");
+    expect(world).not.toMatch(/\bONBD\b/);                                                 // the old dress-holds-the-stage flag is gone
+    expect(world).toContain("portraitSig:function(){return P.rigReady&&!ONBW?String(P.rigSig):null},");
   });
-  it("one lay function makes the pile: a newer lay cancels an older one, the old pile stays until the new is ready, and the layout depends only on a part's place in the rig (a colour change moves no brick)", () => {
+  it("one lay function makes the pile: a newer lay cancels an older one, the old pile stays until the new is ready, and the layout is onbStage.ts's (far to the left of the turntable, a function of the part's place in the rig)", () => {
     expect(world).toContain("function onbLay(){");
     expect(world).toContain("if(tk!==ONBL||ot!==ONBT||!ONBW)return;");
     expect(world).toContain("var oldG=ONBG;ONBG=g;scene.add(g);if(oldG&&oldG.parent)oldG.parent.remove(oldG);");
-    expect(world).toContain("a=i*2.399,r=.25+((i*37)%10)/10*.95;");
-    expect(world.split("onbLay()").length - 1).toBeGreaterThanOrEqual(3);                        // the function and its two callers
+    expect(world).toContain("hx=P.pos.x+PILE_DX,hz=P.pos.z+PILE_DZ");
+    expect(world).toContain("sp=pileSpot(i)");
+    expect(world).toContain("it.pp=new T.Vector3(hx+sp.dx,sp.dy,hz+sp.dz);");
+    expect(world).toContain('import { ARRIVE_MS, LAND_S, PILE_DX, PILE_DZ, PLACE_S, TURNTABLE, buildTiming, landPose, pileSpot, stageZoom } from "./onbStage";');
+    expect(world.split("onbLay()").length - 1).toBeGreaterThanOrEqual(2);                        // the function and its caller
   });
   it("the Dress card is one row of tiles at a time, with the shoes row and every pick named as before", () => {
     for (const part of ["shirt", "pants", "boots", "skin", "hair", "hairColour", "hat", "tail"]) expect(sheet).toContain(`part === "${part}" &&`);
@@ -226,8 +236,8 @@ describe("the Dress step shows the real Kip (kid bench, spec section 9)", () => 
 });
 
 describe("tap-to-build (kid bench slice 2)", () => {
-  it("a tap on the stage during the pile or Dress is the setup's: a part, or nothing, never a walk", () => {
-    expect(world).toContain('canvas.addEventListener("pointerdown",function(e: PointerEvent){ctx();IDLEB.cancel();if(ONBG||ONBD){ONBTAP(e);return}');
+  it("a tap on the stage (the pile, the turntable, Dress) is the setup's: a part, or nothing, never a walk", () => {
+    expect(world).toContain('canvas.addEventListener("pointerdown",function(e: PointerEvent){ctx();IDLEB.cancel();if(ONBG||ONBW){ONBTAP(e);return}');
   });
   it("a tapped part (or the nearest to the ray within half a unit) is carried to its seat, reported through the window event, and the last one is the build's own arrival", () => {
     expect(world).toContain("function onbPlace(gg: any,it: any){");
@@ -235,16 +245,16 @@ describe("tap-to-build (kid bench slice 2)", () => {
     expect(world).toContain('if(all)ONBS("finish")})}');
     expect(world).toContain("var best=.55;open.forEach(");
     expect(world).toContain('if(op==="finish"){var gf=ONBG;if(!gf)return;');
-    expect(world).toContain('detail:{placed:nf,total:nf,done:true}');
+    expect(world).toContain('detail:{placed:total,total:total,done:true}');
     expect(PROGRESS_EVENT).toBe("tv-onb-progress");
   });
   it("the build op carries only the parts not yet seated, stops the taps, and still finishes when none is left", () => {
     expect(world).toContain("gg.userData.running=true;");
-    expect(world).toContain("var sAll=gg.userData.seats,seats2=sAll.filter(function(s: any){return !s.done&&!s.fly}),n=seats2.length,TOT=n>0?Math.max(1.4,Math.min(3.4,.9+.15*n)):.2,");
+    expect(world).toContain("var sAll=gg.userData.seats,seats2=sAll.filter(function(s: any){return !s.done&&!s.fly}),n=seats2.length,TM=buildTiming(n),TOT=TM.total,DUR=TM.dur,STAG=TM.stag;");
   });
   it("the sheet listens for the progress, counts it, and a finished pile shows the built Kip", () => {
     expect(sheet).toContain("window.addEventListener(PROGRESS_EVENT, on);");
-    expect(sheet).toContain('if (d.done) setScene("built");');
+    expect(sheet).toContain('if (d.done) { built.current = true; setScene("built"); }');
     expect(sheet).toContain("}, [scene, placed, held]);");
     expect(sheet).toContain("onClick={buildKip} data-onb-build");
   });
@@ -264,9 +274,9 @@ describe("the blueprint fills in and a brick can be dragged (kid bench slice 2, 
     expect(world).toContain("if(u>=1&&!it.lit){it.lit=true;lit=true}}if(lit)onbBP()");                 // the build's bricks land one by one
     expect(world).toContain("sAll.forEach(function(s: any){s.lit=true});onbBP();");                   // all in: gold, BUILT
   });
-  it("he arrives after a moment on the finished blueprint (0.7 s), at once for reduced motion, in the build and in the all-tapped finish", () => {
-    expect(world).toContain("if(reduce)arrive();else setTimeout(arrive,700)");
-    expect(world).toContain("if(reduce)arrive2();else setTimeout(arrive2,700);return}");
+  it("he arrives on the turntable after a moment on the finished blueprint (0.7 s), at once for reduced motion, in the build and in the all-tapped finish", () => {
+    expect(world).toContain("if(reduce)onbArrive(gg,tk2,sAll.length);else setTimeout(function(){onbArrive(gg,tk2,sAll.length)},ARRIVE_MS)");
+    expect(world).toContain("if(reduce)onbArrive(gf,tkf,nf);else setTimeout(function(){onbArrive(gf,tkf,nf)},ARRIVE_MS);return}");
   });
   it("a press on a brick is a grab (the tap places it on release), a drag lifts it under the finger with a ghost at its seat and its region dashed, and the ghost's geometry is never disposed", () => {
     expect(world).toContain("if(pick)ONBGRAB(e,gg,pick)}");
@@ -289,7 +299,7 @@ describe("the blueprint fills in and a brick can be dragged (kid bench slice 2, 
     expect(sheet).toContain('if (scene !== "pile" || held) return;');
     expect(sheet).toContain("if (h) cap = window.setTimeout(() => setHeld(false), GRAB_MAX_MS);");
     expect(sheet).toContain("Tap or drag the parts to build Kip");
-    expect(sheet).toContain("window.setTimeout(() => setScene(\"built\"), BUILD_DONE_MS)");
-    expect(BUILD_DONE_MS).toBeGreaterThanOrEqual(3400 + 700);                                        // the longest build plus the moment on the finished blueprint
+    expect(sheet).toContain('window.setTimeout(() => setScene((sc) => (sc === "building" ? "built" : sc)), BUILD_DONE_MS)');
+    expect(BUILD_DONE_MS).toBeGreaterThanOrEqual(6400 + 700);                                        // the longest build plus the moment on the finished blueprint
   });
 });
