@@ -53,13 +53,14 @@ export async function startServer({ port = 0 } = {}) {
       const chunks = [];
       req.on("data", (c) => chunks.push(c));
       req.on("end", () => {
-        const body = Buffer.concat(chunks).toString("utf8");
+        const raw = Buffer.concat(chunks);   // the proxy below forwards these exact bytes: a recording is not text, and decoding it as UTF-8 would corrupt it
+        const body = raw.toString("utf8");
         let json = null;
         try { json = body ? JSON.parse(body) : null; } catch { /* not JSON */ }
         apiCalls.push({ method: req.method, path: p, headers: { ...req.headers }, body });
         const h = mocks.get(`${req.method} ${p}`);
         if (!h && process.env.E2E_API_PROXY) { // a real local Worker (wrangler dev) answers instead: used for the end-to-end Smart face check
-          fetch(new URL(req.url, process.env.E2E_API_PROXY), { method: req.method, headers: { "content-type": req.headers["content-type"] ?? "application/json", ...Object.fromEntries(["x-device-id", "x-parent-proof", "x-selfie-consent"].filter((k) => req.headers[k]).map((k) => [k, req.headers[k]])) }, body: req.method === "GET" ? undefined : body })
+          fetch(new URL(req.url, process.env.E2E_API_PROXY), { method: req.method, headers: { "content-type": req.headers["content-type"] ?? "application/json", ...Object.fromEntries(["x-device-id", "x-parent-proof", "x-selfie-consent"].filter((k) => req.headers[k]).map((k) => [k, req.headers[k]])) }, body: req.method === "GET" ? undefined : raw })
             .then(async (r) => { res.writeHead(r.status, { "content-type": r.headers.get("content-type") ?? "application/json", "cache-control": "no-store" }); res.end(Buffer.from(await r.arrayBuffer())); })
             .catch(() => { res.writeHead(502); res.end('{"error":"proxy"}'); });
           return;
