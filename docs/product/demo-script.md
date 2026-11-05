@@ -3,6 +3,15 @@
 November 4 readiness: reviewer touches the live app and sees a scanned toy
 become printable, playable, and shippable.
 
+> Say once, out loud: this demo is operated by an adult and is not for
+> children's use. Photo scan, generated art, voice input, songs, and some text
+> features call Meta's hosted models, whose terms are for adults 18 and over.
+> Make-from-words runs on our own self-hosted Glimmer. Child-facing production
+> moves everything to our own models first. Nothing here claims child safety or
+> privacy-law compliance.
+>
+> Lab rule: all lab users must be with an adult. No child uses the lab build alone.
+
 ## The run (draft of 2026-11-04, not yet rehearsed or timed)
 
 Dan picks the length ("Video length" in [close-out-checklist.md](close-out-checklist.md) section 4). The order below is the whole run; for 90 seconds drop beats 3, 6 and 8 first. Waits that were measured are named; every other length is unknown until the first rehearsal with a stopwatch.
@@ -61,13 +70,14 @@ worker, now `toyventor-v6`). Do one real pick-up of the spoon and the guitar on 
 phone you will film with; that pass has not been done. Preload the demo toy first on the
 shelf; keep a pre-saved build ready for the Build beat.
 
-Say once, out loud: this demo uses Meta's hosted model with adults operating it,
-because Meta's hosted terms are for adults; for children the same feature runs
-on a self-hosted model. Scan a toy, not a person: the photo goes to Meta's
-hosted model through our Worker, and this build has no grown-up check in front
-of the scan. The selfie's optional Smart face is on for the demo: it sends one
-downscaled photo of a face to the same hosted model after a consent screen and
-a grown-up check, so use an adult's face and say so.
+Say once, out loud: this demo is operated by an adult and is not for children's
+use (lab rule: all lab users must be with an adult). Scan a toy, not a person:
+the photo goes to Meta's hosted model through our Worker, and this build has no
+grown-up check in front of the scan. The selfie's optional Smart face is on for
+the demo: it sends one downscaled photo of a face to the same hosted model after
+a consent screen and a grown-up check, so use an adult's face and say so. Camera
+flow is an overlay on a still frame, not tracked AR or real-time detection.
+Nothing is printed yet: show the plate on screen.
 
 
 ## Where this lives

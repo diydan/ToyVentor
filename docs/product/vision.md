@@ -95,15 +95,24 @@ the last run had one timeout, most likely a slow generation under load. One
 setting per capability picks hosted, self-hosted,
 or off, and "self-hosted" never falls back to hosted.
 
+Lab posture (Nov 2026): hosted stays on for the adult-operated lab/demo window
+only, and all lab users must be with an adult. Before any child uses a build:
+flip the model switch default away from hosted, deploy without the Meta key,
+and end the voice exception.
+
 Not claimed: that ToyVentor is assessed under COPPA, the UK Children's Code, or
 GDPR for children; that Glimmer is the default or in production; that the
-safety checks have had a children's red-team (the unsafe-word lists cover
-seven languages, but no native speaker has read the six translations); or that any grown-up check stands in front of file downloads in
-this build. Photos of toys reach Meta's hosted API with no grown-up check in
-front of the scan. The optional Smart face in the Kip selfie is switched on for
-this demo: after a consent screen and a grown-up check, it sends one downscaled
-photo of a face to Meta's hosted API. That is another reason the demo is
-adult-operated, and the route for children keeps it off.
+tuned model is safe for children or proven safer; that hosted Spark was beaten;
+that parts are safe because they are AI-made; that the safety checks have had a
+children's red-team (the unsafe-word lists cover seven languages, but no native
+speaker has read the six translations); or that any grown-up check stands in
+front of file downloads in this build. Photos of toys reach Meta's hosted API
+with no grown-up check in front of the scan. The optional Smart face in the Kip
+selfie is switched on for this demo: after a consent screen and a grown-up
+check, it sends one downscaled photo of a face to Meta's hosted API. That is
+another reason the demo is adult-operated, and the route for children keeps it
+off. Nothing is printed yet: no bench coupon is signed off. The camera flow is
+an overlay on a still frame, not tracked AR or real-time detection.
 
 ## Business sketch
 

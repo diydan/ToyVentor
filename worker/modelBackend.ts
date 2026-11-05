@@ -14,6 +14,10 @@
  *  4. Nothing here logs or returns a URL or a key; `describeBackends` gives modes only.
  *
  * A route that is off answers with the status it already uses for "not configured", and its client already degrades from that.
+ *
+ * LAB POSTURE (Dan, Nov 2026): hosted stays ON for the adult-operated lab/demo window only.
+ * All lab users must be with an adult. Before any child uses a build, flip DEFAULT_MODE away
+ * from hosted, deploy without the Meta key, and end the transcribe exception.
  */
 // Types only: this module has no runtime import of its callers, so there is no import cycle (muse.ts re-exports the helpers below).
 import type { MetaEnv } from "./meta";
