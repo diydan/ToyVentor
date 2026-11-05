@@ -18,7 +18,7 @@
 // Privacy: no address is stored. The address is hashed (SHA-256 of the lower-cased address, with an optional ACCOUNTS_PEPPER) for the link and the grown-up row; it is used once, to send the link, and
 // then dropped. Link and session tokens are stored only as their SHA-256. A rate-limit row holds an IP's hash, not the IP.
 import {
-  ACCOUNTS_PER_IP_DAY, DAY_MS, HOUR_MS, LINK_TTL_MS, MAX_CHILDREN, SESSION_COOKIE, SESSION_IDLE_MS,
+  ACCOUNTS_PER_IP_DAY, DAY_MS, HOUR_MS, LINK_TTL_MS, MAX_CHILDREN, SESSION_COOKIE, SESSION_IDLE_MS, SESSION_ROTATE_GRACE_MS,
   canAddChild, clearedSessionCookie, cleanFavourites, cleanFirstName, hashEmail, hashIp, hashToken, isDeviceId, isRole, linkRefusal, needsRotation, newSessionExpiry, normaliseEmail,
   overLimit, randomId, randomToken, readCookie, retryAfterSeconds, sessionCookie, sessionVerdict, windowStart,
   type Random, type Sha256,
@@ -46,7 +46,7 @@ export interface SendEmailBinding {
 export interface AccountsEnv {
   /** Exactly "on" switches the routes on. Unset (production today): every /api/account route is a 404. */
   ACCOUNTS?: string;
-  /** "production" refuses the "log" email backend. */
+  /** "development" or "test" allow the "log" email backend (and "development" prints each message); anything else, or unset (the live Worker), refuses it. */
   ENVIRONMENT?: string;
   /** "off" (default: login/start answers 503), "log" (tests and local dev only), "resend", or "binding". */
   EMAIL_BACKEND?: string;
@@ -101,7 +101,18 @@ export interface EmailSender { send: (message: EmailMessage) => Promise<void> }
 
 /** Where the "log" backend puts what it would have sent (tests and local dev only; capped). */
 export const logOutbox: EmailMessage[] = [];
-const logSender: EmailSender = { send: async (m) => { logOutbox.push(m); if (logOutbox.length > 50) logOutbox.shift(); } };
+/**
+ * The "log" backend (tests and local dev only): keeps what it would have sent in `logOutbox`, and when ENVIRONMENT is exactly "development" also prints the message to the dev server's output
+ * (`ACCOUNT-MAIL`, one JSON line) so a person running the real Worker locally can read the sign-in link. Only "development" and "test" may use it at all (see selectSender): it must never run on the
+ * live Worker, where the variable is not set.
+ */
+const logSender = (env: AccountsEnv): EmailSender => ({
+  send: async (m) => {
+    logOutbox.push(m);
+    if (logOutbox.length > 50) logOutbox.shift();
+    if (env.ENVIRONMENT === "development") console.log("ACCOUNT-MAIL " + JSON.stringify({ to: m.to, subject: m.subject, text: m.text }));
+  },
+});
 
 /** NOT VERIFIED against the real service: a plain POST to https://api.resend.com/emails with a bearer key. */
 const resendSender = (apiKey: string, from: string): EmailSender => ({
@@ -123,10 +134,10 @@ const bindingSender = (binding: SendEmailBinding, from: string): EmailSender => 
   },
 });
 
-/** The sender the environment asks for, or null when email is not set up (off, an unknown name, a missing secret, or "log" in production). */
+/** The sender the environment asks for, or null when email is not set up (off, an unknown name, a missing secret, or "log" anywhere but development and test). */
 export function selectSender(env: AccountsEnv): EmailSender | null {
   const mode = (env.EMAIL_BACKEND ?? "off").trim().toLowerCase();
-  if (mode === "log") return env.ENVIRONMENT === "production" ? null : logSender;
+  if (mode === "log") return env.ENVIRONMENT === "development" || env.ENVIRONMENT === "test" ? logSender(env) : null; // FAIL CLOSED: the live Worker sets neither, so "log" is refused there
   if (mode === "resend") { const key = env.RESEND_API_KEY?.trim(), from = env.EMAIL_FROM?.trim(); return key && from ? resendSender(key, from) : null; }
   if (mode === "binding") { const from = env.EMAIL_FROM?.trim(); return env.SEND_EMAIL && from ? bindingSender(env.SEND_EMAIL, from) : null; }
   return null;
@@ -220,10 +231,15 @@ export function createAccountsHandler(deps: AccountsDeps = {}) {
       if (!parent) return null;
       const remainingSec = Math.min(SESSION_IDLE_MS, times.expiresMs - t) / 1000;
       if (needsRotation(times, t)) {
-        const next = randomToken(random);
-        await db!.prepare("INSERT INTO sessions (token_hash, parent_id, family_id, created_ms, last_used_ms, expires_ms) VALUES (?, ?, ?, ?, ?, ?)").bind(await hashToken(sha256, next), str(s.parent_id), str(s.family_id), t, t, times.expiresMs).run();
-        await db!.prepare("DELETE FROM sessions WHERE token_hash = ?").bind(th).run();
-        return { parentId: str(s.parent_id), familyId: str(s.family_id), setCookie: sessionCookie(next, remainingSec) };
+        // The old token is not killed at once: a second tab that sent it a moment ago, or a response that never arrived, must not sign the grown-up out. It is given a short grace (its end moves to now + the grace) and the
+        // FIRST request to get here claims the rotation in one statement (only a row that ends later than the grace end changes), so two requests at the same time make one new session, not two.
+        const graceEnd = t + SESSION_ROTATE_GRACE_MS;
+        const claimed = await db!.prepare("UPDATE sessions SET expires_ms = ? WHERE token_hash = ? AND expires_ms > ?").bind(graceEnd, th, graceEnd).run();
+        if (changes(claimed) === 1) {
+          const next = randomToken(random);
+          await db!.prepare("INSERT INTO sessions (token_hash, parent_id, family_id, created_ms, last_used_ms, expires_ms) VALUES (?, ?, ?, ?, ?, ?)").bind(await hashToken(sha256, next), str(s.parent_id), str(s.family_id), t, t, times.expiresMs).run();
+          return { parentId: str(s.parent_id), familyId: str(s.family_id), setCookie: sessionCookie(next, remainingSec) };
+        }
       }
       await db!.prepare("UPDATE sessions SET last_used_ms = ? WHERE token_hash = ?").bind(t, th).run();
       return { parentId: str(s.parent_id), familyId: str(s.family_id) };
@@ -243,6 +259,9 @@ export function createAccountsHandler(deps: AccountsDeps = {}) {
       const eh = await emailKey(email);
       const ih = await hashIp(sha256, request.headers.get("cf-connecting-ip") ?? "unknown", pepper);
       await db.prepare("DELETE FROM account_rate WHERE window_ms < ?").bind(t - 2 * DAY_MS).run();
+      // nothing is kept longer than it is useful: a link's row (a hash of the address and of the token) goes a day after it ends, and an ended session goes with it
+      await db.prepare("DELETE FROM login_links WHERE expires_ms < ?").bind(t - DAY_MS).run();
+      await db.prepare("DELETE FROM sessions WHERE expires_ms < ?").bind(t).run();
       const counts = { email: await bump("email", eh, HOUR_MS), ip: await bump("ip", ih, HOUR_MS) };
       if (linkRefusal(counts)) return json({ error: "too many requests" }, 429, { "retry-after": String(retryAfterSeconds(t, HOUR_MS)) });
       const token = randomToken(random);

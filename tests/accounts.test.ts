@@ -6,7 +6,7 @@ import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   ACCOUNTS_PER_IP_DAY, DAY_MS, HOUR_MS, LINKS_PER_EMAIL_HOUR, LINKS_PER_IP_HOUR, LINK_TTL_MS, MAX_CHILDREN, MAX_PARENTS, SESSION_ABSOLUTE_MS, SESSION_COOKIE, SESSION_IDLE_MS,
-  SESSION_ROTATE_AFTER_MS, canAddChild, canAddParent, clearedSessionCookie, cleanFavourites, cleanFirstName, hashEmail, hashIp, hashToken, isDeviceId, linkRefusal, needsRotation,
+  SESSION_ROTATE_AFTER_MS, SESSION_ROTATE_GRACE_MS, canAddChild, canAddParent, clearedSessionCookie, cleanFavourites, cleanFirstName, hashEmail, hashIp, hashToken, isDeviceId, linkRefusal, needsRotation,
   newSessionExpiry, normaliseEmail, randomId, randomToken, readCookie, retryAfterSeconds, sessionCookie, sessionVerdict, windowStart,
 } from "../shared/accounts";
 import {
@@ -28,9 +28,10 @@ const KID = { firstName: "Mia", favourites: { colour: "blue", fruit: "apple", an
 interface Res { status: number; body: Record<string, any>; text: string; cookie: string | null; headers: Headers }
 const wrapDb = (db: SqliteD1, rewrite: (sql: string) => string): AccountsDb => ({ prepare: (sql) => db.prepare(rewrite(sql)) });
 
-function app(opts: { env?: Partial<AccountsEnv>; deps?: AccountsDeps; rewrite?: (sql: string) => string; migrate?: boolean } = {}) {
+function app(opts: { env?: Partial<AccountsEnv>; deps?: AccountsDeps; rewrite?: (sql: string) => string; wrap?: (db: AccountsDb) => AccountsDb; migrate?: boolean } = {}) {
   const raw = sqliteD1({ migrations: opts.migrate === false ? [] : [MIGRATION] });
-  const db: AccountsDb = opts.rewrite ? wrapDb(raw, opts.rewrite) : raw;
+  const db0: AccountsDb = opts.rewrite ? wrapDb(raw, opts.rewrite) : raw;
+  const db: AccountsDb = opts.wrap ? opts.wrap(db0) : db0;
   const outbox: EmailMessage[] = [];
   const clock = { now: T0 };
   const handler = createAccountsHandler({ now: () => clock.now, sender: { send: async (m) => { outbox.push(m); } }, ...opts.deps });
@@ -128,6 +129,8 @@ describe("the pure rules (shared/accounts.ts)", () => {
     expect(sessionVerdict({ ...s, lastUsedMs: T0 + 80 * DAY_MS }, T0 + 90 * DAY_MS)).toBe("expired");
     expect(needsRotation(s, T0 + DAY_MS - 1)).toBe(false);
     expect(needsRotation(s, T0 + DAY_MS)).toBe(true);
+    expect(needsRotation({ ...s, expiresMs: T0 + DAY_MS + SESSION_ROTATE_GRACE_MS }, T0 + DAY_MS)).toBe(false);   // already in its grace after a rotation: not rotated twice
+    expect(needsRotation({ ...s, expiresMs: T0 + DAY_MS + SESSION_ROTATE_GRACE_MS + 1 }, T0 + DAY_MS)).toBe(true);
   });
   it("the session cookie is httpOnly, Secure, SameSite=Lax and site-wide, and a cleared one has no age", () => {
     const c = sessionCookie("abc", 2592000);
@@ -378,15 +381,31 @@ describe("email: off unless set up", () => {
     expect((await start()).status).toBe(503);
     expect(a.rows("login_links")).toEqual([]);
   });
-  it("the log backend records the message and is refused in production", async () => {
-    const dev = startWith({ EMAIL_BACKEND: "log" });
-    expect((await dev.start()).status).toBe(202);
-    expect(logOutbox).toHaveLength(1);
-    expect(logOutbox[0]).toMatchObject({ to: PARENT });
+  it("the log backend records the message in development and test, and is refused everywhere else, including where ENVIRONMENT is not set (the live Worker)", async () => {
+    for (const environment of ["test", "development"]) {
+      logOutbox.length = 0;
+      const dev = startWith({ EMAIL_BACKEND: "log", ENVIRONMENT: environment });
+      expect((await dev.start()).status, environment).toBe(202);
+      expect(logOutbox).toHaveLength(1);
+      expect(logOutbox[0]).toMatchObject({ to: PARENT });
+    }
     logOutbox.length = 0;
-    const prod = startWith({ EMAIL_BACKEND: "log", ENVIRONMENT: "production" });
-    expect((await prod.start()).status).toBe(503);
+    for (const environment of [undefined, "production", "staging", ""]) {
+      const refused = startWith({ EMAIL_BACKEND: "log", ENVIRONMENT: environment });
+      expect((await refused.start()).status, String(environment)).toBe(503);
+    }
     expect(logOutbox).toEqual([]);
+  });
+  it("only in development is the message also printed (so the link can be read from a real dev server), and nothing is printed in test", async () => {
+    const lines: string[] = [];
+    const spy = vi.spyOn(console, "log").mockImplementation((...a: unknown[]) => { lines.push(a.map(String).join(" ")); });
+    try {
+      await startWith({ EMAIL_BACKEND: "log", ENVIRONMENT: "test" }).start();
+      expect(lines).toEqual([]);
+      await startWith({ EMAIL_BACKEND: "log", ENVIRONMENT: "development" }).start();
+    } finally { spy.mockRestore(); }
+    expect(lines).toHaveLength(1);
+    expect(lines[0]).toMatch(/^ACCOUNT-MAIL \{.*\/\?signin=[A-Za-z0-9_-]{43}/);
   });
   it("resend and binding need their secrets; with them the sender is built (NOT verified against the real services)", () => {
     expect(selectSender({ EMAIL_BACKEND: "resend" })).toBeNull();
@@ -460,7 +479,7 @@ describe("sessions", () => {
       expect((await a.call(method, p, { body: KID, cookie: `tv_session=${"B".repeat(43)}` })).status).toBe(401);
     }
   });
-  it("inside 24 hours the same cookie keeps working and no new one is issued; after 24 hours it is replaced and the old one is dead", async () => {
+  it("inside 24 hours the same cookie keeps working and no new one is issued; after 24 hours it is replaced, and the old one works for two more minutes and then is dead", async () => {
     const a = app();
     const { cookie } = await a.signIn();
     a.clock.now = T0 + DAY_MS - 1;
@@ -471,10 +490,58 @@ describe("sessions", () => {
     expect(rotated.status).toBe(200);
     expect(rotated.cookie).toMatch(/^tv_session=/);
     expect(rotated.cookie).not.toBe(cookie);
-    expect((await a.call("GET", "/api/account/me", { cookie })).status).toBe(401);
+    expect(a.rows("sessions")).toHaveLength(2);                                                       // the old one (in its grace) and the new one
     expect((await a.call("GET", "/api/account/me", { cookie: rotated.cookie })).status).toBe(200);
+    a.clock.now = T0 + DAY_MS + SESSION_ROTATE_GRACE_MS - 1;
+    expect((await a.call("GET", "/api/account/me", { cookie })).status).toBe(200);                    // a tab that still holds the old cookie is not signed out
+    a.clock.now = T0 + DAY_MS + SESSION_ROTATE_GRACE_MS;
+    expect((await a.call("GET", "/api/account/me", { cookie })).status).toBe(401);                    // the grace is over
+    expect(a.rows("sessions")).toHaveLength(1);                                                       // the dead row went when it was found out
+    expect(a.rows("sessions")[0]!.expires_ms).toBe(T0 + SESSION_ABSOLUTE_MS);                         // a rotation does not extend the 90 days
+    expect((await a.call("GET", "/api/account/me", { cookie: rotated.cookie })).status).toBe(200);
+  });
+  it("two requests carrying the same old cookie at the same moment make ONE new session, and neither is signed out", async () => {
+    const a = app();
+    const { cookie } = await a.signIn();
+    a.clock.now = T0 + 2 * DAY_MS;
+    const first = await a.call("GET", "/api/account/me", { cookie });
+    const second = await a.call("GET", "/api/account/me", { cookie });
+    expect([first.status, second.status]).toEqual([200, 200]);
+    expect(first.cookie).toMatch(/^tv_session=/);
+    expect(second.cookie).toBeNull();                                                                   // the rotation was already claimed
+    expect(a.rows("sessions")).toHaveLength(2);
+    a.clock.now += 1000;
+    expect((await a.call("GET", "/api/account/me", { cookie: first.cookie })).cookie).toBeNull();      // and the new one is not rotated again for a day
+  });
+  it("two requests that are really in flight together (a barrier makes both read the old row before either writes) still make ONE new session", async () => {
+    let reads = 0, release!: () => void;
+    const gate = new Promise<void>((r) => { release = r; });
+    const barrier = (db: AccountsDb): AccountsDb => ({
+      prepare: (sql) => {
+        const st = db.prepare(sql);
+        if (!/^SELECT parent_id, family_id, created_ms/.test(sql)) return st;               // only the session lookup waits
+        return { bind: (...v) => { const b = st.bind(...v); return { ...b, first: async () => { const row = await b.first(); if (++reads >= 2) release(); await gate; return row; } }; } };
+      },
+    });
+    const a = app({ wrap: barrier });
+    const { cookie } = await a.signIn();
+    a.clock.now = T0 + 3 * DAY_MS;
+    reads = 0;
+    const both = await Promise.all([a.call("GET", "/api/account/me", { cookie }), a.call("GET", "/api/account/me", { cookie })]);
+    expect(reads).toBe(2);                                                                    // both really did read the old, unrotated row
+    expect(both.map((r) => r.status)).toEqual([200, 200]);
+    expect(both.filter((r) => r.cookie !== null)).toHaveLength(1);
+    expect(a.rows("sessions")).toHaveLength(2);
+  });
+  it("ended sessions and spent links are removed the next time anyone asks for a link: nothing is kept longer than it is useful", async () => {
+    const a = app();
+    await a.signIn();
+    expect(a.rows("login_links")).toHaveLength(1);
     expect(a.rows("sessions")).toHaveLength(1);
-    expect(a.rows("sessions")[0]!.expires_ms).toBe(T0 + SESSION_ABSOLUTE_MS); // a rotation does not extend the 90 days
+    a.clock.now = T0 + 91 * DAY_MS;                                                                      // the session is past its 90 days; the link is long past its 15 minutes
+    await a.call("POST", "/api/account/login/start", { body: { email: "other@example.com", role: "parent" } });
+    expect(a.rows("sessions")).toEqual([]);
+    expect(a.rows("login_links")).toHaveLength(1);                                                       // only the new link
   });
   it("30 days without use ends a session, and the row is removed", async () => {
     const a = app();

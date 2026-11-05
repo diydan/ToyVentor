@@ -15,6 +15,8 @@ export const LINK_TTL_MS = 15 * 60_000;
 export const SESSION_IDLE_MS = 30 * DAY_MS;
 export const SESSION_ABSOLUTE_MS = 90 * DAY_MS;
 export const SESSION_ROTATE_AFTER_MS = DAY_MS;
+/** After a rotation the OLD token keeps working for this long (a second tab that already sent it, or a response that never arrived, must not sign the grown-up out). */
+export const SESSION_ROTATE_GRACE_MS = 2 * 60_000;
 export const LINKS_PER_EMAIL_HOUR = 3;
 export const LINKS_PER_IP_HOUR = 10;
 export const ACCOUNTS_PER_IP_DAY = 5;
@@ -130,8 +132,8 @@ export function sessionVerdict(s: SessionTimes, nowMs: number): "valid" | "expir
   if (nowMs - s.lastUsedMs > SESSION_IDLE_MS) return "expired";
   return "valid";
 }
-/** A token older than 24 hours is replaced by a new one on its next use. */
-export const needsRotation = (s: SessionTimes, nowMs: number): boolean => nowMs - s.createdMs >= SESSION_ROTATE_AFTER_MS;
+/** A token older than 24 hours is replaced by a new one on its next use, unless it is already in its short grace after a rotation (its end is then less than the grace away: it is not rotated twice). */
+export const needsRotation = (s: SessionTimes, nowMs: number): boolean => nowMs - s.createdMs >= SESSION_ROTATE_AFTER_MS && s.expiresMs - nowMs > SESSION_ROTATE_GRACE_MS;
 
 // ---- cookies --------------------------------------------------------------------------------------------------------------------------------------------------------
 
