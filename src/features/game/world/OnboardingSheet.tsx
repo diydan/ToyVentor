@@ -30,9 +30,15 @@ export interface OnboardingSheetProps {
 
 /** The world's report of each part tapped into place (runtime/world.ts onbPlace). */
 export const PROGRESS_EVENT = "tv-onb-progress";
+/** The world says a brick is in the child's hand (`held`: true) or let go: Kip waits for a held brick instead of building himself over it. */
+export const GRAB_EVENT = "tv-onb-grab";
+/** A hold that never lets go (a lost finger) stops counting after this long, so the build can never stall on it. */
+export const GRAB_MAX_MS = 25000;
 /** How long the pile waits for a first tap, and for another after a tap, before Kip builds himself. */
 export const TAP_IDLE_MS = 4500;
 export const TAP_IDLE_AFTER_TAP_MS = 3500;
+/** The build carries the parts for up to 3.4 s, then the finished blueprint shows for 0.7 s, then he arrives (world.ts ONBS build). */
+export const BUILD_DONE_MS = 4400;
 
 const reduced = (): boolean => { try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch { return false; } };
 const todayIso = (): string => new Date().toISOString();
@@ -187,6 +193,19 @@ export function OnboardingSheet({ onClose, onStage, onHold, onPickUp, onIntroSta
   // when nothing has been tapped for a few seconds (Dan: "we should not opt in to build Kip"), carrying whatever is left, and "Build it for me" does the same at once.
   const [placed, setPlaced] = useState(0);
   const [total, setTotal] = useState(0);
+  const [held, setHeld] = useState(false);
+  useEffect(() => {
+    if (scene !== "pile") { setHeld(false); return; }
+    let cap: number | null = null;
+    const on = (e: Event) => {
+      const h = !!(e as CustomEvent<{ held?: boolean }>).detail?.held;
+      if (cap !== null) { window.clearTimeout(cap); cap = null; }
+      setHeld(h);
+      if (h) cap = window.setTimeout(() => setHeld(false), GRAB_MAX_MS);
+    };
+    window.addEventListener(GRAB_EVENT, on);
+    return () => { window.removeEventListener(GRAB_EVENT, on); if (cap !== null) window.clearTimeout(cap); };
+  }, [scene]);
   useEffect(() => {
     if (scene !== "pile") return;
     const on = (e: Event) => {
@@ -199,11 +218,11 @@ export function OnboardingSheet({ onClose, onStage, onHold, onPickUp, onIntroSta
     return () => window.removeEventListener(PROGRESS_EVENT, on);
   }, [scene]);
   useEffect(() => {
-    if (scene !== "pile") return;
+    if (scene !== "pile" || held) return;                               // a brick in the child's hand: wait for it (the world lets go on release, cancel, or after 20 s)
     const t = window.setTimeout(() => buildKip(), placed > 0 ? TAP_IDLE_AFTER_TAP_MS : TAP_IDLE_MS);
     return () => window.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scene, placed]);
+  }, [scene, placed, held]);
   // closing the sheet part-way puts Kip back (a built Kip is untouched, and a pair of headphones already on stays on)
   useEffect(() => () => { if (laid.current || staged.current) onStage("abort"); }, []);
   // the headphones: they appear when the song is complete (and Kip is built), and the player picks them up to start the dance
@@ -215,7 +234,7 @@ export function OnboardingSheet({ onClose, onStage, onHold, onPickUp, onIntroSta
   const buildKip = () => {
     setScene("building");
     onStage("build");
-    timers.current.push(window.setTimeout(() => setScene("built"), 3600));
+    timers.current.push(window.setTimeout(() => setScene("built"), BUILD_DONE_MS));
   };
   const backFromBuild = () => { onStage("abort"); laid.current = false; staged.current = false; back(); };
 
@@ -357,7 +376,7 @@ export function OnboardingSheet({ onClose, onStage, onHold, onPickUp, onIntroSta
             {scene === "pile" && (
               <>
                 {heading("Kip is a pile of parts!")}
-                <p className="tv-onb-p" role="status">{placed > 0 ? `${placed} of ${total} parts are in place. Keep tapping!` : `Tap the parts to build Kip, ${name}! Or just wait: he builds himself.`}</p>
+                <p className="tv-onb-p" role="status">{placed > 0 ? `${placed} of ${total} parts are in place. Keep going!` : `Tap or drag the parts to build Kip, ${name}! Or just wait: he builds himself.`}</p>
                 <div className="tv-onb-nav">
                   <button type="button" className="tv-ctl" onClick={backFromBuild}>Back</button>
                   <button type="button" className="tv-ctl tv-ctl-primary" onClick={buildKip} data-onb-build>Build it for me</button>

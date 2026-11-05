@@ -3,7 +3,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { TITLE_ENTRIES } from "../src/features/game/world/titleEntries";
-import { PROGRESS_EVENT, TAP_IDLE_AFTER_TAP_MS, TAP_IDLE_MS } from "../src/features/game/world/OnboardingSheet";
+import { BUILD_DONE_MS, GRAB_EVENT, GRAB_MAX_MS, PROGRESS_EVENT, TAP_IDLE_AFTER_TAP_MS, TAP_IDLE_MS } from "../src/features/game/world/OnboardingSheet";
 
 const read = (p: string) => readFileSync(new URL(`../${p}`, import.meta.url), "utf8");
 const canvas = read("src/features/game/world/GameCanvas.tsx");
@@ -117,7 +117,7 @@ describe("no Kip before the pile, headphones on the head, no hovering dance", ()
     expect(canvas).toContain('engineRef.current.onbStage("hide"); if (titleOpen) chooseTitle("play");');
     expect(world).toContain('if(op==="hide"){ONBW=true;if(P.model)P.model.visible=false;blob.visible=false;return}');
     expect(world).toContain(" IDLEB.update();\n if(ONBW){if(P.model)P.model.visible=false;blob.visible=false;if(W.root)W.root.visible=false}\n"); // enforced every frame (Kip and the Toy Room), so a rebuilt model or room is never seen
-    expect(world).toContain("var show=function(){ONBW=false;"); // and every way out (build done, abort, end) gives him back
+    expect(world).toContain("var show=function(){var hd=BG.cancel();if(hd)ONBDONE(hd,false);ONBFOCUS=null;ONBW=false;"); // and every way out (build done, abort, end) gives him back (and lets go of a brick in the hand)
     expect(world).toContain("ONBGH=null}ONBW=true;if(hex){save();buildPlayer(null)}"); // the pile keeps him hidden: no show() between the hide and the last part
     expect(world).toContain("if(reduce){show();return}"); // reduced motion: no pile, so he must not stay hidden
   });
@@ -137,9 +137,9 @@ describe("no Kip before the pile, headphones on the head, no hovering dance", ()
 
 describe("the build starts in a workshop with a blueprint", () => {
   it("the workshop dressing is built when the pile is laid out, replaces the Toy Room while the build holds, and goes (with the room coming back) on every exit", () => {
-    expect(world).toContain('import { buildWorkshop, disposeWorkshop } from "./workshopScene";');
+    expect(world).toContain('import { blueprintRegion, buildWorkshop, disposeWorkshop, regionFractions, setBlueprintState, type BrickPart } from "./workshopScene";');
     expect(world).toContain("if(!ONBK){ONBK=buildWorkshop({x:P.pos.x,z:P.pos.z,accent:S.col.c1});scene.add(ONBK)}");
-    expect(world).toContain("var show=function(){ONBW=false;ONBD=false;if(ONBGH){if(ONBGH.parent)ONBGH.parent.remove(ONBGH);ONBGH=null}if(ONBK){disposeWorkshop(ONBK);ONBK=null}if(W.root)W.root.visible=true;");
+    expect(world).toContain("ONBW=false;ONBD=false;if(ONBGH){if(ONBGH.parent)ONBGH.parent.remove(ONBGH);ONBGH=null}if(ONBK){disposeWorkshop(ONBK);ONBK=null}if(W.root)W.root.visible=true;");
   });
 });
 
@@ -231,20 +231,65 @@ describe("tap-to-build (kid bench slice 2)", () => {
   });
   it("a tapped part (or the nearest to the ray within half a unit) is carried to its seat, reported through the window event, and the last one is the build's own arrival", () => {
     expect(world).toContain("function onbPlace(gg: any,it: any){");
-    expect(world).toContain('window.dispatchEvent(new CustomEvent("tv-onb-progress",{detail:{placed:placed,total:seats.length,done:all}}));');
+    expect(world).toContain('window.dispatchEvent(new CustomEvent("tv-onb-progress",{detail:{placed:placed,total:seats.length,done:false}}));'); // "done" comes with the arrival, after a moment on the finished blueprint
     expect(world).toContain('if(all)ONBS("finish")})}');
     expect(world).toContain("var best=.55;open.forEach(");
-    expect(world).toContain('if(op==="finish"){if(!ONBG)return;show();burst(');
+    expect(world).toContain('if(op==="finish"){var gf=ONBG;if(!gf)return;');
+    expect(world).toContain('detail:{placed:nf,total:nf,done:true}');
     expect(PROGRESS_EVENT).toBe("tv-onb-progress");
   });
   it("the build op carries only the parts not yet seated, stops the taps, and still finishes when none is left", () => {
     expect(world).toContain("gg.userData.running=true;");
-    expect(world).toContain("var seats2=gg.userData.seats.filter(function(s: any){return !s.done&&!s.fly}),n=seats2.length,TOT=n>0?Math.max(1.4,Math.min(3.4,.9+.15*n)):.2,");
+    expect(world).toContain("var sAll=gg.userData.seats,seats2=sAll.filter(function(s: any){return !s.done&&!s.fly}),n=seats2.length,TOT=n>0?Math.max(1.4,Math.min(3.4,.9+.15*n)):.2,");
   });
   it("the sheet listens for the progress, counts it, and a finished pile shows the built Kip", () => {
     expect(sheet).toContain("window.addEventListener(PROGRESS_EVENT, on);");
     expect(sheet).toContain('if (d.done) setScene("built");');
-    expect(sheet).toContain("}, [scene, placed]);");
+    expect(sheet).toContain("}, [scene, placed, held]);");
     expect(sheet).toContain("onClick={buildKip} data-onb-build");
+  });
+});
+
+describe("the blueprint fills in and a brick can be dragged (kid bench slice 2, 2026-11-05)", () => {
+  it("every brick learns its region when the pile is laid, from where it hangs in the rig (hat, tail, head, a shoe's foot or boot, an arm or a leg holder, else the torso), not from its height", () => {
+    expect(world).toContain("function onbPart(o: any): {part: BrickPart;side: number}{");
+    for (const part of ['a.userData&&a.userData.hatCad)return {part:"hat"', 'r.tail&&a===r.tail)return {part:"tail"', 'a===r.head)return {part:"head"', 'a===lg.foot||a===lg.boot))return {part:"shoe"', 'a===r.arms[i])return {part:"arm"', 'a===r.feet[i])return {part:"leg"', 'return {part:"torso",side:0}}']) expect(world, part).toContain(part);
+    expect(world).toContain("it.region=blueprintRegion(pt.part,pt.side,{dx:it.p.x-P.pos.x,y:it.p.y})");
+  });
+  it("the poster is redrawn when the pile is laid (outline only in Dress), when a brick lands, when a build tween lands one, and when everything is in", () => {
+    expect(world).toContain("function onbBP(){");
+    expect(world).toContain("setBlueprintState(ONBK,{fill:regionFractions(seats.map(function(s: any){return {region:s.region,lit:!!s.lit}})),focus:ONBFOCUS})");
+    expect(world).toContain("P.model.visible=false;blob.visible=false;onbBP()};");                    // the lay
+    expect(world).toContain("it.fly=false;it.done=true;it.lit=true;onbBP();");                        // a tapped or dragged brick lands
+    expect(world).toContain("if(u>=1&&!it.lit){it.lit=true;lit=true}}if(lit)onbBP()");                 // the build's bricks land one by one
+    expect(world).toContain("sAll.forEach(function(s: any){s.lit=true});onbBP();");                   // all in: gold, BUILT
+  });
+  it("he arrives after a moment on the finished blueprint (0.7 s), at once for reduced motion, in the build and in the all-tapped finish", () => {
+    expect(world).toContain("if(reduce)arrive();else setTimeout(arrive,700)");
+    expect(world).toContain("if(reduce)arrive2();else setTimeout(arrive2,700);return}");
+  });
+  it("a press on a brick is a grab (the tap places it on release), a drag lifts it under the finger with a ghost at its seat and its region dashed, and the ghost's geometry is never disposed", () => {
+    expect(world).toContain("if(pick)ONBGRAB(e,gg,pick)}");
+    expect(world).toContain('import { createBrickGrab } from "./brickGrab";');
+    expect(world).toContain("var BG=createBrickGrab<any>({threshold:9,maxMs:20000,onExpire:function(h: any){ONBDONE(h,true)}});");
+    expect(world).toContain("if(v===\"start\"){ONBGHOST=onbGhost(it);ONBFOCUS=it.region;onbBP();sfx.pop()}");
+    expect(world).toContain("ONBGHOST.material.dispose();");
+    expect(world).not.toContain("ONBGHOST.geometry.dispose");
+    expect(world).toContain('canvas.addEventListener("pointermove",ONBMOVE);canvas.addEventListener("pointerup",ONBUP);canvas.addEventListener("pointercancel",ONBUP);canvas.addEventListener("lostpointercapture",ONBUP);');
+  });
+  it("every way a hold ends carries the brick on: release, cancel and lost pointer all go through ONBUP, the expiry through onExpire, a second finger through down(), the build and abort through show()", () => {
+    expect(world).toContain("function ONBUP(e: PointerEvent){var hd=BG.up(e.pointerId);if(hd)ONBDONE(hd,true)}");
+    expect(world).toContain("var prev=BG.down(it,e.pointerId,e.clientX,e.clientY);if(prev)ONBDONE(prev,true);");
+    expect(world).toContain("if(place&&ONBG===gg&&!gg.userData.running&&!it.done&&!it.fly){if(hd.moved){it.pp.copy(it.m.position);it.pq.copy(it.m.quaternion)}onbPlace(gg,it)}");
+    expect(world).toContain("seats2.forEach(function(s: any){if(s.held){s.pp.copy(s.m.position);s.pq.copy(s.m.quaternion)}});");   // a held brick is carried from the hand when the build starts
+  });
+  it("the sheet waits for a held brick (and stops waiting after 25 s), builds himself again on release, and says drag as well as tap", () => {
+    expect(GRAB_EVENT).toBe("tv-onb-grab");
+    expect(GRAB_MAX_MS).toBeGreaterThan(20000);
+    expect(sheet).toContain('if (scene !== "pile" || held) return;');
+    expect(sheet).toContain("if (h) cap = window.setTimeout(() => setHeld(false), GRAB_MAX_MS);");
+    expect(sheet).toContain("Tap or drag the parts to build Kip");
+    expect(sheet).toContain("window.setTimeout(() => setScene(\"built\"), BUILD_DONE_MS)");
+    expect(BUILD_DONE_MS).toBeGreaterThanOrEqual(3400 + 700);                                        // the longest build plus the moment on the finished blueprint
   });
 });

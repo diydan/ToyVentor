@@ -181,7 +181,8 @@ import { createMess } from "./mess";
 import { migrateOldStockKip } from "./kipLook";
 import { trimTinyCasters } from "./shadowProxy";
 import { createFaceUser } from "./faceUser";
-import { buildWorkshop, disposeWorkshop } from "./workshopScene";
+import { createBrickGrab } from "./brickGrab";
+import { blueprintRegion, buildWorkshop, disposeWorkshop, regionFractions, setBlueprintState, type BrickPart } from "./workshopScene";
 import { buildCleanCart } from "./cleanScene";
 import { buildHobProp } from "./cookScene";
 import { createActivities } from "./activities";
@@ -1167,10 +1168,10 @@ function onbPlace(gg: any,it: any){
  it.fly=true;var tk=ONBT;sfx.pop();
  tween(.8,function(k: number){if(ONBG!==gg)return;var e=k*k*(3-2*k);it.m.position.lerpVectors(it.pp,it.p,e);it.m.position.y+=Math.sin(Math.PI*e)*1.2;it.m.quaternion.slerpQuaternions(it.pq,it.q,e)}).then(function(){
   if(ONBG!==gg||tk!==ONBT)return;
-  it.fly=false;it.done=true;it.m.position.copy(it.p);it.m.quaternion.copy(it.q);
+  it.fly=false;it.done=true;it.lit=true;onbBP();it.m.position.copy(it.p);it.m.quaternion.copy(it.q);
   var seats=gg.userData.seats,placed=0;seats.forEach(function(s: any){if(s.done)placed++});
   var all=placed===seats.length;
-  window.dispatchEvent(new CustomEvent("tv-onb-progress",{detail:{placed:placed,total:seats.length,done:all}}));
+  window.dispatchEvent(new CustomEvent("tv-onb-progress",{detail:{placed:placed,total:seats.length,done:false}})); // "done" is told when he arrives (ONBS finish), after a moment on the finished blueprint
   if(all)ONBS("finish")})}
 function ONBTAP(e: PointerEvent){
  var gg=ONBG;if(!gg||ONBD||gg.userData.running)return;var seats=gg.userData.seats;if(!seats)return;
@@ -1179,11 +1180,11 @@ function ONBTAP(e: PointerEvent){
  var hits=ray.intersectObjects(open.map(function(s: any){return s.m}),false),pick: any=null;
  if(hits.length)pick=open.filter(function(s: any){return s.m===hits[0]!.object})[0];
  else{var best=.55;open.forEach(function(s: any){var d=ray.ray.distanceToPoint(s.m.position);if(d<best){best=d;pick=s}})}
- if(pick)onbPlace(gg,pick)}
+ if(pick)ONBGRAB(e,gg,pick)}
 function cuSlot(s: string){B.slot=s;sfx.pop();renderSheet()}
 function cuPart(id: string){var slotId=B.slot||"base",k=slotPartKey(S.type,slotId,id),p=PART[k];if(!p)return;if(!isOpen(k)){toast("Find it in "+WN[p.w]+".");sfx.bump();return}cur()[slotId]=id;save();buildPlayer(slotId);partSound(k);renderSheet()}
 /* The new-player setup's "meet Kip" scene (OnboardingSheet.tsx, docs/specs/accounts-and-new-user-spec.md section 8). Kip lies in a PILE OF HIS REAL PARTS on the Toy Room floor (every mesh of his rig is cloned, sharing the real STL geometry and materials, so the pile is the demo's parts and not stand-ins), and on "build" each part is carried from the pile to its seat, lowest first, the way the Kip demo's Describe and Build carries its parts (parts/kip/viewer/kip-describe-view.js pilePlan and pileFrame): lifted, carried over, set down. The real Kip stays hidden until the last part lands, and then appears with a pop. `pile` also paints the shirt the favourite colour and turns Kip to face the screen (so the seats match where he will stand). Then the HEADPHONES: `phonesShow` floats a pair beside Kip when the song is ready, `phones` carries them to his head (they then follow it), `phonesOff` takes them away when the song is over. Ops: dress (the real Kip in the workshop, live), pile, finish (the last part was tapped into place), build, abort (put Kip back, keep the headphones; during Dress also put the old look back), end (everything), phonesShow, phones, phonesOff. */
-var ONBG: THREE.Group | null=null,ONBH: THREE.Group | null=null,ONBK: THREE.Group | null=null,ONBT=0,ONBW=false,ONBD=false,ONBGH: any=null,ONBPRE: any=null,ONBL=0; // ONBW: Kip is held hidden every frame (no Kip is ever seen before the pile); ONBD: the DRESS step shows the real Kip in the workshop (ONBGH: the Kip he was a moment ago, kept on show until the new one's parts have loaded; ONBPRE: the look to put back if the setup is left before the build)
+var ONBG: THREE.Group | null=null,ONBH: THREE.Group | null=null,ONBK: THREE.Group | null=null,ONBT=0,ONBW=false,ONBD=false,ONBGH: any=null,ONBPRE: any=null,ONBL=0,ONBGHOST: any=null,ONBFOCUS: any=null; // ONBW: Kip is held hidden every frame (no Kip is ever seen before the pile); ONBD: the DRESS step shows the real Kip in the workshop (ONBGH: the Kip he was a moment ago, kept on show until the new one's parts have loaded; ONBPRE: the look to put back if the setup is left before the build)
 /* "Dress your Kip": the outfit the child picked (one JSON object, or a plain shirt hex) put on the saved character: only valid hex colours and plain strings. The hair style, hat and tail are the character's own slots (cur(), that is S.sel.character): the first version wrote them on S.sel itself, where nothing reads them, so those three picks never reached the real Kip. Returns whether anything changed; the caller saves and rebuilds. */
 function onbOutfit(hex: string): boolean{
  var sl=cur(),sig=function(){return JSON.stringify([S.col.c1,S.col.c2,S.col.boots,S.col.skin,S.col.hair,sl.hair,sl.hat,sl.tail])},was=sig(),cf: any=null;
@@ -1193,6 +1194,51 @@ function onbOutfit(hex: string): boolean{
   if(typeof cf.hair==="string")sl.hair=cf.hair;if(typeof cf.hat==="string")sl.hat=cf.hat;if(typeof cf.tail==="string")sl.tail=cf.tail}
  else if((qq=hexOk(hex)))S.col.c1=qq;
  return sig()!==was}
+/* The blueprint on the workshop wall fills in as bricks land (kid bench slice 2): every brick knows its region (onbPart reads it from where the brick hangs in the rig, which holds in any pose), and onbBP redraws the poster
+   with each region's share built and the region of the brick in the child's hand dashed. The Dress step shows the outline only (nothing has landed). */
+function onbPart(o: any): {part: BrickPart;side: number}{
+ var r: any=P.rig;if(!r)return {part:"other",side:0};
+ for(var a=o;a&&a!==r.g;a=a.parent){
+  if(a.userData&&a.userData.hatCad)return {part:"hat",side:0};
+  if(r.tail&&a===r.tail)return {part:"tail",side:0};
+  if(a===r.head)return {part:"head",side:0};
+  for(var i=0;i<2;i++){
+   var lg=r.snap&&r.snap.legs&&r.snap.legs[i];
+   if(lg&&(a===lg.foot||a===lg.boot))return {part:"shoe",side:i};
+   if(r.arms&&a===r.arms[i])return {part:"arm",side:i};
+   if(r.feet&&a===r.feet[i])return {part:"leg",side:i}}}
+ return {part:"torso",side:0}}
+function onbBP(){
+ var gg=ONBG,seats=gg&&gg.userData.seats;if(!ONBK||!seats)return;
+ setBlueprintState(ONBK,{fill:regionFractions(seats.map(function(s: any){return {region:s.region,lit:!!s.lit}})),focus:ONBFOCUS})}
+/* Drag a brick to its seat: press a brick and it is held (the rules are brickGrab.ts: a tap, a drag past 9 px, every way a hold ends, another finger ignored, a 20 s expiry). A plain tap (no move) carries the
+   brick to its seat as it always did; a drag lifts it under the finger, shows a faint copy of the brick where it will go and dashes its region on the blueprint; letting go, wherever, carries it the rest of the way.
+   Release, cancel, a lost pointer, the build starting, abort and the expiry all end the hold, so nothing can wait on a finger that is gone. The ghost shares the rig's geometry: only its own material is disposed. */
+var ONBPL=new T.Plane(new T.Vector3(0,1,0),-1.15),ONBHP=new T.Vector3();
+var BG=createBrickGrab<any>({threshold:9,maxMs:20000,onExpire:function(h: any){ONBDONE(h,true)}});
+function onbGhost(it: any){
+ var m=new T.Mesh(it.o.geometry,new T.MeshBasicMaterial({color:0xbfeaff,transparent:true,opacity:.5,depthWrite:false}));
+ m.position.copy(it.p);m.quaternion.copy(it.q);m.scale.copy(it.s);m.renderOrder=5;scene.add(m);return m}
+function ONBGRAB(e: PointerEvent,gg: any,it: any){
+ it.grp=gg;var prev=BG.down(it,e.pointerId,e.clientX,e.clientY);if(prev)ONBDONE(prev,true); // a second finger: the first brick is carried on
+ it.held=true;
+ try{canvas.setPointerCapture(e.pointerId)}catch(_){}
+ window.dispatchEvent(new CustomEvent("tv-onb-grab",{detail:{held:true}}))}
+function ONBMOVE(e: PointerEvent){
+ var v=BG.move(e.pointerId,e.clientX,e.clientY);if(v==="ignore")return;
+ var hd=BG.held;if(!hd)return;var it=hd.item,gg=it.grp;if(ONBG!==gg||gg.userData.running)return;
+ if(v==="start"){ONBGHOST=onbGhost(it);ONBFOCUS=it.region;onbBP();sfx.pop()}
+ rayAt(e.clientX,e.clientY);
+ if(ray.ray.intersectPlane(ONBPL,ONBHP)){var c=it.pp;ONBHP.x=Math.max(c.x-6,Math.min(c.x+6,ONBHP.x));ONBHP.z=Math.max(P.pos.z-3,Math.min(P.pos.z+2.5,ONBHP.z));it.m.position.copy(ONBHP);it.m.quaternion.slerp(it.q,.12)}}
+function ONBUP(e: PointerEvent){var hd=BG.up(e.pointerId);if(hd)ONBDONE(hd,true)}
+function ONBDONE(hd: any,place: boolean){
+ var it=hd.item,gg=it.grp;it.held=false;
+ try{canvas.releasePointerCapture(hd.id)}catch(_){}
+ if(ONBGHOST){scene.remove(ONBGHOST);ONBGHOST.material.dispose();ONBGHOST=null}
+ if(ONBFOCUS){ONBFOCUS=null;onbBP()}
+ if(!BG.held)window.dispatchEvent(new CustomEvent("tv-onb-grab",{detail:{held:false}}));
+ if(place&&ONBG===gg&&!gg.userData.running&&!it.done&&!it.fly){if(hd.moved){it.pp.copy(it.m.position);it.pq.copy(it.m.quaternion)}onbPlace(gg,it)}}
+canvas.addEventListener("pointermove",ONBMOVE);canvas.addEventListener("pointerup",ONBUP);canvas.addEventListener("pointercancel",ONBUP);canvas.addEventListener("lostpointercapture",ONBUP);
 /* The pile of Kip's REAL parts (Dan, 2026-11-05: "we still don't start with a pile of bricks"): every mesh of his rig cloned, sharing the real geometry and materials, thrown on the workshop floor. The DRESS step lays it
    and re-lays it with every pick (a colour or a part changes on the pile at once: the layout is a function of the part's place in the rig, so a colour change leaves every brick where it was), and the build step starts
    from the very same pile. A newer lay cancels an older one, and the old pile stays on show until the new one is ready (no blink). */
@@ -1212,12 +1258,13 @@ function onbLay(){
    it.pp=new T.Vector3(hx+Math.cos(a)*r,.12+((i*13)%5)*.07,hz+Math.sin(a)*r*.7);
    eu.set(((i*53)%7)/7*Math.PI*2,((i*29)%11)/11*Math.PI*2,((i*17)%5)/5*Math.PI*2);it.pq=new T.Quaternion().setFromEuler(eu);
    m.position.copy(it.pp);m.quaternion.copy(it.pq);m.scale.copy(it.s);g.add(m);it.m=m});
+  seats.forEach(function(it){var pt=onbPart(it.o);it.region=blueprintRegion(pt.part,pt.side,{dx:it.p.x-P.pos.x,y:it.p.y})}); // which part of the blueprint this brick is
   g.userData.seats=seats;g.userData.total=seats.length;
   var oldG=ONBG;ONBG=g;scene.add(g);if(oldG&&oldG.parent)oldG.parent.remove(oldG);
-  P.model.visible=false;blob.visible=false};
+  P.model.visible=false;blob.visible=false;onbBP()};
  setTimeout(lay,220)}
 function ONBS(op: string,hex?: string){
- var show=function(){ONBW=false;ONBD=false;if(ONBGH){if(ONBGH.parent)ONBGH.parent.remove(ONBGH);ONBGH=null}if(ONBK){disposeWorkshop(ONBK);ONBK=null}if(W.root)W.root.visible=true;if(ONBG){if(ONBG.parent)ONBG.parent.remove(ONBG);ONBG=null}if(P.model)P.model.visible=true;blob.visible=true};
+ var show=function(){var hd=BG.cancel();if(hd)ONBDONE(hd,false);ONBFOCUS=null;ONBW=false;ONBD=false;if(ONBGH){if(ONBGH.parent)ONBGH.parent.remove(ONBGH);ONBGH=null}if(ONBK){disposeWorkshop(ONBK);ONBK=null}if(W.root)W.root.visible=true;if(ONBG){if(ONBG.parent)ONBG.parent.remove(ONBG);ONBG=null}if(P.model)P.model.visible=true;blob.visible=true};
  var dropPhones=function(){if(ONBH){if(ONBH.parent)ONBH.parent.remove(ONBH);ONBH=null}};
  if(op==="abort"){ONBT++;var pre=ONBD?ONBPRE:null;ONBPRE=null;show();if(pre&&S.type==="character"){var sl0=cur();["c1","c2","boots","skin","hair"].forEach(function(k){(S.col as any)[k]=pre.col[k]});["hair","hat","tail"].forEach(function(k){sl0[k]=pre.sel[k]});save();buildPlayer(null)}return}
  if(op==="end"){ONBT++;ONBPRE=null;show();dropPhones();return}
@@ -1246,11 +1293,16 @@ function ONBS(op: string,hex?: string){
  if(op==="build"){
   var gg=ONBG,tk2=ONBT;if(!gg){show();return}
   gg.userData.running=true; // the child's taps (ONBTAP) stop here: the rest of the parts are carried by themselves
-  var seats2=gg.userData.seats.filter(function(s: any){return !s.done&&!s.fly}),n=seats2.length,TOT=n>0?Math.max(1.4,Math.min(3.4,.9+.15*n)):.2,DUR=.9,STAG=Math.max(.02,(TOT-DUR)/Math.max(1,n-1));
+  var sAll=gg.userData.seats,seats2=sAll.filter(function(s: any){return !s.done&&!s.fly}),n=seats2.length,TOT=n>0?Math.max(1.4,Math.min(3.4,.9+.15*n)):.2,DUR=.9,STAG=Math.max(.02,(TOT-DUR)/Math.max(1,n-1));
   sfx.pop();
-  tween(TOT,function(k: number){var t=k*TOT;for(var i=0;i<n;i++){var it=seats2[i],u=Math.max(0,Math.min(1,(t-i*STAG)/DUR)),e=u*u*(3-2*u);it.m.position.lerpVectors(it.pp,it.p,e);it.m.position.y+=Math.sin(Math.PI*e)*1.4;it.m.quaternion.slerpQuaternions(it.pq,it.q,e)}}).then(function(){if(ONBG!==gg||tk2!==ONBT)return;show();burst(new T.Vector3(P.pos.x,1.3,P.pos.z),"rgba(255,255,255,1)",14);sfx.pop();P.happy=1.4;P.hop=Math.max(P.hop,.5)});
+  seats2.forEach(function(s: any){if(s.held){s.pp.copy(s.m.position);s.pq.copy(s.m.quaternion)}}); // a brick still in the child's hand starts from the hand
+  tween(TOT,function(k: number){var t=k*TOT,lit=false;for(var i=0;i<n;i++){var it=seats2[i],u=Math.max(0,Math.min(1,(t-i*STAG)/DUR)),e=u*u*(3-2*u);it.m.position.lerpVectors(it.pp,it.p,e);it.m.position.y+=Math.sin(Math.PI*e)*1.4;it.m.quaternion.slerpQuaternions(it.pq,it.q,e);if(u>=1&&!it.lit){it.lit=true;lit=true}}if(lit)onbBP()}).then(function(){if(ONBG!==gg||tk2!==ONBT)return;sAll.forEach(function(s: any){s.lit=true});onbBP();
+   var arrive=function(){if(ONBG!==gg||tk2!==ONBT)return;show();burst(new T.Vector3(P.pos.x,1.3,P.pos.z),"rgba(255,255,255,1)",14);sfx.pop();P.happy=1.4;P.hop=Math.max(P.hop,.5)};
+   if(reduce)arrive();else setTimeout(arrive,700)}); // every part is in place: the blueprint is whole (gold, BUILT) for a moment, then he arrives
   return}
- if(op==="finish"){if(!ONBG)return;show();burst(new T.Vector3(P.pos.x,1.3,P.pos.z),"rgba(255,255,255,1)",14);sfx.pop();P.happy=1.4;P.hop=Math.max(P.hop,.5);return} // the last tapped part landed: the same arrival as the build's
+ if(op==="finish"){var gf=ONBG;if(!gf)return;var tkf=ONBT,nf=gf.userData.seats.length;gf.userData.running=true;onbBP();
+  var arrive2=function(){if(ONBG!==gf||tkf!==ONBT)return;show();burst(new T.Vector3(P.pos.x,1.3,P.pos.z),"rgba(255,255,255,1)",14);sfx.pop();P.happy=1.4;P.hop=Math.max(P.hop,.5);window.dispatchEvent(new CustomEvent("tv-onb-progress",{detail:{placed:nf,total:nf,done:true}}))};
+  if(reduce)arrive2();else setTimeout(arrive2,700);return} // the last tapped part landed: a moment on the finished blueprint, then the same arrival as the build's
  if(op==="phonesShow"&&!ONBH){var h=phones();ONBH=h;scene.add(h);h.position.set(P.pos.x+1.7,1.3,P.pos.z+.5);sfx.pop();burst(h.position.clone(),"rgba(255,255,255,1)",10);
   fx.push({t:0,d:600,f:function(_k: number,dt: number){if(ONBH!==h||h.userData.worn||h.userData.flying)return;h.position.y=1.3+Math.sin(performance.now()/300)*.12;h.rotation.y+=dt*1.2},end:function(){}});return}
  if(op==="phones"){

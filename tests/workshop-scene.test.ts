@@ -49,11 +49,13 @@ describe("buildWorkshop", () => {
   });
   it("says where the bench, the poster and the floor are, so the caller can place the pile and aim the camera", () => {
     expect(g.userData.bench).toMatchObject({ x: 10 + WORKSHOP.benchDX, z: 1 + WORKSHOP.benchDZ, topY: 1 });
-    expect(g.userData.poster).toMatchObject({ x: 10 + WORKSHOP.posterDX, y: 2.6, z: 1 - 4.55, w: 4.2, h: 3 });
+    expect(g.userData.poster).toMatchObject({ x: 10 + WORKSHOP.posterDX, y: 1.75, z: 1 - 4.55, w: 3.6, h: 2.7 });
     expect(g.userData.floor).toMatchObject({ z0: -4, z1: 3 });
     const poster = new THREE.Box3().setFromObject(named(g, "blueprint")[0]!);
     expect(poster.max.z).toBeCloseTo(1 - 4.55, 5);
-    expect(poster.max.y - poster.min.y).toBeCloseTo(3, 5);
+    expect(poster.max.y - poster.min.y).toBeCloseTo(2.7, 5);
+    expect(poster.max.y).toBeLessThan(3.2);                          // the camera shows the wall up to about y = 3.2: the whole blueprint is in view (2026-11-05)
+    expect(poster.min.y).toBeGreaterThan(0.3);                        // and it clears the Dress card's top edge
   });
   it("two workshops share no material and no geometry", () => {
     const a = buildWorkshop({ x: 0, z: 0 }), b = buildWorkshop({ x: 0, z: 0 });
