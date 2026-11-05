@@ -934,18 +934,20 @@ function applyCharacterStlRig(
   // Hat / Crown
   const hatSlot = rig.slots.hat ?? new T.Group();
   // The slot made by the placeholder rig hangs on the placeholder's head group, which disposeSlotChildren(base) has just taken out of the scene: a hat added there is never drawn (measured 2026-11-05:
-  // wizard, crown, cap, hard hat and ranger hat all invisible on the Snap Kip). The hat is placed in rig.g's own coordinates below, so it belongs directly on rig.g.
-  let hatUp: THREE.Object3D | null = hatSlot.parent;
-  while (hatUp && hatUp !== rig.g) hatUp = hatUp.parent;
-  if (!hatUp) rig.g.add(hatSlot);
+  // wizard, crown, cap, hard hat and ranger hat all invisible on the Snap Kip). It goes on the HEAD (headPivot, like the wig and the ears), not on the rig: the head nods, turns and bobs in every dance and
+  // clip (snapFlex.ts hingeHead), and a hat left on the rig stayed where the head had been (Dan, 2026-11-05: the hat does not stay on the head when dancing).
+  hatSlot.removeFromParent();
+  hatSlot.position.set(0, 0, 0);
+  hatSlot.rotation.set(0, 0, 0);
+  hatSlot.scale.set(1, 1, 1);
+  headPivot.add(hatSlot);
   if (geos.hat) {
     const hatCad = new T.Group();
-    hatCad.rotation.y = Math.PI / 2;
     hatCad.userData.hatCad = true;
-    hatCad.scale.setScalar(KIP_MM_SCALE);
+    // in the head's own frame, in millimetres (kipFrame supplies the quarter turn and the scale); the head's origin is 108 mm up, which the old rig-frame position added
     // on a hat-ready wig the hat stacks on the wig's studs (kip-bench.js: crownAnchor.position.y = headCrownY + topH)
     const hatLift = top && top.kind === "hat" && top.hair ? top.hair.topH + KIP_WIG_LIFT_MM : 0;
-    hatCad.position.set(0, (108.0 + crownHeightMm - 9.5 + hatLift) * KIP_MM_SCALE, 0);
+    hatCad.position.set(0, crownHeightMm - 9.5 + hatLift, 0);
     hatCad.add(scadMesh(geos.hat, sel.hat === "crown" ? metal("#ffd24d") : sparkMat));
     hatSlot.add(hatCad);
     rig.slots.extra = hatSlot;

@@ -39,6 +39,31 @@ describe("hats on the Snap Kip", () => {
       expect(box.max.y).toBeLessThan(3.6);
     });
   }
+  it("the hat rides the HEAD: it nods, turns and moves with the head in a dance (Dan, 2026-11-05: the hat does not stay on the head when dancing)", async () => {
+    for (const hat of ["wizard", "crown", "cap", "propcap", "flower"]) {
+      const { rig, root, hats } = await rigWith({ hat });
+      expect(isUnder(hats[0]!, rig.head!), `${hat} is under the head`).toBe(true);
+      const centre = () => { root.updateMatrixWorld(true); return new THREE.Box3().setFromObject(hats[0]!).getCenter(new THREE.Vector3()); };
+      const rest = centre();
+      rig.head!.position.z += 27;                                   // the head bobs forward 27 mm (the head's frame is in millimetres, turned a quarter: its +z is the stage's +x): the hat goes with it
+      const moved = centre();
+      expect(moved.x - rest.x, `${hat} follows a bob`).toBeCloseTo(27 * 0.0185, 3);
+      rig.head!.position.z -= 27;
+      rig.head!.rotation.z = 0.6;                                   // the head nods about its own origin: the hat, which is above that origin, swings with it
+      const nodded = centre();
+      expect(nodded.distanceTo(rest), `${hat} follows a nod`).toBeGreaterThan(0.1);
+      expect(nodded.y).toBeLessThan(rest.y);                        // and comes down a little, as a hat on a tilted head does
+    }
+  });
+  it("the hat stays on the head's own frame: turning the head turns the hat about the same axis as the hair", async () => {
+    const { rig, root, hats } = await rigWith({ hat: "wizard", hair: "short_swept" });
+    let wig: THREE.Object3D | null = null; root.traverse((o) => { if (o.userData.kipHair) wig = o; });
+    expect(wig).not.toBeNull();
+    const rel = (a: THREE.Object3D, b: THREE.Object3D) => { root.updateMatrixWorld(true); return new THREE.Vector3().setFromMatrixPosition(b.matrixWorld).sub(new THREE.Vector3().setFromMatrixPosition(a.matrixWorld)); };
+    const gapAtRest = rel(wig!, hats[0]!).length();
+    rig.head!.rotation.y = 1.0; rig.head!.rotation.z = 0.4; rig.head!.position.set(0.3, 0.1, 0.2);
+    expect(rel(wig!, hats[0]!).length()).toBeCloseTo(gapAtRest, 4);  // the hat keeps its distance from the wig whatever the head does
+  });
   it("no hat, no hat part", async () => {
     const { hats } = await rigWith({ hat: "none" });
     expect(hats.length).toBe(0);
