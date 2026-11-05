@@ -978,9 +978,11 @@ export function GameCanvas({
   /** The intro begins: leave the title screen so the world, and Kip dancing to his song, show behind it. */
   const onboardIntroStart = useCallback(() => { if (titleOpen) chooseTitle("play"); }, [titleOpen, chooseTitle]);
   /** The "meet Kip" scene: `enter` leaves the title screen and goes to the Toy Room; `pile` paints the shirt and lays Kip out as a pile of bricks; `build` carries them to their seats; `end` puts Kip back. */
-  const onboardStage = useCallback((op: "enter" | "pile" | "build" | "abort" | "end" | "phonesShow", hex?: string) => {
-    if (op === "enter") { engineRef.current?.onbStage("hide"); if (titleOpen) chooseTitle("play"); engineRef.current?.goWorld("room"); return; } // Kip is hidden from the first frame: no Kip is seen before the pile
-    engineRef.current?.onbStage(op, hex);
+  const onboardStage = useCallback((op: "enter" | "dress" | "pile" | "build" | "abort" | "end" | "phonesShow", hex?: string): boolean => {
+    if (!engineRef.current) return false; // no game to show it in: the setup keeps its plain-blocks preview
+    if (op === "enter") { engineRef.current.onbStage("hide"); if (titleOpen) chooseTitle("play"); engineRef.current.goWorld("room"); return true; } // Kip is hidden from the first frame: no Kip is seen before the Dress step shows him on purpose
+    engineRef.current.onbStage(op, hex);
+    return true;
   }, [titleOpen, chooseTitle]);
   const onboardHold = useCallback((on: boolean) => { onboardHoldRef.current = on; }, []);
   /** The player picks up the headphones: Kip puts them on, and the song, held until now, starts the dance. */

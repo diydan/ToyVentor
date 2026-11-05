@@ -12,8 +12,8 @@ import type { FlowState } from "./themeSongFlow";
 export interface OnboardingSheetProps {
   /** Leave without finishing (nothing is saved unless the intro was reached). */
   onClose(): void;
-  /** The "meet Kip" scene in the game's world: `enter` leaves the title and goes to the Toy Room, `pile` paints the shirt (the favourite colour) and lays Kip out as a pile of his real parts, `build` carries them to their seats, `abort` puts Kip back, `phonesShow` floats the headphones beside Kip. */
-  onStage(op: "enter" | "pile" | "build" | "abort" | "end" | "phonesShow", hex?: string): void;
+  /** The "meet Kip" scene in the game's world: `enter` leaves the title and goes to the Toy Room (false: there is no game to show it in), `dress` puts the real Kip in the workshop wearing the outfit in `hex` (a JSON object) and keeps him up to date, `pile` paints the shirt (the favourite colour) and lays Kip out as a pile of his real parts, `build` carries them to their seats, `abort` puts Kip back, `phonesShow` floats the headphones beside Kip. */
+  onStage(op: "enter" | "dress" | "pile" | "build" | "abort" | "end" | "phonesShow", hex?: string): void | boolean;
   /** True from the grown-up's yes until the headphones are picked up: the song is made but does not dance by itself. */
   onHold(on: boolean): void;
   /** The player picked up the headphones: Kip puts them on and the dance starts. Called from a tap. */
@@ -28,10 +28,20 @@ export interface OnboardingSheetProps {
   storage?: Store | null;
 }
 
+/** The world's report of each part tapped into place (runtime/world.ts onbPlace). */
+export const PROGRESS_EVENT = "tv-onb-progress";
+/** How long the pile waits for a first tap, and for another after a tap, before Kip builds himself. */
+export const TAP_IDLE_MS = 4500;
+export const TAP_IDLE_AFTER_TAP_MS = 3500;
+
 const reduced = (): boolean => { try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch { return false; } };
 const todayIso = (): string => new Date().toISOString();
 
 /** A little Kip that wears the choices as they are made (plain blocks: the real Kip is built in the scene that follows). */
+/** What the Dress step can change, one chip each; the tiles of the chosen one show below. */
+const DRESS_PARTS = [["shirt", "Shirt"], ["pants", "Pants"], ["boots", "Shoes"], ["skin", "Skin"], ["hair", "Hair"], ["hairColour", "Hair colour"], ["hat", "Hat"], ["tail", "Tail"]] as const;
+type DressPart = (typeof DRESS_PARTS)[number][0];
+
 function KipPreview({ cfg }: { cfg: KipConfig }) {
   const hat = HAT_CHOICES.find((h) => h.id === cfg.hat);
   const tail = TAIL_CHOICES.find((t) => t.id === cfg.tail);
@@ -87,7 +97,8 @@ export function OnboardingSheet({ onClose, onStage, onHold, onPickUp, onIntroSta
   // the "meet Kip" scene: wait (the Toy Room is loading) > pile (Kip is a pile of bricks) > building > built > meet (three prop cards)
   // "Dress your Kip": the shirt starts as the favourite colour, everything else as the stock Kip (the demo's skin, jeans and chestnut Swept hair)
   const [cfg, setCfg] = useState<KipConfig>(() => defaultKipConfig());
-  const [tab, setTab] = useState<"clothes" | "hair" | "extras">("clothes");
+  // one row of tiles at a time (the card sits beside the real Kip and the screen is about 390 px tall): the chips choose which
+  const [part, setPart] = useState<DressPart>("shirt");
   const pickId = (key: keyof KipConfig) => (id: string) => setCfg((c) => ({ ...c, [key]: id }));
   /** Colour tiles are named by id but the config holds the hex: translate both ways. */
   const pickHex = (key: keyof KipConfig, list: readonly { id: string; hex: string }[]) => (id: string) => { const hit = list.find((x) => x.id === id); if (hit) setCfg((c) => ({ ...c, [key]: hit.hex })); };
@@ -130,31 +141,71 @@ export function OnboardingSheet({ onClose, onStage, onHold, onPickUp, onIntroSta
   const checkFavourites = () => {
     if (!colour || !fruit || !animal) { setProblem("Pick one of each to go on."); return; }
     setCfg((c) => ({ ...c, shirt: colourOf(colour)?.hex ?? c.shirt })); // the shirt starts as the favourite colour (and can be changed on the next screen)
-    setTab("clothes");
+    setPart("shirt");
     next();
   };
 
-  // entering the build step goes to the Toy Room and lays Kip out as a pile; leaving it any other way than forward puts Kip back
+  // The DRESS step shows the REAL Kip, standing in the workshop and wearing every pick at once (the kid bench, spec section 9). `staged`: the game is already showing the workshop, so the build step does
+  // not enter it again. `engineOk` goes false when there is no game to show him in (the plain-blocks preview stays then); `live`: the workshop is up and picks are sent.
+  const staged = useRef(false);
+  const [engineOk, setEngineOk] = useState(true);
+  const [live, setLive] = useState(false);
+  const outfit = () => JSON.stringify(cleanKipConfig(cfg) ?? defaultKipConfig(colourOf(colour)?.hex));
+  useEffect(() => {
+    if (step !== "dress") return;
+    if (staged.current) { setLive(true); return; }
+    if (onStage("enter") === false) { setEngineOk(false); return; }
+    staged.current = true;
+    const t = window.setTimeout(() => setLive(true), 900); // the Toy Room is loading; the workshop goes up over it
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
+  useEffect(() => {
+    if (step !== "dress" || !live) return;
+    const t = window.setTimeout(() => onStage("dress", outfit()), 40);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, live, cfg]);
+  const backFromDress = () => { onStage("abort"); staged.current = false; setLive(false); back(); };
+  const stageDress = step === "dress" && engineOk;
+
+  // entering the build step goes to the Toy Room (already there after Dress) and lays Kip out as a pile; leaving it any other way than forward puts Kip back
   const laid = useRef(false);
   useEffect(() => {
     if (step !== "build") return;
-    onStage("enter");
+    const there = staged.current;
+    if (!there) onStage("enter");
+    staged.current = true;
     setScene("wait");
-    const t = window.setTimeout(() => { onStage("pile", JSON.stringify(cleanKipConfig(cfg) ?? defaultKipConfig(colourOf(colour)?.hex))); laid.current = true; setScene("pile"); }, 1700);
+    const t = window.setTimeout(() => { onStage("pile", outfit()); laid.current = true; setPlaced(0); setTotal(0); setScene("pile"); }, there ? 350 : 1700);
     timers.current.push(t);
     return () => { window.clearTimeout(t); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
   useEffect(() => () => { timers.current.forEach((t) => window.clearTimeout(t)); }, []);
-  // nobody taps to build Kip: he builds himself a moment after the pile is laid (Dan: "we should not opt in to build Kip")
+  // Tap-to-build: the child may tap the parts of the pile (the world carries each tapped part to its seat and reports it through the window event "tv-onb-progress"). Nobody has to: Kip builds himself
+  // when nothing has been tapped for a few seconds (Dan: "we should not opt in to build Kip"), carrying whatever is left, and "Build it for me" does the same at once.
+  const [placed, setPlaced] = useState(0);
+  const [total, setTotal] = useState(0);
   useEffect(() => {
     if (scene !== "pile") return;
-    const t = window.setTimeout(() => buildKip(), 1900);
+    const on = (e: Event) => {
+      const d = (e as CustomEvent<{ placed?: number; total?: number; done?: boolean }>).detail;
+      if (!d) return;
+      setPlaced(Number(d.placed) || 0); setTotal(Number(d.total) || 0);
+      if (d.done) setScene("built"); // the last part was tapped into place: the world has already shown Kip
+    };
+    window.addEventListener(PROGRESS_EVENT, on);
+    return () => window.removeEventListener(PROGRESS_EVENT, on);
+  }, [scene]);
+  useEffect(() => {
+    if (scene !== "pile") return;
+    const t = window.setTimeout(() => buildKip(), placed > 0 ? TAP_IDLE_AFTER_TAP_MS : TAP_IDLE_MS);
     return () => window.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scene]);
+  }, [scene, placed]);
   // closing the sheet part-way puts Kip back (a built Kip is untouched, and a pair of headphones already on stays on)
-  useEffect(() => () => { if (laid.current) onStage("abort"); }, []);
+  useEffect(() => () => { if (laid.current || staged.current) onStage("abort"); }, []);
   // the headphones: they appear when the song is complete (and Kip is built), and the player picks them up to start the dance
   const songReady = !!song && song.phase === "ready" && song.loop > 0;
   const phonesOk = songReady && (step === "intro" || (step === "build" && (scene === "built" || scene === "meet")));
@@ -166,7 +217,7 @@ export function OnboardingSheet({ onClose, onStage, onHold, onPickUp, onIntroSta
     onStage("build");
     timers.current.push(window.setTimeout(() => setScene("built"), 3600));
   };
-  const backFromBuild = () => { onStage("abort"); laid.current = false; back(); };
+  const backFromBuild = () => { onStage("abort"); laid.current = false; staged.current = false; back(); };
 
   /**
    * The grown-up's answer on the song screen: the profile is complete now, so it is saved (on this device), and on a yes the song is asked for RIGHT HERE, before Kip is built, so it is being
@@ -206,7 +257,7 @@ export function OnboardingSheet({ onClose, onStage, onHold, onPickUp, onIntroSta
   const songNote = song?.phase === "dancing" ? `🎵 ${song.name || "Your song"} is playing!` : phonesOk && !picked ? `🎧 ${song?.name || "Your song"} is ready! Pick up the headphones to dance.` : song?.phase === "failed" ? (song.note || "The song maker is resting. You can make a song later from the Map.") : song && song.phase !== "ready" ? `Making ${profile?.kidName ?? name}'s song… ${song.note || ""}` : "";
 
   return (
-    <section ref={rootRef} className={`tv-onb${step === "intro" ? " tv-onb-intro" : ""}${step === "build" ? " tv-onb-stage" : ""}`} role="dialog" aria-modal="true" aria-label="New player setup" data-onb-step={step}>
+    <section ref={rootRef} className={`tv-onb${step === "intro" ? " tv-onb-intro" : ""}${step === "build" || stageDress ? " tv-onb-stage" : ""}${stageDress ? " tv-onb-dressing" : ""}`} role="dialog" aria-modal="true" aria-label="New player setup" data-onb-step={step}>
       {step === "intro" && !calm && (
         <div className="tv-onb-confetti" aria-hidden="true">
           {pieces.map((p, i) => (
@@ -265,36 +316,27 @@ export function OnboardingSheet({ onClose, onStage, onHold, onPickUp, onIntroSta
           <>
             {heading(`Dress ${name}'s Kip`)}
             <div className="tv-onb-dress">
-              <KipPreview cfg={cfg} />
+              {!engineOk && <KipPreview cfg={cfg} />}
               <div className="tv-onb-dresspanel">
                 <div className="tv-onb-tabs" role="tablist" aria-label="What to change">
-                  {([["clothes", "Clothes"], ["hair", "Hair"], ["extras", "Hat & tail"]] as const).map(([id, label]) => (
-                    <button key={id} type="button" role="tab" className="tv-onb-tab" aria-selected={tab === id} onClick={() => setTab(id)} data-tab={id}>{label}</button>
+                  {DRESS_PARTS.map(([id, label]) => (
+                    <button key={id} type="button" role="tab" className="tv-onb-tab" aria-selected={part === id} onClick={() => setPart(id)} data-tab={id}>{label}</button>
                   ))}
                 </div>
-                {tab === "clothes" && (
-                  <>
-                    <Tiles label="Shirt" items={FAVOURITE_COLOURS} value={idOf(FAVOURITE_COLOURS, cfg.shirt)} onPick={pickHex("shirt", FAVOURITE_COLOURS)} colour />
-                    <Tiles label="Pants" items={PANTS_COLOURS} value={idOf(PANTS_COLOURS, cfg.pants)} onPick={pickHex("pants", PANTS_COLOURS)} colour />
-                    <Tiles label="Shoes" items={SHOE_COLOURS} value={idOf(SHOE_COLOURS, cfg.boots)} onPick={pickHex("boots", SHOE_COLOURS)} colour />
-                    <Tiles label="Skin" items={SKIN_CHOICES} value={idOf(SKIN_CHOICES, cfg.skin)} onPick={pickHex("skin", SKIN_CHOICES)} colour />
-                  </>
-                )}
-                {tab === "hair" && (
-                  <>
-                    <Tiles label="Hair" items={HAIR_CHOICES} value={cfg.hair} onPick={pickId("hair")} text />
-                    <Tiles label="Hair colour" items={HAIR_COLOUR_CHOICES} value={idOf(HAIR_COLOUR_CHOICES, cfg.hairColour)} onPick={pickHex("hairColour", HAIR_COLOUR_CHOICES)} colour />
-                  </>
-                )}
-                {tab === "extras" && (
-                  <>
-                    <Tiles label="Hat" items={HAT_CHOICES} value={cfg.hat} onPick={pickId("hat")} />
-                    <Tiles label="Tail" items={TAIL_CHOICES} value={cfg.tail} onPick={pickId("tail")} />
-                  </>
-                )}
+                {part === "shirt" && <Tiles label="Shirt" items={FAVOURITE_COLOURS} value={idOf(FAVOURITE_COLOURS, cfg.shirt)} onPick={pickHex("shirt", FAVOURITE_COLOURS)} colour />}
+                {part === "pants" && <Tiles label="Pants" items={PANTS_COLOURS} value={idOf(PANTS_COLOURS, cfg.pants)} onPick={pickHex("pants", PANTS_COLOURS)} colour />}
+                {part === "boots" && <Tiles label="Shoes" items={SHOE_COLOURS} value={idOf(SHOE_COLOURS, cfg.boots)} onPick={pickHex("boots", SHOE_COLOURS)} colour />}
+                {part === "skin" && <Tiles label="Skin" items={SKIN_CHOICES} value={idOf(SKIN_CHOICES, cfg.skin)} onPick={pickHex("skin", SKIN_CHOICES)} colour />}
+                {part === "hair" && <Tiles label="Hair" items={HAIR_CHOICES} value={cfg.hair} onPick={pickId("hair")} text />}
+                {part === "hairColour" && <Tiles label="Hair colour" items={HAIR_COLOUR_CHOICES} value={idOf(HAIR_COLOUR_CHOICES, cfg.hairColour)} onPick={pickHex("hairColour", HAIR_COLOUR_CHOICES)} colour />}
+                {part === "hat" && <Tiles label="Hat" items={HAT_CHOICES} value={cfg.hat} onPick={pickId("hat")} />}
+                {part === "tail" && <Tiles label="Tail" items={TAIL_CHOICES} value={cfg.tail} onPick={pickId("tail")} />}
               </div>
             </div>
-            {nav(next, "Next")}
+            <div className="tv-onb-nav">
+              <button type="button" className="tv-ctl" onClick={backFromDress} data-onb-back>Back</button>
+              <button type="button" className="tv-ctl tv-ctl-primary" onClick={next} data-onb-next>Next</button>
+            </div>
           </>
         )}
         {step === "song" && (
@@ -315,8 +357,11 @@ export function OnboardingSheet({ onClose, onStage, onHold, onPickUp, onIntroSta
             {scene === "pile" && (
               <>
                 {heading("Kip is a pile of parts!")}
-                <p className="tv-onb-p" role="status">Watch, {name}: Kip is going to build himself, in your favourite colour.</p>
-                <div className="tv-onb-nav"><button type="button" className="tv-ctl" onClick={backFromBuild}>Back</button></div>
+                <p className="tv-onb-p" role="status">{placed > 0 ? `${placed} of ${total} parts are in place. Keep tapping!` : `Tap the parts to build Kip, ${name}! Or just wait: he builds himself.`}</p>
+                <div className="tv-onb-nav">
+                  <button type="button" className="tv-ctl" onClick={backFromBuild}>Back</button>
+                  <button type="button" className="tv-ctl tv-ctl-primary" onClick={buildKip} data-onb-build>Build it for me</button>
+                </div>
               </>
             )}
             {scene === "building" && (<>{heading("Building…")}<p className="tv-onb-p" role="status">Look! The parts are flying to their places.</p></>)}

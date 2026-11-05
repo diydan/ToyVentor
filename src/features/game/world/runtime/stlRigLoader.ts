@@ -933,7 +933,11 @@ function applyCharacterStlRig(
 
   // Hat / Crown
   const hatSlot = rig.slots.hat ?? new T.Group();
-  if (!hatSlot.parent) rig.g.add(hatSlot);
+  // The slot made by the placeholder rig hangs on the placeholder's head group, which disposeSlotChildren(base) has just taken out of the scene: a hat added there is never drawn (measured 2026-11-05:
+  // wizard, crown, cap, hard hat and ranger hat all invisible on the Snap Kip). The hat is placed in rig.g's own coordinates below, so it belongs directly on rig.g.
+  let hatUp: THREE.Object3D | null = hatSlot.parent;
+  while (hatUp && hatUp !== rig.g) hatUp = hatUp.parent;
+  if (!hatUp) rig.g.add(hatSlot);
   if (geos.hat) {
     const hatCad = new T.Group();
     hatCad.rotation.y = Math.PI / 2;

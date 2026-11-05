@@ -798,7 +798,7 @@ var KEY_COAST=.6;
 var TURN_HOP=.1;
 function turnedToward(heading: number){var a=(Math.cos(heading-P.face)-.3)/.6;a=a<0?0:a>1?1:a;return .12+.88*a*a*(3-2*a)}
 function setTarget(x: number,z?: number,deep?: boolean){var nb=(!ED.on&&!ED.testing)?townNeighbors(S.world):null,lo=nb?.2:.5,hi=nb?44.6:43.5;var tz=z===undefined?P.pos.z:deep?Math.max(-3.4,Math.min(1.2,z)):clampPathZ(z);P.target=new T.Vector3(Math.max(lo,Math.min(hi,x)),0,tz);marker.position.set(P.target.x,.06,tz);markT=0}
-canvas.addEventListener("pointerdown",function(e: PointerEvent){ctx();IDLEB.cancel();if(SLEEPH.consume())return;if(ACTS.consume())return;if(P.showcase||P.mDrive)return;if(ACT.down(e)){try{canvas.setPointerCapture(e.pointerId)}catch(_){}return}rayAt(e.clientX,e.clientY);if(BUBBLES.count&&BUBBLES.popAt(ray))return;if(PICK.tap(ray))return;var hb=ray.intersectObjects(bolts,false);if(hb.length){unbolt(hb[0]!.object);return}var js=junkHit();if(js){unboltNext(js);return}var th=ray.intersectObjects(tidySpots.filter(function(s){return !s.done}).map(function(s){return s.hit}),false);if(th.length&&th[0]!.object.userData.tidy){var te=th[0]!.object.userData.tidy;if(Math.abs(P.pos.x-te.x)<3.2){tidyUp(te);return}setTarget(te.x);return}if(sceneVisit){var vh=ray.intersectObjects(sceneMarks.filter(function(mk){return mk.live}).map(function(mk){return mk.hit}),false);var vref=null as null|{kind:string;id:string};for(var vi=0;vi<vh.length;vi++){var vcand=vh[vi]!.object.userData.sceneCarry;if(vcand&&vcand.kind==="spot"&&vh[vi]!.distance-vh[0]!.distance<2.5){vref=vcand;break}}if(vref){var vmk=sceneMarks.filter(function(m){return m.kind==="spot"&&m.id===vref!.id})[0]!;var vr=tapSceneSpot(sceneVisit,vref.id,vmk.x);if(vr.action==="goto")setTarget(vr.x,vmk.g.position.z);sayT(vr.say);sceneTouch();return}}
+canvas.addEventListener("pointerdown",function(e: PointerEvent){ctx();IDLEB.cancel();if(ONBG||ONBD){ONBTAP(e);return}if(SLEEPH.consume())return;if(ACTS.consume())return;if(P.showcase||P.mDrive)return;if(ACT.down(e)){try{canvas.setPointerCapture(e.pointerId)}catch(_){}return}rayAt(e.clientX,e.clientY);if(BUBBLES.count&&BUBBLES.popAt(ray))return;if(PICK.tap(ray))return;var hb=ray.intersectObjects(bolts,false);if(hb.length){unbolt(hb[0]!.object);return}var js=junkHit();if(js){unboltNext(js);return}var th=ray.intersectObjects(tidySpots.filter(function(s){return !s.done}).map(function(s){return s.hit}),false);if(th.length&&th[0]!.object.userData.tidy){var te=th[0]!.object.userData.tidy;if(Math.abs(P.pos.x-te.x)<3.2){tidyUp(te);return}setTarget(te.x);return}if(sceneVisit){var vh=ray.intersectObjects(sceneMarks.filter(function(mk){return mk.live}).map(function(mk){return mk.hit}),false);var vref=null as null|{kind:string;id:string};for(var vi=0;vi<vh.length;vi++){var vcand=vh[vi]!.object.userData.sceneCarry;if(vcand&&vcand.kind==="spot"&&vh[vi]!.distance-vh[0]!.distance<2.5){vref=vcand;break}}if(vref){var vmk=sceneMarks.filter(function(m){return m.kind==="spot"&&m.id===vref!.id})[0]!;var vr=tapSceneSpot(sceneVisit,vref.id,vmk.x);if(vr.action==="goto")setTarget(vr.x,vmk.g.position.z);sayT(vr.say);sceneTouch();return}}
 if(sceneCarry){var ch=ray.intersectObjects(sceneMarks.filter(function(mk){return mk.live}).map(function(mk){return mk.hit}),false);var ref=null as null|{kind:string;id:string};for(var ci=0;ci<ch.length;ci++){var cand=ch[ci]!.object.userData.sceneCarry;if(cand&&ch[ci]!.distance-ch[0]!.distance<2.5){ref=cand;break}}if(ref){var refId=ref.id;if(ref.kind==="item"){var mk2=sceneMarks.filter(function(m){return m.kind==="item"&&m.id===refId})[0]!;var ri=tapSceneItem(sceneCarry,refId,mk2.x);if(ri.action==="goto")setTarget(ri.x,mk2.g.position.z);sayT(ri.say);sceneTouch();return}var mk3=sceneMarks.filter(function(m){return m.kind==="target"&&m.id===refId})[0]!;var rt=tapSceneTarget(sceneCarry,refId,mk3.x);if(rt.action==="goto")setTarget(rt.x,mk3.g.position.z);sayT(rt.say);sceneTouch();return}}
 var sh=ray.intersectObjects(signHits,false);if(sh.length&&!P.busy){var sdir=sh[0]!.object.userData.signDir;setTarget(sdir==="west"?.25:44.55);return}if(!ED.on&&FEED.down(e))return;if(!ED.on&&PFX.tap(ray))return;if(P.busy)return;var lp=lanePoint();if(!lp)return;hold={id:e.pointerId};try{canvas.setPointerCapture(e.pointerId)}catch(_){}setTarget(lp.x,lp.z)});
 canvas.addEventListener("pointermove",function(e: PointerEvent){if(!hold||hold.id!==e.pointerId||P.busy||P.showcase)return;rayAt(e.clientX,e.clientY);var lp2=lanePoint();if(lp2)setTarget(lp2.x,lp2.z)});
@@ -873,6 +873,7 @@ if(!P.showcase&&!P.busy&&!P.mDrive){tidySpots.forEach(function(ts){if(ts.done)re
  if(P.danceBack!=null&&!(mix&&(mix.busyAction==="dance"||mix.busyAction===IDLE_LABEL))){if(Math.abs(P.tface+Math.PI/2)<1e-6)P.tface=P.danceBack;P.danceBack=null}
  IDLEB.update();
  if(ONBW){if(P.model)P.model.visible=false;blob.visible=false;if(W.root)W.root.visible=false}
+ else if(ONBD){if(W.root)W.root.visible=false;var rdy=!!P.rigReady;if(P.model)P.model.visible=rdy;blob.visible=rdy||!!ONBGH;if(ONBGH){if(rdy){if(ONBGH.parent)ONBGH.parent.remove(ONBGH);ONBGH=null}else ONBGH.visible=true}}
  if(S.type==="character"){var fnew=FACEU.step(dt,(P.showcase||P.danceBack!=null||P.mDrive||ED.on||paused||ACT.active||ACTS.busy||SLEEPH.busy||MESS.phase!=="idle"||(mix&&mix.busyAction))?"owned":idleOk()?"free":"away",P.tface);if(fnew!==null)P.tface=fnew}
  var gdx=P.pos.x-(P.gaitX==null?P.pos.x:P.gaitX),gdz=P.pos.z-(P.gaitZ==null?P.pos.z:P.gaitZ),gait=Math.sqrt(gdx*gdx+gdz*gdz)/Math.max(dt,.001);P.gaitX=P.pos.x;P.gaitZ=P.pos.z;gait=gait>8?0:Math.min(gait,4.5);
  if(driven&&mix){mix.update(rig,dt,P.speed,{headYaw:P.noticeYaw||0,headPitch:-(P.spA||0)*.35,gait:gait,stopIn:(P.target&&!P.busy&&!P.showcase)?Math.max(0,Math.sqrt((P.target.x-P.pos.x)*(P.target.x-P.pos.x)+(P.target.z-P.pos.z)*(P.target.z-P.pos.z))-.07):undefined});if(rig.hover)rig.g.position.y+=.12+Math.sin(t*3)*.06}
@@ -1145,26 +1146,57 @@ function cuAct(a: string){
   setForge(!B.forge);
 }
 function cuType(t: string){var nt=t==="robot"?"character":t;if(S.type!==nt){S.type=nt;S.toyId=nt==="vehicle"?"seed-car":"seed-kip";save();buildPlayer(null);sfx.snap();burst(new T.Vector3(P.pos.x,1.2,P.pos.z),"rgba(155,212,255,1)",10)}renderSheet()}
+/* Tap-to-build (kid bench, spec section 9): while the pile lies on the floor a tap on a part (or near one: the nearest part to the ray within half a unit) carries THAT part to its seat. Every landing tells the sheet through the window event "tv-onb-progress" ({placed,total,done}); the last one is the build's own arrival (ONBS "finish"). Nothing here is required: the sheet's idle timer (or its "Build it for me") asks for the "build" op, which carries whatever is left. */
+function onbPlace(gg: any,it: any){
+ if(!gg||ONBG!==gg||gg.userData.running||it.done||it.fly)return;
+ it.fly=true;var tk=ONBT;sfx.pop();
+ tween(.8,function(k: number){if(ONBG!==gg)return;var e=k*k*(3-2*k);it.m.position.lerpVectors(it.pp,it.p,e);it.m.position.y+=Math.sin(Math.PI*e)*1.2;it.m.quaternion.slerpQuaternions(it.pq,it.q,e)}).then(function(){
+  if(ONBG!==gg||tk!==ONBT)return;
+  it.fly=false;it.done=true;it.m.position.copy(it.p);it.m.quaternion.copy(it.q);
+  var seats=gg.userData.seats,placed=0;seats.forEach(function(s: any){if(s.done)placed++});
+  var all=placed===seats.length;
+  window.dispatchEvent(new CustomEvent("tv-onb-progress",{detail:{placed:placed,total:seats.length,done:all}}));
+  if(all)ONBS("finish")})}
+function ONBTAP(e: PointerEvent){
+ var gg=ONBG;if(!gg||ONBD||gg.userData.running)return;var seats=gg.userData.seats;if(!seats)return;
+ rayAt(e.clientX,e.clientY);
+ var open=seats.filter(function(s: any){return !s.done&&!s.fly});if(!open.length)return;
+ var hits=ray.intersectObjects(open.map(function(s: any){return s.m}),false),pick: any=null;
+ if(hits.length)pick=open.filter(function(s: any){return s.m===hits[0]!.object})[0];
+ else{var best=.55;open.forEach(function(s: any){var d=ray.ray.distanceToPoint(s.m.position);if(d<best){best=d;pick=s}})}
+ if(pick)onbPlace(gg,pick)}
 function cuSlot(s: string){B.slot=s;sfx.pop();renderSheet()}
 function cuPart(id: string){var slotId=B.slot||"base",k=slotPartKey(S.type,slotId,id),p=PART[k];if(!p)return;if(!isOpen(k)){toast("Find it in "+WN[p.w]+".");sfx.bump();return}cur()[slotId]=id;save();buildPlayer(slotId);partSound(k);renderSheet()}
-/* The new-player setup's "meet Kip" scene (OnboardingSheet.tsx, docs/specs/accounts-and-new-user-spec.md section 8). Kip lies in a PILE OF HIS REAL PARTS on the Toy Room floor (every mesh of his rig is cloned, sharing the real STL geometry and materials, so the pile is the demo's parts and not stand-ins), and on "build" each part is carried from the pile to its seat, lowest first, the way the Kip demo's Describe and Build carries its parts (parts/kip/viewer/kip-describe-view.js pilePlan and pileFrame): lifted, carried over, set down. The real Kip stays hidden until the last part lands, and then appears with a pop. `pile` also paints the shirt the favourite colour and turns Kip to face the screen (so the seats match where he will stand). Then the HEADPHONES: `phonesShow` floats a pair beside Kip when the song is ready, `phones` carries them to his head (they then follow it), `phonesOff` takes them away when the song is over. Ops: pile, build, abort (put Kip back, keep the headphones), end (everything), phonesShow, phones, phonesOff. */
-var ONBG: THREE.Group | null=null,ONBH: THREE.Group | null=null,ONBK: THREE.Group | null=null,ONBT=0,ONBW=false; // ONBW: Kip is held hidden every frame (no Kip is ever seen before the pile)
+/* The new-player setup's "meet Kip" scene (OnboardingSheet.tsx, docs/specs/accounts-and-new-user-spec.md section 8). Kip lies in a PILE OF HIS REAL PARTS on the Toy Room floor (every mesh of his rig is cloned, sharing the real STL geometry and materials, so the pile is the demo's parts and not stand-ins), and on "build" each part is carried from the pile to its seat, lowest first, the way the Kip demo's Describe and Build carries its parts (parts/kip/viewer/kip-describe-view.js pilePlan and pileFrame): lifted, carried over, set down. The real Kip stays hidden until the last part lands, and then appears with a pop. `pile` also paints the shirt the favourite colour and turns Kip to face the screen (so the seats match where he will stand). Then the HEADPHONES: `phonesShow` floats a pair beside Kip when the song is ready, `phones` carries them to his head (they then follow it), `phonesOff` takes them away when the song is over. Ops: dress (the real Kip in the workshop, live), pile, finish (the last part was tapped into place), build, abort (put Kip back, keep the headphones; during Dress also put the old look back), end (everything), phonesShow, phones, phonesOff. */
+var ONBG: THREE.Group | null=null,ONBH: THREE.Group | null=null,ONBK: THREE.Group | null=null,ONBT=0,ONBW=false,ONBD=false,ONBGH: any=null,ONBPRE: any=null; // ONBW: Kip is held hidden every frame (no Kip is ever seen before the pile); ONBD: the DRESS step shows the real Kip in the workshop (ONBGH: the Kip he was a moment ago, kept on show until the new one's parts have loaded; ONBPRE: the look to put back if the setup is left before the build)
+/* "Dress your Kip": the outfit the child picked (one JSON object, or a plain shirt hex) put on the saved character: only valid hex colours and plain strings. The hair style, hat and tail are the character's own slots (cur(), that is S.sel.character): the first version wrote them on S.sel itself, where nothing reads them, so those three picks never reached the real Kip. Returns whether anything changed; the caller saves and rebuilds. */
+function onbOutfit(hex: string): boolean{
+ var sl=cur(),sig=function(){return JSON.stringify([S.col.c1,S.col.c2,S.col.boots,S.col.skin,S.col.hair,sl.hair,sl.hat,sl.tail])},was=sig(),cf: any=null;
+ if(hex.charAt(0)==="{"){try{cf=JSON.parse(hex)}catch(e){cf=null}} // the whole outfit from "Dress your Kip" (a JSON object), or just the shirt colour (a hex)
+ var hexOk=function(v: any){return typeof v==="string"&&/^#[0-9a-f]{6}$/i.test(v)?v:null},qq: any;
+ if(cf){if((qq=hexOk(cf.shirt)))S.col.c1=qq;if((qq=hexOk(cf.pants)))S.col.c2=qq;if((qq=hexOk(cf.boots)))S.col.boots=qq;if((qq=hexOk(cf.skin)))S.col.skin=qq;if((qq=hexOk(cf.hairColour)))S.col.hair=qq;
+  if(typeof cf.hair==="string")sl.hair=cf.hair;if(typeof cf.hat==="string")sl.hat=cf.hat;if(typeof cf.tail==="string")sl.tail=cf.tail}
+ else if((qq=hexOk(hex)))S.col.c1=qq;
+ return sig()!==was}
 function ONBS(op: string,hex?: string){
- var show=function(){ONBW=false;if(ONBK){disposeWorkshop(ONBK);ONBK=null}if(W.root)W.root.visible=true;if(ONBG){if(ONBG.parent)ONBG.parent.remove(ONBG);ONBG=null}if(P.model)P.model.visible=true;blob.visible=true};
+ var show=function(){ONBW=false;ONBD=false;if(ONBGH){if(ONBGH.parent)ONBGH.parent.remove(ONBGH);ONBGH=null}if(ONBK){disposeWorkshop(ONBK);ONBK=null}if(W.root)W.root.visible=true;if(ONBG){if(ONBG.parent)ONBG.parent.remove(ONBG);ONBG=null}if(P.model)P.model.visible=true;blob.visible=true};
  var dropPhones=function(){if(ONBH){if(ONBH.parent)ONBH.parent.remove(ONBH);ONBH=null}};
- if(op==="abort"){ONBT++;show();return}
- if(op==="end"){ONBT++;show();dropPhones();return}
+ if(op==="abort"){ONBT++;var pre=ONBD?ONBPRE:null;ONBPRE=null;show();if(pre&&S.type==="character"){var sl0=cur();["c1","c2","boots","skin","hair"].forEach(function(k){(S.col as any)[k]=pre.col[k]});["hair","hat","tail"].forEach(function(k){sl0[k]=pre.sel[k]});save();buildPlayer(null)}return}
+ if(op==="end"){ONBT++;ONBPRE=null;show();dropPhones();return}
  if(op==="phonesOff"){dropPhones();return}
  if(S.type!=="character")return;
  if(op==="hide"){ONBW=true;if(P.model)P.model.visible=false;blob.visible=false;return}
+ if(op==="dress"){ // the DRESS step: the real Kip stands in the workshop and wears every pick at once (kid bench, spec section 9); the Toy Room stays hidden, and he is not shown until his parts have loaded
+  var first=!ONBD;
+  if(first){var sl1=cur();ONBPRE={col:{c1:S.col.c1,c2:S.col.c2,boots:S.col.boots,skin:S.col.skin,hair:S.col.hair},sel:{hair:sl1.hair,hat:sl1.hat,tail:sl1.tail}};ONBD=true;ONBW=false}
+  var chd=onbOutfit(hex||"");
+  if(!ONBK){ONBK=buildWorkshop({x:P.pos.x,z:P.pos.z,accent:S.col.c1});scene.add(ONBK)}
+  P.face=P.tface=-Math.PI/2;
+  if(chd){save();var old=(!first&&!ONBGH&&P.model&&P.rigReady)?P.model:null;buildPlayer(null);if(old){ONBGH=old;P.root.add(old)}if(!first){sfx.pop();burst(new T.Vector3(P.pos.x,1.2,P.pos.z),"rgba(255,255,255,1)",6)}}
+  return}
  var phones=function(){var h=new T.Group(),band=new T.Mesh(new T.TorusGeometry(.44,.06,10,28,Math.PI),plastic("#ff6b4a"));h.add(band);[-.44,.44].forEach(function(x){var c=new T.Mesh(new T.CylinderGeometry(.2,.2,.18,20),plastic("#2b4c85"));c.rotation.z=Math.PI/2;c.position.set(x,0,0);h.add(c)});h.traverse(function(o: any){o.castShadow=true});linearize(h);return h};
  if(op==="pile"){
-  ONBT++;var tk=ONBT;if(ONBG){if(ONBG.parent)ONBG.parent.remove(ONBG);ONBG=null}dropPhones();ONBW=true;if(hex){var cf: any=null;if(hex.charAt(0)==="{"){try{cf=JSON.parse(hex)}catch(e){cf=null}} // the whole outfit from "Dress your Kip" (a JSON object), or just the shirt colour (a hex)
-   var hexOk=function(v: any){return typeof v==="string"&&/^#[0-9a-f]{6}$/i.test(v)?v:null},qq: any;
-   if(cf){if((qq=hexOk(cf.shirt)))S.col.c1=qq;if((qq=hexOk(cf.pants)))S.col.c2=qq;if((qq=hexOk(cf.boots)))S.col.boots=qq;if((qq=hexOk(cf.skin)))S.col.skin=qq;if((qq=hexOk(cf.hairColour)))S.col.hair=qq;
-    if(typeof cf.hair==="string")S.sel.hair=cf.hair;if(typeof cf.hat==="string")S.sel.hat=cf.hat;if(typeof cf.tail==="string")S.sel.tail=cf.tail}
-   else S.col.c1=hex;
-   save();buildPlayer(null)}
+  ONBT++;var tk=ONBT;if(ONBG){if(ONBG.parent)ONBG.parent.remove(ONBG);ONBG=null}dropPhones();if(ONBD)burst(new T.Vector3(P.pos.x,1.2,P.pos.z),"rgba(255,255,255,1)",12);ONBD=false;ONBPRE=null;if(ONBGH){if(ONBGH.parent)ONBGH.parent.remove(ONBGH);ONBGH=null}ONBW=true;if(hex){onbOutfit(hex);save();buildPlayer(null)}
   if(reduce){show();return}
   if(!ONBK){ONBK=buildWorkshop({x:P.pos.x,z:P.pos.z,accent:hex});scene.add(ONBK)} // the build starts in a WORKSHOP (Dan: not a turntable, a blueprint on the wall); the Toy Room is hidden while ONBW holds
   P.face=P.tface=-Math.PI/2; // facing the screen, as he will stand when he is built (and where "free" turns him anyway)
@@ -1184,14 +1216,16 @@ function ONBS(op: string,hex?: string){
     it.pp=new T.Vector3(hx+Math.cos(a)*r,.12+((i*13)%5)*.07,hz+Math.sin(a)*r*.7);
     eu.set(((i*53)%7)/7*Math.PI*2,((i*29)%11)/11*Math.PI*2,((i*17)%5)/5*Math.PI*2);it.pq=new T.Quaternion().setFromEuler(eu);
     m.position.copy(it.pp);m.quaternion.copy(it.pq);m.scale.copy(it.s);g.add(m);it.m=m});
-   g.userData.seats=seats};
+   g.userData.seats=seats;g.userData.total=seats.length};
   setTimeout(lay,220);return}
  if(op==="build"){
   var gg=ONBG,tk2=ONBT;if(!gg){show();return}
-  var seats2=gg.userData.seats,n=seats2.length,TOT=3.4,DUR=.9,STAG=Math.max(.02,(TOT-DUR)/Math.max(1,n-1));
+  gg.userData.running=true; // the child's taps (ONBTAP) stop here: the rest of the parts are carried by themselves
+  var seats2=gg.userData.seats.filter(function(s: any){return !s.done&&!s.fly}),n=seats2.length,TOT=n>0?Math.max(1.4,Math.min(3.4,.9+.15*n)):.2,DUR=.9,STAG=Math.max(.02,(TOT-DUR)/Math.max(1,n-1));
   sfx.pop();
   tween(TOT,function(k: number){var t=k*TOT;for(var i=0;i<n;i++){var it=seats2[i],u=Math.max(0,Math.min(1,(t-i*STAG)/DUR)),e=u*u*(3-2*u);it.m.position.lerpVectors(it.pp,it.p,e);it.m.position.y+=Math.sin(Math.PI*e)*1.4;it.m.quaternion.slerpQuaternions(it.pq,it.q,e)}}).then(function(){if(ONBG!==gg||tk2!==ONBT)return;show();burst(new T.Vector3(P.pos.x,1.3,P.pos.z),"rgba(255,255,255,1)",14);sfx.pop();P.happy=1.4;P.hop=Math.max(P.hop,.5)});
   return}
+ if(op==="finish"){if(!ONBG)return;show();burst(new T.Vector3(P.pos.x,1.3,P.pos.z),"rgba(255,255,255,1)",14);sfx.pop();P.happy=1.4;P.hop=Math.max(P.hop,.5);return} // the last tapped part landed: the same arrival as the build's
  if(op==="phonesShow"&&!ONBH){var h=phones();ONBH=h;scene.add(h);h.position.set(P.pos.x+1.7,1.3,P.pos.z+.5);sfx.pop();burst(h.position.clone(),"rgba(255,255,255,1)",10);
   fx.push({t:0,d:600,f:function(_k: number,dt: number){if(ONBH!==h||h.userData.worn||h.userData.flying)return;h.position.y=1.3+Math.sin(performance.now()/300)*.12;h.rotation.y+=dt*1.2},end:function(){}});return}
  if(op==="phones"){
@@ -1480,7 +1514,7 @@ function goTitle(): boolean{if(disposed)return false;if(P.title)return true;if(E
 setTimeout(function(){var ld=$("#load");if(ld)ld.classList.add("gone")},150);
 rafId=requestAnimationFrame(frame);
 
-const handle: WorldRuntimeHandle = { MT:MT,Wm:function(){return W.missions},cr:{enter:crEnter,make:crMake,exit:crExit,R:function(){return ED.R},CR:CR},ed:{ED:ED,enter:edEnter,play:edPlay,back:edBack,exit:edExit,checks:function(){return edChecks(ED.R)},scr:function(x,y){var v=new T.Vector3(x,y,0).project(camera),r=canvas.getBoundingClientRect();return [(v.x+1)/2*r.width+r.left,(1-v.y)/2*r.height+r.top]}},face:function(a){facA=a},start:startPlay,goTitle:goTitle,composer:function(){return !!composer},P:P,spots:spots,bolts:bolts,ability:ability,S:S,unbolt:unbolt,go:function(w){switchWorld(w)},buildSummary:buildSummary,setLoanKeys:setLoanKeys,portraitSig:function(){return P.rigReady&&!ONBW?String(P.rigSig):null}, /* no picture while Kip is held hidden for the new-player build: the avatar's poll waits and takes it when he is built */capturePortrait:toyPortrait,playSeed:playSeed,worldName:function(id: string){var wd=WORLDS[id];return wd?wd.n:id},open:openSheet,close:closeSheet,
+const handle: WorldRuntimeHandle = { MT:MT,Wm:function(){return W.missions},cr:{enter:crEnter,make:crMake,exit:crExit,R:function(){return ED.R},CR:CR},ed:{ED:ED,enter:edEnter,play:edPlay,back:edBack,exit:edExit,checks:function(){return edChecks(ED.R)},scr:function(x,y){var v=new T.Vector3(x,y,0).project(camera),r=canvas.getBoundingClientRect();return [(v.x+1)/2*r.width+r.left,(1-v.y)/2*r.height+r.top]}},face:function(a){facA=a},start:startPlay,goTitle:goTitle,composer:function(){return !!composer},P:P,spots:spots,bolts:bolts,ability:ability,S:S,unbolt:unbolt,go:function(w){switchWorld(w)},buildSummary:buildSummary,setLoanKeys:setLoanKeys,portraitSig:function(){return P.rigReady&&!ONBW&&!ONBD?String(P.rigSig):null}, // no avatar picture while the setup holds the stage: taking one moves Kip to the title's turntable and the Dress step would flip to it (seen 2026-11-05) /* no picture while Kip is held hidden for the new-player build: the avatar's poll waits and takes it when he is built */capturePortrait:toyPortrait,playSeed:playSeed,worldName:function(id: string){var wd=WORLDS[id];return wd?wd.n:id},open:openSheet,close:closeSheet,
 setToy:function(contract){ if(!contract){ S.type="character"; S.sel=stockSel(); S.col=stockCol(); S.toyId=null; buildPlayer(null); moves(); notify(); return; } var c=toyApply(JSON.parse(JSON.stringify(contract))); if(c){ buildPlayer(null); moves(); notify(); } },
 seedDemo:function(){ mInit(); S.scrap=Math.max(S.scrap||0,12); S.bp.beam=1; S.bp.brace=1; S.bp.sgear=1; S.bp.bgear=1; S.bp.gearpair=1; S.bin.beam=Math.max(S.bin.beam||0,2); S.bin.brace=Math.max(S.bin.brace||0,2); S.bin.sgear=Math.max(S.bin.sgear||0,2); S.bin.bgear=Math.max(S.bin.bgear||0,2); delete S.mdone["garden.bridge"]; delete S.ms["garden.bridge"]; mpOpen=false; S.world="garden"; buildWorld("garden"); P.pos.set(6.5,0,0); P.target=null; P.elev=0; cam.x=7.5; save(); toast("Demo save ready in Garden."); notify(); },
 getWorld:function(){return S.world},
