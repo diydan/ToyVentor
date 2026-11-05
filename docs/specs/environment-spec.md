@@ -61,6 +61,8 @@ does not use it; play-time limits and quiet hours still do.) A grown-up can pin 
 Night on the device (`tvTimeOfDay:v1`); the pin also makes either look easy to
 show. The map, the Garage and the 3D worlds all read this one function (the 3D worlds since 2026-11-04).
 
+**The title room** (the turntable room behind the title screen and the Build sheet, `buildFactory` in `runtime/world.ts`) reads the same clock since 2026-11-05 (Dan: "does the turntable page have a day and night version based on the user's time of day?"). Night is the original dark-blue room; day has a bright sky, white clouds and a sun in the windows, lighter walls and floor and warm brass gears. Each colour is one `pk(night, day)` pair; the per-second look tick swaps the room when the clock or the pinned mode wants the other look. `tests/title-room-look.test.ts`; checked in a real Chrome in both looks and a live swap, not on a phone and not across the real 19:00.
+
 ## Stretch goal (post hackathon): a continuous look, and weather
 
 Dan: not just night and day but a transition through the day (midnight darker
