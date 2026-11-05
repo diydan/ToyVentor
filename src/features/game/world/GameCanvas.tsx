@@ -13,6 +13,8 @@ import { loadToyPortrait, PORTRAIT_PX, saveToyPortrait } from "../../../lib/toyP
 import { BANDS } from "../../../lib/age";
 import { readProfile, type PlayerProfile } from "../../../lib/newPlayer";
 import { forgetPlayer } from "../../../lib/returningPlayer";
+import { signinTokenFromSearch, withoutSignin } from "../../../lib/accountsClient";
+import { SignInLanding } from "./AccountPanel";
 import {
   completeGarage,
   completeGarageHousehold,
@@ -231,6 +233,11 @@ export function GameCanvas({
   const [onboardOpen, setOnboardOpen] = useState(() => { try { return /[?&]onboarding=1(&|$)/.test(window.location.search); } catch { return false; } });
   // The saved player (src/lib/returningPlayer.ts): the title greets them by name and offers a different player instead of the first-run setup; a grown-up can forget them in the Grown-Ups sheet.
   const [player, setPlayer] = useState<PlayerProfile | null>(() => { try { return readProfile(window.localStorage); } catch { return null; } });
+  // Opened from the emailed sign-in link (?signin=...): the token leaves the address bar at once (not kept in the history), and a card trades it for a session (AccountPanel.tsx SignInLanding).
+  const [signinToken, setSigninToken] = useState<string | null>(() => { try { return signinTokenFromSearch(window.location.search); } catch { return null; } });
+  useEffect(() => {
+    try { if (signinTokenFromSearch(window.location.search)) window.history.replaceState(null, "", window.location.pathname + withoutSignin(window.location.search) + window.location.hash); } catch { /* an address that cannot be changed: the token stays, the card still works */ }
+  }, []);
   const forgetThisPlayer = useCallback(() => {
     try { forgetPlayer(window.localStorage); } catch { /* blocked storage: nothing was saved to forget */ }
     setPlayer(null);
@@ -1688,6 +1695,7 @@ export function GameCanvas({
       <div className="tv-stage">
         <div ref={stageHostRef} className="tv-stage-canvas-host" />
         {titleOpen && <TitleMenu toyName={label} ready={state.ready} onChoose={chooseTitle} onNewPlayer={openOnboarding} songKey={songFlow?.phase} musicHold={onboardOpen || songFlow?.phase === "dancing"} playerName={player?.kidName} />}
+        {signinToken && <SignInLanding token={signinToken} onDone={() => setSigninToken(null)} />}
         {onboardOpen && <OnboardingSheet onClose={() => { setOnboardOpen(false); try { setPlayer(readProfile(window.localStorage)); } catch { /* keep what we had */ } }} onStage={onboardStage} onHold={onboardHold} onPickUp={onboardPickUp} onIntroStart={onboardIntroStart} onSong={onboardSong} song={songFlow} />}
         {!sleepActive &&
           (demoMode ? (

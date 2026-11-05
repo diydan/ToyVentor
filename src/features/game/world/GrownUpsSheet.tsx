@@ -9,6 +9,7 @@ import { rememberGrownUpProof } from "../../../lib/grownUpGate";
 import { GateMathPad } from "./GateMathPad";
 import { SongSettingsPanel } from "./SongSettingsPanel";
 import { ForgetPlayerButton } from "./ForgetPlayerButton";
+import { AccountGroup } from "./AccountPanel";
 import { safeName } from "../../../lib/returningPlayer";
 import { kipDemoUrl } from "../../../../shared/toycontract";
 import { postRoomPhoto } from "../../../lib/api";
@@ -1470,6 +1471,8 @@ export function GrownUpsSheet({
               </div>
             </details>
           )}
+          {/* Account: a grown-up's emailed sign-in link. Draws nothing until the Worker has accounts on (AccountPanel.tsx). */}
+          <AccountGroup />
           {/* Showcase & developer: Demo Mode and its tools. Closed unless Demo Mode is on, so a parent never meets it. */}
           <details className="tv-disclosure" open={demoMode}>
             <summary>
