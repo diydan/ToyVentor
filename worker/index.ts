@@ -30,6 +30,7 @@ import { handleTranscribe } from "./transcribe";
 import { handleMuseSpark, museConfigured, type MuseEnv } from "./muse";
 import { handleOwnership, type OwnershipEnv } from "./ownership";
 import { type HostedGateEnv, requireHostedGate } from "./hostedGate";
+import { type AccountsEnv, handleAccounts } from "./accounts";
 import { handleParent, type ParentEnv } from "./parent";
 import { handleNameIt } from "./nameIt";
 import { handleRoomScan } from "./roomScan";
@@ -340,6 +341,13 @@ export default {
 
     if (url.pathname.startsWith("/api/parent/")) {
       return handleParent(request, env, url.pathname.slice("/api/parent".length));
+    }
+
+    // Accounts (worker/accounts.ts): a grown-up's emailed sign-in link. Answers only /api/account/*, and 404 "accounts are off" unless ACCOUNTS is exactly "on".
+    {
+      // the real binding is a full D1 database; the shared Env only types the small surface other modules use, so it is narrowed here
+      const accounts = await handleAccounts(request, env as AccountsEnv, ctx);
+      if (accounts) return accounts;
     }
 
     if (url.pathname.startsWith("/api/")) {
