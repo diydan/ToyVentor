@@ -1,4 +1,13 @@
 import type { PlayTimeStatus } from "../../../../shared/parent-time";
+import "../../../sleep-bed.css";
+
+/**
+ * The curtain's look. "bed": see-through, for the night (quiet hours) and for the day's end, because the toy has gone to bed and that is what to see (GameCanvas puts him to bed on the
+ * same two reasons). "break": the heavy one, for a sitting limit, when nobody went to bed.
+ */
+export function curtainLook(status: Pick<PlayTimeStatus, "reason">): "bed" | "break" {
+  return status.reason === "quiet_hours" || status.reason === "daily_limit" ? "bed" : "break";
+}
 
 export interface SleepCurtainProps {
   status: PlayTimeStatus;
@@ -48,7 +57,7 @@ export function SleepCurtain({
 
   return (
     <div
-      className="tv-sleep-curtain"
+      className={curtainLook(status) === "bed" ? "tv-sleep-curtain tv-sleep-curtain--bed" : "tv-sleep-curtain"}
       role="dialog"
       aria-modal="true"
       aria-label="Rest Time"

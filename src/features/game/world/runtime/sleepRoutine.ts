@@ -5,6 +5,8 @@
 //
 // The world supplies an adapter (where the toy is, how to walk it, how to lay it down, and so on) and reads `level` every frame: how asleep the ROOM is, 0 to 1,
 // which `lampScale`, `musicGain` and `tintAmount` turn into the lamp brightness, the music volume and the dusk-blue tint. Nothing here knows three.js.
+// Bedtime (the grown-ups' quiet hours or the day's limit, 2026-11-05) comes in two more ways: `lieHere()` (no bed in this world: lie down where the toy stands, and the wake has no hop down) and
+// `sleepNow(atBed)` (the curtain is up and the toy was not asleep yet: asleep at once, on the bed or where it stands).
 // Safe by construction: the walk gives up after a few seconds (a toy that cannot get to the bed stays awake), a vehicle never sleeps, a tap while the toy is mid-hop
 // is ignored (no half-poses), and `reset()` puts everything back at once for a world change.
 
@@ -71,6 +73,7 @@ export function createSleep(a: SleepAdapter, opts: { spot: P3 }) {
   let nextZzz = 0;
   let from: P3 = { x: 0, y: 0, z: 0 };   // where the current hop starts
   let home: P3 = { x: 0, y: 0, z: 0 };   // where the toy stood when it climbed (beside the bed): it hops back down to here
+  let inPlace = false;             // asleep where it stood, not on the bed: waking is a yawn and nothing more
 
   const go = (next: SleepPhase) => { const prev = phase; phase = next; t = 0; a.onPhase?.(next, prev); };
 
@@ -82,6 +85,39 @@ export function createSleep(a: SleepAdapter, opts: { spot: P3 }) {
     get level(): number { return level; },
     /** True from the tap until the toy is back on the floor and awake. */
     get busy(): boolean { return phase !== "awake"; },
+    /** True while the toy sleeps where it stood (no bed): it has no hop down to make. */
+    get inPlace(): boolean { return inPlace; },
+    /**
+     * Lie down where the toy stands, with no bed (an outdoor world at bedtime). Awake only; a vehicle does not (false). It settles and falls asleep like on a bed, and waking is the yawn
+     * and then awake, with no hop. Returns whether it started.
+     */
+    lieHere(): boolean {
+      if (phase !== "awake" || a.rig() === "vehicle") return false;
+      inPlace = true;
+      a.lieDown();
+      go("lying");
+      return true;
+    },
+    /**
+     * Asleep at once, for the moment the curtain comes and the toy is not yet in bed (it was woken, was busy, or the game was opened in quiet hours). `atBed`: on the mattress, and it
+     * will hop down beside the bed on its own lane when it wakes; otherwise where it stands. From awake or while walking to the bed; a toy already climbing, lying or asleep is left
+     * alone. Returns whether it did anything. A vehicle does not sleep (false).
+     */
+    sleepNow(atBed: boolean): boolean {
+      if ((phase !== "awake" && phase !== "walking") || a.rig() === "vehicle") return false;
+      if (phase === "walking") a.stopWalk();
+      if (atBed) {
+        const here = a.position();
+        home = { x: opts.spot.x, y: 0, z: here.z };
+        a.setPosition(opts.spot.x, opts.spot.y, opts.spot.z);
+        inPlace = false;
+      } else inPlace = true;
+      a.lieDown();
+      level = 1;
+      nextZzz = FIRST_ZZZ_S;
+      go("asleep");
+      return true;
+    },
     /**
      * The bed was tapped. Awake: start for the bed (returns true), unless the toy is a vehicle (returns false: the caller plays its "no, thank you"). Walking: change of heart,
      * stay awake. Lying or asleep: wake up. Climbing, waking or descending: ignored, the toy is mid-move. Returns whether the tap was used.
@@ -123,7 +159,7 @@ export function createSleep(a: SleepAdapter, opts: { spot: P3 }) {
         if (t >= nextZzz) { a.zzz(); nextZzz += ZZZ_EVERY_S; }
       } else if (phase === "waking") {
         // The yawn plays where the toy stands on the mattress; then it hops back down.
-        if (t >= WAKING_S) { from = opts.spot; go("descending"); }
+        if (t >= WAKING_S) { if (inPlace) { inPlace = false; go("awake"); } else { from = opts.spot; go("descending"); } }
       } else if (phase === "descending") {
         const p = hopPoint(from, home, t / DOWN_S);
         a.setPosition(p.x, p.y, p.z);
@@ -133,7 +169,7 @@ export function createSleep(a: SleepAdapter, opts: { spot: P3 }) {
     /** A world change or a new toy: forget everything, light and sound back to normal at once. */
     reset(): void {
       if (phase === "walking") a.stopWalk();
-      phase = "awake"; t = 0; level = 0;
+      phase = "awake"; t = 0; level = 0; inPlace = false;
     },
   };
 }

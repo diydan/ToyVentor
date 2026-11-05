@@ -84,19 +84,20 @@ export function setParentControlsSession(off: boolean): boolean {
 
 /**
  * What every consumer of the play-time status should see. Off: the same shape `evaluatePlayTime` returns when Play Time is switched off (never locked, no
- * twilight, no quiet hours), so `sleepActive`, the mission grace and the heartbeat all fall out with no other change. The settings and the ledger inside the
+ * twilight, no bedtime, no quiet hours), so `sleepActive`, the mission grace and the heartbeat all fall out with no other change. The settings and the ledger inside the
  * snapshot are the SAME objects, untouched. On: the snapshot itself (same reference, so React state does not churn).
  */
 export function effectiveParentSnapshot(snapshot: ParentSnapshot, mode: ParentControlsMode): ParentSnapshot {
   if (mode !== "off") return snapshot;
   const s = snapshot.status;
-  if (!s.locked && !s.twilightCue && !s.inQuietHours && s.reason === "disabled") return snapshot; // already reads as off
+  if (!s.locked && !s.twilightCue && !s.bedtime && !s.inQuietHours && s.reason === "disabled") return snapshot; // already reads as off
   const status: PlayTimeStatus = {
     ...s,
     enabled: false,
     inQuietHours: false,
     remainingSeconds: null,
     twilightCue: false,
+    bedtime: false,
     locked: false,
     reason: "disabled",
   };

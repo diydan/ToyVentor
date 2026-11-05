@@ -923,6 +923,8 @@ export interface EngineHandle {
   isTitle: () => boolean;
   /** Quiet the engine's background music when the calm Sleep Curtain fades in. */
   muteSound: () => void;
+  /** Bedtime: the toy goes to bed by itself. "going" in the last minute before play stops for the night or for the day, "now" once it has stopped, "off" when play is back (he wakes). */
+  setBedtime: (mode: "off" | "going" | "now") => void;
   /** Stock blueprints, forged tools, and Garden river position for Demo Mode v1 without mutating earned XP. */
   seedDemoSave?: () => void;
   /** Dispose the runtime, destroying its WebGL context. */
@@ -981,6 +983,7 @@ interface LegacyHooks {
   setTier?: (tier: number) => void;
   setZoom?: (zoom: number) => void;
   setPaused?: (paused: boolean) => void;
+  setBedtime?: (mode: "off" | "going" | "now") => void;
   mute?: () => void;
   startLearnRun?: (track: string, plan: number[], kidMode: boolean) => void;
   stopLearnRun?: () => void;
@@ -1601,6 +1604,9 @@ export function createEngine(
     isTitle: () => !disposed && Boolean(hooks()?.P?.title),
     muteSound: () => {
       hooks()?.mute?.();
+    },
+    setBedtime: (mode) => {
+      hooks()?.setBedtime?.(mode);
     },
     seedDemoSave: () => {
       hooks()?.seedDemo?.();

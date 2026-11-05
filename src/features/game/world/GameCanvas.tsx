@@ -128,6 +128,7 @@ import { MyToySheet } from "./MyToySheet";
 import { isPackClaimedToday, PackOverlay } from "./PackOverlay";
 import { RevealOverlay } from "./RevealOverlay";
 import { SleepCurtain } from "./SleepCurtain";
+import { bedtimeModeFor } from "../../../lib/bedtimeMode";
 import { WorkshopLauncher } from "./WorkshopLauncher";
 import { ROTATE_GATE_QUERY, rotateGateShowing } from "./rotateGate";
 import "../../../game-hud.css";
@@ -765,6 +766,13 @@ export function GameCanvas({
     parentSnapshot.status.reason !== "quiet_hours";
   const garageGraceActive = garageGraceTicking && garageGraceLeftMs(garageGraceUsed) > 0;
   const sleepActive = parentSnapshot.status.locked && !missionGraceActive && !garageGraceActive;
+
+  // Bedtime (Dan, 2026-11-05: "Kip going to bed by himself at quiet hours"): in the last minute before play stops for the night or for the day he goes to bed (his own bed, or he lies down where he is),
+  // and once the curtain is up he is asleep; when play is back he wakes. A sitting limit is a break, not a night, so he stays up for it. Read from the effective snapshot, so a demo never does it.
+  const bedtimeMode = bedtimeModeFor(parentSnapshot.status, sleepActive);
+  useEffect(() => {
+    if (state.ready) engine()?.setBedtime(bedtimeMode);
+  }, [bedtimeMode, state.ready]);
 
   useEffect(() => {
     setGarageGraceUsed(loadGraceUsedMs(garage.weekendKey));

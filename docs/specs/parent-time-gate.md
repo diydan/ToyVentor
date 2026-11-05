@@ -84,6 +84,28 @@ Sleep shows only `Time for a break!`, `{toyName} is resting for tonight`, or
 one `Grown-ups` button, final-minute twilight softening, and an active-mission
 grace caption when relevant.
 
+### Bedtime: the toy goes to bed by itself (2026-11-05)
+
+Dan: "Kip going to bed by himself at quiet hours". The curtain used to drop on a toy that was simply standing there; now the toy goes to bed first, and the curtain shows him tucked in.
+
+- **The rule (`PlayTimeStatus.bedtime`, `BEDTIME_LEAD_SECONDS` = 60).** True in the last minute before play stops for the night (quiet hours begin: `secondsUntilQuietHours`, exact to the second in the
+  family's time zone) or for the day (the daily limit is what stops play, i.e. it is not later than a sitting limit), and while play is stopped for either. **A sitting limit is a break, not a
+  night: no bedtime** (`Time for a break!` keeps the toy up). Play Time off, and the demo override (`effectiveParentSnapshot` with controls off), never give bedtime. A status from a Worker that
+  does not send the field reads as false.
+- **The mode (`src/lib/bedtimeMode.ts`).** `going` in the lead-in, `now` when the curtain is up for quiet hours or the day's limit, `off` otherwise (a mission or the Garage allowed to finish
+  after the day's limit has no curtain yet, so `off`). `GameCanvas` hands it to `engine.setBedtime`, the world to the sleep hook.
+- **The toy (`sleepHook.setBedtime`, `sleepRoutine.lieHere` / `sleepNow`).** `going`: walk to the nearest bed in the world, hop up, lie down, fall asleep (the room dims, the Zzz drift); a world with
+  no bed (the Garden, the Beach...): lie down where he is. A child who wakes him with a tap, or walks him away from the bed, during the lead-in is respected: he stays up until the curtain.
+  `now`: asleep at once, on the bed or where he is, if he is not yet (a game opened in quiet hours finds him already asleep). `off`: he wakes with the yawn and hops down (no hop when there was
+  no bed). A busy toy (a hug, a meal) waits and goes the moment it is free; the title screen, a vehicle toy and Play Time off do nothing. The bedtime sleep is held for real: if the
+  animation loses the pose (the rig is swapped for the finished one just after a cold load), the hook lies him down again.
+- **The curtain (`curtainLook`, `src/sleep-bed.css`).** For the night and the day's end it is see-through, with the message as a banner along the top, so the sleeping toy and the dusk room
+  show through; for a sitting limit it is the heavy navy one as before.
+- **Checked.** 12 + 23 + 8 unit tests (the rule at its exact boundaries, the hook's modes mutation-checked, the pure mode and the look) and in the real game: the Toy Room (walks to the bed, asleep,
+  wakes, hops down, a child's tap wakes him and he stays up), the Garden (lies down on the grass), a game opened in quiet hours (asleep, banner, awake when they end), and real quiet hours
+  that begin 98 s later (in bed by T-52 s, the curtain at T). Not done: the same for a vehicle (it has no bed), a bedtime story or lullaby, and a grown-up setting for it (it follows the
+  quiet hours and the daily limit that are already set).
+
 ## Validation Gates
 
 - Heartbeats, ledger resets, mission uniqueness, cap math, and proof expiry are

@@ -1,0 +1,51 @@
+/* The Sleep Curtain when the toy has gone to bed (Dan, 2026-11-05: "Kip going to bed by himself at quiet hours"). For the night (quiet hours) and for the day's end the world behind the curtain
+   is the point: Kip tucked in with the room at dusk and the Zzz drifting up. So this one is see-through, with the message as a banner along the top (he lies in the middle or low on the
+   ground, never up there, wherever the camera has him), instead of the heavy navy blur and the centred card that hide everything.
+   A sitting limit ("Time for a break!") keeps the heavy curtain: nobody went to bed. */
+.tv-sleep-curtain.tv-sleep-curtain--bed {
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: calc(12px + env(safe-area-inset-top));
+  background: linear-gradient(to bottom, rgba(6, 10, 30, 0.5), rgba(6, 10, 30, 0.16) 38%, rgba(6, 10, 30, 0.3));
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.tv-sleep-curtain.tv-sleep-curtain--bed .tv-sleep-card {
+  width: min(560px, 94%);
+  padding: 12px 18px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 14px;
+  row-gap: 2px;
+  align-items: center;
+  text-align: left;
+  background: rgb(var(--surface-rgb) / 0.8);
+}
+
+.tv-sleep-curtain.tv-sleep-curtain--bed .tv-sleep-moon {
+  grid-row: 1 / span 2;
+}
+
+.tv-sleep-curtain.tv-sleep-curtain--bed .tv-sleep-title {
+  font-size: 18px;
+  margin: 0;
+}
+
+.tv-sleep-curtain.tv-sleep-curtain--bed .tv-sleep-body {
+  font-size: 12.5px;
+  line-height: 1.35;
+  margin: 0;
+}
+
+@media (max-width: 520px) {
+  .tv-sleep-curtain.tv-sleep-curtain--bed .tv-sleep-card {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+  .tv-sleep-curtain.tv-sleep-curtain--bed .tv-sleep-moon {
+    grid-row: auto;
+    justify-self: center;
+  }
+}

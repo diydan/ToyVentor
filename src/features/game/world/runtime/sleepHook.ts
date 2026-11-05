@@ -5,6 +5,10 @@
 // world.ts supplies the facts through `SleepWorld`. The wiring there is: `onBed` (from the prop fx) calls `tapBed(bed)`; the pointerdown handler first asks `consume()`, which
 // wakes a sleeping toy and swallows that tap; `update(dt)` each frame; `reset()` when the world is rebuilt.
 //
+// Bedtime (2026-11-05, the grown-ups' quiet hours or the day's limit: shared/parent-time.ts `PlayTimeStatus.bedtime`): `setBedtime("going")` in the last minute before play stops sends
+// the toy to the nearest bed (or, in a world with no bed, lies it down where it stands); `"now"` once the curtain is up puts it to sleep at once if it is not yet; `"off"` wakes the
+// sleep that bedtime started (never one the child started) when play comes back. A child who wakes it or walks it off during the lead-in is left alone until the curtain.
+//
 // Robots and vehicles do not sleep yet (a robot's power-down is a later piece): they politely refuse. A character with no clips to play (reduced motion, not loaded) still
 // goes through the motions and simply stands on the bed while the room dims.
 import * as THREE from "three";
@@ -36,7 +40,19 @@ export interface SleepWorld {
   phase(phase: SleepPhase, previous: SleepPhase): void;
   /** The toy was asked to sleep but cannot (a robot or a vehicle): say "no, thank you". */
   refuse(): void;
+  /** Bedtime: where each bed in this world stands. None (or absent): the toy lies down where it is. */
+  beds?(): ReadonlyArray<{ x: number; z: number }>;
+  /** Bedtime: false while something owns the screen and the toy (the title). Absent: always fine. */
+  bedtimeOk?(): boolean;
+  /**
+   * Is the lying pose actually held? False when the toy is asleep in the routine's eyes but the animation lost the pose (the player's rig was swapped for the finished one while it slept:
+   * a game opened in quiet hours is put to bed before the rig has loaded). The hook then lies it down again. Absent: trust the routine.
+   */
+  holdsPose?(): boolean;
 }
+
+/** off: nothing; going: the lead-in before play stops (walk to bed, lie down); now: play has stopped (asleep at once if not already). */
+export type BedtimeMode = "off" | "going" | "now";
 
 /** How close (world units, along x) the toy must be to the bed to start climbing. */
 export const ARRIVE_X = 0.45;
@@ -82,6 +98,9 @@ export function createSleepHook(w: SleepWorld) {
   let level = -1;
   const bubbles: Bubble[] = [];
   let ctrl = make({ x: 0, y: 0, z: 0 });
+  let mode: BedtimeMode = "off";
+  let owned = false;       // the sleep in progress is bedtime's, so "off" may wake it (a sleep the child started with a tap on the bed is not)
+  let declined = false;    // the child woke it or walked it off during the lead-in: leave it be until the curtain
 
   function make(at: P3) {
     return createSleep({
@@ -96,6 +115,43 @@ export function createSleepHook(w: SleepWorld) {
       zzz: () => spawn(at),
       onPhase: (p, prev) => w.phase(p, prev),
     }, { spot: at });
+  }
+
+  /** Aim the routine at this bed (a fresh one for a different bed), unless it is mid-sleep. */
+  function aimAt(bed: { x: number; z: number }): void {
+    if (ctrl.busy) return;
+    if (bedAt.x !== bed.x || bedAt.z !== bed.z) {
+      bedAt = { x: bed.x, z: bed.z };
+      spot = sleepSpot(bed);
+      ctrl = make(spot);
+    }
+  }
+  const nearestBed = (): { x: number; z: number } | null => {
+    const beds = w.beds?.() ?? [];
+    if (!beds.length) return null;
+    const x = w.position().x;
+    return beds.reduce((best, b) => (Math.abs(b.x - x) < Math.abs(best.x - x) ? b : best));
+  };
+
+  /** One look at what bedtime wants, every frame it is on: start, retry, or hurry. */
+  function bedtimeStep(): void {
+    if (mode === "off" || w.eater() !== "character" || (w.bedtimeOk && !w.bedtimeOk())) return;
+    const ph = ctrl.phase;
+    if (ph === "awake") owned = false;                         // the walk gave up, or it was woken: nothing in progress
+    if (ph === "lying" || ph === "asleep" || ph === "climbing") { owned = true; return; }
+    if (ph === "waking" || ph === "descending") return;       // finish getting up first
+    if (mode === "going") {
+      if (ph !== "awake" || declined || !w.allowed()) return;
+      const bed = nearestBed();
+      if (bed) { aimAt(bed); if (ctrl.tapBed()) owned = true; }
+      else if (ctrl.lieHere()) owned = true;
+      return;
+    }
+    // "now": the curtain is up
+    if (ph === "awake" && !w.allowed()) return;               // busy with something that cannot be cut short; the next frame asks again
+    const bed = nearestBed();
+    if (bed) aimAt(bed);
+    if (ctrl.sleepNow(Boolean(bed))) owned = true;
   }
 
   function spawn(at: P3) {
@@ -128,13 +184,28 @@ export function createSleepHook(w: SleepWorld) {
       if (!ctrl.busy) {
         if (!w.allowed()) return false;
         if (w.eater() !== "character") { w.refuse(); return false; }
-        if (bedAt.x !== bed.x || bedAt.z !== bed.z) {            // a different bed: a fresh routine aimed at its mattress
-          bedAt = { x: bed.x, z: bed.z };
-          spot = sleepSpot(bed);
-          ctrl = make(spot);
-        }
+        aimAt(bed);                                              // a different bed: a fresh routine aimed at its mattress
       }
       return ctrl.tapBed();
+    },
+    /** What bedtime is doing now. */
+    get bedtime(): BedtimeMode { return mode; },
+    /** True while the sleep in progress is bedtime's (so "off" will wake it). */
+    get bedtimeOwned(): boolean { return owned; },
+    /** True after the child woke it or walked it off during the lead-in: bedtime waits for the curtain. */
+    get bedtimeDeclined(): boolean { return declined; },
+    /**
+     * Bedtime on, off, or at once. The work is done a frame at a time in `update` (a toy that is busy simply waits). `"off"` wakes the sleep bedtime started, never one the child started; a
+     * change of mode forgets that the child waved it off.
+     */
+    setBedtime(next: BedtimeMode): void {
+      if (next === mode) return;
+      mode = next;
+      declined = false;
+      if (next === "off") {
+        if (owned && ctrl.busy) ctrl.tapElsewhere();             // asleep or lying: wakes; walking: stops; mid-hop: finishes (the call ignores it)
+        owned = false;
+      }
     },
     /**
      * Call first in the world's pointerdown: true means the tap woke the sleeper (or the toy is mid-hop) and the world must NOT also walk the toy or tap a prop. While the toy is still
@@ -143,14 +214,21 @@ export function createSleepHook(w: SleepWorld) {
     consume(): boolean {
       if (!ctrl.busy) return false;
       if (ctrl.phase === "walking") return false;
+      const wasBedtimes = owned && mode === "going";
       ctrl.tapElsewhere();
+      if (wasBedtimes) { declined = true; owned = false; }       // the child woke it: it stays up until the curtain
       return true;
     },
     update(dt: number): void {
       if (ctrl.phase === "walking") {
         const tx = w.targetX();
-        if (tx !== null && Math.abs(tx - spot.x) > REDIRECT_X) ctrl.tapElsewhere();      // the player sent the toy somewhere else
+        if (tx !== null && Math.abs(tx - spot.x) > REDIRECT_X) {
+          ctrl.tapElsewhere();                                   // the player sent the toy somewhere else
+          if (owned && mode === "going") { declined = true; owned = false; }
+        }
       }
+      bedtimeStep();
+      if ((ctrl.phase === "lying" || ctrl.phase === "asleep") && w.holdsPose && !w.holdsPose()) w.lieDown();     // the pose was lost under him: lie down again
       ctrl.update(dt);
       const l = ctrl.level;
       if (Math.abs(l - level) > 0.004 || ((l === 0 || l === 1) && l !== level)) { level = l; w.ambient(l); }
@@ -167,6 +245,7 @@ export function createSleepHook(w: SleepWorld) {
     /** A world change or a new toy: the room is awake at once, the Zzz are gone and nothing is remembered. */
     reset(): void {
       const was = ctrl.phase;
+      owned = false; declined = false;                          // the mode stays: bedtime carries on in the next world
       ctrl.reset();
       if (was !== "awake") w.phase("awake", was);               // the world un-busies the toy and lets go of the lying pose
       clearBubbles();

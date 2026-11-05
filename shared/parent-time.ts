@@ -82,6 +82,12 @@ export interface PlayTimeStatus {
   twilightCue: boolean;
   /** True when play has ended and the calm Sleep Curtain should fade in. */
   locked: boolean;
+  /**
+   * The toy goes to bed: true in the last `BEDTIME_LEAD_SECONDS` before play stops for the night (quiet hours) or for the day (the daily limit), and while it is stopped for
+   * either. Not for a sitting limit ("time for a break": the toy stays up). The game puts the toy to bed on it (it walks to its bed, or lies down where it is) so it is tucked
+   * in when the curtain comes, and wakes it when play comes back. A status from a server that does not send it reads as false.
+   */
+  bedtime: boolean;
   reason: PlayStopReason;
 }
 
@@ -346,6 +352,24 @@ function localMinutesOfDay(nowMs: number, timezone: string): number {
   return hour * 60 + minute;
 }
 
+/** How long before play stops for the night or for the day the toy starts for bed: the walk, the hop and the settling take up to about 14 s, and the warm twilight cue is the same minute. */
+export const BEDTIME_LEAD_SECONDS = 60;
+
+/**
+ * Seconds until quiet hours next begin, or null when they are off, empty, or running now. Minutes of the day are whole in every time zone, so the seconds are the clock's own.
+ */
+export function secondsUntilQuietHours(nowMs: number, timezone: string, quietHours: QuietHours): number | null {
+  if (!quietHours.enabled) return null;
+  const start = parseMinutesOfDay(quietHours.start);
+  const end = parseMinutesOfDay(quietHours.end);
+  if (start === null || end === null || start === end) return null;
+  if (isInQuietHours(nowMs, timezone, quietHours)) return null;
+  const current = localMinutesOfDay(nowMs, timezone);
+  const minutes = (start - current + 1440) % 1440;
+  const secondOfMinute = Math.floor(nowMs / 1000) % 60;
+  return minutes * 60 - secondOfMinute;
+}
+
 export function isInQuietHours(
   nowMs: number,
   timezone: string,
@@ -441,6 +465,7 @@ export function evaluatePlayTime(
       remainingSeconds: null,
       twilightCue: false,
       locked: false,
+      bedtime: false,
       reason: "disabled",
     };
   }
@@ -461,6 +486,7 @@ export function evaluatePlayTime(
       remainingSeconds: 0,
       twilightCue: false,
       locked: true,
+      bedtime: true,
       reason: "quiet_hours",
     };
   }
@@ -478,6 +504,13 @@ export function evaluatePlayTime(
         : "session_limit";
   }
 
+  // Bedtime: the day's limit is what stops play (it is not later than a sitting limit), or quiet hours begin soon. A sitting limit is a break, not a night.
+  const dailyStopsPlay = sessionRemainingSeconds === null || dailyRemainingSeconds <= sessionRemainingSeconds;
+  const dailySoon = dailyStopsPlay && remainingSeconds > 0 && remainingSeconds <= BEDTIME_LEAD_SECONDS;
+  const dailyDone = remainingSeconds <= 0 && reason === "daily_limit";
+  const untilQuiet = secondsUntilQuietHours(nowMs, settings.timezone, settings.quietHours);
+  const quietSoon = untilQuiet !== null && untilQuiet > 0 && untilQuiet <= BEDTIME_LEAD_SECONDS;
+
   return {
     day: ledger.day,
     enabled: true,
@@ -493,6 +526,7 @@ export function evaluatePlayTime(
     remainingSeconds,
     twilightCue: remainingSeconds > 0 && remainingSeconds <= 60,
     locked: remainingSeconds <= 0,
+    bedtime: dailySoon || dailyDone || quietSoon,
     reason,
   };
 }
