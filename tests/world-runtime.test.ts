@@ -212,8 +212,8 @@ describe("native world runtime (Phase 0A)", () => {
     // Unit 3: the print-ready copy lives in the customizer snapshot, not hidden DOM.
     expect(text).not.toContain("Ready to 3D print");
     expect(sceneText).toContain("function gear(r: number, th: number, mat: THREE.Material, teeth?: number)");
-    expect(text).toContain("gear(.9,.2,plastic(\"#2c3f94\"),12)");
-    expect(text).toContain("gear(.6,.2,plastic(\"#3c55b8\"),8)");
+    expect(text).toContain("gear(.9,.2,plastic(pk(\"#2c3f94\",\"#e3a548\")),12)"); // the night gears are the original colours; day has brass ones (the title room's two looks)
+    expect(text).toContain("gear(.6,.2,plastic(pk(\"#3c55b8\",\"#f2c76a\")),8)");
     expect(text).toContain("gears[1].rotation.y+=tts.d*GEAR_RATIO[1]");
   });
 });
