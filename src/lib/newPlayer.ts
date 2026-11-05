@@ -233,16 +233,49 @@ export function clearProfile(store: Store | null): void {
 // ---- the theme song ------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 /**
- * The one sentence a song is asked for ("prompt" kind of /api/theme-song: the route screens it before any model sees it). Only a first name and three picks from closed lists; null when the
- * profile did not say yes to the song.
+ * The one sentence a song is asked for ("prompt" kind of /api/theme-song: the route screens it before any model sees it). A first name, three favourites and, when the sheet passes it, what the child dressed Kip in
+ * (`outfitWords`): all picks from closed lists. Null when the profile did not say yes to the song.
  */
-export function songIdea(p: PlayerProfile): string | null {
+export function songIdea(p: PlayerProfile, outfit?: KipConfig | null, max: number = SONG_IDEA_MAX): string | null {
   if (!p.songConsent) return null;
   const colour = colourOf(p.favourites.colour)?.label.toLowerCase();
   const fruit = fruitOf(p.favourites.fruit)?.label.toLowerCase();
   const animal = animalOf(p.favourites.animal)?.label.toLowerCase();
   if (!colour || !fruit || !animal) return null;
-  return `a happy welcome song for ${p.kidName}, who loves the colour ${colour}, ${fruit} and ${animal}s, and has just built a Kip to play with`;
+  const base = `a happy welcome song for ${p.kidName}, who loves the colour ${colour}, ${fruit} and ${animal}s, and has just built a Kip to play with`;
+  const worn = outfit ? outfitWords(outfit) : [];
+  // every detail the child chose goes in, unless the sentence would pass the route's 300 characters: then the least important go first (shoes, tail, hat, hair, pants, shirt last)
+  for (let n = worn.length; n > 0; n--) {
+    const sentence = `${base}. Kip is wearing ${listWords(worn.slice(0, n))}`;
+    if (sentence.length <= max) return sentence;
+  }
+  return base;
+}
+
+/** The longest idea the song route takes (worker/themeSong.ts MAX_DESCRIPTION). */
+export const SONG_IDEA_MAX = 300;
+
+/** "a, b and c". */
+const listWords = (parts: readonly string[]): string => (parts.length <= 1 ? (parts[0] ?? "") : `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`);
+
+/**
+ * What the child dressed Kip in, as plain words for the song writer, most important first: the shirt and pants colours, the hair (its colour and style), the hat, the tail and the shoe colour. Only closed-list
+ * labels (a stray value is skipped, never repeated), and no skin tone: a song has no need of it. A "none" hair, hat or tail says nothing.
+ */
+export function outfitWords(c: KipConfig): string[] {
+  const hexLabel = (list: readonly ColourChoice[], hex: string): string | null => list.find((x) => x.hex.toLowerCase() === String(hex).toLowerCase())?.label.toLowerCase() ?? null;
+  const idLabel = (list: readonly Choice[], id: string): string | null => list.find((x) => x.id === id)?.label.toLowerCase() ?? null;
+  const out: string[] = [];
+  const shirt = hexLabel(FAVOURITE_COLOURS, c.shirt), pants = hexLabel(PANTS_COLOURS, c.pants), shoes = hexLabel(SHOE_COLOURS, c.boots);
+  if (shirt) out.push(`a ${shirt} shirt`);
+  if (pants) out.push(`${pants} pants`);
+  const style = c.hair !== "none" ? idLabel(HAIR_CHOICES, c.hair) : null, tone = hexLabel(HAIR_COLOUR_CHOICES, c.hairColour);
+  if (style) out.push(tone ? `${tone} hair in the ${style} style` : `hair in the ${style} style`);
+  const hat = c.hat !== "none" ? idLabel(HAT_CHOICES, c.hat) : null, tail = c.tail !== "none" ? idLabel(TAIL_CHOICES, c.tail) : null;
+  if (hat) out.push(`a ${hat}`);
+  if (tail) out.push(`a ${tail}`);
+  if (shoes) out.push(`${shoes} shoes`);
+  return out;
 }
 
 // ---- the intro -----------------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -229,7 +229,7 @@ export function OnboardingSheet({ onClose, onStage, onHold, onPickUp, onIntroSta
     if (!made.ok) { setProblem(`Something is missing (${made.problem}). Please go back.`); return; }
     saveProfile(storage === undefined ? safeStorage() : storage, made.profile);
     setProfile(made.profile);
-    const idea = songIdea(made.profile);
+    const idea = songIdea(made.profile, cleanKipConfig(cfg) ?? defaultKipConfig(colourOf(colour)?.hex)); // the favourites AND what he is wearing
     if (idea) { onHold(true); onSong(idea); }
     next();
   };

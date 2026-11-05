@@ -873,7 +873,6 @@ if(!P.showcase&&!P.busy&&!P.mDrive){tidySpots.forEach(function(ts){if(ts.done)re
  if(P.danceBack!=null&&!(mix&&(mix.busyAction==="dance"||mix.busyAction===IDLE_LABEL))){if(Math.abs(P.tface+Math.PI/2)<1e-6)P.tface=P.danceBack;P.danceBack=null}
  IDLEB.update();
  if(ONBW){if(P.model)P.model.visible=false;blob.visible=false;if(W.root)W.root.visible=false}
- else if(ONBD){if(W.root)W.root.visible=false;var rdy=!!P.rigReady;if(P.model)P.model.visible=rdy;blob.visible=rdy||!!ONBGH;if(ONBGH){if(rdy){if(ONBGH.parent)ONBGH.parent.remove(ONBGH);ONBGH=null}else ONBGH.visible=true}}
  if(S.type==="character"){var fnew=FACEU.step(dt,(P.showcase||P.danceBack!=null||P.mDrive||ED.on||paused||ACT.active||ACTS.busy||SLEEPH.busy||MESS.phase!=="idle"||(mix&&mix.busyAction))?"owned":idleOk()?"free":"away",P.tface);if(fnew!==null)P.tface=fnew}
  var gdx=P.pos.x-(P.gaitX==null?P.pos.x:P.gaitX),gdz=P.pos.z-(P.gaitZ==null?P.pos.z:P.gaitZ),gait=Math.sqrt(gdx*gdx+gdz*gdz)/Math.max(dt,.001);P.gaitX=P.pos.x;P.gaitZ=P.pos.z;gait=gait>8?0:Math.min(gait,4.5);
  if(driven&&mix){mix.update(rig,dt,P.speed,{headYaw:P.noticeYaw||0,headPitch:-(P.spA||0)*.35,gait:gait,stopIn:(P.target&&!P.busy&&!P.showcase)?Math.max(0,Math.sqrt((P.target.x-P.pos.x)*(P.target.x-P.pos.x)+(P.target.z-P.pos.z)*(P.target.z-P.pos.z))-.07):undefined});if(rig.hover)rig.g.position.y+=.12+Math.sin(t*3)*.06}
@@ -1168,7 +1167,7 @@ function ONBTAP(e: PointerEvent){
 function cuSlot(s: string){B.slot=s;sfx.pop();renderSheet()}
 function cuPart(id: string){var slotId=B.slot||"base",k=slotPartKey(S.type,slotId,id),p=PART[k];if(!p)return;if(!isOpen(k)){toast("Find it in "+WN[p.w]+".");sfx.bump();return}cur()[slotId]=id;save();buildPlayer(slotId);partSound(k);renderSheet()}
 /* The new-player setup's "meet Kip" scene (OnboardingSheet.tsx, docs/specs/accounts-and-new-user-spec.md section 8). Kip lies in a PILE OF HIS REAL PARTS on the Toy Room floor (every mesh of his rig is cloned, sharing the real STL geometry and materials, so the pile is the demo's parts and not stand-ins), and on "build" each part is carried from the pile to its seat, lowest first, the way the Kip demo's Describe and Build carries its parts (parts/kip/viewer/kip-describe-view.js pilePlan and pileFrame): lifted, carried over, set down. The real Kip stays hidden until the last part lands, and then appears with a pop. `pile` also paints the shirt the favourite colour and turns Kip to face the screen (so the seats match where he will stand). Then the HEADPHONES: `phonesShow` floats a pair beside Kip when the song is ready, `phones` carries them to his head (they then follow it), `phonesOff` takes them away when the song is over. Ops: dress (the real Kip in the workshop, live), pile, finish (the last part was tapped into place), build, abort (put Kip back, keep the headphones; during Dress also put the old look back), end (everything), phonesShow, phones, phonesOff. */
-var ONBG: THREE.Group | null=null,ONBH: THREE.Group | null=null,ONBK: THREE.Group | null=null,ONBT=0,ONBW=false,ONBD=false,ONBGH: any=null,ONBPRE: any=null; // ONBW: Kip is held hidden every frame (no Kip is ever seen before the pile); ONBD: the DRESS step shows the real Kip in the workshop (ONBGH: the Kip he was a moment ago, kept on show until the new one's parts have loaded; ONBPRE: the look to put back if the setup is left before the build)
+var ONBG: THREE.Group | null=null,ONBH: THREE.Group | null=null,ONBK: THREE.Group | null=null,ONBT=0,ONBW=false,ONBD=false,ONBGH: any=null,ONBPRE: any=null,ONBL=0; // ONBW: Kip is held hidden every frame (no Kip is ever seen before the pile); ONBD: the DRESS step shows the real Kip in the workshop (ONBGH: the Kip he was a moment ago, kept on show until the new one's parts have loaded; ONBPRE: the look to put back if the setup is left before the build)
 /* "Dress your Kip": the outfit the child picked (one JSON object, or a plain shirt hex) put on the saved character: only valid hex colours and plain strings. The hair style, hat and tail are the character's own slots (cur(), that is S.sel.character): the first version wrote them on S.sel itself, where nothing reads them, so those three picks never reached the real Kip. Returns whether anything changed; the caller saves and rebuilds. */
 function onbOutfit(hex: string): boolean{
  var sl=cur(),sig=function(){return JSON.stringify([S.col.c1,S.col.c2,S.col.boots,S.col.skin,S.col.hair,sl.hair,sl.hat,sl.tail])},was=sig(),cf: any=null;
@@ -1178,6 +1177,29 @@ function onbOutfit(hex: string): boolean{
   if(typeof cf.hair==="string")sl.hair=cf.hair;if(typeof cf.hat==="string")sl.hat=cf.hat;if(typeof cf.tail==="string")sl.tail=cf.tail}
  else if((qq=hexOk(hex)))S.col.c1=qq;
  return sig()!==was}
+/* The pile of Kip's REAL parts (Dan, 2026-11-05: "we still don't start with a pile of bricks"): every mesh of his rig cloned, sharing the real geometry and materials, thrown on the workshop floor. The DRESS step lays it
+   and re-lays it with every pick (a colour or a part changes on the pile at once: the layout is a function of the part's place in the rig, so a colour change leaves every brick where it was), and the build step starts
+   from the very same pile. A newer lay cancels an older one, and the old pile stays on show until the new one is ready (no blink). */
+function onbLay(){
+ var tk=++ONBL,ot=ONBT,tries=0,lay=function(){
+  if(tk!==ONBL||ot!==ONBT||!ONBW)return;
+  if(!(P.rig&&P.rig.stlMode==="stl")&&tries++<30){setTimeout(lay,250);return} // his real parts are fetched: wait for them (about 7 s at most, then no pile)
+  if(!P.model||!P.rig)return;
+  P.model.updateMatrixWorld(true);
+  var seats: any[]=[];
+  P.rig.g.traverse(function(o: any){if(o.isMesh&&o.visible!==false&&!o.userData.shadowProxy&&o.geometry&&o.geometry.attributes&&o.geometry.attributes.position){var p=new T.Vector3(),q=new T.Quaternion(),sc=new T.Vector3();o.matrixWorld.decompose(p,q,sc);seats.push({o:o,p:p,q:q,s:sc})}});
+  if(seats.length<3)return;
+  seats.sort(function(a,b){return a.p.y-b.p.y});
+  var g=new T.Group(),hx=P.pos.x-2.3,hz=P.pos.z+.3,eu=new T.Euler();
+  seats.forEach(function(it,i){var m=new T.Mesh(it.o.geometry,it.o.material),a=i*2.399,r=.25+((i*37)%10)/10*.95;
+   m.castShadow=true;m.receiveShadow=true;
+   it.pp=new T.Vector3(hx+Math.cos(a)*r,.12+((i*13)%5)*.07,hz+Math.sin(a)*r*.7);
+   eu.set(((i*53)%7)/7*Math.PI*2,((i*29)%11)/11*Math.PI*2,((i*17)%5)/5*Math.PI*2);it.pq=new T.Quaternion().setFromEuler(eu);
+   m.position.copy(it.pp);m.quaternion.copy(it.pq);m.scale.copy(it.s);g.add(m);it.m=m});
+  g.userData.seats=seats;g.userData.total=seats.length;
+  var oldG=ONBG;ONBG=g;scene.add(g);if(oldG&&oldG.parent)oldG.parent.remove(oldG);
+  P.model.visible=false;blob.visible=false};
+ setTimeout(lay,220)}
 function ONBS(op: string,hex?: string){
  var show=function(){ONBW=false;ONBD=false;if(ONBGH){if(ONBGH.parent)ONBGH.parent.remove(ONBGH);ONBGH=null}if(ONBK){disposeWorkshop(ONBK);ONBK=null}if(W.root)W.root.visible=true;if(ONBG){if(ONBG.parent)ONBG.parent.remove(ONBG);ONBG=null}if(P.model)P.model.visible=true;blob.visible=true};
  var dropPhones=function(){if(ONBH){if(ONBH.parent)ONBH.parent.remove(ONBH);ONBH=null}};
@@ -1186,38 +1208,25 @@ function ONBS(op: string,hex?: string){
  if(op==="phonesOff"){dropPhones();return}
  if(S.type!=="character")return;
  if(op==="hide"){ONBW=true;if(P.model)P.model.visible=false;blob.visible=false;return}
- if(op==="dress"){ // the DRESS step: the real Kip stands in the workshop and wears every pick at once (kid bench, spec section 9); the Toy Room stays hidden, and he is not shown until his parts have loaded
+ if(op==="dress"){ // the DRESS step: the bricks of Kip's real parts lie in the workshop and take every pick at once (colours and parts change on the pile); he is built from this same pile (kid bench, spec section 9)
   var first=!ONBD;
-  if(first){var sl1=cur();ONBPRE={col:{c1:S.col.c1,c2:S.col.c2,boots:S.col.boots,skin:S.col.skin,hair:S.col.hair},sel:{hair:sl1.hair,hat:sl1.hat,tail:sl1.tail}};ONBD=true;ONBW=false}
+  if(first){var sl1=cur();ONBPRE={col:{c1:S.col.c1,c2:S.col.c2,boots:S.col.boots,skin:S.col.skin,hair:S.col.hair},sel:{hair:sl1.hair,hat:sl1.hat,tail:sl1.tail}};ONBD=true;ONBW=true}
   var chd=onbOutfit(hex||"");
   if(!ONBK){ONBK=buildWorkshop({x:P.pos.x,z:P.pos.z,accent:S.col.c1});scene.add(ONBK)}
   P.face=P.tface=-Math.PI/2;
-  if(chd){save();var old=(!first&&!ONBGH&&P.model&&P.rigReady)?P.model:null;buildPlayer(null);if(old){ONBGH=old;P.root.add(old)}if(!first){sfx.pop();burst(new T.Vector3(P.pos.x,1.2,P.pos.z),"rgba(255,255,255,1)",6)}}
+  if(chd){save();buildPlayer(null);if(!first)sfx.pop()}
+  if(first||chd||!ONBG)onbLay();
   return}
  var phones=function(){var h=new T.Group(),band=new T.Mesh(new T.TorusGeometry(.44,.06,10,28,Math.PI),plastic("#ff6b4a"));h.add(band);[-.44,.44].forEach(function(x){var c=new T.Mesh(new T.CylinderGeometry(.2,.2,.18,20),plastic("#2b4c85"));c.rotation.z=Math.PI/2;c.position.set(x,0,0);h.add(c)});h.traverse(function(o: any){o.castShadow=true});linearize(h);return h};
  if(op==="pile"){
-  ONBT++;var tk=ONBT;if(ONBG){if(ONBG.parent)ONBG.parent.remove(ONBG);ONBG=null}dropPhones();if(ONBD)burst(new T.Vector3(P.pos.x,1.2,P.pos.z),"rgba(255,255,255,1)",12);ONBD=false;ONBPRE=null;if(ONBGH){if(ONBGH.parent)ONBGH.parent.remove(ONBGH);ONBGH=null}ONBW=true;if(hex){onbOutfit(hex);save();buildPlayer(null)}
+  ONBT++;dropPhones();var chg=hex?onbOutfit(hex):false;
+  if(ONBG&&ONBD&&!chg&&!ONBG.userData.running){ONBD=false;ONBPRE=null;ONBW=true;if(reduce)show();return} // the Dress step laid this very pile in this very outfit: the build starts from it, nothing is laid again
+  if(ONBG){if(ONBG.parent)ONBG.parent.remove(ONBG);ONBG=null}
+  ONBD=false;ONBPRE=null;if(ONBGH){if(ONBGH.parent)ONBGH.parent.remove(ONBGH);ONBGH=null}ONBW=true;if(hex){save();buildPlayer(null)}
   if(reduce){show();return}
-  if(!ONBK){ONBK=buildWorkshop({x:P.pos.x,z:P.pos.z,accent:hex});scene.add(ONBK)} // the build starts in a WORKSHOP (Dan: not a turntable, a blueprint on the wall); the Toy Room is hidden while ONBW holds
+  if(!ONBK){ONBK=buildWorkshop({x:P.pos.x,z:P.pos.z,accent:S.col.c1});scene.add(ONBK)} // the build starts in a WORKSHOP (Dan: not a turntable, a blueprint on the wall); the Toy Room is hidden while ONBW holds
   P.face=P.tface=-Math.PI/2; // facing the screen, as he will stand when he is built (and where "free" turns him anyway)
-  var tries=0,lay=function(){
-   if(tk!==ONBT)return;
-   if(!(P.rig&&P.rig.stlMode==="stl")&&tries++<30){setTimeout(lay,250);return} // his real parts are fetched: wait for them (about 7 s at most, then no pile)
-   if(!P.model||!P.rig)return;
-   P.model.updateMatrixWorld(true);
-   var seats: any[]=[];
-   P.rig.g.traverse(function(o: any){if(o.isMesh&&o.visible!==false&&!o.userData.shadowProxy&&o.geometry&&o.geometry.attributes&&o.geometry.attributes.position){var p=new T.Vector3(),q=new T.Quaternion(),sc=new T.Vector3();o.matrixWorld.decompose(p,q,sc);seats.push({o:o,p:p,q:q,s:sc})}});
-   if(seats.length<3)return;
-   seats.sort(function(a,b){return a.p.y-b.p.y});
-   var g=new T.Group(),hx=P.pos.x-2.3,hz=P.pos.z+.3,eu=new T.Euler();
-   ONBG=g;scene.add(g);P.model.visible=false;blob.visible=false;
-   seats.forEach(function(it,i){var m=new T.Mesh(it.o.geometry,it.o.material),a=i*2.399,r=.25+((i*37)%10)/10*.95;
-    m.castShadow=true;m.receiveShadow=true;
-    it.pp=new T.Vector3(hx+Math.cos(a)*r,.12+((i*13)%5)*.07,hz+Math.sin(a)*r*.7);
-    eu.set(((i*53)%7)/7*Math.PI*2,((i*29)%11)/11*Math.PI*2,((i*17)%5)/5*Math.PI*2);it.pq=new T.Quaternion().setFromEuler(eu);
-    m.position.copy(it.pp);m.quaternion.copy(it.pq);m.scale.copy(it.s);g.add(m);it.m=m});
-   g.userData.seats=seats;g.userData.total=seats.length};
-  setTimeout(lay,220);return}
+  onbLay();return}
  if(op==="build"){
   var gg=ONBG,tk2=ONBT;if(!gg){show();return}
   gg.userData.running=true; // the child's taps (ONBTAP) stop here: the rest of the parts are carried by themselves

@@ -133,7 +133,7 @@ const KIND_WORDS: Record<ThemeKind, { intro: string; noun: string; about: string
   prompt: {
     intro: "A child asked for a song about an idea, and you will name the song and write it for a small child to sing along to. The child may write in any language; write the name and the song in simple English.",
     noun: "song",
-    about: "The song is ABOUT the idea: the verse paints it in your own simple words and keeps it gentle and happy, whatever the idea is; do not let it drift into a generic happy song. ",
+    about: "The song is ABOUT the idea: the verse paints it in your own simple words and keeps it gentle and happy, whatever the idea is; do not let it drift into a generic happy song. When the idea lists things the child picked (favourite colours, a fruit, an animal, what a toy is wearing), sing about as many of them as fit, by their plain names, one or two to a line. ",
     said: "asked for a song about",
   },
 };

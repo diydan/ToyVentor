@@ -50,7 +50,7 @@ describe("the sheet keeps its promises", () => {
     expect(sheet).not.toMatch(/localStorage\.(set|get)Item/); // everything goes through newPlayer.ts
   });
   it("asks for the song only from a tap and only from the profile's own song idea (null without the grown-up's yes)", () => {
-    expect(sheet).toContain("const idea = songIdea(made.profile);");
+    expect(sheet).toContain("const idea = songIdea(made.profile, cleanKipConfig(cfg) ?? defaultKipConfig(colourOf(colour)?.hex));");
     expect(sheet).toContain("if (idea) { onHold(true); onSong(idea); }");
     expect(sheet.match(/\bonSong\(idea\)/g)).toHaveLength(1);
   });
@@ -118,7 +118,7 @@ describe("no Kip before the pile, headphones on the head, no hovering dance", ()
     expect(world).toContain('if(op==="hide"){ONBW=true;if(P.model)P.model.visible=false;blob.visible=false;return}');
     expect(world).toContain(" IDLEB.update();\n if(ONBW){if(P.model)P.model.visible=false;blob.visible=false;if(W.root)W.root.visible=false}\n"); // enforced every frame (Kip and the Toy Room), so a rebuilt model or room is never seen
     expect(world).toContain("var show=function(){ONBW=false;"); // and every way out (build done, abort, end) gives him back
-    expect(world).toContain("ONBGH=null}ONBW=true;if(hex){onbOutfit(hex);"); // the pile keeps him hidden: no show() between the hide and the last part
+    expect(world).toContain("ONBGH=null}ONBW=true;if(hex){save();buildPlayer(null)}"); // the pile keeps him hidden: no show() between the hide and the last part
     expect(world).toContain("if(reduce){show();return}"); // reduced motion: no pile, so he must not stay hidden
   });
   it("the headphones are parented to the head the dance moves (the highest sizeable mesh's parent), and the floating bob stops when the pickup starts", () => {
@@ -138,7 +138,7 @@ describe("no Kip before the pile, headphones on the head, no hovering dance", ()
 describe("the build starts in a workshop with a blueprint", () => {
   it("the workshop dressing is built when the pile is laid out, replaces the Toy Room while the build holds, and goes (with the room coming back) on every exit", () => {
     expect(world).toContain('import { buildWorkshop, disposeWorkshop } from "./workshopScene";');
-    expect(world).toContain("if(!ONBK){ONBK=buildWorkshop({x:P.pos.x,z:P.pos.z,accent:hex});scene.add(ONBK)}");
+    expect(world).toContain("if(!ONBK){ONBK=buildWorkshop({x:P.pos.x,z:P.pos.z,accent:S.col.c1});scene.add(ONBK)}");
     expect(world).toContain("var show=function(){ONBW=false;ONBD=false;if(ONBGH){if(ONBGH.parent)ONBGH.parent.remove(ONBGH);ONBGH=null}if(ONBK){disposeWorkshop(ONBK);ONBK=null}if(W.root)W.root.visible=true;");
   });
 });
@@ -173,7 +173,8 @@ describe("dress your Kip", () => {
     expect(world).toContain("sl.tail=cf.tail}");
     expect(world).not.toContain("S.sel.hair=cf.hair");
     expect(world).toContain("else if((qq=hexOk(hex)))S.col.c1=qq;"); // a plain hex is still just the shirt, and only a valid one
-    expect(world).toContain("if(hex){onbOutfit(hex);save();buildPlayer(null)}"); // the pile applies the outfit through the same helper
+    expect(world).toContain("var chg=hex?onbOutfit(hex):false;"); // the pile applies the outfit through the same helper, and the Dress step does too (chd)
+    expect(world).toContain("var chd=onbOutfit(hex||\"\");");
   });
 });
 
@@ -203,14 +204,20 @@ describe("the Dress step shows the real Kip (kid bench, spec section 9)", () => 
     expect(canvas).toContain('"enter" | "dress" | "pile" | "build" | "abort" | "end" | "phonesShow"');
     expect(engine).toContain('"hide" | "dress" | "pile"');
   });
-  it("the world shows Kip only once his parts have loaded, keeps the last Kip on show while the new one loads, hides the Toy Room, and no Kip is shown before the step asks", () => {
-    expect(world).toContain("else if(ONBD){if(W.root)W.root.visible=false;var rdy=!!P.rigReady;if(P.model)P.model.visible=rdy;blob.visible=rdy||!!ONBGH;");
-    expect(world).toContain("var old=(!first&&!ONBGH&&P.model&&P.rigReady)?P.model:null;buildPlayer(null);if(old){ONBGH=old;P.root.add(old)}");
-    expect(world).toContain("ONBPRE={col:{c1:S.col.c1,c2:S.col.c2,boots:S.col.boots,skin:S.col.skin,hair:S.col.hair},sel:{hair:sl1.hair,hat:sl1.hat,tail:sl1.tail}};ONBD=true;ONBW=false");
+  it("the Dress step lays a PILE of Kip's real parts, not a standing Kip (Dan, 2026-11-05: we still don't start with a pile of bricks): Kip and the Toy Room stay hidden all through it, and every pick re-lays the pile", () => {
+    expect(world).toContain("ONBD=true;ONBW=true}"); // the Dress step holds the stage hidden, like the pile
+    expect(world).toContain("if(chd){save();buildPlayer(null);if(!first)sfx.pop()}\n  if(first||chd||!ONBG)onbLay();");
+    expect(world).not.toContain("else if(ONBD){if(W.root)W.root.visible=false;var rdy=");   // no standing Kip is ever shown in Dress
+    expect(world).not.toContain("ONBGH=old");
+    expect(world).toContain("ONBPRE={col:{c1:S.col.c1,c2:S.col.c2,boots:S.col.boots,skin:S.col.skin,hair:S.col.hair},sel:{hair:sl1.hair,hat:sl1.hat,tail:sl1.tail}};");
     expect(world).toContain("portraitSig:function(){return P.rigReady&&!ONBW&&!ONBD?String(P.rigSig):null},");
   });
-  it("leaving Dress for the pile clears the dress state and the old look is no longer restored", () => {
-    expect(world).toContain("dropPhones();if(ONBD)burst(new T.Vector3(P.pos.x,1.2,P.pos.z),\"rgba(255,255,255,1)\",12);ONBD=false;ONBPRE=null;");
+  it("one lay function makes the pile: a newer lay cancels an older one, the old pile stays until the new is ready, and the layout depends only on a part's place in the rig (a colour change moves no brick)", () => {
+    expect(world).toContain("function onbLay(){");
+    expect(world).toContain("if(tk!==ONBL||ot!==ONBT||!ONBW)return;");
+    expect(world).toContain("var oldG=ONBG;ONBG=g;scene.add(g);if(oldG&&oldG.parent)oldG.parent.remove(oldG);");
+    expect(world).toContain("a=i*2.399,r=.25+((i*37)%10)/10*.95;");
+    expect(world.split("onbLay()").length - 1).toBeGreaterThanOrEqual(3);                        // the function and its two callers
   });
   it("the Dress card is one row of tiles at a time, with the shoes row and every pick named as before", () => {
     for (const part of ["shirt", "pants", "boots", "skin", "hair", "hairColour", "hat", "tail"]) expect(sheet).toContain(`part === "${part}" &&`);
