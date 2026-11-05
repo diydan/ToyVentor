@@ -253,6 +253,17 @@
    "loop": false,
    "planted": true,
    "source": "Mixamo \"pickup and Throw Object\""
+  },
+  {
+   "id": "dance_samba",
+   "label": "Samba",
+   "group": "dance",
+   "dur": 4.3333,
+   "beats": 8,
+   "bpm": 110.77,
+   "loop": true,
+   "planted": true,
+   "source": "Mixamo \"Samba Dance\" (the three.js sample Michelle.glb)"
   }
  ]
 }

@@ -1,0 +1,18 @@
+[
+  {
+    "id": "dance_samba",
+    "glb": "public/kip/mixamo/Michelle.glb",
+    "clip": "SambaDance",
+    "label": "Samba",
+    "group": "dance",
+    "beats": 8,
+    "loop": true,
+    "inPlace": true,
+    "closeLoop": 0.12,
+    "trim": [
+      0,
+      4.4
+    ],
+    "source": "Mixamo \"Samba Dance\" (the three.js sample Michelle.glb)"
+  }
+]

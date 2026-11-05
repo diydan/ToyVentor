@@ -200,8 +200,8 @@ describe("where a dance's weight lands (beatHit)", () => {
 describe("the index of dances", () => {
   it("offers exactly the dances with a counted tempo, in the file's order, and never the Samba's own id", () => {
     const list = parseDanceIndex(JSON.parse(readFileSync(join(BAKED, "index.json"), "utf8")));
-    expect(list.map((d) => d.id)).toEqual(["dance_silly", "dance_hiphop", "dance_swing"]);
-    expect(list.map((d) => [d.bpm, d.beats])).toEqual([[125.22, 8], [101.41, 8], [137.8, 48]]);
+    expect(list.map((d) => d.id)).toEqual(["dance_silly", "dance_hiphop", "dance_swing", "dance_samba"]); // dance_samba: the sample Samba baked as a planted joint clip (2026-11-05), not the hand-built `dance`
+    expect(list.map((d) => [d.bpm, d.beats])).toEqual([[125.22, 8], [101.41, 8], [137.8, 48], [110.77, 8]]);
     expect(list.every((d) => d.group === "dance" && !d.loaded && d.hit === 0)).toBe(true);
   });
   it("leaves out a clip with no tempo, a move or a reaction, a tempo outside 40 to 220, a fractional or huge beat count, a bad or repeated id", () => {
@@ -228,11 +228,11 @@ describe("the dance library", () => {
   }) as unknown as typeof fetch;
   const lib = (over: Record<string, string | null> = {}) => { const bank: Record<string, BakedClip> = {}; const log: string[] = []; return { bank, log, lib: createDanceLibrary({ fetchImpl: fileFetch(over, log), addClips: (c) => Object.assign(bank, c) }) }; };
 
-  it("starts with the Samba alone, reads the index once, and then knows the other three", async () => {
+  it("starts with the Samba alone, reads the index once, and then knows the other four", async () => {
     const { lib: l, log } = lib();
     expect(l.list().map((d) => d.id)).toEqual(["dance"]);
     await l.prepare(); await l.prepare();
-    expect(l.list().map((d) => d.id)).toEqual(["dance", "dance_silly", "dance_hiphop", "dance_swing"]);
+    expect(l.list().map((d) => d.id)).toEqual(["dance", "dance_silly", "dance_hiphop", "dance_swing", "dance_samba"]);
     expect(log.filter((u) => u.endsWith("index.json"))).toHaveLength(1);
     expect(l.list()[0]).toMatchObject({ ...SAMBA, loaded: true });
   });

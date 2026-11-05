@@ -111,7 +111,7 @@ export async function bakeOne(cfg, inDir) {
   if (cfg.closeLoop) closeLoop(THREE, kip, cfg.closeLoop);
   if (cfg.hands !== false) limitHands(THREE, kip);
   if (cfg.plant !== false) plantBakedClip(THREE, kip);
-  const baked = clipToBaked(THREE, kip, { id: cfg.id, label: cfg.label, group: cfg.group, source: cfg.glb ? `Mixamo Xbot "${cfg.clip}"` : `Mixamo "${path.basename(cfg.file, ".fbx")}"`, beats: cfg.beats, planted: cfg.plant !== false });
+  const baked = clipToBaked(THREE, kip, { id: cfg.id, label: cfg.label, group: cfg.group, source: cfg.source ?? (cfg.glb ? `Mixamo Xbot "${cfg.clip}"` : `Mixamo "${path.basename(cfg.file, ".fbx")}"`), beats: cfg.beats, planted: cfg.plant !== false });
   const problems = checkBaked(baked, { loop: Boolean(cfg.loop) });
   return { baked, problems, drift, srcDuration, metrics: measure(baked) };
 }
