@@ -4,6 +4,7 @@
 	"main": "worker/index.ts",
 	"compatibility_date": "2026-10-26",
 	"routes": [
+		{ "pattern": "app.toyventor.com", "custom_domain": true },
 		{ "pattern": "toyventor.com", "custom_domain": true },
 		{ "pattern": "www.toyventor.com", "custom_domain": true }
 	],
