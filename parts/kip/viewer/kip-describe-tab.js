@@ -11,10 +11,11 @@ import { describe, loadRecipeBook } from './kip-describe.js';
 import { loadPartsData } from './kip-describe-validate.js';
 import { createDescribeView, partColour } from './kip-describe-view.js';
 import { createWorkshop, THINK_LINES, DRAW_LINES, LOAD_LINES } from './kip-workshop-wait.js';   // the waiting state: belt, bricks, parts pile
-import { createVoiceInput } from './kip-describe-voice.js';   // the microphone: say what to build (hidden unless the app's /api/transcribe says it can listen)
+import { createVoiceInput } from './kip-describe-voice.js';   // the microphone: say what to build (works when the app's /api/transcribe says it can listen; otherwise shown inert, saying why)
 import { createThemeSong } from './kip-theme-song.js';   // a name and a sung theme song for the build, started with it (the card stays hidden when the route is off)
 
 const STORE_KEY = 'kipDescribeEndpoint';
+const IDEAS_SHOWN = 4;   // example buttons shown before "More ideas"
 
 // "Say what it is": the same setting and the same voice as the game's props. This page is served from the app's own origin, so the
 // language picked in the game's menu is read from the same localStorage key, and the picker below writes it back.
@@ -29,11 +30,16 @@ const SOURCE_LABEL = { model: 'Built by the model', 'recipe-book': 'A sample bui
 const CSS = `
 .kdb-toggle { position: fixed; right: 16px; bottom: 16px; z-index: 40; border: 0; border-radius: 999px; padding: 10px 16px; font: 600 14px/1 system-ui, sans-serif;
   background: #1b2238; color: #fff; cursor: pointer; box-shadow: 0 6px 18px rgba(27,34,56,.28); }
-.kdb-toggle:focus-visible, .kdb-panel button:focus-visible, .kdb-panel textarea:focus-visible, .kdb-panel input:focus-visible { outline: 3px solid #ff6b4a; outline-offset: 2px; }
-.kdb-panel { position: fixed; right: 16px; top: 64px; z-index: 41; width: min(340px, calc(100vw - 32px)); max-height: calc(100vh - 64px - 72px); overflow: auto; box-sizing: border-box;
-  padding: 14px 16px 16px; border-radius: 16px; background: rgba(255,255,255,.94); color: #1b2238; font: 14px/1.4 system-ui, sans-serif;
-  backdrop-filter: blur(10px); box-shadow: 0 10px 34px rgba(27,34,56,.22); }
+.kdb-panel { --kdb-ink: #1b2238; --kdb-bg: #fff; --kdb-soft: #eef1f7; --kdb-line: #c9cfdc; --kdb-muted: #566079; --kdb-field: #fff; --kdb-btn: #fff; --kdb-ring: #d9441f;
+  --kdb-accent: #ff6b4a; --kdb-accent-hover: #ff8567; --kdb-on-accent: #1b2238; --kdb-btn-hover: #eef1f7;
+  position: fixed; right: 16px; top: 64px; z-index: 41; width: min(360px, calc(100vw - 32px)); max-height: calc(100vh - 64px - 72px); overflow: auto; box-sizing: border-box;
+  padding: 0 16px 16px; border-radius: 16px; background: var(--kdb-bg); color: var(--kdb-ink); font: 14px/1.4 system-ui, sans-serif; box-shadow: 0 10px 34px rgba(27,34,56,.22); }
+.kdb-toggle:hover, .kdb-toggle:focus-visible { background: #2b3556; color: #fff; }   /* the host's own button:hover paints #fff, which is white text on white */
+.kdb-toggle:active { background: #0f1426; color: #fff; }
+.kdb-toggle:focus-visible, .kdb-panel button:focus-visible, .kdb-panel textarea:focus-visible, .kdb-panel input:focus-visible, .kdb-panel select:focus-visible, .kdb-panel summary:focus-visible, .kdb-panel li:focus-visible { outline: 3px solid var(--kdb-ring, #ff6b4a); outline-offset: 2px; }
 .kdb-panel[hidden] { display: none; }
+/* Something shown only after a build (the slider, the controls, the words-in picker) carries the hidden attribute: a display rule of its own must never beat it. */
+.kdb-panel [hidden] { display: none !important; }
 /* Room for a host's own chrome: the panel starts below a top bar and leaves the toggle visible; on a narrow screen the toggle rises above a bottom strip
    and the open panel becomes a bottom sheet that stops short of both that strip and a host's bottom-left button (it scrolls inside; its own Close
    button, and Escape, dismiss it). */
@@ -41,36 +47,63 @@ const CSS = `
 @media (max-width: 640px) { .kdb-panel { top: auto; bottom: 96px; left: 16px; right: 16px; width: auto; max-height: min(72vh, calc(100vh - 286px)); } }
 /* the host's "hide UI" key (H) adds this class to the container (or any ancestor of it) */
 .clean-ui .kdb-toggle, .clean-ui .kdb-panel { display: none !important; }
-.kdb-panel h2 { margin: 0 0 8px; font-size: 16px; display: flex; justify-content: space-between; align-items: center; }
-.kdb-inputrow { display: flex; gap: 8px; align-items: flex-start; } .kdb-inputrow textarea { flex: 1; min-width: 0; width: auto; }
-.kdb-panel button.kdb-mic { flex: none; width: 48px; height: 48px; padding: 0; border-radius: 50%; font-size: 22px; line-height: 1; } .kdb-panel button.kdb-mic[hidden] { display: none; }
-.kdb-panel button.kdb-mic-on { background: #ff6b4a; border-color: #ff6b4a; color: #fff; animation: kdb-pulse 1s ease-in-out infinite; }
-@keyframes kdb-pulse { 50% { box-shadow: 0 0 0 8px rgba(255, 107, 74, .28); } }
-@media (prefers-reduced-motion: reduce) { .kdb-panel button.kdb-mic-on { animation: none; } }
-.kdb-panel textarea { width: 100%; box-sizing: border-box; resize: vertical; min-height: 54px; padding: 8px 10px; border: 1px solid #c9cfdc; border-radius: 10px; font: inherit; }
-.kdb-panel button { font: 600 13px/1 system-ui, sans-serif; border: 1px solid #c9cfdc; background: #fff; color: #1b2238; border-radius: 999px; padding: 8px 12px; cursor: pointer; }
-.kdb-panel button.kdb-go { background: #ff6b4a; border-color: #ff6b4a; color: #fff; margin-top: 8px; }
+/* the title row stays put while the rest scrolls, so Close is always in reach on a small screen */
+.kdb-panel h2.kdb-head { position: sticky; top: 0; z-index: 2; margin: 0 -16px; padding: 14px 16px 4px; background: var(--kdb-bg); font-size: 17px; display: flex; justify-content: space-between; align-items: center; }
+.kdb-sub { margin: 0 0 12px; color: var(--kdb-muted); font-size: 13px; }
+.kdb-label { display: block; margin: 0 0 4px; font-weight: 600; font-size: 13px; }
+.kdb-inputrow { display: block; }
+.kdb-panel textarea { display: block; width: 100%; box-sizing: border-box; resize: vertical; min-height: 64px; padding: 9px 11px; border: 1px solid var(--kdb-line); border-radius: 12px; background: var(--kdb-field); color: var(--kdb-ink); font: inherit; }
+.kdb-panel button { font: 600 13px/1 system-ui, sans-serif; border: 1px solid var(--kdb-line); background: var(--kdb-btn); color: var(--kdb-ink); border-radius: 999px; padding: 8px 12px; cursor: pointer; }
+.kdb-panel button:hover:not(:disabled) { background: var(--kdb-btn-hover); border-color: var(--kdb-muted); color: var(--kdb-ink); }
+.kdb-panel button.kdb-go:hover:not(:disabled), .kdb-panel button.kdb-play:hover:not(:disabled), .kdb-panel button.kdb-mic-on:hover:not(:disabled) { background: var(--kdb-accent-hover); border-color: var(--kdb-accent-hover); color: var(--kdb-on-accent); }
+.kdb-panel button.kdb-more:hover:not(:disabled) { background: none; border: 0; color: var(--kdb-ink); }
+.kdb-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
+.kdb-panel button.kdb-go { flex: 1 1 140px; min-height: 44px; margin: 0; background: var(--kdb-accent); border-color: var(--kdb-accent); color: var(--kdb-on-accent); font-size: 15px; }
 .kdb-panel button[disabled] { opacity: .55; cursor: progress; }
-.kdb-examples { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-.kdb-examples button { font-weight: 500; padding: 5px 9px; white-space: normal; text-align: left; }
+/* the microphone: a pill with words, so nobody has to guess what a bare 🎤 does */
+.kdb-panel button.kdb-mic { flex: none; position: relative; overflow: hidden; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; min-width: 10.5rem; padding: 0 16px; font-size: 14px; white-space: nowrap; }
+.kdb-panel button.kdb-mic[hidden] { display: none; }
+.kdb-panel button.kdb-mic-on { background: var(--kdb-accent); border-color: var(--kdb-accent); color: var(--kdb-on-accent); animation: kdb-pulse 1s ease-in-out infinite; }
+/* while it listens, a line under the pill runs out over exactly the time the recording may last (--kdb-cap is set from the controller's limit) */
+.kdb-panel button.kdb-mic-on::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--kdb-on-accent); transform-origin: left; animation: kdb-cap var(--kdb-cap, 8s) linear forwards; }
+.kdb-panel button.kdb-mic-off, .kdb-panel button.kdb-mic-off:hover:not(:disabled) { opacity: .65; border-style: dashed; cursor: not-allowed; background: var(--kdb-btn); border-color: var(--kdb-line); }
+@keyframes kdb-nudge { from { box-shadow: 0 0 0 3px var(--kdb-accent); } to { box-shadow: 0 0 0 3px transparent; } } .kdb-voicehint.kdb-nudge { animation: kdb-nudge .8s ease-out; }
+@media (prefers-reduced-motion: reduce) { .kdb-voicehint.kdb-nudge { animation: none; } }
+.kdb-voicehint { margin: 8px 0 0; padding: 8px 10px; border-radius: 10px; background: var(--kdb-soft); font-size: 13px; }
+@keyframes kdb-pulse { 50% { box-shadow: 0 0 0 8px rgba(255, 107, 74, .28); } }
+@keyframes kdb-cap { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) { .kdb-panel button.kdb-mic-on { animation: none; } .kdb-panel button.kdb-mic-on::after { display: none; } }
+.kdb-status { margin: 10px 0 2px; min-height: 1.4em; }
+.kdb-try { margin-top: 12px; }
+.kdb-h3, .kdb-try-t { margin: 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--kdb-muted); }
+.kdb-examples { display: flex; flex-wrap: wrap; gap: 6px; }
+.kdb-examples button { font-weight: 500; padding: 6px 10px; white-space: normal; text-align: left; }
+.kdb-panel button.kdb-more { margin-top: 6px; padding: 4px 2px; border: 0; background: none; color: var(--kdb-muted); text-decoration: underline; font-size: 12px; }
 /* A host's global "button { transition: all ...; white-space: nowrap }" (Kip-Demo has one) must not leak in: it would slide the toggle whenever its position changes. */
 .kdb-toggle, .kdb-panel, .kdb-panel * { transition: none; }
-.kdb-status { margin: 10px 0 4px; min-height: 1.4em; }
-.kdb-badge { display: inline-block; margin: 2px 0 6px; padding: 3px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+.kdb-badge { display: inline-block; margin: 10px 0 0; padding: 3px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; }
 .kdb-badge.ok { background: #d9f3e8; color: #0d6b48; } .kdb-badge.warn { background: #ffe9c2; color: #8a5200; }
-.kdb-build { margin: 8px 0 2px; } .kdb-controls { display: flex; flex-wrap: wrap; gap: 6px; } .kdb-progress { margin: 6px 0 0; font-size: 13px; min-height: 1.3em; }
-.kdb-slider { display: block; margin: 10px 0 6px; font-weight: 600; } .kdb-slider input { width: 100%; margin-top: 4px; }
+.kdb-build { margin: 10px 0 0; padding: 10px; border-radius: 12px; background: var(--kdb-soft); }
+.kdb-controls { display: flex; gap: 6px; } .kdb-controls button { flex: 1 1 0; min-height: 38px; padding: 8px 4px; }
+.kdb-panel button.kdb-play { flex-grow: 1.6; background: var(--kdb-accent); border-color: var(--kdb-accent); color: var(--kdb-on-accent); }
+.kdb-bar { height: 6px; margin-top: 10px; border-radius: 3px; background: var(--kdb-line); overflow: hidden; } .kdb-bar > i { display: block; height: 100%; width: 0; background: var(--kdb-accent); }
+.kdb-progress { margin: 6px 0 0; font-size: 13px; min-height: 1.3em; }
+.kdb-slider { display: block; margin: 12px 0 0; font-weight: 600; } .kdb-slider input { display: block; width: 100%; margin: 6px 0 2px; accent-color: var(--kdb-accent); }
 .kdb-slider.locked { opacity: .5; }
-.kdb-lang { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; font-weight: 600; } .kdb-lang select { font: inherit; padding: 4px 6px; border-radius: 8px; }
-.kdb-caption { margin: 6px 0 0; min-height: 1.3em; font-weight: 700; }
-.kdb-steps { margin: 6px 0 0; padding-left: 22px; } .kdb-steps li { padding: 2px 4px; border-radius: 6px; cursor: pointer; }
-.kdb-steps li:hover, .kdb-steps li.on { background: #eef1f7; }
-.kdb-panel details { margin-top: 10px; font-size: 13px; } .kdb-panel details input { width: 100%; box-sizing: border-box; margin: 6px 0; padding: 7px 9px; border: 1px solid #c9cfdc; border-radius: 8px; font: inherit; }
-.kdb-panel code { background: #eef1f7; padding: 1px 5px; border-radius: 5px; font-size: 12px; word-break: break-all; }
+.kdb-slider-ends { display: flex; justify-content: space-between; font-size: 12px; font-weight: 500; color: var(--kdb-muted); }
+.kdb-stepsbox { margin-top: 12px; }
+.kdb-steps { margin: 0; padding-left: 24px; } .kdb-steps li { padding: 4px 6px; border-radius: 8px; cursor: pointer; } .kdb-steps li::marker { color: var(--kdb-muted); font-weight: 600; }
+.kdb-steps li:hover, .kdb-steps li.on { background: var(--kdb-soft); } .kdb-steps li.on { font-weight: 600; }
+.kdb-sw { display: inline-block; width: 10px; height: 10px; margin-right: 7px; border-radius: 3px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.2); }
+.kdb-caption { margin: 8px 0 0; min-height: 1.3em; font-weight: 700; font-size: 15px; } .kdb-caption:empty { margin: 0; min-height: 0; }
+.kdb-lang { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; font-weight: 600; } .kdb-lang select { font: inherit; padding: 4px 6px; border-radius: 8px; background: var(--kdb-field); color: var(--kdb-ink); border: 1px solid var(--kdb-line); }
+.kdb-panel details { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--kdb-line); font-size: 13px; } .kdb-panel details summary { cursor: pointer; font-weight: 600; color: var(--kdb-muted); }
+.kdb-panel details input { width: 100%; box-sizing: border-box; margin: 6px 0; padding: 7px 9px; border: 1px solid var(--kdb-line); border-radius: 8px; background: var(--kdb-field); color: var(--kdb-ink); font: inherit; }
+.kdb-panel details p { margin: 8px 0 0; } .kdb-panel details .kdb-voicenote { font-weight: 600; }
+.kdb-panel code { background: var(--kdb-soft); padding: 1px 5px; border-radius: 5px; font-size: 12px; word-break: break-all; }
 @media (prefers-color-scheme: dark) {
-  .kdb-panel { background: rgba(27,34,56,.94); color: #f4efe6; } .kdb-panel textarea, .kdb-panel details input { background: #121829; color: #f4efe6; border-color: #3b4560; }
-  .kdb-panel button { background: #26304a; color: #f4efe6; border-color: #3b4560; } .kdb-panel button.kdb-go { background: #ff6b4a; border-color: #ff6b4a; color: #fff; }
-  .kdb-steps li:hover, .kdb-steps li.on { background: #26304a; } .kdb-panel code { background: #26304a; }
+  .kdb-panel { --kdb-ink: #f4efe6; --kdb-bg: #1b2238; --kdb-soft: #26304a; --kdb-line: #3b4560; --kdb-muted: #a9b2c8; --kdb-field: #121829; --kdb-btn: #26304a; --kdb-btn-hover: #34406a; --kdb-ring: #ff8a6e; }
+  .kdb-badge.ok { background: #12382b; color: #8fe0bd; } .kdb-badge.warn { background: #44330f; color: #f2c46d; }
 }
 @media (prefers-reduced-motion: reduce) { .kdb-panel, .kdb-toggle { transition: none; } }
 `;
@@ -98,6 +131,7 @@ export function mountDescribe({
   themeOptions = {},   // createThemeSong overrides (a test shortens the poll)
   transcribeUrl = '/api/transcribe',   // the app's own route (a child's voice to words, worker/transcribe.ts); '' turns the microphone off; a server where it is off just hides the button
   voiceOptions = {},   // createVoiceInput overrides (a test shortens the limits)
+  voiceLabel = 'Say it',   // the words on the microphone pill. Neutral in the app; the standalone Kip demo page passes the name of the speech model it is demonstrating
 }) {
   if (!document.getElementById('kdb-style')) document.head.append(el('style', { id: 'kdb-style' }, CSS));
   let book = null, parts = null, view = null, loading = null, busy = false, last = null, isOpen = false;
@@ -106,40 +140,55 @@ export function mountDescribe({
   let camSaved = null;   // the host camera (position and orbit target) from when the panel opened
   let voiceAudio = null, voiceDownUntil = 0, voiceSeq = 0, spokenStep = -1;   // the part voice: current clip, back-off after a failure, newest-tap-wins counter, last step spoken while playing
 
-  const text = el('textarea', { id: 'kdb-text', maxlength: '300', rows: '2', placeholder: 'For example: a race car, or Kip with a cowboy hat' });
+  const text = el('textarea', { id: 'kdb-text', maxlength: '300', rows: '3', placeholder: 'For example: a race car, or Kip with a cowboy hat' });
   const go = el('button', { class: 'kdb-go', type: 'button' }, 'Build it');
   const examples = el('div', { class: 'kdb-examples', role: 'group', 'aria-label': 'Examples' });
+  const moreBtn = el('button', { class: 'kdb-more', type: 'button', 'aria-expanded': 'false', hidden: '' }, 'More ideas');
+  const tryBox = el('div', { class: 'kdb-try' }, el('p', { class: 'kdb-try-t' }, 'Try an idea'), examples, moreBtn);
   const status = el('p', { class: 'kdb-status', role: 'status', 'aria-live': 'polite' }, 'Say what you would like to build.');
   const workshop = createWorkshop({ doc: document, onLabel: (msg) => { status.textContent = msg; } });
   const badge = el('span', { class: 'kdb-badge', hidden: '' });
   const theme = themeUrl ? createThemeSong({ url: themeUrl, fetchImpl, ...themeOptions }) : null;
-  // the words the child said land in the text box to be SEEN and changed: the tab never builds from a voice by itself
-  const voice = transcribeUrl ? createVoiceInput({ url: transcribeUrl, fetchImpl, currentText: () => text.value, onText: (words) => { text.value = words.slice(0, 300); text.focus(); }, onStatus: (msg) => { status.textContent = msg; }, ...voiceOptions }) : null;
-  const inputRow = el('div', { class: 'kdb-inputrow' }, text, ...(voice ? [voice.node] : []));
-  const playBtn = el('button', { type: 'button' }, 'Play build');
+  // The words the child said land in the text box to be SEEN and changed: the tab never builds from a voice by itself. The button is a labelled pill ("Say it" by default) that is
+  // always there once the panel has asked the route: when the route cannot listen it is inert and says why, so it is never a mystery where the microphone went.
+  const voice = transcribeUrl ? createVoiceInput({ url: transcribeUrl, fetchImpl, currentText: () => text.value, onText: (words) => { text.value = words.slice(0, 300); text.focus(); }, onStatus: (msg) => { if (!voiceHint.hidden && msg === voice?.whyOff()) nudge(voiceHint); else status.textContent = msg; }, label: voiceLabel, showWhenOff: true,
+    onState: (st) => { voiceHint.hidden = st !== 'off'; if (st === 'off') voiceHint.textContent = `${voice.whyOff()}${voice.offReason === 'unreachable' ? ' (Open the app\'s own address from npm run dev, or run npm run kip:serve -- --api <that address>.)' : ''}`; }, ...voiceOptions }) : null;
+  const voiceHint = el('p', { class: 'kdb-voicehint', role: 'status', hidden: '' });   // why the microphone pill is inert, shown for as long as it is (not only when it is pressed)
+  /** A press on the inert pill must visibly DO something, without saying the same sentence twice: flash the reason that is already on screen. */
+  const nudge = (node) => { node.classList.remove('kdb-nudge'); void node.offsetWidth; node.classList.add('kdb-nudge'); };
+  const inputRow = el('div', { class: 'kdb-inputrow' }, text);
+  const actions = el('div', { class: 'kdb-actions' }, ...(voice ? [voice.node] : []), go);
+  const playBtn = el('button', { class: 'kdb-play', type: 'button' }, 'Play build');
   const backBtn = el('button', { type: 'button', 'aria-label': 'Back one step' }, 'Back');
   const nextBtn = el('button', { type: 'button', 'aria-label': 'Next step' }, 'Next');
   const replayBtn = el('button', { type: 'button' }, 'Replay');
+  const barFill = el('i', {});
+  const bar = el('div', { class: 'kdb-bar', 'aria-hidden': 'true' }, barFill);   // how far the build has got: the same number as the words under it
   const progress = el('p', { class: 'kdb-progress', role: 'status', 'aria-live': 'polite' }, '');
   const buildBox = el('div', { class: 'kdb-build', role: 'group', 'aria-label': 'Build animation', hidden: '' },
-    el('div', { class: 'kdb-controls' }, backBtn, playBtn, nextBtn, replayBtn), progress);
+    el('div', { class: 'kdb-controls' }, backBtn, playBtn, nextBtn, replayBtn), bar, progress);
   const slider = el('input', { type: 'range', min: '0', max: '100', value: '0', 'aria-label': 'Exploded view' });
-  const sliderBox = el('label', { class: 'kdb-slider', hidden: '' }, 'Exploded view', slider);
+  const sliderBox = el('label', { class: 'kdb-slider', hidden: '' }, 'Exploded view', slider, el('span', { class: 'kdb-slider-ends', 'aria-hidden': 'true' }, el('span', {}, 'Together'), el('span', {}, 'Apart')));
   const list = el('ol', { class: 'kdb-steps', 'aria-label': 'Build steps' });
+  const stepsBox = el('div', { class: 'kdb-stepsbox', hidden: '' }, el('p', { class: 'kdb-h3' }, 'Parts, in building order'), list);
   const langSel = el('select', { id: 'kdb-lang', 'aria-label': 'Language for part names' }, ...LANGS.map(([c, name]) => el('option', { value: c }, name)));
   langSel.value = lang.get();
-  const langBox = el('label', { class: 'kdb-lang' }, 'Words in', langSel);
+  const langBox = el('label', { class: 'kdb-lang', hidden: '' }, 'Words in', langSel);
   const caption = el('p', { class: 'kdb-caption', role: 'status', 'aria-live': 'polite' }, '');
   const epInput = el('input', { type: 'url', id: 'kdb-endpoint', placeholder: 'http://127.0.0.1:8788/describe', value: endpoint || store.get(), 'aria-label': 'Model endpoint address' });
   const epNote = el('p', {}, '');
   const test = el('button', { type: 'button' }, 'Test connection');
+  const voiceNote = el('p', { class: 'kdb-voicenote' }, '');
   const settings = el('details', {}, el('summary', {}, 'Settings: model endpoint (optional)'), epInput, test, epNote,
     el('p', {}, 'With no address, the app asks its own server, which asks Muse to pick the sample build that fits your words (in any language). If that is not available the page matches your words to the sample builds itself. To let a language model design a NEW build instead, start the local endpoint with ', el('code', {}, 'node parts/kip/viewer/tools/describe-endpoint.mjs'),
       ' and paste the address it prints. The page never holds a key: the server and the endpoint read it from your own .dev.vars.'),
-    el('p', {}, 'What is sent: with an address, your description and the list of part names go only to that address. With no address, your description (phone numbers and emails removed first) goes to the app\'s server and on to Muse, to pick a build. When theme songs are switched on, the same description also goes to the app\'s server to write a name and a song, and the finished words go to a song service that sings them (nothing else about you does). Songs you make are kept in this browser only. Nothing else is stored except that address, and only for this browser tab.'));
+    el('p', {}, 'What is sent: with an address, your description and the list of part names go only to that address. With no address, your description (phone numbers and emails removed first) goes to the app\'s server and on to Muse, to pick a build. When theme songs are switched on, the same description also goes to the app\'s server to write a name and a song, and the finished words go to a song service that sings them (nothing else about you does). Songs you make are kept in this browser only. Nothing else is stored except that address, and only for this browser tab.'),
+    el('p', {}, `Voice: the microphone is not asked for until you press ${voiceLabel}. Then a recording of up to 8 seconds goes to the app\'s server and on to a speech-to-text model to be turned into words, and is dropped as soon as the words are back. The words land in the box for you to read and change; nothing is built until you press Build it.`),
+    voiceNote);
   const close = el('button', { type: 'button', 'aria-label': 'Close' }, 'Close');
-  const panel = el('section', { class: 'kdb-panel', 'aria-label': 'Describe and build', hidden: '' }, el('h2', {}, 'Describe & build', close),
-    el('label', { for: 'kdb-text' }, 'What should we build?'), inputRow, examples, go, status, workshop.node, badge, ...(theme ? [theme.node] : []), buildBox, sliderBox, langBox, list, caption, settings);
+  const panel = el('section', { class: 'kdb-panel', 'aria-label': 'Describe and build', hidden: '' }, el('h2', { class: 'kdb-head' }, 'Describe & build', close),
+    el('p', { class: 'kdb-sub' }, 'Type it or say it, and Muse finds parts that fit together.'),
+    el('label', { class: 'kdb-label', for: 'kdb-text' }, 'What should we build?'), inputRow, actions, voiceHint, status, workshop.node, badge, ...(theme ? [theme.node] : []), buildBox, sliderBox, stepsBox, caption, langBox, tryBox, settings);
   const toggle = el('button', { class: 'kdb-toggle', type: 'button', 'aria-expanded': 'false', 'aria-controls': 'kdb-panel' }, 'Describe & build');
   panel.id = 'kdb-panel';
   container.append(toggle, panel);
@@ -189,9 +238,12 @@ export function mountDescribe({
         scene.add(view.group);
         // The book can hold many more builds than make sensible example buttons: the ones marked `featured` are shown, every build can still be matched and built.
         const featured = book.recipes.filter((r) => r.featured);
-        for (const r of (featured.length ? featured : book.recipes)) {
-          examples.append(el('button', { type: 'button', title: r.title, onclick: () => { text.value = r.description; build(); } }, r.description));
-        }
+        const ideas = featured.length ? featured : book.recipes;
+        ideas.forEach((r, i) => {
+          // the first few are shown; the rest wait behind "More ideas" (they stay in the page either way, so a script can still press any of them)
+          examples.append(el('button', { type: 'button', title: r.title, ...(i >= IDEAS_SHOWN ? { hidden: '', 'data-more': '' } : {}), onclick: () => { text.value = r.description; build(); } }, r.description));
+        });
+        moreBtn.hidden = ideas.length <= IDEAS_SHOWN;
         workshop.stop({ finished: true });
         say('Say what you would like to build.');
       } catch (e) { workshop.stop(); throw e; }
@@ -202,10 +254,19 @@ export function mountDescribe({
   function renderSteps(result) {
     list.replaceChildren(...result.steps.map((s, i) => {
       const host = s.mate ? ` on the ${label(result.steps.find((x) => x.id === s.mate.host)?.part).toLowerCase()}` : ' (the base)';
+      const sw = el('span', { class: 'kdb-sw', 'aria-hidden': 'true' });
+      sw.style.background = partColour(parts, s.part);   // the colour the 3D view draws this part in
       return el('li', { tabindex: '0', onmouseenter: () => view.highlight(i), onmouseleave: () => view.highlight(null), onfocus: () => view.highlight(i), onblur: () => view.highlight(null),
         onclick: () => sayPart(i), onkeydown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); sayPart(i); } } },
-        `${label(s.part)}${host}`);
+        sw, `${label(s.part)}${host}`);
     }));
+    syncChrome();
+  }
+  /** The step list and the language picker mean something only while there is a build to show. */
+  function syncChrome() {
+    const has = list.children.length > 0;
+    stepsBox.hidden = !has;
+    langBox.hidden = !has;
   }
 
   // ---- the build player -------------------------------------------------------------------------------------------------
@@ -221,6 +282,7 @@ export function mountDescribe({
     if (!playing) spokenStep = -1;
     progress.textContent = p <= 0 ? (reduced() ? `Ready: press Play build to watch all ${n} parts go together.` : `Ready: all ${n} parts are in a pile. Press Play build to watch them go together.`)
       : p >= n ? `Built: all ${n} parts are seated.` : `Step ${cur + 1} of ${n}: ${stepName(cur)}`;
+    barFill.style.width = n > 0 ? `${Math.max(0, Math.min(1, p / n)) * 100}%` : '0%';
     backBtn.disabled = p <= 0;
     nextBtn.disabled = p >= n;
     playBtn.textContent = playing ? 'Pause' : (p > 0 && p < n ? 'Resume' : 'Play build');
@@ -283,7 +345,7 @@ export function mountDescribe({
       badge.textContent = `${sourceLabel} · ${result.validated ? 'checked: every part fits' : 'not checked for fit'}`;
       stop();
       if (!result.poses) {
-        view.clear(); list.replaceChildren(); sliderBox.hidden = true; buildBox.hidden = true; n = 0; p = 0;
+        view.clear(); list.replaceChildren(); syncChrome(); sliderBox.hidden = true; buildBox.hidden = true; n = 0; p = 0;
         workshop.stop();
         say(`${result.note} It has no checked positions, so it is not drawn.`);
         return;
@@ -308,6 +370,15 @@ export function mountDescribe({
     }
   }
 
+  /** Settings > what the microphone is doing, for whoever is wondering why the pill is (or is not) live. */
+  function noteVoice() {
+    if (!voice) { voiceNote.textContent = 'Voice input is not part of this page.'; return; }
+    voiceNote.textContent = voice.available ? `Voice input is on (${voiceLabel}): this server can turn your voice into words.`
+      : voice.offReason === 'browser' ? `Voice input is off (${voiceLabel}): this browser cannot record sound.`
+      : voice.offReason === 'unreachable' ? `Voice input is off (${voiceLabel}): the page could not reach the app\'s server (/api/transcribe), for example on a plain file server.`
+      : `Voice input is off (${voiceLabel}): the server says voice input is not switched on (TRANSCRIBE_BACKEND=hosted in .dev.vars turns it on for the demo).`;
+  }
+
   function open() {
     // The tab re-aims the host's camera at the drawing; remember where it was so closing puts the host's own scene back in view.
     camSaved = { pos: camera.position.clone(), target: controls?.target?.clone() };
@@ -316,7 +387,7 @@ export function mountDescribe({
     setCharacterVisible(false);
     theme?.warm().catch(() => { /* waking the song model is best effort */ });   // a build is likely coming, and so is its song: wake our own model now
     ready().catch((e) => say(`Could not load the part list: ${e.message}`));
-    voice?.probe().catch(() => { /* no microphone button: the box still works */ });   // one free GET; the button shows only if the route says it can listen
+    voice?.probe().then(noteVoice, () => { /* the pill stays hidden: the box still works */ });   // one free GET; the pill works only if the route says it can listen, and says why when it cannot
     text.focus();
   }
   function closePanel() {
@@ -339,6 +410,12 @@ export function mountDescribe({
   go.addEventListener('click', build);
   text.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); build(); } });
   slider.addEventListener('input', () => { if (!ready_() || playing || p < n) return; view.setExplode(Number(slider.value) / 100); });
+  moreBtn.addEventListener('click', () => {
+    const open = moreBtn.getAttribute('aria-expanded') !== 'true';
+    moreBtn.setAttribute('aria-expanded', String(open));
+    moreBtn.textContent = open ? 'Fewer ideas' : 'More ideas';
+    for (const b of examples.querySelectorAll('[data-more]')) b.hidden = !open;
+  });
   playBtn.addEventListener('click', play);
   nextBtn.addEventListener('click', stepForward);
   backBtn.addEventListener('click', stepBack);

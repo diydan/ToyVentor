@@ -38,7 +38,7 @@ class FakeRecorder {
   }
 }
 
-function setup(opts: { enabled?: boolean | "throws"; reply?: { status: number; body?: unknown } | "throws"; mic?: "ok" | "denied" | "none" | "other"; text?: () => string; withRecorder?: boolean; toWav?: (b: Blob) => Promise<Blob> } = {}) {
+function setup(opts: { enabled?: boolean | "throws"; reply?: { status: number; body?: unknown } | "throws"; mic?: "ok" | "denied" | "none" | "other"; text?: () => string; withRecorder?: boolean; toWav?: (b: Blob) => Promise<Blob>; label?: string; showWhenOff?: boolean; getStatus?: number } = {}) {
   FakeRecorder.made = [];
   FakeRecorder.supported = new Set(["audio/webm;codecs=opus", "audio/webm"]);
   const t = { now: 1000, timers: [] as Array<{ fn: () => void; ms: number; id: number; live: boolean }> };
@@ -52,6 +52,8 @@ function setup(opts: { enabled?: boolean | "throws"; reply?: { status: number; b
     calls.push({ url, method, type: (init?.headers as Record<string, string> | undefined)?.["content-type"] ?? null, body: (init?.body as Blob | undefined) ?? null });
     if (method === "GET") {
       if (opts.enabled === "throws") throw new Error("offline");
+      if (opts.getStatus && opts.enabled === false) return new Response(JSON.stringify({ ok: true, enabled: false }), { status: opts.getStatus });   // the real route: 200 with enabled:false
+      if (opts.getStatus) return new Response("<html>not the route</html>", { status: opts.getStatus });
       return new Response(JSON.stringify({ ok: true, enabled: opts.enabled !== false }), { status: opts.enabled === false ? 503 : 200 });
     }
     if (opts.reply === "throws") throw new Error("network");
@@ -68,7 +70,7 @@ function setup(opts: { enabled?: boolean | "throws"; reply?: { status: number; b
   };
   const voice = createVoiceInput({
     doc: fakeDoc, fetchImpl, url: "/api/transcribe", getUserMedia, MediaRecorderClass: opts.withRecorder === false ? undefined : FakeRecorder,
-    now: () => t.now, ...(opts.toWav ? { toWav: opts.toWav } : {}),
+    now: () => t.now, ...(opts.toWav ? { toWav: opts.toWav } : {}), ...(opts.label !== undefined ? { label: opts.label } : {}), ...(opts.showWhenOff !== undefined ? { showWhenOff: opts.showWhenOff } : {}), ...((opts as { actionWord?: string }).actionWord ? { actionWord: (opts as { actionWord?: string }).actionWord } : {}), ...((opts as { what?: string }).what ? { what: (opts as { what?: string }).what } : {}),
     setTimeout: (fn: () => void, ms: number) => { const id = t.timers.length + 1; t.timers.push({ fn, ms, id, live: true }); return id; },
     clearTimeout: (id: number) => { const x = t.timers.find((q) => q.id === id); if (x) x.live = false; },
     onText: (w: string) => words.push(w), onStatus: (s: string) => status.push(s), onState: (s: string) => states.push(s), currentText: opts.text ?? (() => ""),
@@ -348,14 +350,14 @@ describe("the module and its wiring", () => {
   const tab = read("parts/kip/viewer/kip-describe-tab.js");
   it("keeps the audio and the words nowhere: no storage of any kind, no other address than the app's own route", () => {
     expect(voice).not.toMatch(/localStorage|sessionStorage|indexedDB|caches\.|document\.cookie/);
-    expect(voice).not.toMatch(/mureka|api\.meta|whisper|authorization|api[_-]?key/i);
+    expect(voice).not.toMatch(/mureka|api\.meta|authorization|api[_-]?key/i);
     expect(voice).toContain("url = '/api/transcribe'");
   });
-  it("is mounted in the tab beside the text box, probed when the panel opens, thrown away on Build and on close, and torn down on dispose", () => {
+  it("is mounted in the tab under the text box beside Build it, probed when the panel opens, thrown away on Build and on close, and torn down on dispose", () => {
     expect(tab).toMatch(/import \{ createVoiceInput \} from '\.\/kip-describe-voice\.js'/);
     expect(tab).toContain("transcribeUrl = '/api/transcribe'");
-    expect(tab).toMatch(/const inputRow = el\('div', \{ class: 'kdb-inputrow' \}, text, \.\.\.\(voice \? \[voice\.node\] : \[\]\)\)/);
-    expect(tab).toContain("voice?.probe().catch(");
+    expect(tab).toMatch(/const actions = el\('div', \{ class: 'kdb-actions' \}, \.\.\.\(voice \? \[voice\.node\] : \[\]\), go\)/);
+    expect(tab).toContain("voice?.probe().then(noteVoice,");
     expect(tab).toMatch(/busy = true; go\.disabled = true;\s*voice\?\.cancel\(\);/);
     expect(tab).toMatch(/stopVoice\(\); theme\?\.silence\(\); voice\?\.cancel\(\);/);
     expect(tab).toContain("voice?.dispose()");
@@ -377,9 +379,21 @@ describe("the module and its wiring", () => {
     const harness = read("parts/kip/viewer/tools/describe-harness.html");
     expect(harness).toContain("transcribeUrl: q.get('transcribe') ?? ''");
   });
-  it("has the buttons a small hand can press: 48 px round, labelled, and pulsing only when motion is allowed", () => {
-    expect(tab).toMatch(/\.kdb-panel button\.kdb-mic \{[^}]*width: 48px; height: 48px;/);
-    expect(tab).toMatch(/@media \(prefers-reduced-motion: reduce\) \{ \.kdb-panel button\.kdb-mic-on \{ animation: none; \} \}/);
+  it("has the buttons a small hand can press: a labelled pill at least 44 px tall, and pulsing and counting down only when motion is allowed", () => {
+    expect(tab).toMatch(/\.kdb-panel button\.kdb-mic \{[^}]*min-height: 44px;/);
+    expect(tab).toMatch(/\.kdb-panel button\.kdb-go \{[^}]*min-height: 44px;/);
+    expect(tab).toMatch(/@media \(prefers-reduced-motion: reduce\) \{ \.kdb-panel button\.kdb-mic-on \{ animation: none; \} \.kdb-panel button\.kdb-mic-on::after \{ display: none; \} \}/);
+  });
+  it("states its own hover colours so the host page's global button:hover (white) never makes white text on white", () => {
+    expect(tab).toMatch(/\.kdb-toggle:hover, \.kdb-toggle:focus-visible \{ background: #2b3556; color: #fff; \}/);
+    expect(tab).toMatch(/\.kdb-panel button:hover:not\(:disabled\) \{ background: var\(--kdb-btn-hover\);[^}]*color: var\(--kdb-ink\);/);
+    expect(tab).toMatch(/\.kdb-panel button\.kdb-go:hover:not\(:disabled\)[^{]*\{ background: var\(--kdb-accent-hover\);[^}]*color: var\(--kdb-on-accent\);/);
+    expect(tab).not.toMatch(/cursor: help/);   // the inert pill is not a "?" that does nothing
+  });
+  it("asks for the labelled pill that stays visible when the route is off, and says in Settings what the microphone does with the voice", () => {
+    expect(tab).toContain("label: voiceLabel, showWhenOff: true");
+    expect(tab).toContain("Voice: the microphone is not asked for until you press ${voiceLabel}.");
+    expect(tab).toMatch(/\.kdb-panel \[hidden\] \{ display: none !important; \}/);   // a display rule of its own must never show a hidden slider or controls before a build
   });
 });
 
@@ -486,3 +500,135 @@ describe("the upload uses the converted WAV", () => {
     expect(s.streams.every((x) => x.tracks.every((t) => t.stopped))).toBe(true);
   });
 });
+
+// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// The labelled pill: "Muse transcribe", visible even when the route cannot listen (inert, saying why), so nobody wonders where the microphone went.
+// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+describe("the labelled pill (label + showWhenOff)", () => {
+  it("is a pill with words and an accessible name that contains them, and works exactly like the round button", async () => {
+    const s = setup({ label: "Muse transcribe", showWhenOff: true });
+    expect(s.node.hidden).toBe(true);
+    expect(await s.voice.probe()).toBe(true);
+    expect(s.node.hidden).toBe(false);
+    expect(s.voice.state).toBe("idle");
+    expect(s.node.textContent).toBe("🎤 Muse transcribe");
+    expect(s.node.attrs["aria-label"]).toBe("Muse transcribe: say what to build");
+    expect(s.node.attrs["aria-disabled"]).toBe("false");
+    press(s); await s.tick();
+    expect(s.voice.state).toBe("listening");
+    expect(s.node.textContent).toBe("⏹ Stop");
+    expect(s.node.attrs["aria-label"]).toBe("Stop listening");
+    s.t.now += 2000; press(s);
+    expect(s.node.textContent).toBe("… Transcribing");
+    await s.tick();
+    expect(s.words).toEqual(["a pink skateboard"]);
+    expect(s.node.textContent).toBe("🎤 Muse transcribe");
+  });
+  it("without a label it is the old round icon, unchanged", async () => {
+    const s = setup();
+    await s.voice.probe();
+    expect(s.node.textContent).toBe("🎤");
+    expect(s.node.attrs["aria-label"]).toBe("Say what to build");
+  });
+  it("with showWhenOff a route that is off, errors or answers with a page that is not the route leaves the pill shown, inert, and saying why on a press", async () => {
+    const cases = [
+      { o: { enabled: false as const, getStatus: 200 }, why: "off", say: SAY.off() },
+      { o: { enabled: "throws" as const }, why: "unreachable", say: SAY.noServer() },
+      { o: { getStatus: 404 }, why: "unreachable", say: SAY.noServer() },
+      { o: { withRecorder: false }, why: "browser", say: SAY.unsupported },
+    ];
+    for (const c of cases) {
+      const s = setup({ label: "Muse transcribe", showWhenOff: true, ...c.o });
+      expect(await s.voice.probe(), JSON.stringify(c.o)).toBe(false);
+      expect(s.node.hidden).toBe(false);
+      expect(s.voice.state).toBe("off");
+      expect(s.node.attrs["aria-disabled"]).toBe("true");
+      expect(s.node.classes.has("kdb-mic-off")).toBe(true);
+      press(s); await s.tick();
+      expect(s.status.at(-1), `a press says why: ${JSON.stringify(c.o)}`).toBe(c.say);
+      s.status.length = 0;
+      s.node.fire("click", { detail: 0 });
+      expect(s.status.at(-1), `and so does the keyboard: ${JSON.stringify(c.o)}`).toBe(c.say);
+      expect(s.gum, "the microphone is never asked for").toHaveLength(0);
+      expect(FakeRecorder.made).toHaveLength(0);
+      expect(posts(s)).toHaveLength(0);
+      s.voice.cancel();
+      expect(s.voice.state, "cancel does not wake an inert pill").toBe("off");
+    }
+  });
+  it("tells the page it went inert and why, so the reason can stay on screen (whyOff) instead of waiting for a press", async () => {
+    const s = setup({ label: "Muse transcribe", showWhenOff: true, getStatus: 404 });
+    await s.voice.probe();
+    expect(s.states).toContain("off");
+    expect(s.voice.whyOff()).toBe(SAY.noServer());
+    expect(s.voice.offReason).toBe("unreachable");
+    const ok = setup({ label: "Muse transcribe", showWhenOff: true });
+    await ok.voice.probe();
+    expect(ok.states).not.toContain("off");
+  });
+  it("a route that turns itself off while in use (503) leaves the pill inert, with the same words", async () => {
+    const s = setup({ label: "Muse transcribe", showWhenOff: true, reply: { status: 503 } });
+    await s.voice.probe();
+    press(s); await s.tick(); s.t.now += 2000; press(s); await s.tick();
+    expect(s.voice.state).toBe("off");
+    expect(s.node.hidden).toBe(false);
+    expect(s.status.at(-1)).toBe(SAY.off());
+  });
+  it("without showWhenOff nothing about the old hidden behaviour changes, even with a label", async () => {
+    const s = setup({ label: "Muse transcribe", enabled: false });
+    expect(await s.voice.probe()).toBe(false);
+    expect(s.node.hidden).toBe(true);
+    expect(s.voice.state).toBe("hidden");
+  });
+  it("never bypasses the route: an off pill sends no request but the free probe", async () => {
+    const s = setup({ label: "Muse transcribe", showWhenOff: true, enabled: false, getStatus: 200 });
+    await s.voice.probe();
+    for (let i = 0; i < 3; i++) { press(s); s.node.fire("click", { detail: 0 }); }
+    await s.tick();
+    expect(s.calls.map((c) => c.method)).toEqual(["GET"]);
+  });
+});
+
+describe("what the microphone pill is called", () => {
+  const tab = read("parts/kip/viewer/kip-describe-tab.js");
+  it("is neutral in the app: the tab's default words are \"Say it\", with no model name in them", () => {
+    expect(tab).toContain("voiceLabel = 'Say it'");
+    expect(tab.match(/voiceLabel = '[^']*'/)![0]).not.toMatch(/muse|meta|transcribe/i);
+  });
+  it("only the standalone Kip demo page names the speech model; the bench passes the option through and the app's Workshop never sets it", () => {
+    expect(read("parts/kip/viewer/Kip-Demo.html")).toContain("{ voiceLabel: 'Muse transcribe' }");
+    expect(read("parts/kip/viewer/kip-bench.js")).toContain("...(env.voiceLabel ? { voiceLabel: env.voiceLabel } : {})");
+    expect(read("parts/kip/viewer/workshop.js")).not.toMatch(/voiceLabel|Muse transcribe/);
+    expect(read("parts/kip/viewer/Workshop.html")).not.toMatch(/voiceLabel|Muse transcribe/);
+  });
+  it("the tab's own words (outside the option's default) never say Muse transcribe", () => {
+    expect(tab.replace(/\/\/[^\n]*/g, "")).not.toMatch(/Muse transcribe/);
+  });
+  it("the public copies carry the same", () => {
+    for (const f of ["Kip-Demo.html", "kip-bench.js", "kip-describe-tab.js", "kip-describe-voice.js"]) {
+      expect(readFileSync(join(root, "public/kip", f)), f).toEqual(readFileSync(join(root, "parts/kip/viewer", f)));
+    }
+  });
+});
+
+describe("actionWord and what: Create a world reuses the controller with its own words", () => {
+  it("the 'I heard' line names the button the child presses next (Build it by default, Make in Create a world)", () => {
+    expect(SAY.heard("a red car")).toBe('I heard: "a red car". Press Build it, or change the words.');
+    expect(SAY.heard("a snowy cave", "Make")).toBe('I heard: "a snowy cave". Press Make, or change the words.');
+  });
+  it("is said through onStatus with the configured word after a recording", async () => {
+    const s = setup({ actionWord: "Make" } as never);
+    await s.voice.probe(); press(s); await s.tick(); s.t.now += 2000; press(s); await s.tick();
+    expect(s.status.at(-1)).toBe('I heard: "a pink skateboard". Press Make, or change the words.');
+    expect(s.words).toEqual(["a pink skateboard"]);
+  });
+  it("what the child is asked to say is in the accessible name, with and without a label", async () => {
+    const a = setup({ label: "Say it", what: "your world" } as never);
+    expect(a.node.attrs["aria-label"]).toBe("Say it: say your world");
+    const b = setup({ what: "your world" } as never);
+    expect(b.node.attrs["aria-label"]).toBe("Say your world");
+    const c = setup();
+    expect(c.node.attrs["aria-label"]).toBe("Say what to build");   // the default is unchanged
+  });
+});
+

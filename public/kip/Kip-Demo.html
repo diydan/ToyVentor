@@ -13,7 +13,7 @@
 <div id="app"></div>
 <script type="module">
 import { mountKipBench } from '/kip/kip-bench.js?v=10.0';
-window.kipBench = mountKipBench(document.getElementById('app'));
+window.kipBench = mountKipBench(document.getElementById('app'), { voiceLabel: 'Muse transcribe' });   // this demo page names the speech model its microphone button uses; the app's Workshop does not
 </script>
 </body>
 </html>

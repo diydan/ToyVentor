@@ -1,6 +1,23 @@
 import { useEffect, useRef, useState } from "react";
 import { chipWord, type CreateAction, type CreateSnapshot } from "./engine";
 
+/**
+ * "Say it": the same microphone button as Describe & build in the Workshop, from the same module (public/kip/kip-describe-voice.js), so the recording rules live in one place:
+ * nothing is recorded or even asked of the microphone until the child presses it, a recording is at most 8 s, it goes to the app's own /api/transcribe and is dropped, and the
+ * words land in the text box to be SEEN and changed, never made automatically. Loaded on demand like the Workshop (a plain static file, not part of this bundle). When the app's
+ * route is off, or the module cannot be loaded, the browser's own "Speak" button is shown instead, exactly as before.
+ */
+interface SayIt {
+  node: HTMLButtonElement;
+  probe: () => Promise<boolean>;
+  cancel: () => void;
+  dispose: () => void;
+}
+type VoiceModule = { createVoiceInput: (options: Record<string, unknown>) => SayIt };
+const VOICE_MODULE = "/kip/kip-describe-voice.js";
+const loadVoiceModule = (): Promise<VoiceModule> =>
+  import(/* @vite-ignore */ new URL(VOICE_MODULE, window.location.origin).href) as Promise<VoiceModule>;
+
 export interface CreatePanelProps {
   snapshot: CreateSnapshot;
   onClose: () => void;
@@ -15,6 +32,44 @@ export interface CreatePanelProps {
 export function CreatePanel({ snapshot, onClose, onMake, onAction }: CreatePanelProps) {
   const [draft, setDraft] = useState(snapshot.inputValue);
   const submittedRef = useRef("");
+  const [sayIt, setSayIt] = useState<"checking" | "on" | "off">("checking");
+  const [voiceMsg, setVoiceMsg] = useState("");
+  const voiceHost = useRef<HTMLSpanElement>(null);
+  const voiceRef = useRef<SayIt | null>(null);
+  const draftRef = useRef(draft);
+  draftRef.current = draft;
+
+  // Build the Say it button once, ask the route (one free GET) whether it can listen, and free the microphone when the panel goes away.
+  useEffect(() => {
+    let gone = false;
+    let voice: SayIt | null = null;
+    void (async () => {
+      try {
+        const mod = await loadVoiceModule();
+        if (gone) return;
+        voice = mod.createVoiceInput({
+          label: "Say it",
+          actionWord: "Make",
+          what: "your world",
+          currentText: () => draftRef.current,
+          onText: (words: string) => setDraft(words.slice(0, 160)),
+          onStatus: (line: string) => setVoiceMsg(line),
+        });
+        voice.node.classList.add("tv-ctl");
+        voiceHost.current?.append(voice.node);
+        voiceRef.current = voice;
+        const ok = await voice.probe();
+        if (!gone) setSayIt(ok ? "on" : "off");
+      } catch {
+        if (!gone) setSayIt("off");
+      }
+    })();
+    return () => {
+      gone = true;
+      voiceRef.current = null;
+      voice?.dispose();
+    };
+  }, []);
 
   useEffect(() => {
     if (
@@ -32,6 +87,8 @@ export function CreatePanel({ snapshot, onClose, onMake, onAction }: CreatePanel
     const text = draft.trim();
     if (!text || snapshot.busy) return;
     submittedRef.current = text;
+    voiceRef.current?.cancel(); // a recording in progress is thrown away: the child pressed Make
+    setVoiceMsg("");
     onMake(text);
     setDraft("");
   };
@@ -64,7 +121,10 @@ export function CreatePanel({ snapshot, onClose, onMake, onAction }: CreatePanel
           maxLength={160}
           placeholder="Describe your world (e.g. snowy mountain with cave)"
           aria-label="Describe your world"
-          onChange={(event) => setDraft(event.target.value)}
+          onChange={(event) => {
+            setDraft(event.target.value);
+            setVoiceMsg("");
+          }}
           onKeyDown={(event) => {
             if (event.key === "Enter") {
               event.preventDefault();
@@ -72,7 +132,8 @@ export function CreatePanel({ snapshot, onClose, onMake, onAction }: CreatePanel
             }
           }}
         />
-        {snapshot.micAvailable && (
+        <span ref={voiceHost} className="tv-cr-voicehost" />
+        {snapshot.micAvailable && sayIt === "off" && (
           <button
             type="button"
             className="tv-ctl"
@@ -93,6 +154,12 @@ export function CreatePanel({ snapshot, onClose, onMake, onAction }: CreatePanel
           </button>
         )}
       </div>
+
+      {sayIt === "on" && voiceMsg && (
+        <p className="tv-cr-voice" role="status" aria-live="polite">
+          {voiceMsg}
+        </p>
+      )}
 
       {snapshot.chips.length > 0 && (
         <div className="tv-cr-chips" role="group" aria-label="Picture words">

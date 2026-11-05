@@ -10,6 +10,10 @@
 // cannot decode the webm or mp4 a browser records), sent once to the app's own route, and dropped. The words that come back go into the text box for the
 // child to SEE and change: nothing is built until the child presses Build it.
 //
+// LABEL AND "OFF". By default the button is a round icon that is hidden unless the route can listen (nothing changes for a page whose server cannot). A host that wants the feature to be
+// FOUND passes `label` (e.g. "Muse transcribe": the button becomes a pill with words) and `showWhenOff: true` (the pill is shown even when the route is off or unreachable, in an inert
+// "off" state: pressing it says why in plain words instead of recording anything). The route's gates are never bypassed: an off route stays off, the pill only explains it.
+//
 // WHAT IT NEVER DOES. It never auto-builds, never keeps the audio or the words anywhere (no storage of any kind), never talks to anything but the app's own route, and always
 // stops every microphone track when a recording ends, fails, is cancelled or the panel closes.
 //
@@ -91,7 +95,7 @@ export async function recordingToWav(blob, { OfflineAudioContextClass = globalTh
 export const SAY = {
   listening: 'Listening… say it, then tap again.',
   thinking: 'Thinking about what you said…',
-  heard: (words) => `I heard: "${words}". Press Build it, or change the words.`,
+  heard: (words, action = 'Build it') => `I heard: "${words}". Press ${action}, or change the words.`,
   heardKept: (words) => `I heard: "${words}". I left your words as they are.`,
   denied: 'I cannot hear you yet. Ask a grown-up to let this page use the microphone, or type it.',
   noMic: 'I cannot find a microphone. Type it instead!',
@@ -99,6 +103,8 @@ export const SAY = {
   failed: 'I could not hear that. Try again, or type it.',
   busy: 'One moment, then try again.',
   unsupported: 'This browser cannot listen. Type it instead!',
+  off: () => 'Voice input is switched off on this server. Type it instead!',
+  noServer: () => "Voice input needs the app's server, and this page cannot reach it. Type it instead!",
 };
 
 const make = (doc, tag, attrs = {}, ...kids) => {
@@ -114,35 +120,52 @@ export function createVoiceInput({
   maxMs = MAX_MS, holdMs = HOLD_MS, minMs = MIN_MS, now = () => Date.now(), toWav = recordingToWav,
   setTimeout: later = (fn, ms) => globalThis.setTimeout(fn, ms), clearTimeout: cancelLater = (id) => globalThis.clearTimeout(id),
   onText = () => {}, onStatus = () => {}, onState = () => {}, currentText = () => '',
+  label = '', showWhenOff = false, actionWord = 'Build it', what = 'what to build',   // what: what the child is asked to say, in the button's accessible name   // actionWord: the button the child presses next ("Make" in Create a world), named in the "I heard" line
 } = {}) {
-  const node = make(doc, 'button', { type: 'button', class: 'kdb-mic', 'aria-label': 'Say what to build', 'aria-pressed': 'false', title: 'Say what to build', hidden: '' }, '🎤');
-  let state = 'hidden';            // hidden | idle | asking | listening | thinking
+  const idleName = label ? `${label}: say ${what}` : `Say ${what}`;
+  const node = make(doc, 'button', { type: 'button', class: 'kdb-mic', 'aria-label': idleName, 'aria-pressed': 'false', title: idleName, hidden: '' }, label ? `🎤 ${label}` : '🎤');
+  node.style?.setProperty?.('--kdb-cap', `${maxMs}ms`);   // the listening bar in the page's CSS runs for exactly as long as the recording may
+  let state = 'hidden';            // hidden | off (shown but inert: the route cannot listen, see showWhenOff) | idle | asking | listening | thinking
   let run = 0;                     // bumps whenever a recording is cancelled or finished: an answer from an older one is dropped
-  let available = null;
+  let available = null, offReason = '';   // offReason: off (the route says it is not switched on) | unreachable (no answer from it) | browser (this browser cannot record) | ''
   let stream = null, recorder = null, chunks = [], startedAt = 0, timer = 0, pressedAt = 0, released = false, textAtStart = '', mime = '';
 
   const setState = (s) => {
     state = s;
     node.setAttribute('aria-pressed', String(s === 'listening'));
-    node.setAttribute('aria-label', s === 'listening' ? 'Stop listening' : 'Say what to build');
+    node.setAttribute('aria-label', s === 'listening' ? 'Stop listening' : idleName);
+    node.setAttribute('aria-disabled', String(s === 'off'));   // inert, but still pressable: a press explains why (a truly disabled button would stay silent)
     node.classList.toggle('kdb-mic-on', s === 'listening');
+    node.classList.toggle('kdb-mic-off', s === 'off');
     node.disabled = s === 'thinking';
-    node.textContent = s === 'listening' ? '⏹' : s === 'thinking' ? '…' : '🎤';
+    node.textContent = s === 'listening' ? (label ? '⏹ Stop' : '⏹') : s === 'thinking' ? (label ? '… Transcribing' : '…') : (label ? `🎤 ${label}` : '🎤');
     onState(s);
   };
+  /** Why the pill is inert, in words a child can read. */
+  const offMessage = () => (offReason === 'browser' ? SAY.unsupported : offReason === 'unreachable' ? SAY.noServer() : SAY.off());
   const stopTracks = () => { try { stream?.getTracks().forEach((t) => t.stop()); } catch { /* already stopped */ } stream = null; };
   const clearTimer = () => { if (timer) { cancelLater(timer); timer = 0; } };
 
   /** One free GET: is voice input on? Remembered. Shows the button only when it is. */
   async function probe() {
     if (available === null) {
-      try { const res = await fetchImpl(url); available = res.ok && (await res.json())?.enabled === true; } catch { available = false; }
-      if (available && (!MediaRecorderClass || !getUserMedia)) available = false;   // a browser that cannot record shows no button
+      offReason = '';
+      try {
+        const res = await fetchImpl(url);
+        available = res.ok && (await res.json())?.enabled === true;
+        if (!available) offReason = res.ok ? 'off' : 'unreachable';
+      } catch { available = false; offReason = 'unreachable'; }
+      if (available && (!MediaRecorderClass || !getUserMedia)) { available = false; offReason = 'browser'; }   // a browser that cannot record shows no working button
     }
-    if (available && state === 'hidden') { node.hidden = false; setState('idle'); }
+    if (available && (state === 'hidden' || state === 'off')) { node.hidden = false; setState('idle'); }
+    else if (!available && showWhenOff && state === 'hidden') { node.hidden = false; setState('off'); }
     return available;
   }
-  const hide = () => { available = false; node.hidden = true; setState('hidden'); };
+  /** The route cannot listen (it said so, or stopped answering). By default the button goes away; with showWhenOff it stays, inert, and says why when pressed. */
+  const hide = (why = 'off') => {
+    available = false; offReason = why;
+    if (showWhenOff) { node.hidden = false; setState('off'); } else { node.hidden = true; setState('hidden'); }
+  };
 
   async function upload(recorded, mine) {
     let blob = recorded;
@@ -154,7 +177,7 @@ export function createVoiceInput({
     try {
       const res = await fetchImpl(url, { method: 'POST', headers: { 'content-type': type }, body: blob, ...(abort ? { signal: abort.signal } : {}) });
       if (mine !== run) return;
-      if (res.status === 503) { hide(); onStatus(SAY.unsupported); return; }
+      if (res.status === 503) { hide(); onStatus(showWhenOff ? offMessage() : SAY.unsupported); return; }
       if (res.status === 429) { setState('idle'); onStatus(SAY.busy); return; }
       if (!res.ok) throw new Error(String(res.status));
       const body = await res.json();
@@ -164,7 +187,7 @@ export function createVoiceInput({
       if (!words) { onStatus(typeof body?.note === 'string' && body.note ? body.note : SAY.failed); return; }
       if (currentText() !== textAtStart) { onStatus(SAY.heardKept(words)); return; }   // the child typed meanwhile: do not overwrite it
       onText(words);
-      onStatus(SAY.heard(words));
+      onStatus(SAY.heard(words, actionWord));
     } catch {
       if (mine === run) { setState('idle'); onStatus(SAY.failed); }
     } finally {
@@ -239,13 +262,14 @@ export function createVoiceInput({
     try { if (recorder && recorder.state !== 'inactive') recorder.stop(); } catch { /* already stopped */ }
     recorder = null; chunks = [];
     stopTracks();
-    if (state !== 'hidden') setState('idle');
+    if (state !== 'hidden' && state !== 'off') setState('idle');
   }
 
   // a press: start (or, while listening, stop); letting go of a press held past `holdMs` stops it. The keyboard toggles through click (detail 0).
   node.addEventListener('pointerdown', (e) => {
     if (e.button) return;
     pressedAt = now(); released = false;
+    if (state === 'off') { pressedAt = 0; onStatus(offMessage()); return; }
     if (state === 'idle') void start();
     else if (state === 'listening') { pressedAt = 0; stop(); }
   });
@@ -259,6 +283,7 @@ export function createVoiceInput({
   });
   node.addEventListener('click', (e) => {
     if (e.detail !== 0) return;
+    if (state === 'off') { onStatus(offMessage()); return; }
     if (state === 'idle') { released = false; void start(); } else if (state === 'listening') stop();
   });
 
@@ -267,5 +292,8 @@ export function createVoiceInput({
     dispose() { cancel(); node.remove?.(); },
     get state() { return state; },
     get available() { return available; },
+    get offReason() { return offReason; },
+    /** The plain words for why the pill is inert (the same ones a press says). */
+    whyOff: () => offMessage(),
   };
 }

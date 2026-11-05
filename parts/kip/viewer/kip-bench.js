@@ -474,7 +474,7 @@ if __name__ == "__main__": run_cli(PART)</div>
  * page script, moved here unchanged except for the host seams listed in docs/specs/workshop-spec.md (stage 4a):
  * lookups go through `$el` / `benchRoot` instead of `document`, listeners through `listen` (so dispose can remove them),
  * the URL through `getSearch` / `getHash` / `replaceHash`, published handles through `globals`.
- * `env` (all optional): { getSearch, getHash, replaceHash, embedded, globals }.
+ * `env` (all optional): { getSearch, getHash, replaceHash, embedded, globals, voiceLabel }.
  * Returns { root, ready, dispose }; `ready` settles when the first load is done.
  */
 export function mountKipBench(host, env = {}) {
@@ -3450,6 +3450,7 @@ const describeTab = mountDescribe({
   THREE, STLLoader, mergeVertices, toCreasedNormals, scene, camera, controls, container: benchRoot,
   setCharacterVisible: on => { if (kip) kip.mover.visible = on; originRing.visible = on; },
   themeOptions: { onSong: song => mySongs.add(song) },   // a new theme song is measured at once, so it is in the party's Song picker when the child gets there
+  ...(env.voiceLabel ? { voiceLabel: env.voiceLabel } : {}),   // the words on the microphone pill: only the standalone demo page sets it (Kip-Demo.html)
 });
 globals.kipDescribe = describeTab;
 mySongs.catchUp().catch(() => { /* songs made before, measured quietly in the background; a failure just leaves them off the picker */ });

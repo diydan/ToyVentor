@@ -4275,6 +4275,12 @@ button.tv-badge-pill:hover {
   border-color: var(--line);
 }
 
+/* "Say it" in Create a world: the microphone button comes from the Workshop's own module (kip-describe-voice.js) and is a plain DOM button, so it gets the game's button look here */
+.tv-cr-voicehost { display: contents; }
+.tv-ctl.kdb-mic[hidden] { display: none; }
+.tv-ctl.kdb-mic-on { background: var(--gold); color: #2b1d00; border-color: var(--gold); box-shadow: 0 3px 0 #b8901f; }
+.tv-cr-voice { margin: 6px 2px 0; font-size: 13px; font-weight: 600; color: var(--ink); }
+
 .tv-cr-say {
   margin: 0;
   padding: 10px 12px;

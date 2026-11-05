@@ -458,10 +458,11 @@ try {
   const describeCalls = () => describeStub.seen.length;
 
   check('the panel opened and asked the route once, for free', transcribe.probes >= 1 && transcribe.posts.length === 0, `${transcribe.probes} probes, ${transcribe.posts.length} posts`);
-  check('the 🎤 button is there, labelled, and sits beside the text box on the right', await mic.waitFor(`!document.querySelector('${micBtn}').hidden`, 10000) && (await mev(`document.querySelector('${micBtn}').getAttribute('aria-label')`)) === 'Say what to build'
-    && await mev(`(() => { const m = document.querySelector('${micBtn}').getBoundingClientRect(), t = document.querySelector('#kdb-text').getBoundingClientRect(); return m.left >= t.right - 1 && m.top >= t.top - 1 && m.top <= t.bottom; })()`));
+  check('the "Say it" pill is there, says so in words, and sits under the text box, left of the Build it button', await mic.waitFor(`!document.querySelector('${micBtn}').hidden`, 10000) && (await mev(`document.querySelector('${micBtn}').getAttribute('aria-label')`)) === 'Say it: say what to build'
+    && (await mev(`document.querySelector('${micBtn}').textContent`)).includes('Say it')
+    && await mev(`(() => { const m = document.querySelector('${micBtn}').getBoundingClientRect(), t = document.querySelector('#kdb-text').getBoundingClientRect(), g = document.querySelector('.kdb-go').getBoundingClientRect(); return m.top >= t.bottom - 1 && m.left <= t.left + 4 && m.right <= g.left + 1; })()`));
   const r0 = await rect();
-  check('it is a real touch target: round, at least 44 px each way', r0.w >= 44 && r0.h >= 44 && Math.abs(r0.w - r0.h) < 1, JSON.stringify(r0));
+  check('it is a real touch target: a pill at least 44 px each way', r0.w >= 44 && r0.h >= 44 && r0.w > r0.h, JSON.stringify(r0));
   check('NOTHING was recorded and the microphone was not even asked for before a press', (await gum()).calls === 0 && transcribe.posts.length === 0);
   await mic.shot(path.join(SHOTS, 'microphone-idle.png'));
 
@@ -565,12 +566,17 @@ try {
   check('and the page talked only to its own server for all of it', await mev(`true`) && [...new Set(mic.requests.map((r) => { try { return new URL(r.url).origin; } catch { return r.url.slice(0, 5); } }))].every((o) => o === base || o.startsWith('data') || o.startsWith('blob')), [...new Set(mic.requests.map((r) => r.url.slice(0, 40)))].slice(0, 5).join(', '));
   check('no page errors in the microphone page', mic.exceptions.length === 0, mic.exceptions.join(' | '));
 
-  // the route off: the button is not there at all
+  // the route off: the pill is still there (so nobody wonders where the microphone went) but inert, and a press says why
   transcribe.enabled = false;
   const off = await chrome.open(`${base}/kip/tools/describe-harness.html?stepMs=300&transcribe=/api/transcribe`);
   await off.waitFor('window.__describeReady === true', 180000);
   await nap(800);
-  check('with the route off the button is hidden, the microphone is never asked for, and the box works as it always did', await off.evaluate(`document.querySelector('.kdb-mic').hidden`) && await off.evaluate(`!document.querySelector('.kdb-mic').offsetParent`) && (await off.evaluate(`document.querySelector('#kdb-text') !== null`)));
+  check('with the route off the pill is shown but inert (aria-disabled), and the box works as it always did', await off.evaluate(`!document.querySelector('.kdb-mic').hidden && !!document.querySelector('.kdb-mic').offsetParent && document.querySelector('.kdb-mic').getAttribute('aria-disabled') === 'true' && document.querySelector('.kdb-mic').classList.contains('kdb-mic-off')`) && (await off.evaluate(`document.querySelector('#kdb-text') !== null`)));
+  const offRect = JSON.parse(await off.evaluate(`(() => { const r = document.querySelector('.kdb-mic').getBoundingClientRect(); return JSON.stringify({ x: r.x + r.width / 2, y: r.y + r.height / 2 }); })()`));
+  await off.evaluate(`window.__gum = { calls: 0 }; const real = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices); navigator.mediaDevices.getUserMedia = (c) => { window.__gum.calls++; return real(c); }; 0`);
+  await off.click(offRect.x, offRect.y);
+  await nap(300);
+  check('pressing the inert pill says it is switched off, asks for no microphone and sends nothing', /switched off on this server/.test(await off.evaluate(`document.querySelector('.kdb-status').textContent`)) && (await off.evaluate('window.__gum.calls')) === 0 && transcribe.posts.length === 0, await off.evaluate(`document.querySelector('.kdb-status').textContent`));
   // and the harness without the parameter has no probe and no button behaviour at all
   const probesNow = transcribe.probes;
   const plain = await chrome.open(`${base}/kip/tools/describe-harness.html?stepMs=300`);
