@@ -165,7 +165,7 @@ import { TOOL_BUILDERS } from "./toolMeshes";
 import { TOOL_WORK_S, TOOL_WORK_SCALE, newToolPose, toolPose } from "./toolWork";
 import { createFetch } from "./dogFetch";
 import { createFollow } from "./dogFollow";
-import { GEAR_RATIO, createTurntable } from "./turntableSpin";
+import { GEAR_RATIO, buildShiftPx, createTurntable, turntableLive } from "./turntableSpin";
 import { createTurntableSound } from "./turntableSound";
 import { SHOVE_FADE_S, loadMoves } from "./gameMoves";
 import { followsClock, lookFor } from "./worldLook";
@@ -806,12 +806,17 @@ function endHold(e: PointerEvent){if(hold&&hold.id===e.pointerId)hold=null}
 canvas.addEventListener("pointerup",endHold);canvas.addEventListener("pointercancel",endHold);
 /* The title's turntable can be played with (runtime/turntableSpin.ts, turntableSound.ts; Dan, 2026-11-04): hold it to stop it, drag it either way, flick it. The title overlay lets touches through except on its buttons, so a press on empty stage reaches this canvas and a tap on a button never does. Off the title (P.title false) none of this reacts and the table just turns at its idle speed. */
 var TT=createTurntable({reduceMotion:reduce}),TTS=createTurntableSound({reduceMotion:reduce}),ttGrab: {id:number;x:number}|null=null;
+/* The same table in the Build sheet's showcase (Dan, 2026-11-05, via the coordinator: "do 3"): live on the title and while the Build card is open, never on the Create screen, the editor or a mission. The card is a DOM element over the canvas, so a press on it never reaches the canvas: only the free stage on its right can grab the table. */
+function ttLive(){return turntableLive({title:!!P.title,showcase:!!P.showcase,building:hostEl.classList.contains("building")})}
+/* How wide the left card is now (measured four times a second, no layout read every frame), eased so the camera glides when the card opens or closes: the showcase camera slides right by half of it so the toy stands in the middle of the free stage, not under the card's edge. */
+var ttSheetW=0,ttSheetT=-9;
+function ttCard(prev: number|undefined,dt: number){var now=performance.now()/1000;if(now-ttSheetT>.2){ttSheetT=now;var el=P.title||!hostEl.parentElement?null:hostEl.parentElement.querySelector(".tv-sheet:not([hidden])");ttSheetW=el?(el as HTMLElement).offsetWidth:0}return prev==null?ttSheetW:prev+(ttSheetW-prev)*Math.min(1,dt*8)}
 function ttRim(){var c=canvas.getBoundingClientRect(),xa=v3.set(FX,.34,0).project(camera).x,xb=v3.set(FX+2.1,.34,0).project(camera).x;return Math.max(40,Math.abs(xb-xa)*c.width/2)}
-canvas.addEventListener("pointerdown",function(e: PointerEvent){if(!P.title||!FAC||ttGrab||disposed||(e.pointerType==="mouse"&&e.button!==0))return;noteGesture();ttGrab={id:e.pointerId,x:e.clientX};try{canvas.setPointerCapture(e.pointerId)}catch(_){}TT.grab();TTS.grab()});
+canvas.addEventListener("pointerdown",function(e: PointerEvent){if(!ttLive()||!FAC||ttGrab||disposed||(e.pointerType==="mouse"&&e.button!==0))return;noteGesture();ttGrab={id:e.pointerId,x:e.clientX};try{canvas.setPointerCapture(e.pointerId)}catch(_){}TT.grab();TTS.grab()});
 canvas.addEventListener("pointermove",function(e: PointerEvent){if(!ttGrab||ttGrab.id!==e.pointerId)return;TT.drag(e.clientX-ttGrab.x,ttRim());ttGrab.x=e.clientX});
 function ttEnd(e: PointerEvent){if(ttGrab&&ttGrab.id===e.pointerId){ttGrab=null;TT.release();TTS.release()}}
 canvas.addEventListener("pointerup",ttEnd);canvas.addEventListener("pointercancel",ttEnd);
-winOn("keydown",function(e){if(!P.title||disposed||e.ctrlKey||e.metaKey||e.altKey)return;var k=e.key,tg=e.target&&e.target.tagName;if(k!=="ArrowLeft"&&k!=="ArrowRight")return;if(tg==="INPUT"||tg==="TEXTAREA"||tg==="SELECT"||(e.target&&e.target.isContentEditable))return;e.preventDefault();noteGesture();TT.nudge(k==="ArrowLeft"?-1:1)});
+winOn("keydown",function(e){if(!ttLive()||disposed||e.ctrlKey||e.metaKey||e.altKey)return;var k=e.key,tg=e.target&&e.target.tagName;if(k!=="ArrowLeft"&&k!=="ArrowRight")return;if(tg==="INPUT"||tg==="TEXTAREA"||tg==="SELECT"||(e.target&&e.target.isContentEditable))return;if(!P.title&&e.target&&e.target.closest&&e.target.closest(".tv-sheet,.tv-modal"))return;e.preventDefault();noteGesture();TT.nudge(k==="ArrowLeft"?-1:1)});
 canvas.addEventListener("pointermove",function(e: PointerEvent){FEED.move(e);ACT.move(e)});canvas.addEventListener("pointerup",function(e: PointerEvent){FEED.up(e);ACT.up(e)});canvas.addEventListener("pointercancel",function(){FEED.cancel();ACT.cancel()});
 winOn("keydown",function(e){if(paused)return;var k=(e.key||"").toLowerCase(),onBtn=e.target&&e.target.closest&&e.target.closest("button"),tgn=e.target&&e.target.tagName;if(onBtn&&(k===" "||k==="enter"))return;if(tgn==="INPUT"||tgn==="TEXTAREA"||tgn==="SELECT"||(e.target&&e.target.isContentEditable))return;
  if(k==="arrowleft"||k==="a")keys.l=1;else if(k==="arrowright"||k==="d")keys.r=1;else if(k==="arrowup"||k==="w")keys.u=1;else if(k==="arrowdown"||k==="s")keys.d=1;else if(k==="1")ability("speed");else if(k==="2")ability("spin");else if(k==="3")ability("glow");else if(k==="4")ability("torque");else if(k==="e"||k===" "){if(P.nearJunk)unboltNext(P.nearJunk)}else if(k==="b"){P.showcase?closeSheet():openSheet()}else if(k==="escape"&&P.showcase)closeSheet();else return;ctx();e.preventDefault()});
@@ -901,7 +906,7 @@ if(!P.showcase&&!P.busy&&!P.mDrive){tidySpots.forEach(function(ts){if(ts.done)re
  var asp=camera.aspect,dd0=Math.max(asp>1.2?LAND_DD:10,Math.min(22,VIEW_W/(2*Math.tan(camera.fov*Math.PI/360)*asp))),ZK=[1,1.5,2.1][S.zoom||0]??1;P.zd=P.zd==null?ZK:P.zd+(ZK-P.zd)*Math.min(1,dt*4);
  // Celebrations (the samba) push the camera in so the dance reads on a phone; walking and idling keep the wide navigation view.
  var pushT=mix&&mix.busyAction==="dance"?DANCE_PUSH:1;P.push=P.push==null?1:P.push+(pushT-P.push)*Math.min(1,dt*(pushT<1?3:2));var dd=dd0*P.zd*P.push;
- if(P.showcase){cam.x+=(P.pos.x-cam.x)*Math.min(1,dt*4);var hh=(rig.h||2.6),cy2=.36+hh*.5,tn=2*Math.tan(camera.fov*Math.PI/360),d2=Math.max(7,(hh/.33)/tn*(asp<.8?1:.62),((rig.w||1.9)/.8)/(tn*asp));camera.position.set(cam.x,cy2+1,d2);camera.lookAt(cam.x,cy2,0);var W0=hostEl.clientWidth,H0=hostEl.clientHeight;camera.setViewOffset(W0,H0,0,H0*(P.title?-.04:.27),W0,H0)}
+ if(P.showcase){cam.x+=(P.pos.x-cam.x)*Math.min(1,dt*4);var hh=(rig.h||2.6),cy2=.36+hh*.5,tn=2*Math.tan(camera.fov*Math.PI/360),d2=Math.max(7,(hh/.33)/tn*(asp<.8?1:.62),((rig.w||1.9)/.8)/(tn*asp));camera.position.set(cam.x,cy2+1,d2);camera.lookAt(cam.x,cy2,0);var W0=hostEl.clientWidth,H0=hostEl.clientHeight;P.shx=ttCard(P.shx,dt);camera.setViewOffset(W0,H0,-buildShiftPx(W0,P.shx),-.04*H0,W0,H0)}
  else{var la=(Math.cos(P.face)>0?1:-1)*Math.min(1.5,2*Math.tan(camera.fov*Math.PI/360)*asp*dd*.21),tx=Math.max(3,Math.min(41,P.pos.x+la));cam.x+=(tx-cam.x)*Math.min(1,dt*2.6);camera.position.set(cam.x,2.6+dd*.24,dd);camera.lookAt(cam.x,1.1+(P.zd-1)*1.2,P.pos.z*.3)}if(scene.fog&&"near" in scene.fog){if(W.fogW!==W.root){W.fogW=W.root;W.fn0=scene.fog.near;W.ff0=scene.fog.far}var fex=P.showcase?0:dd-dd0;scene.fog.near=W.fn0+fex;scene.fog.far=W.ff0+fex}
  if(!reduce&&P.shake>0){camera.position.x+=(Math.random()-.5)*P.shake;camera.position.y+=(Math.random()-.5)*P.shake*.7}P.shake=Math.max(0,(P.shake||0)-dt*1.6);
  var fovT=36+(reduce?0:(P.kick||0)*6);P.kick=Math.max(0,(P.kick||0)-dt*2.4);if(Math.abs(camera.fov-fovT)>.02){camera.fov+=(fovT-camera.fov)*Math.min(1,dt*12);camera.updateProjectionMatrix()}

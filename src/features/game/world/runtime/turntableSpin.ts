@@ -192,3 +192,25 @@ export function tickAudible(step: Pick<SpinStep, "active" | "speed">, reduceMoti
   const s = Math.abs(step.speed);
   return s > 0.12 && s < TICK_MAX;
 }
+
+// ---- where the table can be played with, and where it stands --------------------------------------------------------------------------------------------------------
+
+/**
+ * Is the table one the child can play with right now? The title page, and the Build sheet's showcase (the world is in its showcase state AND the host carries the `building` class, which
+ * `openSheet` adds and `closeSheet` removes). Never the Create screen or the level editor (they do not carry `building`), and never a mission or the walking world (not a showcase).
+ */
+export function turntableLive(s: { title: boolean; showcase: boolean; building: boolean }): boolean {
+  return !!s.title || (!!s.showcase && !!s.building);
+}
+
+/**
+ * How far to slide the Build showcase to the right so the toy and its table stand in the middle of what the left card leaves free (pixels). The card covers `cardW` of a canvas
+ * `canvasW` wide, so the free area's middle is `cardW / 2` right of the canvas's middle. Never more than 40 % of the canvas (a card wider than 80 % would push the toy off the
+ * screen), never negative, and 0 for a bad number.
+ */
+export function buildShiftPx(canvasW: number, cardW: number): number {
+  const w = num(canvasW);
+  const c = num(cardW);
+  if (w <= 0 || c <= 0) return 0;
+  return Math.min(c / 2, w * 0.4);
+}

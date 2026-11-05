@@ -1,7 +1,7 @@
 // The title turntable you can play with (runtime/turntableSpin.ts; Dan, 2026-11-04: hold, pause, slower and faster, in any direction). Pure physics, so every claim is checked with numbers.
 import { describe, expect, it } from "vitest";
 import {
-  DETENTS, DRAG_GAIN, GEAR_RATIO, IDLE_SPEED, MAX_DRAG_SPEED, MAX_FLING, SETTLE_RATE, TICK_MAX, WHOOSH_FROM, createTurntable, tickAudible, whooshFor, type Turntable,
+  DETENTS, DRAG_GAIN, GEAR_RATIO, IDLE_SPEED, MAX_DRAG_SPEED, MAX_FLING, SETTLE_RATE, TICK_MAX, WHOOSH_FROM, buildShiftPx, createTurntable, tickAudible, turntableLive, whooshFor, type Turntable,
 } from "../src/features/game/world/runtime/turntableSpin";
 
 const DT = 1 / 60;
@@ -262,5 +262,30 @@ describe("the gears", () => {
   it("keep the proportions they had against the table (0.6 and -0.9 against 0.45)", () => {
     expect(GEAR_RATIO[0]).toBeCloseTo(0.6 / 0.45, 12);
     expect(GEAR_RATIO[1]).toBeCloseTo(-0.9 / 0.45, 12);
+  });
+});
+
+describe("where the table can be played with (the Build sheet joined the title)", () => {
+  const w = (title: boolean, showcase: boolean, building: boolean) => turntableLive({ title, showcase, building });
+  it("is live on the title and in the Build sheet's showcase, and nowhere else", () => {
+    expect(w(true, true, false)).toBe(true);            // the title page
+    expect(w(false, true, true)).toBe(true);            // the Build sheet is open
+    expect(w(false, false, false)).toBe(false);         // walking about in the world
+    expect(w(false, true, false)).toBe(false);          // a showcase that is not the Build sheet (the Create screen, the editor, anything else that borrows it)
+    expect(w(false, false, true)).toBe(false);          // the class lingering after the showcase ended (the sheet closing): never live
+    expect(w(false, false, false)).toBe(false);
+  });
+  it("closing the Build sheet (showcase off) makes it not live at once, whatever else is true", () => {
+    for (const title of [false]) for (const building of [true, false]) expect(w(title, false, building)).toBe(false);
+  });
+  it("slides the toy into the middle of what the card leaves free", () => {
+    expect(buildShiftPx(844, 420)).toBe(210);                       // a phone held sideways: the card is 420 px of 844
+    expect(buildShiftPx(390, 0.58 * 390)).toBeCloseTo(113.1, 6);    // upright (?rotate=0): the card is 58 vw
+    expect(buildShiftPx(844, 0)).toBe(0);                           // no card: no shift
+    expect(buildShiftPx(844, -50)).toBe(0);
+    expect(buildShiftPx(0, 420)).toBe(0);
+    expect(buildShiftPx(Number.NaN, 420)).toBe(0);
+    expect(buildShiftPx(844, Number.NaN)).toBe(0);
+    expect(buildShiftPx(500, 5000)).toBe(200);                      // a card as wide as the screen cannot push the toy off it
   });
 });
